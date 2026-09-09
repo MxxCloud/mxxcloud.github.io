@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.mxxcloud.twa",
+        "sha256_cert_fingerprints": ["3C:34:A4:D5:FA:8E:26:A1:F9:BB:23:82:07:4A:1E:B8:97:64:E8:75:2F:F9:F1:FC:06:18:0B:2C:5E:DE:4D:9A"]
+      }
+    }]
