@@ -592,19 +592,25 @@ function disegnaAnno() {
     ? `${riepilogo.numero} ${riepilogo.numero === 1 ? "voce" : "voci"} · ${daSaldare(riepilogo)}`
     : "Niente di programmato in questo anno.";
 
+  // Senza nulla in programma non c'è niente di «tutto incassato»: la riga
+  // sotto il numero lo dice invece di vantare un saldo che non esiste.
   scriviTessera(
     kpiEntrate,
     riepilogo.entrate,
-    riepilogo.entrateDaSaldare
-      ? `${euroCorto.format(riepilogo.entrateDaSaldare)} da incassare`
-      : "tutto incassato"
+    riepilogo.numeroEntrate === 0
+      ? "niente in programma"
+      : riepilogo.entrateDaSaldare
+        ? `${euroCorto.format(riepilogo.entrateDaSaldare)} da incassare`
+        : "tutto incassato"
   );
   scriviTessera(
     kpiUscite,
     riepilogo.uscite,
-    riepilogo.usciteDaSaldare
-      ? `${euroCorto.format(riepilogo.usciteDaSaldare)} da pagare`
-      : "tutto pagato"
+    riepilogo.numeroUscite === 0
+      ? "niente in programma"
+      : riepilogo.usciteDaSaldare
+        ? `${euroCorto.format(riepilogo.usciteDaSaldare)} da pagare`
+        : "tutto pagato"
   );
 
   if (riepilogo.peggiore) {

@@ -1,9 +1,14 @@
-# Spese future
+# Budget futuro
 
 Pianificatore delle entrate e delle uscite che devono ancora arrivare: una app
 web installabile che funziona anche senza rete. Non ha server né dipendenze da
 installare — è HTML, CSS e JavaScript, e i dati restano nel dispositivo di chi
 la usa.
+
+L'indirizzo resta `/spese-future/`, com'era quando l'app trattava solo le
+spese: cambiarlo romperebbe i collegamenti e le copie già installate. Per lo
+stesso motivo non cambiano né il nome dell'archivio nel browser né il marchio
+scritto dentro i file di backup.
 
 È il rovescio del [tracker delle spese](https://mxxcloud.github.io/spese-personali/):
 là si registra quello che è già stato speso, qui si programma quello che deve

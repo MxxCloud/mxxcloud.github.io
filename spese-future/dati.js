@@ -1,4 +1,4 @@
-// Motore dati del pianificatore: archiviazione nel browser e regole di calcolo.
+// Motore dati di Budget futuro: archiviazione nel browser e regole di calcolo.
 // L'interfaccia in app.js parla solo con questo modulo.
 //
 // La differenza con il tracker delle spese passate è il verso del tempo: qui le
@@ -7,6 +7,8 @@
 // un mese all'altro e si spostano quando la data cambia. Il registro di ciò che
 // è già stato speso resta l'altra applicazione.
 
+// Anche il nome dell'archivio resta invariato: rinominarlo farebbe
+// ripartire la app da vuota su ogni dispositivo dove è già in uso.
 const NOME_ARCHIVIO = "spese-future";
 // Versione 2: le voci hanno un tipo (uscita o entrata) e lo stato si chiama
 // "saldata", perché "pagata" non si dice di un'entrata.
@@ -672,16 +674,18 @@ export function vociInCsv(filtri = {}, formato = "excel") {
 }
 
 export function nomeFileCsv(filtri = {}) {
-  if (filtri.mese) return `spese-future_${filtri.mese}.csv`;
-  if (filtri.anno) return `spese-future_${filtri.anno}.csv`;
+  if (filtri.mese) return `budget-futuro_${filtri.mese}.csv`;
+  if (filtri.anno) return `budget-futuro_${filtri.anno}.csv`;
   if (filtri.da || filtri.a) {
-    return `spese-future_${filtri.da ?? "inizio"}_${filtri.a ?? "fine"}.csv`;
+    return `budget-futuro_${filtri.da ?? "inizio"}_${filtri.a ?? "fine"}.csv`;
   }
-  return `spese-future_${oggiIso()}.csv`;
+  return `budget-futuro_${oggiIso()}.csv`;
 }
 
 // --- backup completo -----------------------------------------------------
 
+// Il marchio dentro i file di backup resta quello di prima del nuovo nome:
+// cambiarlo renderebbe illeggibili i backup già scaricati.
 const FORMATO_BACKUP = "spese-future";
 const VERSIONE_BACKUP = 2;
 
@@ -703,7 +707,7 @@ export function esportaBackup() {
 }
 
 export function nomeFileBackup() {
-  return `backup-spese-future_${oggiIso()}.json`;
+  return `backup-budget-futuro_${oggiIso()}.json`;
 }
 
 async function svuotaTutto() {
@@ -758,7 +762,7 @@ export async function importaBackup(contenuto) {
     return ["Il file non contiene un backup leggibile."];
   }
   if (contenuto.formato !== FORMATO_BACKUP) {
-    return ["Questo file non è un backup del pianificatore di spese future."];
+    return ["Questo file non è un backup di Budget futuro."];
   }
   if (contenuto.versione !== VERSIONE_BACKUP && contenuto.versione !== 1) {
     return [`Il backup è in versione ${contenuto.versione}, non riconosciuta.`];
