@@ -1,0 +1,1227 @@
+:root {
+  --sfondo: #f5f6f8;
+  --superficie: #ffffff;
+  --testo: #1c1f24;
+  --testo-tenue: #626a75;
+  --bordo: #dfe3e8;
+  --accento: #41499b;
+  --accento-testo: #ffffff;
+  --errore: #a4262c;
+  --errore-sfondo: #fdf2f2;
+
+  /* Colori delle categorie, assegnati in ordine fisso e mai ciclati.
+     Verificati per il daltonismo su entrambi i fondali: la coppia adiacente
+     peggiore resta sopra le soglie in chiaro e in scuro. Oltre la sesta
+     categoria si usa --cat-oltre, un neutro, invece di inventare tinte. */
+  --cat-1: #2a78d6;
+  --cat-2: #eb6834;
+  --cat-3: #1baf7a;
+  --cat-4: #eda100;
+  --cat-5: #e87ba4;
+  --cat-6: #008300;
+  --cat-oltre: #8b93a1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sfondo: #16181c;
+    --superficie: #1e2126;
+    --testo: #e8eaed;
+    --testo-tenue: #a0a7b4;
+    --bordo: #333840;
+    --accento: #8e93e8;
+    --accento-testo: #11131f;
+    --errore: #f28b82;
+    --errore-sfondo: #2a1d1d;
+
+    --cat-1: #3987e5;
+    --cat-2: #d95926;
+    --cat-3: #199e70;
+    --cat-4: #c98500;
+    --cat-5: #d55181;
+    --cat-6: #008300;
+    --cat-oltre: #78808d;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Diversi contenitori qui sotto dichiarano display: grid o flex, che da soli
+   vincono sull'attributo hidden e lascerebbero aperti pannelli chiusi. */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  /* Lo spazio in basso lascia passare la barra di navigazione e quella
+     d'azione, entrambe fisse: senza, l'ultima spesa resta sotto. */
+  padding: 1rem 0.9rem calc(9.5rem + env(safe-area-inset-bottom));
+  background: var(--sfondo);
+  color: var(--testo);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+main {
+  max-width: 52rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.vista {
+  display: none;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.vista.attiva {
+  display: flex;
+}
+
+@media (min-width: 40rem) {
+  body {
+    padding: 2rem 1rem calc(7rem + env(safe-area-inset-bottom));
+  }
+
+  main {
+    gap: 1.5rem;
+  }
+}
+
+.intestazione {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  letter-spacing: -0.01em;
+}
+
+.istruzioni-installa {
+  width: 100%;
+  margin: 0.4rem 0 0;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--bordo);
+  border-radius: 7px;
+  color: var(--testo-tenue);
+  font-size: 0.85rem;
+}
+
+.installa {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--accento);
+  background: transparent;
+  color: var(--accento);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.installa:hover {
+  background: var(--accento);
+  color: var(--accento-testo);
+  filter: none;
+}
+
+/* ======================================================================
+   Mattoni comuni
+   ====================================================================== */
+
+.scheda {
+  background: var(--superficie);
+  border: 1px solid var(--bordo);
+  border-radius: 10px;
+}
+
+form.scheda {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 1rem;
+  align-items: end;
+  padding: 1.25rem;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.campo-largo {
+  grid-column: 1 / -1;
+}
+
+label {
+  color: var(--testo-tenue);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--bordo);
+  border-radius: 7px;
+  background: var(--sfondo);
+  color: var(--testo);
+  font: inherit;
+  font-size: 0.95rem;
+}
+
+input:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accento);
+  outline-offset: 2px;
+}
+
+.titolo-form {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--testo-tenue);
+}
+
+.azioni-form {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.6rem;
+}
+
+button {
+  border: none;
+  border-radius: 7px;
+  font: inherit;
+  cursor: pointer;
+}
+
+button[disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+button[disabled]:hover {
+  filter: none;
+}
+
+.azioni-form button {
+  padding: 0.6rem 1.4rem;
+  background: var(--accento);
+  color: var(--accento-testo);
+  font-weight: 600;
+}
+
+.azioni-form .secondario {
+  background: transparent;
+  border: 1px solid var(--bordo);
+  color: var(--testo-tenue);
+  font-weight: 500;
+}
+
+button:hover {
+  filter: brightness(1.08);
+}
+
+.minimo {
+  padding: 0.3rem 0.6rem;
+  background: transparent;
+  color: var(--testo-tenue);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.minimo:hover {
+  color: var(--testo);
+  filter: none;
+}
+
+.minimo.pericolo:hover {
+  color: var(--errore);
+}
+
+.in-modifica {
+  background: color-mix(in srgb, var(--accento) 12%, transparent);
+}
+
+.interruttore {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--testo);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.interruttore input {
+  width: auto;
+  accent-color: var(--accento);
+}
+
+.etichetta-nascosta {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.errori {
+  margin: 0;
+  padding: 0.85rem 1rem 0.85rem 2.2rem;
+  border: 1px solid var(--errore);
+  border-radius: 10px;
+  background: var(--errore-sfondo);
+  color: var(--errore);
+  font-size: 0.9rem;
+}
+
+.vuoto {
+  margin: 0;
+  padding: 2rem;
+  border: 1px dashed var(--bordo);
+  border-radius: 10px;
+  color: var(--testo-tenue);
+  text-align: center;
+}
+
+.senza-dati {
+  color: var(--testo-tenue);
+  font-size: 0.9rem;
+  list-style: none;
+}
+
+.punto {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+}
+
+/* Barra impilata: 2px di stacco fra i segmenti, così restano
+   distinguibili anche quando due categorie hanno colori vicini. */
+.pila {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+  margin-bottom: 0.9rem;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.pila span {
+  display: block;
+  min-width: 3px;
+}
+
+.pila:empty {
+  display: none;
+}
+
+/* ======================================================================
+   Cruscotti: anno e mese
+   ====================================================================== */
+
+.cruscotto {
+  padding: 0.6rem 1.25rem 1.25rem;
+  text-align: center;
+}
+
+.navigatore {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+}
+
+.passo {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  color: var(--testo-tenue);
+}
+
+.passo svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.passo:hover {
+  filter: none;
+  color: var(--testo);
+}
+
+.etichetta-grande {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.totale-grande {
+  margin: 0.4rem 0 0;
+}
+
+.totale-grande strong {
+  font-size: 2.3rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.scomposizione,
+.confronto {
+  margin: 0.25rem 0 0;
+  color: var(--testo-tenue);
+  font-size: 0.85rem;
+}
+
+.confronto:empty {
+  display: none;
+}
+
+.kpi {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.tessera {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.7rem 0.75rem;
+}
+
+.etichetta-kpi {
+  color: var(--testo-tenue);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.valore-kpi {
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* La riga sotto il numero dice di che numero si tratta: senza, "1.200 €"
+   sotto "Mese più caro" non direbbe quale mese. */
+.valore-kpi small {
+  display: block;
+  color: var(--testo-tenue);
+  font-size: 0.7rem;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+/* ======================================================================
+   Calendario dell'anno
+   ====================================================================== */
+
+.calendario {
+  padding: 1.25rem;
+}
+
+.calendario h2,
+.grafico h2 {
+  margin: 0 0 1rem;
+  color: var(--testo-tenue);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mesi {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 30rem) {
+  .mesi {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 48rem) {
+  .mesi {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+.mese-scheda {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.6rem 0.7rem 0.5rem;
+  border: 1px solid var(--bordo);
+  border-radius: 9px;
+  background: var(--sfondo);
+  color: var(--testo);
+  text-align: left;
+}
+
+.mese-scheda:hover {
+  filter: none;
+  border-color: var(--accento);
+}
+
+.nome-mese {
+  color: var(--testo-tenue);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.totale-mese {
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.conteggio-mese {
+  color: var(--testo-tenue);
+  font-size: 0.75rem;
+}
+
+.mese-scheda .pila-piccola {
+  height: 5px;
+  margin: 0.35rem 0 0;
+  border-radius: 3px;
+}
+
+.traccia-mese {
+  margin-top: 0.35rem;
+  height: 4px;
+}
+
+/* In un mese libero la barra deve restare vuota: il minimo di tre pixel,
+   utile altrove perché un importo minuscolo si veda, qui mentirebbe. */
+.traccia-mese .riempimento {
+  min-width: 0;
+}
+
+/* Il mese in cui si vive e quello aperto nell'altra vista sono i due punti
+   che l'occhio cerca per primi nel calendario. */
+.mese-reale {
+  border-color: var(--accento);
+}
+
+.mese-aperto {
+  background: color-mix(in srgb, var(--accento) 12%, transparent);
+}
+
+.mese-vuoto .totale-mese {
+  color: var(--testo-tenue);
+  font-weight: 500;
+}
+
+.nota {
+  margin: 0.9rem 0 0;
+  color: var(--testo-tenue);
+  font-size: 0.8rem;
+}
+
+/* ======================================================================
+   Grafici
+   ====================================================================== */
+
+.grafico {
+  padding: 1.25rem;
+}
+
+.barre {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.barre li {
+  display: grid;
+  grid-template-columns: minmax(5rem, 8rem) 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.etichetta-barra {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.traccia {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--sfondo);
+}
+
+.riempimento {
+  display: block;
+  height: 100%;
+  min-width: 3px;
+  border-radius: 5px;
+  background: var(--accento);
+}
+
+.valore-barra {
+  color: var(--testo-tenue);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.area-colonne {
+  overflow-x: auto;
+}
+
+.colonne {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.colonne li {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  cursor: pointer;
+}
+
+/* Dodici importi non entrano nella larghezza di un telefono: si
+   sovrapporrebbero. Restano nelle schede del calendario, che li mostrano
+   uno per riga, e tornano qui dove c'è spazio. */
+.valore-colonna {
+  display: none;
+  min-height: 1.2em;
+  color: var(--testo-tenue);
+  font-size: 0.65rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.contenitore-asta {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 96px;
+  border-bottom: 1px solid var(--bordo);
+}
+
+.asta {
+  width: 100%;
+  min-height: 3px;
+  border-radius: 4px 4px 0 0;
+  background: var(--accento);
+}
+
+.etichetta-colonna {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--testo-tenue);
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Il mese aperto nell'altra vista resta in primo piano: gli altri
+   arretrano invece di sparire. */
+.colonne li:not(.mese-mostrato) .asta {
+  opacity: 0.45;
+}
+
+.colonne .mese-mostrato .etichetta-colonna {
+  color: var(--testo);
+  font-weight: 600;
+}
+
+@media (min-width: 40rem) {
+  .colonne {
+    gap: 0.5rem;
+  }
+
+  .contenitore-asta {
+    height: 120px;
+  }
+
+  .valore-colonna {
+    display: block;
+    font-size: 0.75rem;
+  }
+
+  .etichetta-colonna {
+    font-size: 0.7rem;
+  }
+}
+
+.prossime {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.prossima {
+  display: grid;
+  grid-template-columns: 9px 1fr auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.2rem;
+  border-top: 1px solid var(--bordo);
+  cursor: pointer;
+}
+
+.prossima:first-child {
+  border-top: none;
+}
+
+/* ======================================================================
+   Vista mese: chip, elenco, azioni
+   ====================================================================== */
+
+.testa-elenco {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 38px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--bordo);
+  border-radius: 19px;
+  background: var(--superficie);
+  color: var(--testo);
+  font-size: 0.85rem;
+}
+
+.chip:hover {
+  filter: none;
+  border-color: var(--accento);
+}
+
+.chip[aria-pressed="true"] {
+  border-color: var(--accento);
+  color: var(--accento);
+  font-weight: 600;
+}
+
+.chip svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.elenco-spese {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.giorno {
+  padding: 0.85rem 0.2rem 0.4rem;
+  color: var(--testo-tenue);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.spesa {
+  display: grid;
+  grid-template-columns: 9px 1fr auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.6rem;
+  border-top: 1px solid var(--bordo);
+  border-radius: 7px;
+}
+
+.spesa:first-of-type {
+  border-top: none;
+}
+
+.corpo-spesa {
+  min-width: 0;
+}
+
+.corpo-spesa b {
+  display: block;
+  overflow: hidden;
+  font-size: 1rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.corpo-spesa small {
+  display: block;
+  color: var(--testo-tenue);
+  font-size: 0.8rem;
+}
+
+.importo-spesa {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Una spesa già pagata resta in elenco ma smette di pesare sullo sguardo:
+   il programma serve a vedere quello che deve ancora arrivare. */
+.spesa.pagata .corpo-spesa b,
+.spesa.pagata .importo-spesa {
+  color: var(--testo-tenue);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+/* Le azioni compaiono sotto la spesa toccata: su telefono non c'è
+   spazio per tenerle sempre visibili senza sacrificare l'importo. */
+.azioni-spesa {
+  grid-column: 1 / -1;
+  display: none;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding-top: 0.5rem;
+}
+
+.spesa.aperta .azioni-spesa {
+  display: flex;
+}
+
+.foglio-nuova .campo-importo input {
+  padding: 0.5rem 0.65rem;
+  font-size: 1.6rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 40rem) {
+  .cruscotto {
+    text-align: left;
+  }
+
+  .navigatore {
+    justify-content: start;
+    grid-template-columns: 44px auto 44px;
+  }
+
+  .kpi {
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 1rem;
+  }
+
+  .tessera {
+    padding: 1rem 1.25rem;
+    gap: 0.3rem;
+  }
+
+  .etichetta-kpi {
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+  }
+
+  .valore-kpi {
+    font-size: 1.5rem;
+  }
+
+  .spesa {
+    grid-template-columns: 9px 1fr auto auto;
+  }
+
+  .azioni-spesa {
+    grid-column: auto;
+    display: flex;
+    padding-top: 0;
+    visibility: hidden;
+  }
+
+  .spesa:hover .azioni-spesa,
+  .spesa:focus-within .azioni-spesa,
+  .spesa.aperta .azioni-spesa {
+    visibility: visible;
+  }
+}
+
+/* ======================================================================
+   Pannelli richiudibili: categorie, backup, esportazioni
+   ====================================================================== */
+
+.gestione {
+  padding: 0.5rem 1.25rem;
+}
+
+.gestione summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  color: var(--testo-tenue);
+  font-size: 0.9rem;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+}
+
+.gestione summary::-webkit-details-marker {
+  display: none;
+}
+
+.gestione summary::after {
+  content: "▾";
+  margin-left: auto;
+  color: var(--testo-tenue);
+  transition: transform 0.15s ease;
+}
+
+.gestione[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.gestione summary:hover {
+  color: var(--testo);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gestione summary::after {
+    transition: none;
+  }
+}
+
+.nota-backup {
+  margin: 0 0 0.75rem;
+  color: var(--testo-tenue);
+  font-size: 0.85rem;
+}
+
+.nota-backup.avviso {
+  margin: 0.75rem 0 1rem;
+}
+
+.nota-backup.avviso strong {
+  color: var(--errore);
+}
+
+.riga-backup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.riga-backup button,
+.ripristina span {
+  display: inline-block;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid var(--bordo);
+  border-radius: 7px;
+  color: var(--testo-tenue);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.riga-backup button {
+  background: var(--accento);
+  border-color: var(--accento);
+  color: var(--accento-testo);
+}
+
+.ripristina span:hover,
+.riga-backup button:hover {
+  filter: brightness(1.08);
+}
+
+.ripristina input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.ripristina:focus-within span {
+  outline: 2px solid var(--accento);
+  outline-offset: 2px;
+}
+
+.esportazioni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.esporta {
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--bordo);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--testo-tenue);
+  font-size: 0.85rem;
+}
+
+.esporta:hover {
+  filter: none;
+  border-color: var(--accento);
+  color: var(--testo);
+}
+
+.riga-aggiunta {
+  display: flex;
+  gap: 0.6rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.riga-aggiunta button {
+  padding: 0.55rem 1.1rem;
+  background: var(--accento);
+  color: var(--accento-testo);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.elenco-categorie {
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.elenco-categorie li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--bordo);
+}
+
+.nome-categoria {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.usi-categoria {
+  color: var(--testo-tenue);
+  font-size: 0.85rem;
+}
+
+.campo-rinomina {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+}
+
+/* ======================================================================
+   Barre fisse e finestre di dialogo
+   ====================================================================== */
+
+.barra-inferiore {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1px solid var(--bordo);
+  background: var(--superficie);
+}
+
+.voce-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  min-height: 56px;
+  padding: 0.4rem;
+  background: transparent;
+  color: var(--testo-tenue);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.voce-nav svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.voce-nav[aria-current="page"] {
+  color: var(--accento);
+}
+
+.voce-nav:hover {
+  filter: none;
+  color: var(--testo);
+}
+
+/* La barra d'azione sta sopra la navigazione e appare solo nella vista del
+   mese: si aggiunge una spesa dove la si sta programmando. */
+.barra-azione {
+  position: fixed;
+  inset: auto 0 calc(56px + env(safe-area-inset-bottom)) 0;
+  z-index: 19;
+  display: none;
+  padding: 0.7rem 0.9rem;
+  background: linear-gradient(to top, var(--sfondo) 65%, transparent);
+}
+
+body[data-vista="mese"] .barra-azione {
+  display: block;
+}
+
+.barra-azione .principale {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 52rem;
+  min-height: 50px;
+  margin: 0 auto;
+  border-radius: 10px;
+  background: var(--accento);
+  color: var(--accento-testo);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.barra-azione svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+dialog {
+  max-width: 26rem;
+  padding: 1.5rem;
+  border: 1px solid var(--bordo);
+  border-radius: 12px;
+  background: var(--superficie);
+  color: var(--testo);
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+
+dialog h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+dialog p {
+  margin: 0 0 1.25rem;
+  color: var(--testo-tenue);
+  font-size: 0.95rem;
+}
+
+.modulo-mesi {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.modulo-mesi p {
+  margin: 0;
+}
+
+.facoltativo {
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.aiuto {
+  margin: 0;
+  color: var(--testo-tenue);
+  font-size: 0.8rem;
+}
+
+.azioni-dialogo {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.azioni-dialogo button {
+  padding: 0.55rem 1.1rem;
+  background: var(--accento);
+  color: var(--accento-testo);
+  font-weight: 600;
+}
+
+.azioni-dialogo .secondario {
+  background: transparent;
+  border: 1px solid var(--bordo);
+  color: var(--testo-tenue);
+  font-weight: 500;
+}
+
+.azioni-dialogo .distruttivo {
+  background: var(--errore);
+  color: var(--superficie);
+}

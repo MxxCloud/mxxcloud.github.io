@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Spese future</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#41499b">
+  <link rel="icon" href="icona-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icona-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header class="intestazione">
+      <h1>Spese future</h1>
+      <button type="button" id="installa" class="installa">Installa</button>
+      <p id="istruzioni-installa" class="istruzioni-installa" hidden></p>
+    </header>
+
+    <ul id="errori" class="errori" hidden></ul>
+
+    <!-- ================= vista: anno ================= -->
+    <section id="vista-anno" class="vista" aria-label="Calendario dell'anno">
+
+      <div class="scheda cruscotto">
+        <div class="navigatore">
+          <button type="button" id="anno-precedente" class="passo" aria-label="Anno precedente">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+          </button>
+          <p id="anno-corrente" class="etichetta-grande">—</p>
+          <button type="button" id="anno-successivo" class="passo" aria-label="Anno successivo">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+        <p class="totale-grande"><strong id="totale-anno">—</strong></p>
+        <p id="scomposizione-anno" class="scomposizione"></p>
+      </div>
+
+      <div class="kpi">
+        <div class="scheda tessera">
+          <span class="etichetta-kpi">Media mensile</span>
+          <strong id="kpi-media" class="valore-kpi">—</strong>
+        </div>
+        <div class="scheda tessera">
+          <span class="etichetta-kpi">Mese più caro</span>
+          <strong id="kpi-picco" class="valore-kpi">—</strong>
+        </div>
+        <div class="scheda tessera">
+          <span class="etichetta-kpi">Da affrontare</span>
+          <strong id="kpi-residuo" class="valore-kpi">—</strong>
+        </div>
+      </div>
+
+      <section class="scheda calendario" aria-label="I dodici mesi dell'anno">
+        <h2>Calendario</h2>
+        <ul id="calendario" class="mesi"></ul>
+        <p class="nota">Tocca un mese per aprirlo, modificarne le spese, clonarle o spostarle.</p>
+      </section>
+
+      <div class="scheda grafico">
+        <h2>Andamento dell'anno</h2>
+        <div class="area-colonne">
+          <ul id="grafico-mesi" class="colonne"></ul>
+        </div>
+      </div>
+
+      <div class="scheda grafico">
+        <h2>Per categoria</h2>
+        <div id="pila-categorie" class="pila" role="img" aria-label="Ripartizione per categoria"></div>
+        <ul id="grafico-categorie" class="barre"></ul>
+      </div>
+
+      <div class="scheda grafico">
+        <h2>Prossime scadenze</h2>
+        <ul id="prossime" class="prossime"></ul>
+      </div>
+
+      <details class="scheda gestione">
+        <summary><span>Esporta e conserva</span></summary>
+        <p class="nota-backup">
+          I dati stanno solo su questo dispositivo: se svuoti i dati del browser
+          o cambi telefono, spariscono. Il backup è l'unico modo per riaverli.
+        </p>
+        <div class="riga-backup">
+          <button type="button" id="scarica-backup">Scarica backup</button>
+          <label class="ripristina">
+            <span>Ripristina da backup</span>
+            <input type="file" id="carica-backup" accept="application/json,.json">
+          </label>
+        </div>
+        <p class="nota-backup avviso">
+          Il ripristino <strong>sostituisce</strong> tutto ciò che è registrato ora.
+        </p>
+        <div class="esportazioni">
+          <button type="button" id="esporta-excel" class="esporta">Esporta l'anno per Excel</button>
+          <button type="button" id="esporta-standard" class="esporta">Esporta l'anno in CSV standard</button>
+        </div>
+      </details>
+
+      <details class="scheda gestione">
+        <summary><span>Gestisci categorie</span></summary>
+        <form id="form-categoria" class="riga-aggiunta" novalidate>
+          <label for="nuova-categoria" class="etichetta-nascosta">Nuova categoria</label>
+          <input type="text" id="nuova-categoria" name="nome" maxlength="40" placeholder="Nome della nuova categoria">
+          <button type="submit">Aggiungi</button>
+        </form>
+        <ul id="elenco-categorie" class="elenco-categorie"></ul>
+      </details>
+    </section>
+
+    <!-- ================= vista: mese ================= -->
+    <section id="vista-mese" class="vista" aria-label="Spese del mese">
+
+      <div class="scheda cruscotto">
+        <div class="navigatore">
+          <button type="button" id="mese-precedente" class="passo" aria-label="Mese precedente">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+          </button>
+          <p id="mese-corrente" class="etichetta-grande">—</p>
+          <button type="button" id="mese-successivo" class="passo" aria-label="Mese successivo">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+        <p class="totale-grande"><strong id="totale-mese">—</strong></p>
+        <p id="scomposizione-mese" class="scomposizione"></p>
+        <p id="confronto-mese" class="confronto"></p>
+      </div>
+
+      <div class="testa-elenco">
+        <div class="chips" id="filtri-stato" role="group" aria-label="Filtra per stato">
+          <button type="button" class="chip" data-stato="tutte" aria-pressed="true">Tutte</button>
+          <button type="button" class="chip" data-stato="da-pagare" aria-pressed="false">Da pagare</button>
+          <button type="button" class="chip" data-stato="pagate" aria-pressed="false">Pagate</button>
+        </div>
+        <div class="chips">
+          <button type="button" class="chip" id="clona-mese">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 9h10v10H9zM5 15H4V4h11v1"/></svg>
+            <span>Clona il mese</span>
+          </button>
+          <button type="button" class="chip" id="sposta-mese">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
+            <span>Sposta il mese</span>
+          </button>
+        </div>
+      </div>
+
+      <form id="form-spesa" class="scheda foglio-nuova" novalidate hidden>
+        <p id="titolo-form" class="titolo-form">Nuova spesa</p>
+        <div class="campo campo-importo">
+          <label for="importo">Importo (€)</label>
+          <input type="number" id="importo" name="importo" step="0.01" min="0.01" inputmode="decimal" placeholder="0,00" required>
+        </div>
+        <div class="campo">
+          <label for="data">Data prevista</label>
+          <input type="date" id="data" name="data" required>
+        </div>
+        <div class="campo">
+          <label for="categoria">Categoria</label>
+          <select id="categoria" name="categoria" required></select>
+        </div>
+        <div class="campo campo-largo">
+          <label for="descrizione">Descrizione</label>
+          <input type="text" id="descrizione" name="descrizione" maxlength="200" placeholder="es. Bollo auto" required>
+        </div>
+        <label class="interruttore campo-largo">
+          <input type="checkbox" id="pagata">
+          <span>Già pagata</span>
+        </label>
+        <div class="azioni-form">
+          <button type="submit" id="bottone-invia">Aggiungi spesa</button>
+          <button type="button" id="bottone-annulla" class="secondario">Annulla</button>
+        </div>
+      </form>
+
+      <ul id="elenco-spese" class="elenco-spese"></ul>
+      <p id="vuoto" class="vuoto" hidden>Nessuna spesa programmata in questo mese.</p>
+    </section>
+  </main>
+
+  <div class="barra-azione">
+    <button type="button" id="apri-nuova" class="principale">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      Aggiungi spesa
+    </button>
+  </div>
+
+  <nav class="barra-inferiore" aria-label="Sezioni">
+    <button type="button" class="voce-nav" data-vista="anno" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v14H4zM4 10h16M9 3v4M15 3v4"/></svg>
+      <span>Anno</span>
+    </button>
+    <button type="button" class="voce-nav" data-vista="mese">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      <span>Mese</span>
+    </button>
+  </nav>
+
+  <dialog id="dialogo-conferma">
+    <form method="dialog">
+      <h2 id="titolo-conferma">Eliminare la spesa?</h2>
+      <p id="dettaglio-conferma"></p>
+      <div class="azioni-dialogo">
+        <button value="annulla" class="secondario">Annulla</button>
+        <button value="conferma" class="distruttivo">Elimina</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dialogo-mesi">
+    <form method="dialog" class="modulo-mesi">
+      <h2 id="titolo-mesi">Clonare la spesa</h2>
+      <p id="dettaglio-mesi"></p>
+      <div class="campo">
+        <label for="mese-destinazione">Nel mese</label>
+        <input type="month" id="mese-destinazione" required>
+      </div>
+      <div class="campo" id="campo-ripetizione">
+        <label for="mese-ripetizione">Ripeti fino al mese <span class="facoltativo">(facoltativo)</span></label>
+        <input type="month" id="mese-ripetizione">
+        <p class="aiuto">Con un mese finale la copia viene creata in tutti i mesi dell'intervallo.</p>
+      </div>
+      <div class="azioni-dialogo">
+        <button value="annulla" class="secondario">Annulla</button>
+        <button value="conferma" id="conferma-mesi">Clona</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
