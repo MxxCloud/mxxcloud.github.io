@@ -2,6 +2,11 @@
   "name": "Budget futuro",
   "short_name": "Budget",
   "description": "Pianificatore di entrate e uscite future: calendario annuale, riepiloghi mese per mese, dati solo sul dispositivo.",
+  "id": "./",
+  "categories": [
+    "finance",
+    "productivity"
+  ],
   "lang": "it",
   "dir": "ltr",
   "start_url": "./",

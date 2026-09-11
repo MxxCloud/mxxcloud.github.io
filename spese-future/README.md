@@ -97,6 +97,12 @@ leggono a vicenda. Chi aveva già usato la app prima delle entrate non deve fare
 nulla: all'apertura le voci esistenti diventano uscite e lo stato «pagata»
 diventa «saldata», una volta sola.
 
+## Come app Android
+
+Da Chrome si installa come PWA (menu → *Installa app*). Per impacchettarla in un
+APK firmato — una Trusted Web Activity, come Spese personali — i valori, i
+comandi e il collegamento `assetlinks.json` stanno in [ANDROID.md](ANDROID.md).
+
 ## Uso locale
 
 Non basta aprire `index.html` con un doppio clic: il browser blocca i moduli
