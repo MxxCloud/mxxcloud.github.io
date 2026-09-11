@@ -2,21 +2,26 @@
 // L'interfaccia in app.js parla solo con questo modulo.
 //
 // La differenza con il tracker delle spese passate è il verso del tempo: qui le
-// voci descrivono impegni che devono ancora arrivare, quindi si programmano su
-// un anno intero, si copiano da un mese all'altro e si spostano quando la data
-// cambia. Il registro di ciò che è già stato speso resta l'altra applicazione.
+// voci descrivono movimenti che devono ancora arrivare — uscite da pagare ed
+// entrate da incassare — quindi si programmano su un anno intero, si copiano da
+// un mese all'altro e si spostano quando la data cambia. Il registro di ciò che
+// è già stato speso resta l'altra applicazione.
 
 const NOME_ARCHIVIO = "spese-future";
-const VERSIONE_ARCHIVIO = 1;
+// Versione 2: le voci hanno un tipo (uscita o entrata) e lo stato si chiama
+// "saldata", perché "pagata" non si dice di un'entrata.
+const VERSIONE_ARCHIVIO = 2;
 
-export const CATEGORIE_INIZIALI = [
-  "Casa",
-  "Auto",
-  "Tasse",
-  "Assicurazioni",
-  "Viaggi",
-  "Altro",
-];
+// Il deposito si chiama ancora "spese" anche ora che contiene pure le entrate:
+// rinominarlo costringerebbe a una migrazione che non darebbe nulla in cambio.
+const DEPOSITI = ["spese", "categorie"];
+
+export const TIPI = ["uscita", "entrata"];
+
+export const CATEGORIE_INIZIALI = {
+  uscita: ["Casa", "Auto", "Tasse", "Assicurazioni", "Viaggi", "Altro"],
+  entrata: ["Stipendio", "Rimborsi", "Affitti", "Altro"],
+};
 
 const IMPORTO_MASSIMO = 1_000_000;
 const LUNGHEZZA_MASSIMA_NOME = 40;
@@ -32,7 +37,7 @@ const DIALETTI_CSV = {
 
 // I dati stanno in memoria e vengono riscritti su IndexedDB a ogni modifica:
 // l'insieme è piccolo, e così filtri e aggregati restano codice sincrono.
-const memoria = { spese: [], categorie: [] };
+const memoria = { voci: [], categorie: [] };
 let archivio = null;
 
 // --- archiviazione -------------------------------------------------------
@@ -49,7 +54,7 @@ function apriArchivio() {
     const apertura = indexedDB.open(NOME_ARCHIVIO, VERSIONE_ARCHIVIO);
     apertura.onupgradeneeded = () => {
       const db = apertura.result;
-      for (const nome of ["spese", "categorie"]) {
+      for (const nome of DEPOSITI) {
         if (!db.objectStoreNames.contains(nome)) {
           db.createObjectStore(nome, { keyPath: "id", autoIncrement: true });
         }
@@ -75,26 +80,55 @@ async function rimuovi(deposito, id) {
   await richiesta(transazione.objectStore(deposito).delete(id));
 }
 
+function tipoValido(grezzo) {
+  return TIPI.includes(grezzo) ? grezzo : null;
+}
+
+/**
+ * Porta i record scritti prima delle entrate al formato attuale: erano tutti
+ * uscite, e lo stato si chiamava "pagata". La conversione è scritta su disco,
+ * così avviene una volta sola.
+ */
+async function migraDallaVersione1() {
+  for (const voce of memoria.voci) {
+    if (voce.tipo && "saldata" in voce) continue;
+    voce.tipo = voce.tipo ?? "uscita";
+    voce.saldata = voce.saldata ?? voce.pagata === true;
+    delete voce.pagata;
+    await scrivi("spese", voce);
+  }
+  for (const categoria of memoria.categorie) {
+    if (categoria.tipo) continue;
+    categoria.tipo = "uscita";
+    await scrivi("categorie", categoria);
+  }
+}
+
 export async function inizializza() {
   archivio = await apriArchivio();
-  memoria.spese = await leggiTutto("spese");
+  memoria.voci = await leggiTutto("spese");
   memoria.categorie = await leggiTutto("categorie");
 
-  if (memoria.categorie.length === 0) {
-    for (const nome of CATEGORIE_INIZIALI) {
-      const id = await scrivi("categorie", { nome });
-      memoria.categorie.push({ id, nome });
+  await migraDallaVersione1();
+
+  // Le categorie predefinite arrivano per tipo: chi usava già la app senza
+  // entrate non deve inventarsele a mano la prima volta che ne registra una.
+  for (const tipo of TIPI) {
+    if (memoria.categorie.some((c) => c.tipo === tipo)) continue;
+    for (const nome of CATEGORIE_INIZIALI[tipo]) {
+      const id = await scrivi("categorie", { nome, tipo });
+      memoria.categorie.push({ id, nome, tipo });
     }
   }
 
-  // Nessuna spesa deve restare orfana di una categoria non più in elenco.
-  const presenti = new Set(memoria.categorie.map((c) => c.nome.toLowerCase()));
-  for (const spesa of memoria.spese) {
-    if (!presenti.has(spesa.categoria.toLowerCase())) {
-      const id = await scrivi("categorie", { nome: spesa.categoria });
-      memoria.categorie.push({ id, nome: spesa.categoria });
-      presenti.add(spesa.categoria.toLowerCase());
-    }
+  // Nessuna voce deve restare orfana di una categoria non più in elenco.
+  const presenti = new Set(memoria.categorie.map((c) => `${c.tipo}\n${c.nome.toLowerCase()}`));
+  for (const voce of memoria.voci) {
+    const chiave = `${voce.tipo}\n${voce.categoria.toLowerCase()}`;
+    if (presenti.has(chiave)) continue;
+    const id = await scrivi("categorie", { nome: voce.categoria, tipo: voce.tipo });
+    memoria.categorie.push({ id, nome: voce.categoria, tipo: voce.tipo });
+    presenti.add(chiave);
   }
 }
 
@@ -152,6 +186,12 @@ export function giorniNelMese(mese) {
   return new Date(anno, numero, 0).getDate();
 }
 
+export function meseSpostato(mese, passo) {
+  const [anno, numero] = mese.split("-").map(Number);
+  const data = new Date(anno, numero - 1 + passo, 1);
+  return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}`;
+}
+
 /**
  * Sposta una data in un altro mese conservando il giorno quando esiste.
  * Il 31 gennaio spostato a febbraio diventa il 28 (o il 29): inventare il
@@ -197,20 +237,26 @@ export function importoInCentesimi(grezzo) {
 export function valida(payload) {
   const errori = [];
 
+  const tipo = tipoValido(payload.tipo);
+  if (tipo === null) errori.push("Indica se la voce è un'uscita o un'entrata.");
+
   const data = dataValida(payload.data);
   if (data === null) errori.push("Indica una data valida nel formato AAAA-MM-GG.");
 
   const [importoCent, erroreImporto] = importoInCentesimi(payload.importo);
   if (erroreImporto) errori.push(erroreImporto);
 
-  const categoria = nomeCategoriaCanonico(payload.categoria);
+  const categoria = tipo ? nomeCategoriaCanonico(payload.categoria, tipo) : null;
   if (categoria === null) errori.push("Scegli una categoria tra quelle disponibili.");
 
   const descrizione = String(payload.descrizione ?? "").trim().slice(0, 200);
-  if (!descrizione) errori.push("Indica una descrizione: è il nome dell'impegno.");
+  if (!descrizione) errori.push("Indica una descrizione: è il nome della voce.");
 
   if (errori.length) return [null, errori];
-  return [{ data, importoCent, categoria, descrizione, pagata: payload.pagata === true }, []];
+  return [
+    { tipo, data, importoCent, categoria, descrizione, saldata: payload.saldata === true },
+    [],
+  ];
 }
 
 function validaNomeCategoria(grezzo) {
@@ -224,36 +270,47 @@ function validaNomeCategoria(grezzo) {
 
 // --- categorie -----------------------------------------------------------
 
-function nomeCategoriaCanonico(grezzo) {
+// Uscite ed entrate hanno elenchi separati: "Stipendio" fra le spese non vuole
+// dire nulla, e lo stesso nome può servire da entrambe le parti.
+function nomeCategoriaCanonico(grezzo, tipo) {
   const cercato = String(grezzo ?? "").trim().toLowerCase();
-  const trovata = memoria.categorie.find((c) => c.nome.toLowerCase() === cercato);
+  const trovata = memoria.categorie.find(
+    (c) => c.tipo === tipo && c.nome.toLowerCase() === cercato
+  );
   return trovata ? trovata.nome : null;
 }
 
-export function nomiCategorie() {
+export function nomiCategorie(tipo) {
   return memoria.categorie
+    .filter((c) => c.tipo === tipo)
     .map((c) => c.nome)
     .sort((a, b) => a.localeCompare(b, "it", { sensitivity: "base" }));
 }
 
-export function elencaCategorie() {
+export function elencaCategorie(tipo) {
   return memoria.categorie
+    .filter((categoria) => !tipo || categoria.tipo === tipo)
     .map((categoria) => ({
       id: categoria.id,
       nome: categoria.nome,
-      usi: memoria.spese.filter((s) => s.categoria === categoria.nome).length,
+      tipo: categoria.tipo,
+      usi: memoria.voci.filter((v) => v.tipo === categoria.tipo && v.categoria === categoria.nome)
+        .length,
     }))
     .sort((a, b) => a.nome.localeCompare(b.nome, "it", { sensitivity: "base" }));
 }
 
-export async function aggiungiCategoria(grezzo) {
+export async function aggiungiCategoria(grezzo, grezzoTipo) {
+  const tipo = tipoValido(grezzoTipo);
+  if (tipo === null) return ["Indica se la categoria è di uscite o di entrate."];
+
   const [nome, errori] = validaNomeCategoria(grezzo);
   if (errori.length) return errori;
-  if (nomeCategoriaCanonico(nome) !== null) {
+  if (nomeCategoriaCanonico(nome, tipo) !== null) {
     return ["Esiste già una categoria con questo nome."];
   }
-  const id = await scrivi("categorie", { nome });
-  memoria.categorie.push({ id, nome });
+  const id = await scrivi("categorie", { nome, tipo });
+  memoria.categorie.push({ id, nome, tipo });
   return [];
 }
 
@@ -265,18 +322,20 @@ export async function rinominaCategoria(id, grezzo) {
   if (!categoria) return ["La categoria non esiste."];
 
   const omonima = memoria.categorie.find(
-    (c) => c.id !== id && c.nome.toLowerCase() === nome.toLowerCase()
+    (c) => c.id !== id && c.tipo === categoria.tipo && c.nome.toLowerCase() === nome.toLowerCase()
   );
   if (omonima) return ["Esiste già una categoria con questo nome."];
 
   const precedente = categoria.nome;
   categoria.nome = nome;
-  await scrivi("categorie", { id, nome });
+  await scrivi("categorie", { id, nome, tipo: categoria.tipo });
 
-  // Rinominare senza aggiornare i riferimenti lascerebbe spese senza categoria.
-  for (const spesa of memoria.spese.filter((s) => s.categoria === precedente)) {
-    spesa.categoria = nome;
-    await scrivi("spese", spesa);
+  // Rinominare senza aggiornare i riferimenti lascerebbe voci senza categoria.
+  for (const voce of memoria.voci.filter(
+    (v) => v.tipo === categoria.tipo && v.categoria === precedente
+  )) {
+    voce.categoria = nome;
+    await scrivi("spese", voce);
   }
   return [];
 }
@@ -285,10 +344,12 @@ export async function eliminaCategoria(id) {
   const categoria = memoria.categorie.find((c) => c.id === id);
   if (!categoria) return ["La categoria non esiste."];
 
-  const usi = memoria.spese.filter((s) => s.categoria === categoria.nome).length;
+  const usi = memoria.voci.filter(
+    (v) => v.tipo === categoria.tipo && v.categoria === categoria.nome
+  ).length;
   if (usi) {
     return [
-      `«${categoria.nome}» è usata da ${usi} ${usi === 1 ? "spesa" : "spese"}: riassegnale prima di eliminarla.`,
+      `«${categoria.nome}» è usata da ${usi} ${usi === 1 ? "voce" : "voci"}: riassegnale prima di eliminarla.`,
     ];
   }
 
@@ -297,172 +358,177 @@ export async function eliminaCategoria(id) {
   return [];
 }
 
-// --- spese programmate ---------------------------------------------------
+// --- voci ----------------------------------------------------------------
 
-function inEuro(spesa) {
+function inEuro(voce) {
   return {
-    id: spesa.id,
-    data: spesa.data,
-    mese: meseDi(spesa.data),
-    importo: spesa.importoCent / 100,
-    categoria: spesa.categoria,
-    descrizione: spesa.descrizione,
-    pagata: spesa.pagata === true,
+    id: voce.id,
+    tipo: voce.tipo,
+    data: voce.data,
+    mese: meseDi(voce.data),
+    importo: voce.importoCent / 100,
+    categoria: voce.categoria,
+    descrizione: voce.descrizione,
+    saldata: voce.saldata === true,
   };
 }
 
 function superaFiltri(voce, filtri = {}) {
+  if (filtri.tipo && voce.tipo !== filtri.tipo) return false;
   if (filtri.mese && voce.mese !== filtri.mese) return false;
   if (filtri.anno && annoDi(voce.data) !== filtri.anno) return false;
   if (filtri.da && voce.data < filtri.da) return false;
   if (filtri.a && voce.data > filtri.a) return false;
   if (filtri.categoria && voce.categoria !== filtri.categoria) return false;
-  if (filtri.stato === "pagate" && !voce.pagata) return false;
-  if (filtri.stato === "da-pagare" && voce.pagata) return false;
+  if (filtri.stato === "saldate" && !voce.saldata) return false;
+  if (filtri.stato === "da-saldare" && voce.saldata) return false;
   if (filtri.testo && !voce.descrizione.toLowerCase().includes(filtri.testo.toLowerCase())) {
     return false;
   }
   return true;
 }
 
-export function elencaSpese(filtri = {}) {
-  return memoria.spese
+export function elencaVoci(filtri = {}) {
+  return memoria.voci
     .map(inEuro)
-    .filter((spesa) => superaFiltri(spesa, filtri))
+    .filter((voce) => superaFiltri(voce, filtri))
     .sort((a, b) => a.data.localeCompare(b.data) || a.id - b.id);
 }
 
-export function speseDelMese(mese, filtri = {}) {
-  return elencaSpese({ ...filtri, mese });
+export function vociDelMese(mese, filtri = {}) {
+  return elencaVoci({ ...filtri, mese });
 }
 
-export async function aggiungiSpesa(payload) {
-  const [spesa, errori] = valida(payload);
+export async function aggiungiVoce(payload) {
+  const [voce, errori] = valida(payload);
   if (errori.length) return errori;
-  const id = await scrivi("spese", spesa);
-  memoria.spese.push({ id, ...spesa });
+  const id = await scrivi("spese", voce);
+  memoria.voci.push({ id, ...voce });
   return [];
 }
 
-export async function aggiornaSpesa(id, payload) {
-  const [spesa, errori] = valida(payload);
+export async function aggiornaVoce(id, payload) {
+  const [voce, errori] = valida(payload);
   if (errori.length) return errori;
-  const esistente = memoria.spese.find((s) => s.id === id);
-  if (!esistente) return ["La spesa da modificare non esiste."];
-  Object.assign(esistente, spesa);
+  const esistente = memoria.voci.find((v) => v.id === id);
+  if (!esistente) return ["La voce da modificare non esiste."];
+  Object.assign(esistente, voce);
   await scrivi("spese", esistente);
   return [];
 }
 
-export async function eliminaSpesa(id) {
-  if (!memoria.spese.some((s) => s.id === id)) return ["La spesa da eliminare non esiste."];
+export async function eliminaVoce(id) {
+  if (!memoria.voci.some((v) => v.id === id)) return ["La voce da eliminare non esiste."];
   await rimuovi("spese", id);
-  memoria.spese = memoria.spese.filter((s) => s.id !== id);
+  memoria.voci = memoria.voci.filter((v) => v.id !== id);
   return [];
 }
 
-export async function segnaPagata(id, pagata) {
-  const spesa = memoria.spese.find((s) => s.id === id);
-  if (!spesa) return ["La spesa non esiste."];
-  spesa.pagata = pagata === true;
-  await scrivi("spese", spesa);
+export async function segnaSaldata(id, saldata) {
+  const voce = memoria.voci.find((v) => v.id === id);
+  if (!voce) return ["La voce non esiste."];
+  voce.saldata = saldata === true;
+  await scrivi("spese", voce);
   return [];
 }
 
 // --- clonazione e spostamento -------------------------------------------
 
-/**
- * Copia una spesa nei mesi indicati. Le copie nascono da pagare: sono impegni
- * futuri, e ereditare "pagata" dall'originale le darebbe per saldate.
- */
-export async function clonaSpesa(id, mesi) {
-  const spesa = memoria.spese.find((s) => s.id === id);
-  if (!spesa) return ["La spesa da clonare non esiste."];
+function copiaIn(voce, mese) {
+  return {
+    tipo: voce.tipo,
+    data: giornoNelMese(voce.data, mese),
+    importoCent: voce.importoCent,
+    categoria: voce.categoria,
+    descrizione: voce.descrizione,
+    // Le copie nascono da saldare: sono impegni futuri, ed ereditare lo stato
+    // dall'originale le darebbe per già pagate o già incassate.
+    saldata: false,
+  };
+}
+
+export async function clonaVoce(id, mesi) {
+  const voce = memoria.voci.find((v) => v.id === id);
+  if (!voce) return ["La voce da clonare non esiste."];
 
   const destinazioni = [...new Set(mesi.map(meseValido).filter(Boolean))];
   if (!destinazioni.length) return ["Indica almeno un mese di destinazione valido."];
 
   for (const mese of destinazioni) {
-    const copia = {
-      data: giornoNelMese(spesa.data, mese),
-      importoCent: spesa.importoCent,
-      categoria: spesa.categoria,
-      descrizione: spesa.descrizione,
-      pagata: false,
-    };
+    const copia = copiaIn(voce, mese);
     const nuovoId = await scrivi("spese", copia);
-    memoria.spese.push({ id: nuovoId, ...copia });
+    memoria.voci.push({ id: nuovoId, ...copia });
   }
   return [];
 }
 
-/** Copia tutte le spese di un mese nei mesi indicati. */
+/** Copia tutte le voci di un mese nei mesi indicati. */
 export async function clonaMese(origine, mesi) {
   const partenza = meseValido(origine);
   if (partenza === null) return ["Il mese di partenza non è valido."];
 
-  const voci = memoria.spese.filter((s) => meseDi(s.data) === partenza);
-  if (!voci.length) return ["Questo mese non ha spese da copiare."];
+  const voci = memoria.voci.filter((v) => meseDi(v.data) === partenza);
+  if (!voci.length) return ["Questo mese non ha voci da copiare."];
 
   const destinazioni = [...new Set(mesi.map(meseValido).filter(Boolean))].filter(
     (mese) => mese !== partenza
   );
-  if (!destinazioni.length) return ["Indica almeno un mese di destinazione diverso da quello di partenza."];
+  if (!destinazioni.length) {
+    return ["Indica almeno un mese di destinazione diverso da quello di partenza."];
+  }
 
   for (const mese of destinazioni) {
-    for (const spesa of voci) {
-      const copia = {
-        data: giornoNelMese(spesa.data, mese),
-        importoCent: spesa.importoCent,
-        categoria: spesa.categoria,
-        descrizione: spesa.descrizione,
-        pagata: false,
-      };
+    for (const voce of voci) {
+      const copia = copiaIn(voce, mese);
       const nuovoId = await scrivi("spese", copia);
-      memoria.spese.push({ id: nuovoId, ...copia });
+      memoria.voci.push({ id: nuovoId, ...copia });
     }
   }
   return [];
 }
 
-/** Sposta una spesa in un altro mese conservandone il giorno quando esiste. */
-export async function spostaSpesa(id, mese) {
+/** Sposta una voce in un altro mese conservandone il giorno quando esiste. */
+export async function spostaVoce(id, mese) {
   const destinazione = meseValido(mese);
   if (destinazione === null) return ["Indica il mese di destinazione nel formato AAAA-MM."];
 
-  const spesa = memoria.spese.find((s) => s.id === id);
-  if (!spesa) return ["La spesa da spostare non esiste."];
+  const voce = memoria.voci.find((v) => v.id === id);
+  if (!voce) return ["La voce da spostare non esiste."];
 
-  spesa.data = giornoNelMese(spesa.data, destinazione);
-  await scrivi("spese", spesa);
+  voce.data = giornoNelMese(voce.data, destinazione);
+  await scrivi("spese", voce);
   return [];
 }
 
-/** Sposta tutte le spese di un mese in un altro. */
+/** Sposta tutte le voci di un mese in un altro. */
 export async function spostaMese(origine, destinazione) {
   const partenza = meseValido(origine);
   const arrivo = meseValido(destinazione);
   if (partenza === null || arrivo === null) return ["Indica mesi validi nel formato AAAA-MM."];
   if (partenza === arrivo) return ["Il mese di destinazione coincide con quello di partenza."];
 
-  const voci = memoria.spese.filter((s) => meseDi(s.data) === partenza);
-  if (!voci.length) return ["Questo mese non ha spese da spostare."];
+  const voci = memoria.voci.filter((v) => meseDi(v.data) === partenza);
+  if (!voci.length) return ["Questo mese non ha voci da spostare."];
 
-  for (const spesa of voci) {
-    spesa.data = giornoNelMese(spesa.data, arrivo);
-    await scrivi("spese", spesa);
+  for (const voce of voci) {
+    voce.data = giornoNelMese(voce.data, arrivo);
+    await scrivi("spese", voce);
   }
   return [];
 }
 
 // --- riepiloghi ----------------------------------------------------------
 
+function somma(voci) {
+  return voci.reduce((totale, voce) => totale + Math.round(voce.importo * 100), 0) / 100;
+}
+
 function perCategoria(voci) {
   const totali = new Map();
-  let somma = 0;
+  let totale = 0;
   for (const voce of voci) {
     const centesimi = Math.round(voce.importo * 100);
-    somma += centesimi;
+    totale += centesimi;
     totali.set(voce.categoria, (totali.get(voce.categoria) ?? 0) + centesimi);
   }
   return [...totali.entries()]
@@ -470,82 +536,100 @@ function perCategoria(voci) {
     .map(([categoria, valore]) => ({
       categoria,
       totale: valore / 100,
-      quota: somma ? valore / somma : 0,
+      quota: totale ? valore / totale : 0,
     }));
 }
 
-function sommaDi(voci) {
-  return voci.reduce((somma, voce) => somma + Math.round(voce.importo * 100), 0) / 100;
-}
+/** Il conto di un insieme di voci: entrate, uscite, saldo e stato di ciascuno. */
+export function aggrega(voci) {
+  const entrate = voci.filter((v) => v.tipo === "entrata");
+  const uscite = voci.filter((v) => v.tipo === "uscita");
+  const totaleEntrate = somma(entrate);
+  const totaleUscite = somma(uscite);
 
-export function riepilogoMese(mese, filtri = {}) {
-  const voci = elencaSpese({ ...filtri, mese });
-  const pagate = voci.filter((v) => v.pagata);
   return {
-    mese,
-    totale: sommaDi(voci),
     numero: voci.length,
-    pagato: sommaDi(pagate),
-    daPagare: sommaDi(voci.filter((v) => !v.pagata)),
-    perCategoria: perCategoria(voci),
+    numeroEntrate: entrate.length,
+    numeroUscite: uscite.length,
+    entrate: totaleEntrate,
+    uscite: totaleUscite,
+    saldo: Math.round((totaleEntrate - totaleUscite) * 100) / 100,
+    entrateSaldate: somma(entrate.filter((v) => v.saldata)),
+    entrateDaSaldare: somma(entrate.filter((v) => !v.saldata)),
+    usciteSaldate: somma(uscite.filter((v) => v.saldata)),
+    usciteDaSaldare: somma(uscite.filter((v) => !v.saldata)),
+    numeroDaSaldare: voci.filter((v) => !v.saldata).length,
+    numeroSaldate: voci.filter((v) => v.saldata).length,
+    perCategoria: { uscita: perCategoria(uscite), entrata: perCategoria(entrate) },
   };
 }
 
-export function anniConSpese() {
-  const anni = new Set(memoria.spese.map((s) => annoDi(s.data)));
+export function riepilogo(filtri = {}) {
+  return aggrega(elencaVoci(filtri));
+}
+
+export function riepilogoMese(mese, filtri = {}) {
+  return { mese, ...aggrega(elencaVoci({ ...filtri, mese })) };
+}
+
+/**
+ * Il riepilogo di un periodo qualsiasi, con la ripartizione per mese:
+ * è quello che serve per vedere in una volta tutto ciò che è stato
+ * programmato fra due date.
+ */
+export function riepilogoPeriodo(filtri = {}) {
+  const voci = elencaVoci(filtri);
+  const mesi = [...new Set(voci.map((v) => v.mese))].sort();
+  return {
+    ...aggrega(voci),
+    voci,
+    perMese: mesi.map((mese) => ({ mese, ...aggrega(voci.filter((v) => v.mese === mese)) })),
+  };
+}
+
+export function anniConVoci() {
+  const anni = new Set(memoria.voci.map((v) => annoDi(v.data)));
   anni.add(annoCorrente());
   return [...anni].sort();
 }
 
 /**
  * Il quadro dell'anno: dodici mesi sempre presenti, anche vuoti, perché il
- * calendario deve mostrare i buchi quanto le spese.
+ * calendario deve mostrare i buchi quanto i mesi impegnati.
  */
 export function riepilogoAnno(anno, filtri = {}) {
-  const voci = elencaSpese({ ...filtri, anno });
-  const mesi = mesiDellAnno(anno).map((mese) => {
-    const suoi = voci.filter((v) => v.mese === mese);
-    return {
-      mese,
-      totale: sommaDi(suoi),
-      numero: suoi.length,
-      pagato: sommaDi(suoi.filter((v) => v.pagata)),
-      daPagare: sommaDi(suoi.filter((v) => !v.pagata)),
-      perCategoria: perCategoria(suoi),
-    };
-  });
+  const voci = elencaVoci({ ...filtri, anno });
+  const perMese = mesiDellAnno(anno).map((mese) => ({
+    mese,
+    ...aggrega(voci.filter((v) => v.mese === mese)),
+  }));
 
-  const conSpese = mesi.filter((m) => m.numero > 0);
-  const piuCaro = conSpese.reduce((max, m) => (max && max.totale >= m.totale ? max : m), null);
-  const totale = sommaDi(voci);
+  const impegnati = perMese.filter((m) => m.numero > 0);
+  const piuCaro = impegnati.reduce((max, m) => (max && max.uscite >= m.uscite ? max : m), null);
+  const peggiore = impegnati.reduce((min, m) => (min && min.saldo <= m.saldo ? min : m), null);
 
   // "Ancora da affrontare" guarda avanti da oggi: le scadenze già passate,
-  // pagate o no, non sono più programmazione ma storia.
+  // saldate o no, non sono più programmazione ma storia.
   const oggi = oggiIso();
-  const residue = voci.filter((v) => v.data >= oggi && !v.pagata);
+  const residue = voci.filter((v) => v.data >= oggi && !v.saldata);
 
   return {
     anno,
-    totale,
-    numero: voci.length,
-    pagato: sommaDi(voci.filter((v) => v.pagata)),
-    daPagare: sommaDi(voci.filter((v) => !v.pagata)),
-    residuo: sommaDi(residue),
-    numeroResidue: residue.length,
-    media: conSpese.length ? totale / conSpese.length : 0,
-    mediaMensile: totale / 12,
-    mesiConSpese: conSpese.length,
+    ...aggrega(voci),
+    perMese,
+    mesiImpegnati: impegnati.length,
     piuCaro,
-    perMese: mesi,
-    perCategoria: perCategoria(voci),
+    peggiore,
+    mediaMensileUscite: somma(voci.filter((v) => v.tipo === "uscita")) / 12,
+    residuo: aggrega(residue),
   };
 }
 
-/** Le prossime scadenze a partire da oggi, per la vista dell'anno. */
+/** Le prossime voci ancora da saldare a partire da oggi. */
 export function prossimeScadenze(quante = 5) {
   const oggi = oggiIso();
-  return elencaSpese()
-    .filter((spesa) => spesa.data >= oggi && !spesa.pagata)
+  return elencaVoci()
+    .filter((voce) => voce.data >= oggi && !voce.saldata)
     .slice(0, quante);
 }
 
@@ -564,17 +648,18 @@ function dataNelDialetto(iso, dialetto) {
   return `${giorno}/${mese}/${anno}`;
 }
 
-export function speseInCsv(filtri = {}, formato = "excel") {
+export function vociInCsv(filtri = {}, formato = "excel") {
   const dialetto = DIALETTI_CSV[formato] ?? DIALETTI_CSV.excel;
 
-  const righe = [["Data", "Importo", "Categoria", "Descrizione", "Stato"]];
-  for (const spesa of elencaSpese(filtri)) {
+  const righe = [["Data", "Tipo", "Importo", "Categoria", "Descrizione", "Stato"]];
+  for (const voce of elencaVoci(filtri)) {
     righe.push([
-      dataNelDialetto(spesa.data, dialetto),
-      spesa.importo.toFixed(2).replace(".", dialetto.decimale),
-      spesa.categoria,
-      spesa.descrizione,
-      spesa.pagata ? "Pagata" : "Da pagare",
+      dataNelDialetto(voce.data, dialetto),
+      voce.tipo === "entrata" ? "Entrata" : "Uscita",
+      voce.importo.toFixed(2).replace(".", dialetto.decimale),
+      voce.categoria,
+      voce.descrizione,
+      voce.saldata ? "Saldata" : "Da saldare",
     ]);
   }
 
@@ -589,26 +674,30 @@ export function speseInCsv(filtri = {}, formato = "excel") {
 export function nomeFileCsv(filtri = {}) {
   if (filtri.mese) return `spese-future_${filtri.mese}.csv`;
   if (filtri.anno) return `spese-future_${filtri.anno}.csv`;
+  if (filtri.da || filtri.a) {
+    return `spese-future_${filtri.da ?? "inizio"}_${filtri.a ?? "fine"}.csv`;
+  }
   return `spese-future_${oggiIso()}.csv`;
 }
 
 // --- backup completo -----------------------------------------------------
 
 const FORMATO_BACKUP = "spese-future";
-const VERSIONE_BACKUP = 1;
+const VERSIONE_BACKUP = 2;
 
 export function esportaBackup() {
   return {
     formato: FORMATO_BACKUP,
     versione: VERSIONE_BACKUP,
     esportato: new Date().toISOString(),
-    categorie: memoria.categorie.map((c) => c.nome),
-    spese: memoria.spese.map((s) => ({
-      data: s.data,
-      importo: s.importoCent / 100,
-      categoria: s.categoria,
-      descrizione: s.descrizione,
-      pagata: s.pagata === true,
+    categorie: memoria.categorie.map((c) => ({ nome: c.nome, tipo: c.tipo })),
+    voci: memoria.voci.map((v) => ({
+      tipo: v.tipo,
+      data: v.data,
+      importo: v.importoCent / 100,
+      categoria: v.categoria,
+      descrizione: v.descrizione,
+      saldata: v.saldata === true,
     })),
   };
 }
@@ -618,12 +707,44 @@ export function nomeFileBackup() {
 }
 
 async function svuotaTutto() {
-  const transazione = archivio.transaction(["spese", "categorie"], "readwrite");
-  for (const deposito of ["spese", "categorie"]) {
+  const transazione = archivio.transaction(DEPOSITI, "readwrite");
+  for (const deposito of DEPOSITI) {
     await richiesta(transazione.objectStore(deposito).clear());
   }
-  memoria.spese = [];
+  memoria.voci = [];
   memoria.categorie = [];
+}
+
+/**
+ * Riporta un backup al formato attuale. I file scritti prima delle entrate
+ * contengono solo uscite, sotto la chiave "spese" e con lo stato "pagata":
+ * restano leggibili, altrimenti un backup vecchio diventerebbe carta straccia.
+ */
+function normalizzaBackup(contenuto) {
+  const grezzeVoci = Array.isArray(contenuto.voci)
+    ? contenuto.voci
+    : Array.isArray(contenuto.spese)
+      ? contenuto.spese
+      : [];
+
+  const voci = grezzeVoci.map((voce) => ({
+    tipo: voce?.tipo ?? "uscita",
+    data: voce?.data,
+    importo: voce?.importo,
+    categoria: voce?.categoria,
+    descrizione: voce?.descrizione,
+    saldata: voce?.saldata ?? voce?.pagata ?? false,
+  }));
+
+  const categorie = (Array.isArray(contenuto.categorie) ? contenuto.categorie : [])
+    .map((categoria) =>
+      typeof categoria === "string"
+        ? { nome: categoria.trim(), tipo: "uscita" }
+        : { nome: String(categoria?.nome ?? "").trim(), tipo: tipoValido(categoria?.tipo) ?? "uscita" }
+    )
+    .filter((categoria) => categoria.nome);
+
+  return { voci, categorie };
 }
 
 /**
@@ -639,30 +760,33 @@ export async function importaBackup(contenuto) {
   if (contenuto.formato !== FORMATO_BACKUP) {
     return ["Questo file non è un backup del pianificatore di spese future."];
   }
-  if (contenuto.versione !== VERSIONE_BACKUP) {
+  if (contenuto.versione !== VERSIONE_BACKUP && contenuto.versione !== 1) {
     return [`Il backup è in versione ${contenuto.versione}, non riconosciuta.`];
   }
 
-  const categorie = Array.isArray(contenuto.categorie) ? contenuto.categorie : [];
-  const spese = Array.isArray(contenuto.spese) ? contenuto.spese : [];
+  const { voci, categorie } = normalizzaBackup(contenuto);
 
   // Le categorie citate dalle voci devono esistere, altrimenti la validazione
   // le rifiuterebbe: si ricavano dal backup stesso prima di controllare il resto.
-  const nomi = new Set(categorie.map((n) => String(n).trim()).filter(Boolean));
-  for (const voce of spese) {
-    const nome = String(voce?.categoria ?? "").trim();
-    if (nome) nomi.add(nome);
+  const nomi = new Map(categorie.map((c) => [`${c.tipo}\n${c.nome}`, c]));
+  for (const voce of voci) {
+    const nome = String(voce.categoria ?? "").trim();
+    const tipo = tipoValido(voce.tipo) ?? "uscita";
+    if (nome) nomi.set(`${tipo}\n${nome}`, { nome, tipo });
   }
 
   const precedenti = memoria.categorie;
-  memoria.categorie = [...nomi].map((nome, indice) => ({ id: -1 - indice, nome }));
+  memoria.categorie = [...nomi.values()].map((categoria, indice) => ({
+    id: -1 - indice,
+    ...categoria,
+  }));
 
   const errori = [];
   const valide = [];
-  spese.forEach((voce, indice) => {
-    const [spesa, suoi] = valida(voce ?? {});
-    if (suoi.length) errori.push(`Spesa ${indice + 1}: ${suoi.join(" ")}`);
-    else valide.push(spesa);
+  voci.forEach((grezza, indice) => {
+    const [voce, suoi] = valida(grezza);
+    if (suoi.length) errori.push(`Voce ${indice + 1}: ${suoi.join(" ")}`);
+    else valide.push(voce);
   });
 
   if (errori.length) {
@@ -671,13 +795,13 @@ export async function importaBackup(contenuto) {
   }
 
   await svuotaTutto();
-  for (const nome of nomi) {
-    const id = await scrivi("categorie", { nome });
-    memoria.categorie.push({ id, nome });
+  for (const categoria of nomi.values()) {
+    const id = await scrivi("categorie", categoria);
+    memoria.categorie.push({ id, ...categoria });
   }
-  for (const spesa of valide) {
-    const id = await scrivi("spese", spesa);
-    memoria.spese.push({ id, ...spesa });
+  for (const voce of valide) {
+    const id = await scrivi("spese", voce);
+    memoria.voci.push({ id, ...voce });
   }
   return [];
 }

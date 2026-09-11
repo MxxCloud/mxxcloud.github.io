@@ -33,42 +33,54 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
           </button>
         </div>
-        <p class="totale-grande"><strong id="totale-anno">—</strong></p>
-        <p id="scomposizione-anno" class="scomposizione"></p>
+        <p class="etichetta-totale">Saldo dell'anno</p>
+        <p class="totale-grande"><strong id="saldo-anno">—</strong></p>
+        <p id="flussi-anno" class="scomposizione"></p>
+        <p id="stato-anno" class="scomposizione"></p>
       </div>
 
       <div class="kpi">
         <div class="scheda tessera">
-          <span class="etichetta-kpi">Media mensile</span>
-          <strong id="kpi-media" class="valore-kpi">—</strong>
+          <span class="etichetta-kpi">Entrate</span>
+          <strong id="kpi-entrate" class="valore-kpi">—</strong>
         </div>
         <div class="scheda tessera">
-          <span class="etichetta-kpi">Mese più caro</span>
-          <strong id="kpi-picco" class="valore-kpi">—</strong>
+          <span class="etichetta-kpi">Uscite</span>
+          <strong id="kpi-uscite" class="valore-kpi">—</strong>
         </div>
         <div class="scheda tessera">
-          <span class="etichetta-kpi">Da affrontare</span>
-          <strong id="kpi-residuo" class="valore-kpi">—</strong>
+          <span class="etichetta-kpi">Saldo più basso</span>
+          <strong id="kpi-peggiore" class="valore-kpi">—</strong>
         </div>
       </div>
 
       <section class="scheda calendario" aria-label="I dodici mesi dell'anno">
         <h2>Calendario</h2>
         <ul id="calendario" class="mesi"></ul>
-        <p class="nota">Tocca un mese per aprirlo, modificarne le spese, clonarle o spostarle.</p>
+        <p class="legenda">
+          <span class="voce-legenda"><i class="punto punto-entrata"></i>entrate</span>
+          <span class="voce-legenda"><i class="punto punto-uscita"></i>uscite</span>
+          <span>Tocca un mese per aprirlo, modificarne le voci, clonarle o spostarle.</span>
+        </p>
       </section>
 
       <div class="scheda grafico">
-        <h2>Andamento dell'anno</h2>
+        <h2>Saldo mese per mese</h2>
         <div class="area-colonne">
           <ul id="grafico-mesi" class="colonne"></ul>
         </div>
       </div>
 
       <div class="scheda grafico">
-        <h2>Per categoria</h2>
-        <div id="pila-categorie" class="pila" role="img" aria-label="Ripartizione per categoria"></div>
-        <ul id="grafico-categorie" class="barre"></ul>
+        <h2>Uscite per categoria</h2>
+        <div id="pila-uscite" class="pila" role="img" aria-label="Ripartizione delle uscite per categoria"></div>
+        <ul id="grafico-uscite" class="barre"></ul>
+      </div>
+
+      <div class="scheda grafico">
+        <h2>Entrate per categoria</h2>
+        <div id="pila-entrate" class="pila" role="img" aria-label="Ripartizione delle entrate per categoria"></div>
+        <ul id="grafico-entrate" class="barre"></ul>
       </div>
 
       <div class="scheda grafico">
@@ -77,7 +89,7 @@
       </div>
 
       <details class="scheda gestione">
-        <summary><span>Esporta e conserva</span></summary>
+        <summary><span>Backup e ripristino</span></summary>
         <p class="nota-backup">
           I dati stanno solo su questo dispositivo: se svuoti i dati del browser
           o cambi telefono, spariscono. Il backup è l'unico modo per riaverli.
@@ -92,10 +104,6 @@
         <p class="nota-backup avviso">
           Il ripristino <strong>sostituisce</strong> tutto ciò che è registrato ora.
         </p>
-        <div class="esportazioni">
-          <button type="button" id="esporta-excel" class="esporta">Esporta l'anno per Excel</button>
-          <button type="button" id="esporta-standard" class="esporta">Esporta l'anno in CSV standard</button>
-        </div>
       </details>
 
       <details class="scheda gestione">
@@ -103,6 +111,11 @@
         <form id="form-categoria" class="riga-aggiunta" novalidate>
           <label for="nuova-categoria" class="etichetta-nascosta">Nuova categoria</label>
           <input type="text" id="nuova-categoria" name="nome" maxlength="40" placeholder="Nome della nuova categoria">
+          <label for="tipo-categoria" class="etichetta-nascosta">Per quali voci</label>
+          <select id="tipo-categoria">
+            <option value="uscita">Uscite</option>
+            <option value="entrata">Entrate</option>
+          </select>
           <button type="submit">Aggiungi</button>
         </form>
         <ul id="elenco-categorie" class="elenco-categorie"></ul>
@@ -110,7 +123,7 @@
     </section>
 
     <!-- ================= vista: mese ================= -->
-    <section id="vista-mese" class="vista" aria-label="Spese del mese">
+    <section id="vista-mese" class="vista" aria-label="Voci del mese">
 
       <div class="scheda cruscotto">
         <div class="navigatore">
@@ -122,16 +135,23 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
           </button>
         </div>
-        <p class="totale-grande"><strong id="totale-mese">—</strong></p>
-        <p id="scomposizione-mese" class="scomposizione"></p>
+        <p class="etichetta-totale">Saldo del mese</p>
+        <p class="totale-grande"><strong id="saldo-mese">—</strong></p>
+        <p id="flussi-mese" class="scomposizione"></p>
+        <p id="stato-mese" class="scomposizione"></p>
         <p id="confronto-mese" class="confronto"></p>
       </div>
 
       <div class="testa-elenco">
-        <div class="chips" id="filtri-stato" role="group" aria-label="Filtra per stato">
-          <button type="button" class="chip" data-stato="tutte" aria-pressed="true">Tutte</button>
-          <button type="button" class="chip" data-stato="da-pagare" aria-pressed="false">Da pagare</button>
-          <button type="button" class="chip" data-stato="pagate" aria-pressed="false">Pagate</button>
+        <div class="chips" id="tipo-mese" role="group" aria-label="Filtra per tipo">
+          <button type="button" class="chip" data-tipo="" aria-pressed="true">Tutto</button>
+          <button type="button" class="chip" data-tipo="entrata" aria-pressed="false">Entrate</button>
+          <button type="button" class="chip" data-tipo="uscita" aria-pressed="false">Uscite</button>
+        </div>
+        <div class="chips" id="stato-filtro-mese" role="group" aria-label="Filtra per stato">
+          <button type="button" class="chip" data-stato="" aria-pressed="true">Tutte</button>
+          <button type="button" class="chip" data-stato="da-saldare" aria-pressed="false">Da saldare</button>
+          <button type="button" class="chip" data-stato="saldate" aria-pressed="false">Saldate</button>
         </div>
         <div class="chips">
           <button type="button" class="chip" id="clona-mese">
@@ -145,8 +165,21 @@
         </div>
       </div>
 
-      <form id="form-spesa" class="scheda foglio-nuova" novalidate hidden>
-        <p id="titolo-form" class="titolo-form">Nuova spesa</p>
+      <form id="form-voce" class="scheda foglio-nuova" novalidate hidden>
+        <p id="titolo-form" class="titolo-form">Nuova voce</p>
+        <div class="campo campo-largo">
+          <span class="etichetta-gruppo">Tipo</span>
+          <div class="segmenti" id="tipo-voce" role="group" aria-label="Tipo di voce">
+            <label class="segmento">
+              <input type="radio" name="tipo" value="uscita" checked>
+              <span>Uscita</span>
+            </label>
+            <label class="segmento">
+              <input type="radio" name="tipo" value="entrata">
+              <span>Entrata</span>
+            </label>
+          </div>
+        </div>
         <div class="campo campo-importo">
           <label for="importo">Importo (€)</label>
           <input type="number" id="importo" name="importo" step="0.01" min="0.01" inputmode="decimal" placeholder="0,00" required>
@@ -164,24 +197,88 @@
           <input type="text" id="descrizione" name="descrizione" maxlength="200" placeholder="es. Bollo auto" required>
         </div>
         <label class="interruttore campo-largo">
-          <input type="checkbox" id="pagata">
-          <span>Già pagata</span>
+          <input type="checkbox" id="saldata">
+          <span id="etichetta-saldata">Già pagata</span>
         </label>
         <div class="azioni-form">
-          <button type="submit" id="bottone-invia">Aggiungi spesa</button>
+          <button type="submit" id="bottone-invia">Aggiungi voce</button>
           <button type="button" id="bottone-annulla" class="secondario">Annulla</button>
         </div>
       </form>
 
-      <ul id="elenco-spese" class="elenco-spese"></ul>
-      <p id="vuoto" class="vuoto" hidden>Nessuna spesa programmata in questo mese.</p>
+      <ul id="elenco-mese" class="elenco-voci"></ul>
+      <p id="vuoto-mese" class="vuoto" hidden>Nessuna voce programmata in questo mese.</p>
+    </section>
+
+    <!-- ================= vista: periodo ================= -->
+    <section id="vista-periodo" class="vista" aria-label="Entrate e uscite del periodo">
+
+      <section class="scheda filtri" aria-label="Periodo e filtri">
+        <div class="chips" id="scorciatoie-periodo" role="group" aria-label="Periodi rapidi">
+          <button type="button" class="chip" data-periodo="mese">Questo mese</button>
+          <button type="button" class="chip" data-periodo="anno">Quest'anno</button>
+          <button type="button" class="chip" data-periodo="dodici">Prossimi 12 mesi</button>
+          <button type="button" class="chip" data-periodo="tutto">Tutto</button>
+        </div>
+        <div class="campo">
+          <label for="periodo-da">Dal</label>
+          <input type="date" id="periodo-da">
+        </div>
+        <div class="campo">
+          <label for="periodo-a">Al</label>
+          <input type="date" id="periodo-a">
+        </div>
+        <div class="campo campo-largo">
+          <label for="periodo-testo">Cerca nella descrizione</label>
+          <input type="search" id="periodo-testo" placeholder="es. assicurazione">
+        </div>
+        <div class="chips campo-largo" id="tipo-periodo" role="group" aria-label="Filtra per tipo">
+          <button type="button" class="chip" data-tipo="" aria-pressed="true">Tutto</button>
+          <button type="button" class="chip" data-tipo="entrata" aria-pressed="false">Entrate</button>
+          <button type="button" class="chip" data-tipo="uscita" aria-pressed="false">Uscite</button>
+        </div>
+        <div class="chips campo-largo" id="stato-periodo" role="group" aria-label="Filtra per stato">
+          <button type="button" class="chip" data-stato="" aria-pressed="true">Tutte</button>
+          <button type="button" class="chip" data-stato="da-saldare" aria-pressed="false">Da saldare</button>
+          <button type="button" class="chip" data-stato="saldate" aria-pressed="false">Saldate</button>
+        </div>
+        <div class="esportazioni campo-largo">
+          <button type="button" id="esporta-excel" class="esporta">Esporta la selezione per Excel</button>
+          <button type="button" id="esporta-standard" class="esporta">Esporta in CSV standard</button>
+        </div>
+      </section>
+
+      <div class="scheda cruscotto cruscotto-periodo">
+        <p id="etichetta-periodo" class="etichetta-grande">—</p>
+        <p class="etichetta-totale">Saldo del periodo</p>
+        <p class="totale-grande"><strong id="saldo-periodo">—</strong></p>
+        <p id="flussi-periodo" class="scomposizione"></p>
+      </div>
+
+      <div class="kpi">
+        <div class="scheda tessera">
+          <span class="etichetta-kpi">Da incassare</span>
+          <strong id="kpi-da-incassare" class="valore-kpi">—</strong>
+        </div>
+        <div class="scheda tessera">
+          <span class="etichetta-kpi">Da pagare</span>
+          <strong id="kpi-da-pagare" class="valore-kpi">—</strong>
+        </div>
+        <div class="scheda tessera">
+          <span class="etichetta-kpi">Già saldato</span>
+          <strong id="kpi-saldate" class="valore-kpi">—</strong>
+        </div>
+      </div>
+
+      <ul id="elenco-periodo" class="elenco-voci"></ul>
+      <p id="vuoto-periodo" class="vuoto" hidden>Nessuna voce nel periodo scelto.</p>
     </section>
   </main>
 
   <div class="barra-azione">
     <button type="button" id="apri-nuova" class="principale">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-      Aggiungi spesa
+      Aggiungi voce
     </button>
   </div>
 
@@ -194,11 +291,15 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
       <span>Mese</span>
     </button>
+    <button type="button" class="voce-nav" data-vista="periodo">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V9m5 8v-4m5 4V5m5 12V11"/></svg>
+      <span>Periodo</span>
+    </button>
   </nav>
 
   <dialog id="dialogo-conferma">
     <form method="dialog">
-      <h2 id="titolo-conferma">Eliminare la spesa?</h2>
+      <h2 id="titolo-conferma">Eliminare la voce?</h2>
       <p id="dettaglio-conferma"></p>
       <div class="azioni-dialogo">
         <button value="annulla" class="secondario">Annulla</button>
@@ -209,7 +310,7 @@
 
   <dialog id="dialogo-mesi">
     <form method="dialog" class="modulo-mesi">
-      <h2 id="titolo-mesi">Clonare la spesa</h2>
+      <h2 id="titolo-mesi">Clonare la voce</h2>
       <p id="dettaglio-mesi"></p>
       <div class="campo">
         <label for="mese-destinazione">Nel mese</label>

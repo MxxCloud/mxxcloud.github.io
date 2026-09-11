@@ -1,7 +1,7 @@
 {
   "name": "Spese future",
   "short_name": "Future",
-  "description": "Pianificatore di spese future: calendario annuale, riepiloghi mese per mese, dati solo sul dispositivo.",
+  "description": "Pianificatore di entrate e uscite future: calendario annuale, riepiloghi mese per mese, dati solo sul dispositivo.",
   "lang": "it",
   "dir": "ltr",
   "start_url": "./",

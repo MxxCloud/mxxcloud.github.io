@@ -9,6 +9,12 @@
   --errore: #a4262c;
   --errore-sfondo: #fdf2f2;
 
+  /* Il verso del denaro: le entrate in verde, le uscite in rosso. Servono a
+     leggere un segno, non a categorizzare, quindi restano fuori dalla scala
+     delle categorie qui sotto. */
+  --positivo: #16794c;
+  --negativo: #a4262c;
+
   /* Colori delle categorie, assegnati in ordine fisso e mai ciclati.
      Verificati per il daltonismo su entrambi i fondali: la coppia adiacente
      peggiore resta sopra le soglie in chiaro e in scuro. Oltre la sesta
@@ -34,6 +40,9 @@
     --errore: #f28b82;
     --errore-sfondo: #2a1d1d;
 
+    --positivo: #58c48d;
+    --negativo: #f28b82;
+
     --cat-1: #3987e5;
     --cat-2: #d95926;
     --cat-3: #199e70;
@@ -57,7 +66,7 @@
 body {
   margin: 0;
   /* Lo spazio in basso lascia passare la barra di navigazione e quella
-     d'azione, entrambe fisse: senza, l'ultima spesa resta sotto. */
+     d'azione, entrambe fisse: senza, l'ultima voce resta sotto. */
   padding: 1rem 0.9rem calc(9.5rem + env(safe-area-inset-bottom));
   background: var(--sfondo);
   color: var(--testo);
@@ -141,7 +150,8 @@ h1 {
   border-radius: 10px;
 }
 
-form.scheda {
+form.scheda,
+.filtri {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
   gap: 1rem;
@@ -160,7 +170,8 @@ form.scheda {
   grid-column: 1 / -1;
 }
 
-label {
+label,
+.etichetta-gruppo {
   color: var(--testo-tenue);
   font-size: 0.85rem;
   font-weight: 500;
@@ -193,6 +204,49 @@ button:focus-visible {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--testo-tenue);
+}
+
+/* Uscita o entrata è la prima scelta del modulo: due bottoni affiancati la
+   rendono visibile senza aprire un menu. */
+.segmenti {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+.segmento {
+  flex: 1;
+}
+
+.segmento input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.segmento span {
+  display: block;
+  padding: 0.55rem;
+  border: 1px solid var(--bordo);
+  border-radius: 8px;
+  color: var(--testo-tenue);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+.segmento input:checked + span {
+  border-color: var(--accento);
+  background: color-mix(in srgb, var(--accento) 12%, transparent);
+  color: var(--accento);
+}
+
+.segmento input:focus-visible + span {
+  outline: 2px solid var(--accento);
+  outline-offset: 2px;
 }
 
 .azioni-form {
@@ -312,6 +366,22 @@ button:hover {
   flex: none;
 }
 
+.punto-entrata {
+  background: var(--positivo);
+}
+
+.punto-uscita {
+  background: var(--negativo);
+}
+
+.positivo {
+  color: var(--positivo);
+}
+
+.negativo {
+  color: var(--negativo);
+}
+
 /* Barra impilata: 2px di stacco fra i segmenti, così restano
    distinguibili anche quando due categorie hanno colori vicini. */
 .pila {
@@ -333,12 +403,16 @@ button:hover {
 }
 
 /* ======================================================================
-   Cruscotti: anno e mese
+   Cruscotti: anno, mese, periodo
    ====================================================================== */
 
 .cruscotto {
   padding: 0.6rem 1.25rem 1.25rem;
   text-align: center;
+}
+
+.cruscotto-periodo {
+  padding-top: 1.25rem;
 }
 
 .navigatore {
@@ -377,12 +451,21 @@ button:hover {
   font-weight: 600;
 }
 
+.etichetta-totale {
+  margin: 0.6rem 0 0;
+  color: var(--testo-tenue);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 .totale-grande {
-  margin: 0.4rem 0 0;
+  margin: 0.1rem 0 0;
 }
 
 .totale-grande strong {
-  font-size: 2.3rem;
+  font-size: 2.1rem;
   font-weight: 700;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
@@ -395,7 +478,8 @@ button:hover {
   font-size: 0.85rem;
 }
 
-.confronto:empty {
+.confronto:empty,
+.scomposizione:empty {
   display: none;
 }
 
@@ -426,7 +510,7 @@ button:hover {
 }
 
 /* La riga sotto il numero dice di che numero si tratta: senza, "1.200 €"
-   sotto "Mese più caro" non direbbe quale mese. */
+   sotto "Mese più pesante" non direbbe quale mese. */
 .valore-kpi small {
   display: block;
   color: var(--testo-tenue);
@@ -502,31 +586,44 @@ button:hover {
   letter-spacing: 0.04em;
 }
 
-.totale-mese {
+.saldo-mese-scheda {
   font-size: 1.05rem;
   font-variant-numeric: tabular-nums;
 }
 
-.conteggio-mese {
+.dettaglio-mese {
   color: var(--testo-tenue);
   font-size: 0.75rem;
 }
 
-.mese-scheda .pila-piccola {
-  height: 5px;
-  margin: 0.35rem 0 0;
-  border-radius: 3px;
+.barre-mese {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 0.4rem;
 }
 
 .traccia-mese {
-  margin-top: 0.35rem;
   height: 4px;
 }
 
-/* In un mese libero la barra deve restare vuota: il minimo di tre pixel,
-   utile altrove perché un importo minuscolo si veda, qui mentirebbe. */
+/* In un mese senza entrate o senza uscite la barra deve restare vuota: il
+   minimo di tre pixel, utile altrove perché un importo minuscolo si veda,
+   qui mentirebbe. */
 .traccia-mese .riempimento {
   min-width: 0;
+}
+
+/* La classe deve battere lo sfondo d'accento dichiarato da .riempimento e
+   .asta, che nel foglio vengono dopo: da sola perderebbe il confronto. */
+.riempimento.verso-entrata,
+.asta.verso-entrata {
+  background: var(--positivo);
+}
+
+.riempimento.verso-uscita,
+.asta.verso-uscita {
+  background: var(--negativo);
 }
 
 /* Il mese in cui si vive e quello aperto nell'altra vista sono i due punti
@@ -539,15 +636,24 @@ button:hover {
   background: color-mix(in srgb, var(--accento) 12%, transparent);
 }
 
-.mese-vuoto .totale-mese {
+.mese-vuoto .saldo-mese-scheda {
   color: var(--testo-tenue);
   font-weight: 500;
 }
 
-.nota {
+.legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.9rem;
   margin: 0.9rem 0 0;
   color: var(--testo-tenue);
   font-size: 0.8rem;
+}
+
+.voce-legenda {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 /* ======================================================================
@@ -639,19 +745,39 @@ button:hover {
   white-space: nowrap;
 }
 
-.contenitore-asta {
+/* Le colonne del saldo crescono da una linea dello zero al centro: sopra i
+   mesi in attivo, sotto quelli in passivo. */
+.asta-doppia {
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
   width: 100%;
   height: 96px;
+}
+
+.meta-sopra,
+.meta-sotto {
+  display: flex;
+  flex: 1;
+  width: 100%;
+}
+
+.meta-sopra {
+  align-items: flex-end;
   border-bottom: 1px solid var(--bordo);
+}
+
+.meta-sotto {
+  align-items: flex-start;
 }
 
 .asta {
   width: 100%;
-  min-height: 3px;
-  border-radius: 4px 4px 0 0;
+  border-radius: 3px 3px 0 0;
   background: var(--accento);
+}
+
+.meta-sotto .asta {
+  border-radius: 0 0 3px 3px;
 }
 
 .etichetta-colonna {
@@ -666,7 +792,7 @@ button:hover {
 /* Il mese aperto nell'altra vista resta in primo piano: gli altri
    arretrano invece di sparire. */
 .colonne li:not(.mese-mostrato) .asta {
-  opacity: 0.45;
+  opacity: 0.5;
 }
 
 .colonne .mese-mostrato .etichetta-colonna {
@@ -679,7 +805,7 @@ button:hover {
     gap: 0.5rem;
   }
 
-  .contenitore-asta {
+  .asta-doppia {
     height: 120px;
   }
 
@@ -716,7 +842,7 @@ button:hover {
 }
 
 /* ======================================================================
-   Vista mese: chip, elenco, azioni
+   Elenchi di voci: mese e periodo
    ====================================================================== */
 
 .testa-elenco {
@@ -765,7 +891,7 @@ button:hover {
   stroke-linejoin: round;
 }
 
-.elenco-spese {
+.elenco-voci {
   display: flex;
   flex-direction: column;
   margin: 0;
@@ -782,7 +908,38 @@ button:hover {
   text-transform: uppercase;
 }
 
-.spesa {
+/* Nel periodo le voci di mesi diversi stanno nello stesso elenco: il mese
+   fa da intestazione e porta con sé il proprio saldo. */
+.mese-gruppo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.6rem;
+  padding: 1.1rem 0.2rem 0.4rem;
+  border-bottom: 1px solid var(--bordo);
+}
+
+.mese-gruppo > span {
+  color: var(--testo-tenue);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mese-gruppo small {
+  color: var(--testo-tenue);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.mese-gruppo strong {
+  margin-left: auto;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.voce {
   display: grid;
   grid-template-columns: 9px 1fr auto;
   align-items: center;
@@ -792,15 +949,15 @@ button:hover {
   border-radius: 7px;
 }
 
-.spesa:first-of-type {
+.voce:first-of-type {
   border-top: none;
 }
 
-.corpo-spesa {
+.corpo-voce {
   min-width: 0;
 }
 
-.corpo-spesa b {
+.corpo-voce b {
   display: block;
   overflow: hidden;
   font-size: 1rem;
@@ -809,30 +966,38 @@ button:hover {
   white-space: nowrap;
 }
 
-.corpo-spesa small {
+.corpo-voce small {
   display: block;
   color: var(--testo-tenue);
   font-size: 0.8rem;
 }
 
-.importo-spesa {
+.importo-voce {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-/* Una spesa già pagata resta in elenco ma smette di pesare sullo sguardo:
-   il programma serve a vedere quello che deve ancora arrivare. */
-.spesa.pagata .corpo-spesa b,
-.spesa.pagata .importo-spesa {
+/* Il segno colorato distingue un incasso da un pagamento prima che si legga
+   la cifra; le uscite restano del colore del testo, perché sono la
+   maggioranza e tingerle tutte di rosso renderebbe l'elenco illeggibile. */
+.voce-entrata .importo-voce,
+.prossima.voce-entrata .importo-voce {
+  color: var(--positivo);
+}
+
+/* Una voce già saldata resta in elenco ma smette di pesare sullo sguardo:
+   il piano serve a vedere quello che deve ancora succedere. */
+.voce.saldata .corpo-voce b,
+.voce.saldata .importo-voce {
   color: var(--testo-tenue);
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
 
-/* Le azioni compaiono sotto la spesa toccata: su telefono non c'è
+/* Le azioni compaiono sotto la voce toccata: su telefono non c'è
    spazio per tenerle sempre visibili senza sacrificare l'importo. */
-.azioni-spesa {
+.azioni-voce {
   grid-column: 1 / -1;
   display: none;
   flex-wrap: wrap;
@@ -840,7 +1005,7 @@ button:hover {
   padding-top: 0.5rem;
 }
 
-.spesa.aperta .azioni-spesa {
+.voce.aperta .azioni-voce {
   display: flex;
 }
 
@@ -880,26 +1045,30 @@ button:hover {
     font-size: 1.5rem;
   }
 
-  .spesa {
+  .totale-grande strong {
+    font-size: 2.3rem;
+  }
+
+  .voce {
     grid-template-columns: 9px 1fr auto auto;
   }
 
-  .azioni-spesa {
+  .azioni-voce {
     grid-column: auto;
     display: flex;
     padding-top: 0;
     visibility: hidden;
   }
 
-  .spesa:hover .azioni-spesa,
-  .spesa:focus-within .azioni-spesa,
-  .spesa.aperta .azioni-spesa {
+  .voce:hover .azioni-voce,
+  .voce:focus-within .azioni-voce,
+  .voce.aperta .azioni-voce {
     visibility: visible;
   }
 }
 
 /* ======================================================================
-   Pannelli richiudibili: categorie, backup, esportazioni
+   Pannelli richiudibili: categorie e backup
    ====================================================================== */
 
 .gestione {
@@ -1003,7 +1172,6 @@ button:hover {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 1rem;
 }
 
 .esporta {
@@ -1023,8 +1191,19 @@ button:hover {
 
 .riga-aggiunta {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.6rem;
   margin: 0.5rem 0 1rem;
+}
+
+.riga-aggiunta input {
+  flex: 1 1 10rem;
+  width: auto;
+}
+
+.riga-aggiunta select {
+  flex: 0 1 8rem;
+  width: auto;
 }
 
 .riga-aggiunta button {
@@ -1047,6 +1226,16 @@ button:hover {
   gap: 0.75rem;
   padding: 0.5rem 0;
   border-top: 1px solid var(--bordo);
+}
+
+.gruppo-categorie {
+  padding: 0.9rem 0 0.2rem;
+  border-top: none;
+  color: var(--testo-tenue);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
 
 .nome-categoria {
@@ -1077,7 +1266,7 @@ button:hover {
   inset: auto 0 0 0;
   z-index: 20;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   padding-bottom: env(safe-area-inset-bottom);
   border-top: 1px solid var(--bordo);
   background: var(--superficie);
@@ -1117,7 +1306,7 @@ button:hover {
 }
 
 /* La barra d'azione sta sopra la navigazione e appare solo nella vista del
-   mese: si aggiunge una spesa dove la si sta programmando. */
+   mese: si aggiunge una voce dove la si sta programmando. */
 .barra-azione {
   position: fixed;
   inset: auto 0 calc(56px + env(safe-area-inset-bottom)) 0;

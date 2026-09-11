@@ -1,55 +1,74 @@
 # Spese future
 
-Pianificatore delle spese che devono ancora arrivare: una app web installabile
-che funziona anche senza rete. Non ha server né dipendenze da installare — è
-HTML, CSS e JavaScript, e i dati restano nel dispositivo di chi la usa.
+Pianificatore delle entrate e delle uscite che devono ancora arrivare: una app
+web installabile che funziona anche senza rete. Non ha server né dipendenze da
+installare — è HTML, CSS e JavaScript, e i dati restano nel dispositivo di chi
+la usa.
 
 È il rovescio del [tracker delle spese](https://mxxcloud.github.io/spese-personali/):
-là si registra quello che è già stato speso, qui si programma quello che si
-dovrà affrontare.
+là si registra quello che è già stato speso, qui si programma quello che deve
+ancora succedere, da entrambe le parti del conto.
 
 ## Funzionalità
 
-**Due viste.** Una barra in basso commuta fra *Anno* e *Mese*. *Anno* è il
-calendario: dodici schede, una per mese, con il totale programmato, quante
-spese sono e la ripartizione per categoria; toccarne una apre il mese. *Mese* è
-il dettaglio: le spese del mese raggruppate per giorno, con inserimento,
-modifica, clonazione e spostamento.
+**Tre viste.** Una barra in basso commuta fra *Anno*, *Mese* e *Periodo*.
+*Anno* è il calendario: dodici schede, una per mese, con il saldo, quante voci
+sono e due barre — entrate e uscite — sulla stessa scala; toccarne una apre il
+mese. *Mese* è il dettaglio, con inserimento, modifica, clonazione e
+spostamento. *Periodo* è l'elenco completo fra due date qualsiasi, raggruppato
+per mese.
 
-**Calendario annuale.** Il totale dell'anno, quanto è già stato pagato e quanto
-resta da pagare, l'andamento dei dodici mesi come grafico a colonne, i totali
-per categoria e le prossime cinque scadenze a partire da oggi. I mesi liberi si
-vedono quanto quelli impegnati: servono a capire dove si può spostare una spesa.
+**Entrate e uscite.** Ogni voce è un'uscita da pagare o un'entrata da
+incassare; il tipo si sceglie all'inserimento e decide quali categorie
+compaiono, perché «Stipendio» fra le spese non vorrebbe dire nulla. Totali e
+saldo sono sempre separati per verso: entrate, uscite e differenza.
 
-**Clonare.** Una spesa si copia in un altro mese, o in tutti i mesi di un
-intervallo — è il modo di programmare una rata che si ripete senza reinserirla
-dodici volte. Si può clonare anche un mese intero dentro un altro. Le copie
-nascono sempre da pagare.
+**Stato.** Ogni voce resta «da saldare» finché non la si segna come pagata o
+incassata. I filtri mostrano tutto, solo ciò che manca o solo ciò che è già
+stato saldato, sia nel mese sia nel periodo; i riepiloghi tengono i due valori
+distinti, così «quanto devo ancora incassare» e «quanto devo ancora pagare»
+sono due numeri che si leggono a colpo d'occhio.
 
-**Spostare.** Una spesa si sposta in un altro mese conservando il giorno, quando
+**Calendario annuale.** Saldo dell'anno, entrate e uscite totali, quanto resta
+da incassare e da pagare, il saldo mese per mese come grafico a colonne con la
+linea dello zero, i totali per categoria — separati fra uscite ed entrate — e
+le prossime cinque scadenze a partire da oggi. I mesi liberi si vedono quanto
+quelli impegnati: servono a capire dove si può spostare una voce.
+
+**Periodo.** Un intervallo scelto a mano oppure con le scorciatoie (questo
+mese, quest'anno, prossimi dodici mesi, tutto), filtrabile per tipo, stato e
+testo della descrizione. Mostra saldo del periodo, quanto c'è da incassare e da
+pagare, quanto è già saldato, e l'elenco di tutte le voci raggruppate per mese
+con il saldo di ciascuno.
+
+**Clonare.** Una voce si copia in un altro mese, o in tutti i mesi di un
+intervallo — è il modo di programmare uno stipendio o una rata che si ripete
+senza reinserirli dodici volte. Si può clonare anche un mese intero dentro un
+altro. Le copie nascono sempre da saldare.
+
+**Spostare.** Una voce si sposta in un altro mese conservando il giorno, quando
 il mese di arrivo lo contiene: il 31 gennaio spostato a febbraio diventa il 28
 (o il 29), perché il 31 febbraio non esiste. Si può spostare anche un mese
-intero, per far slittare tutto un blocco di impegni.
+intero, per far slittare tutto un blocco.
 
-**Stato di pagamento.** Ogni voce è «da pagare» finché non la si segna come
-pagata. I filtri in cima al mese mostrano tutte le spese, solo quelle da pagare
-o solo quelle pagate, e il riepilogo dell'anno tiene i due valori separati.
-«Da affrontare» conta solo ciò che cade da oggi in avanti e non è ancora pagato.
+**Categorie.** Elenchi separati per uscite ed entrate, da aggiungere,
+rinominare ed eliminare nel pannello "Gestisci categorie". Rinominare una
+categoria aggiorna anche le voci collegate, mentre eliminarne una ancora in uso
+viene impedito, così nessuna voce resta senza categoria. A ogni categoria è
+associato un colore, usato in modo coerente fra elenco, calendario e grafici; i
+colori sono verificati perché restino distinguibili anche a chi ha una carenza
+nella visione dei colori.
 
-**Categorie.** Si aggiungono, rinominano ed eliminano dal pannello "Gestisci
-categorie". Rinominare una categoria aggiorna anche le spese collegate, mentre
-eliminarne una ancora in uso viene impedito, così nessuna spesa resta senza
-categoria. A ogni categoria è associato un colore, usato in modo coerente fra
-elenco, calendario e grafici; i colori sono verificati perché restino
-distinguibili anche a chi ha una carenza nella visione dei colori.
-
-**Esportazione CSV.** Le spese dell'anno aperto, in due formati: uno per Excel
-in locale italiana (separatore `;`, decimali a virgola, date `gg/mm/aaaa`) e uno
-standard internazionale per LibreOffice, Fogli Google e strumenti di analisi.
+**Esportazione CSV.** Le voci della selezione corrente nella vista *Periodo*,
+in due formati: uno per Excel in locale italiana (separatore `;`, decimali a
+virgola, date `gg/mm/aaaa`) e uno standard internazionale per LibreOffice,
+Fogli Google e strumenti di analisi.
 
 **Backup e ripristino.** Un file JSON con l'intero archivio, che si riporta
 dentro quando serve. Il ripristino sostituisce tutto il contenuto e rifiuta il
-file se anche un solo record non è valido.
+file se anche un solo record non è valido. I backup scritti dalla prima
+versione, quando esistevano solo le uscite, restano leggibili: le voci
+diventano uscite e lo stato «pagata» diventa «saldata».
 
 ## Dove stanno i dati
 
@@ -59,12 +78,14 @@ inviati da nessuna parte e nessuno oltre a chi usa il dispositivo può leggerli.
 Questo ha due conseguenze:
 
 - **Telefono e computer hanno archivi separati.** Non si sincronizzano: una
-  spesa programmata sul telefono non compare sul computer.
+  voce programmata sul telefono non compare sul computer.
 - **Svuotare i dati del browser cancella tutto.** Il backup è l'unico modo per
   riaverli, ed è anche il modo per spostarli da un dispositivo all'altro.
 
 L'archivio è indipendente da quello del tracker delle spese: le due app non si
-leggono a vicenda.
+leggono a vicenda. Chi aveva già usato la app prima delle entrate non deve fare
+nulla: all'apertura le voci esistenti diventano uscite e lo stato «pagata»
+diventa «saldata», una volta sola.
 
 ## Uso locale
 
