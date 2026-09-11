@@ -9,6 +9,16 @@
   <link rel="icon" href="icona-192.png" type="image/png">
   <link rel="apple-touch-icon" href="icona-192.png">
   <link rel="stylesheet" href="style.css">
+  <script>
+    // Va qui, e non in app.js: i moduli sono differiti, e il tema arriverebbe
+    // dopo il primo disegno: si vedrebbe un lampo del tema sbagliato.
+    try {
+      const tema = localStorage.getItem("tema");
+      if (tema === "chiaro" || tema === "scuro") document.documentElement.dataset.tema = tema;
+    } catch {
+      // Archivio locale non disponibile: resta il tema del dispositivo.
+    }
+  </script>
 </head>
 <body>
   <main>
@@ -87,6 +97,28 @@
         <h2>Prossime scadenze</h2>
         <ul id="prossime" class="prossime"></ul>
       </div>
+
+      <details class="scheda gestione">
+        <summary><span>Aspetto</span></summary>
+        <p class="nota-aspetto">
+          «Sistema» segue il tema del telefono o del computer e cambia con lui.
+          Le altre due scelte restano fisse su questo dispositivo.
+        </p>
+        <div class="segmenti" id="scelta-tema" role="group" aria-label="Tema dell'app">
+          <label class="segmento">
+            <input type="radio" name="tema" value="sistema" checked>
+            <span>Sistema</span>
+          </label>
+          <label class="segmento">
+            <input type="radio" name="tema" value="chiaro">
+            <span>Chiaro</span>
+          </label>
+          <label class="segmento">
+            <input type="radio" name="tema" value="scuro">
+            <span>Scuro</span>
+          </label>
+        </div>
+      </details>
 
       <details class="scheda gestione">
         <summary><span>Backup e ripristino</span></summary>

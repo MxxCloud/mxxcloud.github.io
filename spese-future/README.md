@@ -64,6 +64,11 @@ associato un colore, usato in modo coerente fra elenco, calendario e grafici; i
 colori sono verificati perché restino distinguibili anche a chi ha una carenza
 nella visione dei colori.
 
+**Tema.** Il pannello "Aspetto" sceglie fra chiaro, scuro e «Sistema», che
+segue il tema del dispositivo e cambia con lui. La scelta resta su quel
+dispositivo e viene applicata prima che la pagina si disegni, così all'apertura
+non si vede un lampo del tema sbagliato.
+
 **Esportazione CSV.** Le voci della selezione corrente nella vista *Periodo*,
 in due formati: uno per Excel in locale italiana (separatore `;`, decimali a
 virgola, date `gg/mm/aaaa`) e uno standard internazionale per LibreOffice,

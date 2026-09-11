@@ -7,7 +7,7 @@
 // worker da installare, e il nome nuovo fa cancellare ad "activate" il deposito
 // precedente, così non restano in giro copie morte.
 
-const VERSIONE = "budget-futuro-v3";
+const VERSIONE = "budget-futuro-v4";
 
 const RISORSE = [
   "./",

@@ -69,6 +69,8 @@ const campoNuovaCategoria = document.getElementById("nuova-categoria");
 const tipoCategoria = document.getElementById("tipo-categoria");
 const elencoCategorie = document.getElementById("elenco-categorie");
 
+const sceltaTema = document.getElementById("scelta-tema");
+
 const dialogoConferma = document.getElementById("dialogo-conferma");
 const titoloConferma = document.getElementById("titolo-conferma");
 const dettaglioConferma = document.getElementById("dettaglio-conferma");
@@ -1152,6 +1154,38 @@ function disegna() {
   disegnaPeriodo();
 }
 
+// --- tema ----------------------------------------------------------------
+
+// "sistema" non scrive nulla sul documento: senza l'attributo valgono le regole
+// che seguono le preferenze del dispositivo, ed è il comportamento di partenza.
+function applicaTema(tema) {
+  if (tema === "chiaro" || tema === "scuro") document.documentElement.dataset.tema = tema;
+  else delete document.documentElement.dataset.tema;
+
+  const scelto = sceltaTema.querySelector(`input[value="${tema}"]`) ?? sceltaTema.querySelector('input[value="sistema"]');
+  scelto.checked = true;
+}
+
+function temaSalvato() {
+  try {
+    return localStorage.getItem("tema") ?? "sistema";
+  } catch {
+    // Archivio locale non disponibile: si resta sul tema del dispositivo.
+    return "sistema";
+  }
+}
+
+sceltaTema.addEventListener("change", (evento) => {
+  const tema = evento.target.value;
+  applicaTema(tema);
+  try {
+    if (tema === "sistema") localStorage.removeItem("tema");
+    else localStorage.setItem("tema", tema);
+  } catch {
+    // La scelta vale comunque per questa sessione.
+  }
+});
+
 // --- installazione e funzionamento offline -------------------------------
 
 const bottoneInstalla = document.getElementById("installa");
@@ -1244,6 +1278,7 @@ nascondiSeGiaInstallata();
 
 // --- avvio ---------------------------------------------------------------
 
+applicaTema(temaSalvato());
 await dati.inizializza();
 mostraVista("anno");
 tornaANuovaVoce();
