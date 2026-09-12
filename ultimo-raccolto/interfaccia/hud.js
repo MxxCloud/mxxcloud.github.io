@@ -183,6 +183,7 @@ const COMANDI = [
   ["SPAZIO", "COLPIRE CIÒ CHE HAI DAVANTI"],
   ["1-8", "SCEGLIERE DALLO ZAINO"],
   ["C", "COSTRUIRE"],
+  ["M", "MAPPA"],
   ["F3", "DIAGNOSTICA"],
 ];
 

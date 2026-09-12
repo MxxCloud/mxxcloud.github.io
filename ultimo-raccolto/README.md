@@ -43,7 +43,13 @@ terra dove servono.
 
 Vale una regola sola: **quello che tieni in mano è quello che usi**, e lo si
 vede addosso al superstite. Con la torcia in pugno fai luce; con l'ascia
-abbatti un albero in due colpi invece di quattro. Il sole gira: un giorno dura dieci minuti veri, l'alba e il tramonto
+abbatti un albero in due colpi invece di quattro.
+
+In basso a destra c'è una minimappa che mostra poco meno di tre schermate:
+abbastanza per capire dov'è il lago e da che parte finisce la roccia, troppo
+poco per essere una mappa del mondo — che toglierebbe il gusto di andare a
+vedere. I falò e le torce che hai posato ci compaiono come puntini caldi:
+sono i tuoi punti di riferimento, non quelli del mondo. Il sole gira: un giorno dura dieci minuti veri, l'alba e il tramonto
 durano due ore ciascuno, e alle nove di sera è buio pieno. Una torcia in mano
 o un falò acceso scavano un cerchio di luce nel buio.
 
@@ -76,6 +82,7 @@ solo la rimanda, non la sostituisce.
 | `Spazio` | colpire ciò che si ha davanti, o posare |
 | `1`-`8` | scegliere la casella, cioè cosa si impugna |
 | `C` | aprire e chiudere le costruzioni |
+| `M` | accendere e spegnere la minimappa |
 | `F3` | diagnostica |
 
 Si agisce su quello che si ha **davanti**, non sotto i piedi: è anche l'unico
@@ -167,6 +174,15 @@ non serve calcolare l'aggancio allo specchio.
 Serve un solo punto d'aggancio per direzione e non uno per fotogramma: nello
 sprite del superstite il busto è identico nei quattro fotogrammi di una
 direzione — cambiano solo le gambe — quindi camminando la mano non si muove.
+
+**La minimappa scorre invece di rifarsi.** Calcolare il terreno dei 4096
+tasselli che inquadra costa quasi trenta millisecondi, cioè due fotogrammi:
+rifarla a ogni fotogramma è impensabile e rifarla a ogni passo si sentirebbe
+come uno scatto. Quindi quando il giocatore cambia tassello i valori già noti
+si spostano e si calcola solo la striscia appena entrata — una riga, due
+centesimi di millisecondo. Continua a scorrere anche da spenta, perché
+mantenerla costa pochissimo e ricostruirla da zero costa molto: riaccenderla
+non deve far perdere un fotogramma.
 
 **`interfaccia/`** — L'interfaccia sta sul canvas e non nel DOM, al contrario
 della diagnostica. Serve un font disegnato a pixel (`arte/sprite-testo.js`, 3x5),
