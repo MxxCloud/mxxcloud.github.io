@@ -161,3 +161,57 @@ export function disegnaRicette(p, scelta) {
   const piede = "1-2 SCEGLI   SPAZIO COSTRUISCI   C CHIUDI";
   testo.disegna(p, piede, x + 7, y + altezza - 9, GRIGIO);
 }
+
+// --- promemoria dei comandi ----------------------------------------------
+
+// Accanto allo zaino, sempre. È il rimedio a un difetto vero della prima
+// versione: chi raccoglieva legna non aveva modo di scoprire che serviva a
+// costruire, perché niente sullo schermo nominava il tasto. Un sistema che
+// non si trova è come se non ci fosse.
+export function disegnaPromemoria(p, barra) {
+  const scritta = "C  COSTRUIRE";
+  const x = barra.x0 - testo.larghezza(scritta) - 8;
+  const y = barra.y + 7;
+  testo.disegnaConOmbra(p, scritta, x, y, TENUE);
+}
+
+// --- schermata di apertura ------------------------------------------------
+
+const COMANDI = [
+  ["WASD  FRECCE", "CAMMINARE"],
+  ["MAIUSC", "CORRERE"],
+  ["SPAZIO", "COLPIRE CIÒ CHE HAI DAVANTI"],
+  ["1-8", "SCEGLIERE DALLO ZAINO"],
+  ["C", "COSTRUIRE"],
+  ["F3", "DIAGNOSTICA"],
+];
+
+// Si mostra a ogni avvio e sparisce al primo tasto. A ogni avvio e non solo
+// al primo: chi sa già i comandi preme W e non la vede più, chi torna dopo
+// una settimana non deve andarseli a cercare.
+export function disegnaApertura(p, versione) {
+  const larghezza = 236;
+  const altezza = 30 + COMANDI.length * 9 + 22;
+  const x = Math.round((schermo.LARGHEZZA - larghezza) / 2);
+  const y = Math.round((schermo.ALTEZZA - altezza) / 2);
+
+  p.fillStyle = "rgb(8 9 12 / 0.72)";
+  p.fillRect(0, 0, schermo.LARGHEZZA, schermo.ALTEZZA);
+  riquadro(p, x, y, larghezza, altezza, FONDO_PIENO, BORDO);
+
+  testo.disegna(p, "ULTIMO RACCOLTO", x + 10, y + 9, CHIARO);
+  // La versione sta qui perché è l'unico posto in cui serve davvero: senza,
+  // non c'è modo di distinguere "non è stato pubblicato" da "il browser ti
+  // sta servendo una copia vecchia".
+  testo.disegna(p, versione, x + larghezza - 10 - testo.larghezza(versione), y + 9, BORDO_SCELTO);
+  testo.disegna(p, "DI GIORNO SI RACCOGLIE, DI NOTTE SERVE LUCE", x + 10, y + 18, GRIGIO);
+
+  COMANDI.forEach(([tasto, cosa], i) => {
+    const ry = y + 32 + i * 9;
+    testo.disegna(p, tasto, x + 10, ry, BORDO_SCELTO);
+    testo.disegna(p, cosa, x + 86, ry, TENUE);
+  });
+
+  const chiudi = "UN TASTO QUALSIASI PER COMINCIARE";
+  testo.disegna(p, chiudi, Math.round((schermo.LARGHEZZA - testo.larghezza(chiudi)) / 2), y + altezza - 11, GRIGIO);
+}
