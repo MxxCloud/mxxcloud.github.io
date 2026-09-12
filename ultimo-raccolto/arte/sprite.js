@@ -104,3 +104,59 @@ export function riflesso(immagine) {
   riflessi.set(immagine, canvas);
   return canvas;
 }
+
+// Le maschere di transizione esistono in un solo orientamento — nord e
+// nord-ovest — e gli altri sei si ricavano girandole. Vale la stessa economia
+// del riflesso: quello che non si disegna a mano è tempo guadagnato.
+const ruotati = new WeakMap();
+
+export function ruotato(immagine, quarti) {
+  const giri = ((quarti % 4) + 4) % 4;
+  if (giri === 0) return immagine;
+
+  let perImmagine = ruotati.get(immagine);
+  if (!perImmagine) {
+    perImmagine = [];
+    ruotati.set(immagine, perImmagine);
+  }
+  if (perImmagine[giri]) return perImmagine[giri];
+
+  // A un quarto e a tre quarti i lati si scambiano; a mezzo giro no.
+  const dispari = giri % 2 === 1;
+  const larghezza = dispari ? immagine.height : immagine.width;
+  const altezza = dispari ? immagine.width : immagine.height;
+
+  const { canvas, contesto } = telaio(larghezza, altezza);
+  contesto.translate(larghezza / 2, altezza / 2);
+  contesto.rotate((giri * Math.PI) / 2);
+  contesto.drawImage(immagine, -immagine.width / 2, -immagine.height / 2);
+
+  perImmagine[giri] = canvas;
+  return canvas;
+}
+
+// Ritaglia un'immagine attraverso la sagoma di una maschera. È il cuore delle
+// transizioni fra terreni: il tassello del vicino passa solo dove la maschera
+// è opaca, e sotto resta il tassello di base già disegnato.
+const mascherati = new WeakMap();
+
+export function mascherato(immagine, maschera) {
+  let perImmagine = mascherati.get(immagine);
+  if (!perImmagine) {
+    perImmagine = new WeakMap();
+    mascherati.set(immagine, perImmagine);
+  }
+  const gia = perImmagine.get(maschera);
+  if (gia) return gia;
+
+  const { canvas, contesto } = telaio(immagine.width, immagine.height);
+  // Prima la sagoma, poi l'immagine ristretta a dove la sagoma è opaca.
+  // "source-in" tiene del nuovo disegno solo la parte che si sovrappone a
+  // quello che c'era già, che è esattamente la definizione di ritaglio.
+  contesto.drawImage(maschera, 0, 0);
+  contesto.globalCompositeOperation = "source-in";
+  contesto.drawImage(immagine, 0, 0);
+
+  perImmagine.set(maschera, canvas);
+  return canvas;
+}

@@ -26,9 +26,18 @@ let precedente = 0;
 let fotogrammi = 0;
 let finestraFps = 0;
 let fps = 0;
+// Il fotogramma più lento dell'ultima finestra. Gli fps medi non servono a
+// trovare gli scatti: sessanta di media stanno benissimo anche con un
+// fotogramma da trenta millisecondi in mezzo, che però si sente.
+let peggiore = 0;
+let peggioreInCorso = 0;
 
 export function fpsCorrenti() {
   return fps;
+}
+
+export function peggiorFotogramma() {
+  return peggiore;
 }
 
 export function inPausa() {
@@ -63,10 +72,13 @@ export function avvia({ aggiorna, disegna }) {
 
     fotogrammi += 1;
     finestraFps += delta;
+    peggioreInCorso = Math.max(peggioreInCorso, delta);
     if (finestraFps >= 0.5) {
       fps = Math.round(fotogrammi / finestraFps);
+      peggiore = peggioreInCorso;
       fotogrammi = 0;
       finestraFps = 0;
+      peggioreInCorso = 0;
     }
   }
 
