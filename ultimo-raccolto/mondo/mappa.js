@@ -11,8 +11,10 @@ import { impronta, semeDaTesto } from "../motore/casuale.js";
 import { cuoci, mascherato, ruotato } from "../arte/sprite.js";
 import * as terrenoArte from "../arte/sprite-terreno.js";
 import * as oggettiArte from "../arte/sprite-oggetti.js";
+import * as coseArte from "../arte/sprite-cose.js";
 import * as transizioniArte from "../arte/sprite-transizioni.js";
 import { TERRENO, OGGETTO, terrenoIn, oggettoIn } from "./generazione.js";
+import * as modifiche from "./modifiche.js";
 
 const { TASSELLO } = schermo;
 export const SETTORE = 16;
@@ -39,6 +41,15 @@ const CATALOGO_OGGETTI = {
   [OGGETTO.ALBERO]: { sprite: oggettiArte.ALBERO, solido: true },
   [OGGETTO.SASSO]: { sprite: oggettiArte.SASSO, solido: true },
   [OGGETTO.CESPUGLIO]: { sprite: oggettiArte.CESPUGLIO, solido: false },
+
+  // Il falò acceso ferma: ci si cammina attorno, non dentro. Quello spento no
+  // — è cenere, e restare bloccati da un mucchio di cenere sarebbe assurdo.
+  [OGGETTO.FALO_ACCESO]: {
+    fotogrammi: coseArte.FALO_ACCESO,
+    solido: true,
+    luce: { raggio: 64, intensita: 1 },
+  },
+  [OGGETTO.FALO_SPENTO]: { sprite: coseArte.FALO_SPENTO, solido: false },
 };
 
 // --- transizioni ----------------------------------------------------------
@@ -102,14 +113,28 @@ export function terrenoDi(tx, ty) {
   return terrenoIn(tx, ty, seme);
 }
 
+// Le modifiche hanno sempre l'ultima parola sulla generazione: è il punto in
+// cui il mondo smette di essere una funzione pura delle coordinate e comincia
+// a ricordarsi di chi ci è passato.
 export function oggettoDi(tx, ty) {
+  const cambio = modifiche.di(tx, ty);
+  if (cambio && cambio.oggetto !== undefined) return cambio.oggetto;
   return oggettoIn(tx, ty, seme, terrenoIn(tx, ty, seme));
+}
+
+// Cambia un tassello e butta via il settore che lo conteneva, così alla
+// prossima inquadratura viene ricotto con il mondo nuovo. Solo quel settore:
+// un oggetto sta tutto dentro il suo tassello e non sfrangia i vicini.
+export function cambiaTassello(tx, ty, cambio) {
+  if (cambio === null) modifiche.rimuovi(tx, ty);
+  else modifiche.imposta(tx, ty, cambio);
+  settori.delete(chiave(Math.floor(tx / SETTORE), Math.floor(ty / SETTORE)));
 }
 
 export function solidoIn(tx, ty) {
   const terreno = terrenoIn(tx, ty, seme);
   if (CATALOGO[terreno].solido) return true;
-  const oggetto = oggettoIn(tx, ty, seme, terreno);
+  const oggetto = oggettoDi(tx, ty);
   return oggetto !== OGGETTO.NESSUNO && CATALOGO_OGGETTI[oggetto].solido;
 }
 
@@ -197,17 +222,30 @@ function cuociSettore(sx, sy) {
       pennello.drawImage(tasselloDi(tx, ty, terreno), x * TASSELLO, y * TASSELLO);
       sfrangia(pennello, leggi, x, y, tx, ty, terreno);
 
-      const oggetto = oggettoIn(tx, ty, seme, terreno);
+      const oggetto = oggettoDi(tx, ty);
       if (oggetto !== OGGETTO.NESSUNO) {
-        const sprite = cuoci(CATALOGO_OGGETTI[oggetto].sprite);
+        const voce = CATALOGO_OGGETTI[oggetto];
+        const fotogrammi = voce.fotogrammi
+          ? voce.fotogrammi.map((f) => cuoci(f))
+          : [cuoci(voce.sprite)];
+        const sprite = fotogrammi[0];
         oggetti.push({
+          tipo: oggetto,
+          tx,
+          ty,
+          fotogrammi,
+          sprite,
           // Ancorato ai piedi: lo sprite è più alto del tassello e cresce
           // verso l'alto, com'è ovvio per un albero e per niente ovvio per il
           // disegno, che parte dall'angolo in alto a sinistra.
           x: tx * TASSELLO,
           y: (ty + 1) * TASSELLO - sprite.height,
           base: (ty + 1) * TASSELLO,
-          sprite,
+          // La luce esce dalla fiamma, non dal centro geometrico dello
+          // sprite: qualche pixel più in alto dei piedi.
+          luce: voce.luce
+            ? { x: tx * TASSELLO + TASSELLO / 2, y: (ty + 1) * TASSELLO - 9, ...voce.luce }
+            : null,
         });
       }
     }
@@ -311,8 +349,15 @@ function potaSettori(sxCentro, syCentro) {
 // fotogramma darebbe al raccoglitore di rifiuti sessanta oggetti al secondo da
 // smaltire, e si vedrebbe come singhiozzo.
 const oggettiInquadrati = [];
+const lumiInquadrati = [];
 
-export function disegnaTerreno() {
+// Le luci accese dentro l'inquadratura, riempite insieme agli oggetti: chi
+// disegna l'oscurità le ritrova già pronte senza ripercorrere i settori.
+export function lumiVisibili() {
+  return lumiInquadrati;
+}
+
+export function disegnaTerreno(fotogramma = 0) {
   const q = schermo.inquadratura();
   const primo = Math.floor(q.sinistra / LATO_SETTORE);
   const ultimo = Math.floor((q.destra - 1) / LATO_SETTORE);
@@ -320,15 +365,19 @@ export function disegnaTerreno() {
   const sotto = Math.floor((q.sotto - 1) / LATO_SETTORE);
 
   oggettiInquadrati.length = 0;
+  lumiInquadrati.length = 0;
 
   for (let sy = sopra; sy <= sotto; sy += 1) {
     for (let sx = primo; sx <= ultimo; sx += 1) {
       const s = settore(sx, sy);
       schermo.disegna(s.canvas, sx * LATO_SETTORE, sy * LATO_SETTORE);
       for (const oggetto of s.oggetti) {
-        if (schermo.visibile(oggetto.x, oggetto.y, oggetto.sprite.width, oggetto.sprite.height)) {
-          oggettiInquadrati.push(oggetto);
+        if (!schermo.visibile(oggetto.x, oggetto.y, oggetto.sprite.width, oggetto.sprite.height)) continue;
+        if (oggetto.fotogrammi.length > 1) {
+          oggetto.sprite = oggetto.fotogrammi[fotogramma % oggetto.fotogrammi.length];
         }
+        oggettiInquadrati.push(oggetto);
+        if (oggetto.luce) lumiInquadrati.push(oggetto.luce);
       }
     }
   }

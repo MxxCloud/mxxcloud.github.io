@@ -68,4 +68,12 @@ export const TAVOLOZZA = {
   r: "#16181c",
 
   s: "#8b93a1", // metallo
+
+  // Le uniche tinte sature della tavolozza, e non per vezzo: il paesaggio è
+  // tutto smorto, quindi il rosso di una bacca e il giallo di una fiamma sono
+  // le sole cose che l'occhio trova da solo. Vanno spese con parsimonia — se
+  // si colorasse di arancione anche un cespuglio, smetterebbero di funzionare.
+  t: "#a33b2a", // bacche
+  u: "#e0913a", // fiamma
+  v: "#f2d06b", // fiamma, cuore
 };

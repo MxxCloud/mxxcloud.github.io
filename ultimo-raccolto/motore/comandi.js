@@ -5,7 +5,11 @@
 // arriveranno i comandi su schermo per il telefono o la riconfigurazione dei
 // tasti. Nessuna altra parte del gioco sa che esiste una tastiera.
 
-export const AZIONI = ["su", "giu", "sinistra", "destra", "usa", "corri"];
+export const AZIONI = ["su", "giu", "sinistra", "destra", "usa", "corri", "ricette"];
+
+// Otto caselle, otto tasti: la selezione con la rotellina o con Q/E costringe
+// a scorrere, e con solo otto caselle scorrere è più lento che puntare.
+export const CASELLE = 8;
 
 const MAPPA = {
   KeyW: "su", ArrowUp: "su",
@@ -14,12 +18,30 @@ const MAPPA = {
   KeyD: "destra", ArrowRight: "destra",
   Space: "usa", Enter: "usa",
   ShiftLeft: "corri", ShiftRight: "corri",
+  KeyC: "ricette", Tab: "ricette",
 };
 
+for (let i = 1; i <= CASELLE; i += 1) MAPPA[`Digit${i}`] = `casella${i}`;
+
 const attive = new Set();
+// Le azioni premute in questo passo e non ancora consumate. Servono perché
+// "colpisci" e "tieni premuto per camminare" sono due cose diverse: senza
+// distinguerle, tenere premuta la barra abbatterebbe un albero in un
+// sessantesimo di secondo.
+const appena = new Set();
 
 export function attiva(azione) {
   return attive.has(azione);
+}
+
+export function appenaPremuto(azione) {
+  return appena.has(azione);
+}
+
+// Da chiamare in fondo a ogni passo di aggiornamento: quello che è stato
+// premuto vale per un passo solo.
+export function finePasso() {
+  appena.clear();
 }
 
 // Serve alla sospensione: perdendo il fuoco della finestra il keyup non arriva
@@ -27,6 +49,7 @@ export function attiva(azione) {
 // un albero per tutto il tempo in cui si guarda un'altra applicazione.
 export function rilasciaTutto() {
   attive.clear();
+  appena.clear();
 }
 
 // Vettore di spostamento normalizzato. La normalizzazione non è un vezzo: in
@@ -54,7 +77,9 @@ export function collega() {
     // Le frecce e la barra spaziatrice farebbero scorrere la pagina, e la
     // barra premerebbe anche l'ultimo elemento che ha ricevuto un clic.
     evento.preventDefault();
-    if (!evento.repeat) attive.add(azione);
+    if (evento.repeat) return;
+    attive.add(azione);
+    appena.add(azione);
   });
 
   addEventListener("keyup", (evento) => {

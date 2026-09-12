@@ -21,11 +21,17 @@ export const TERRENO = {
   TERRA: 6,
 };
 
+// Gli ultimi due non li genera nessuno: li posa il giocatore, e vivono nelle
+// modifiche (vedi modifiche.js). Stanno qui lo stesso perché OGGETTO è il
+// vocabolario di cosa può esserci su un tassello, non l'elenco di cosa sa
+// produrre la generazione.
 export const OGGETTO = {
   NESSUNO: 0,
   ALBERO: 1,
   SASSO: 2,
   CESPUGLIO: 3,
+  FALO_ACCESO: 4,
+  FALO_SPENTO: 5,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati
