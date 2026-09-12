@@ -6,7 +6,7 @@ import * as modifiche from "../mondo/modifiche.js";
 import * as inventario from "./inventario.js";
 import { impronta } from "../motore/casuale.js";
 import { OGGETTO } from "../mondo/generazione.js";
-import { CATALOGO, raccoltaDi } from "./oggetti.js";
+import { CATALOGO, raccoltaDi, colpiNecessari } from "./oggetti.js";
 
 const { TASSELLO } = schermo;
 
@@ -33,8 +33,11 @@ export function azionePossibile(eroe, cosaInMano) {
   const raccolta = raccoltaDi(b.oggetto);
   if (raccolta) {
     const dati = modifiche.di(b.tx, b.ty);
-    const dati_colpi = dati?.colpi ?? 0;
-    return { tipo: "raccogli", verbo: raccolta.verbo, restano: raccolta.colpi - dati_colpi, bersaglio: b };
+    const gia = dati?.colpi ?? 0;
+    // Mai sotto uno: chi comincia a mani nude e passa all'ascia ha già dato
+    // più colpi di quanti ne servano, e "restano 0" sarebbe una bugia.
+    const restano = Math.max(1, colpiNecessari(b.oggetto, cosaInMano) - gia);
+    return { tipo: "raccogli", verbo: raccolta.verbo, restano, bersaglio: b };
   }
   const posa = cosaInMano && CATALOGO[cosaInMano]?.posa;
   if (posa !== undefined && posa !== null && posabile(b)) {
@@ -78,16 +81,21 @@ export function agisci(eroe, cosaInMano) {
   if (azione.tipo === "posa") {
     if (!inventario.togli(azione.cosa, 1)) return null;
     mappa.cambiaTassello(tx, ty, { oggetto: CATALOGO[azione.cosa].posa });
-    return { tipo: "posa", cosa: azione.cosa };
+    return { tipo: "posa", tx, ty, cosa: azione.cosa };
   }
 
-  const raccolta = raccoltaDi(azione.bersaglio.oggetto);
+  const oggetto = azione.bersaglio.oggetto;
+  const raccolta = raccoltaDi(oggetto);
   const precedente = modifiche.di(tx, ty) ?? {};
   const colpi = (precedente.colpi ?? 0) + 1;
+  const necessari = colpiNecessari(oggetto, cosaInMano);
 
-  if (colpi < raccolta.colpi) {
-    mappa.cambiaTassello(tx, ty, { ...precedente, colpi });
-    return { tipo: "colpo", restano: raccolta.colpi - colpi };
+  if (colpi < necessari) {
+    // Annota e basta: l'albero è ancora lo stesso albero, quindi il settore
+    // non va ricotto — e se lo fosse, cancellerebbe il tremolio appena
+    // cominciato.
+    mappa.annotaTassello(tx, ty, { ...precedente, colpi });
+    return { tipo: "colpo", tx, ty, scheggie: raccolta.scheggie, restano: necessari - colpi };
   }
 
   const ottenuto = resaDi(raccolta, tx, ty);
@@ -100,5 +108,5 @@ export function agisci(eroe, cosaInMano) {
   // L'oggetto sparisce comunque, anche se lo zaino era pieno: è il prezzo di
   // non guardare prima. L'interfaccia lo dice chiaramente.
   mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
-  return { tipo: "raccolto", ottenuto, avanzate };
+  return { tipo: "raccolto", tx, ty, scheggie: raccolta.scheggie, ottenuto, avanzate };
 }

@@ -3,7 +3,7 @@
 import * as schermo from "../motore/schermo.js";
 import * as comandi from "../motore/comandi.js";
 import * as mappa from "../mondo/mappa.js";
-import { cuoci, riflesso } from "../arte/sprite.js";
+import { cuoci, riflesso, telaio } from "../arte/sprite.js";
 import * as arte from "../arte/sprite-personaggi.js";
 
 const { TASSELLO } = schermo;
@@ -56,10 +56,75 @@ function muovi(e, dx, dy) {
 
 // --- aspetto --------------------------------------------------------------
 
+// Dove sta la mano, in coordinate locali dello sprite 16x24. Una sola per
+// direzione e non una per fotogramma: nello sprite del superstite il busto è
+// identico in tutti e quattro i fotogrammi di una direzione — cambiano solo le
+// gambe — quindi camminando la mano non si muove.
+//
+// "dietro" dice da che parte dell'ordine di disegno va l'oggetto: di spalle
+// una torcia sta dietro al corpo, di fronte e di profilo davanti.
+const MANO = {
+  giu: { x: 11, y: 6, dietro: false },
+  // Di spalle l'oggetto va spostato verso il bordo, non messo in mezzo alle
+  // scapole: dietro al busto sparirebbe del tutto, e un oggetto che non si
+  // vede è come non averlo disegnato.
+  su: { x: 2, y: 6, dietro: true },
+  lato: { x: 3, y: 6, dietro: false },
+};
+
+// Corpo e oggetto impugnato si compongono in una figura sola, cotta una volta
+// e tenuta qui. Le combinazioni sono poche — tre direzioni per quattro
+// fotogrammi per i pochi oggetti impugnabili — quindi a regime disegnare il
+// superstite con l'ascia in mano costa esattamente quanto disegnarlo a mani
+// nude: una drawImage.
+//
+// Comporre invece di sovrapporre al momento del disegno risolve due cose da
+// sé: la profondità, che diventa solo l'ordine dei due disegni, e lo
+// specchiamento, perché la direzione destra si ottiene riflettendo la figura
+// già composta e non serve calcolare l'aggancio speculare.
+const composti = new Map();
+
+function figura(direzione, fotogramma, impugnato) {
+  const chiave = `${direzione}|${fotogramma}|${impugnato?.nome ?? ""}`;
+  const gia = composti.get(chiave);
+  if (gia) return gia;
+
+  const fotogrammi = direzione === "su" ? arte.SU : direzione === "giu" ? arte.GIU : arte.LATO;
+  const corpo = cuoci(fotogrammi[fotogramma]);
+
+  if (!impugnato) {
+    composti.set(chiave, corpo);
+    return corpo;
+  }
+
+  const attrezzo = cuoci(impugnato.righe);
+  const mano = MANO[direzione];
+  const ax = mano.x - Math.floor(attrezzo.width / 2);
+  // Ogni oggetto dice da sé quanto in basso sta nel pugno: una torcia si
+  // regge alta perché la fiamma deve stare sopra la testa, un'ascia bassa.
+  const ay = mano.y + (impugnato.scartoY ?? 0);
+
+  const { canvas, contesto } = telaio(corpo.width, corpo.height);
+  if (mano.dietro) {
+    contesto.drawImage(attrezzo, ax, ay);
+    contesto.drawImage(corpo, 0, 0);
+  } else {
+    contesto.drawImage(corpo, 0, 0);
+    contesto.drawImage(attrezzo, ax, ay);
+  }
+
+  composti.set(chiave, canvas);
+  return canvas;
+}
+
+export function figureComposte() {
+  return composti.size;
+}
+
 function aggiornaAspetto(e) {
   const fotogramma = Math.floor(e.passo) % 4;
-  const fotogrammi = e.guarda === "su" ? arte.SU : e.guarda === "giu" ? arte.GIU : arte.LATO;
-  const immagine = cuoci(fotogrammi[fotogramma]);
+  const direzione = e.guarda === "su" ? "su" : e.guarda === "giu" ? "giu" : "lato";
+  const immagine = figura(direzione, fotogramma, e.impugnato ?? null);
 
   e.sprite = e.guarda === "destra" ? riflesso(immagine) : immagine;
   // Ancorato ai piedi, come gli oggetti della mappa: è quello che fa funzionare
@@ -67,6 +132,13 @@ function aggiornaAspetto(e) {
   e.x = e.px - e.sprite.width / 2;
   e.y = e.py - e.sprite.height;
   e.base = e.py;
+
+  // Dove sta davvero la mano nel mondo. Serve a far uscire la luce della
+  // torcia dalla fiamma disegnata invece che da un punto generico sopra la
+  // testa. A destra la figura è riflessa, quindi lo è anche la mano.
+  const mano = MANO[direzione];
+  const manoX = e.guarda === "destra" ? e.sprite.width - mano.x - 1 : mano.x;
+  e.impugnatura = { x: e.x + manoX, y: e.y + mano.y + 2 };
 }
 
 // --- comportamento --------------------------------------------------------
@@ -99,7 +171,21 @@ export function aggiorna(e, passo) {
 // --- creazione ------------------------------------------------------------
 
 export function crea(px, py) {
-  const e = { tipo: TIPO, px, py, guarda: "giu", passo: 0, sprite: null, x: 0, y: 0, base: py };
+  const e = {
+    tipo: TIPO,
+    px,
+    py,
+    guarda: "giu",
+    passo: 0,
+    sprite: null,
+    x: 0,
+    y: 0,
+    base: py,
+    // Lo riempie chi orchestra, non il giocatore: sapere cosa c'è nello zaino
+    // è una regola di gioco, e le entità stanno sotto le regole.
+    impugnato: null,
+    impugnatura: { x: px, y: py },
+  };
   aggiornaAspetto(e);
   return e;
 }

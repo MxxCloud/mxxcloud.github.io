@@ -73,6 +73,11 @@ export const TAVOLOZZA = {
   // tutto smorto, quindi il rosso di una bacca e il giallo di una fiamma sono
   // le sole cose che l'occhio trova da solo. Vanno spese con parsimonia — se
   // si colorasse di arancione anche un cespuglio, smetterebbero di funzionare.
+  // Il legno vivo sotto la corteccia. Esiste per le scheggie: quelle di
+  // colore uguale all'albero da cui escono sono invisibili contro l'albero
+  // stesso, e una scheggia che non si vede non dice niente a nessuno.
+  w: "#8a6a45",
+
   t: "#a33b2a", // bacche
   u: "#e0913a", // fiamma
   v: "#f2d06b", // fiamma, cuore

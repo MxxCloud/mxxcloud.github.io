@@ -36,9 +36,14 @@ una delle cose che si andranno a fare.
 raccoglie, di notte serve luce.**
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
-con un tocco — e quello che ne esce finisce in uno zaino di otto caselle. Con
-quei materiali si fanno torce e falò, e i falò si posano per terra dove
-serve. Il sole gira: un giorno dura dieci minuti veri, l'alba e il tramonto
+con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne
+sparge di più. Quello che ne esce finisce in uno zaino di otto caselle. Con
+quei materiali si fanno ascia, torce e falò, e torce e falò si posano per
+terra dove servono.
+
+Vale una regola sola: **quello che tieni in mano è quello che usi**, e lo si
+vede addosso al superstite. Con la torcia in pugno fai luce; con l'ascia
+abbatti un albero in due colpi invece di quattro. Il sole gira: un giorno dura dieci minuti veri, l'alba e il tramonto
 durano due ore ciascuno, e alle nove di sera è buio pieno. Una torcia in mano
 o un falò acceso scavano un cerchio di luce nel buio.
 
@@ -63,13 +68,12 @@ abilità e rifinitura (M6).
 | `W A S D` o frecce | camminare |
 | `Maiusc` | correre |
 | `Spazio` | colpire ciò che si ha davanti, o posare |
-| `1`-`8` | scegliere la casella dello zaino |
+| `1`-`8` | scegliere la casella, cioè cosa si impugna |
 | `C` | aprire e chiudere le costruzioni |
 | `F3` | diagnostica |
 
 Si agisce su quello che si ha **davanti**, non sotto i piedi: è anche l'unico
-modo di posare un falò senza restarci dentro. Con una torcia nella casella
-scelta si fa luce — non c'è da accenderla, basta tenerla in mano.
+modo di posare un falò senza restarci dentro.
 
 I comandi su schermo per il telefono arrivano più avanti, ma il gioco non parla
 mai di tasti: chiede a `motore/comandi.js` se si sta andando avanti. È l'unico
@@ -145,6 +149,19 @@ il catalogo di cosa esiste e cosa rende; `inventario.js` lo zaino;
 `ricette.js` cosa si costruisce; `azioni.js` il gesto che collega il giocatore
 al mondo.
 
+**Quello che si impugna** non è disegnato accanto al superstite ma **composto
+con lui** in un'unica figura, cotta una volta e tenuta in cache per direzione,
+fotogramma e oggetto. Sono poche combinazioni, quindi disegnare il superstite
+con l'ascia in mano costa quanto disegnarlo a mani nude: una `drawImage`.
+Comporre invece di sovrapporre risolve due cose da sé — la profondità, che
+diventa solo l'ordine dei due disegni (di spalle l'oggetto va dietro), e lo
+specchiamento, perché la direzione destra riflette la figura già composta e
+non serve calcolare l'aggancio allo specchio.
+
+Serve un solo punto d'aggancio per direzione e non uno per fotogramma: nello
+sprite del superstite il busto è identico nei quattro fotogrammi di una
+direzione — cambiano solo le gambe — quindi camminando la mano non si muove.
+
 **`interfaccia/`** — L'interfaccia sta sul canvas e non nel DOM, al contrario
 della diagnostica. Serve un font disegnato a pixel (`arte/sprite-testo.js`, 3x5),
 perché il browser disegnerebbe qualunque font di sistema con l'antialiasing e
@@ -162,6 +179,13 @@ giri lo sguardo non è un survival. `mondo/modifiche.js` tiene le eccezioni:
 solo i tasselli che il giocatore ha toccato, mentre tutto il resto continua a
 venire dalla generazione. È anche ciò che renderà piccolo il salvataggio —
 si scrive quella mappa, non il mondo.
+
+**I colpi non ricuociono il settore.** Un albero a metà abbattimento è ancora
+lo stesso albero: il contatore dei colpi si annota senza invalidare il
+disegno, e il settore si ricuoce solo quando l'oggetto cambia davvero.
+Ricuocere duecentocinquantasei tasselli per aggiornare un numero era spreco,
+ma soprattutto cancellava ogni stato temporaneo — cioè rendeva impossibile
+far tremare l'albero colpito.
 
 **Il buio.** Non si disegna direttamente sullo schermo: si stende su un telo
 a parte, ci si ritagliano sopra le luci con `destination-out`, e solo alla

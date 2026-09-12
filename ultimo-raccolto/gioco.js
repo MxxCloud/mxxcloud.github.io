@@ -9,6 +9,7 @@ import * as schermo from "./motore/schermo.js";
 import * as ciclo from "./motore/ciclo.js";
 import * as comandi from "./motore/comandi.js";
 import * as oscurita from "./motore/oscurita.js";
+import * as scheggie from "./motore/scheggie.js";
 import * as mappa from "./mondo/mappa.js";
 import * as modifiche from "./mondo/modifiche.js";
 import * as entita from "./entita/entita.js";
@@ -17,7 +18,7 @@ import * as tempo from "./regole/tempo.js";
 import * as inventario from "./regole/inventario.js";
 import * as azioni from "./regole/azioni.js";
 import { RICETTE, fai } from "./regole/ricette.js";
-import { nomeDi } from "./regole/oggetti.js";
+import { nomeDi, CATALOGO } from "./regole/oggetti.js";
 import * as hud from "./interfaccia/hud.js";
 
 const { TASSELLO } = schermo;
@@ -26,7 +27,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M1";
+const VERSIONE = "M1.1";
 
 // --- elementi -------------------------------------------------------------
 
@@ -49,10 +50,14 @@ let azioneCorrente = null;
 let messaggio = null;
 let aperturaVisibile = true;
 
-// La torcia in mano illumina. È l'unica cosa che l'oggetto selezionato fa di
-// suo, ed è voluto che sia leggibile così: prendi la torcia, ci vedi.
-const LUCE_TORCIA = { raggio: 46, intensita: 0.9 };
 const lumi = [];
+
+// Quanto e per quanto trema ciò che si colpisce. Due pixel per meno di un
+// quinto di secondo: di più sembrerebbe un terremoto, di meno non si vedrebbe.
+const DURATA_TREMOLIO = 0.18;
+const AMPIEZZA_TREMOLIO = 2;
+// Uno solo, perché si colpisce una cosa per volta.
+let colpito = null;
 
 function cosaInMano() {
   return inventario.contenuto()[casellaScelta]?.cosa ?? null;
@@ -102,6 +107,22 @@ function leggiComandi() {
   const esito = azioni.agisci(eroe, cosaInMano());
   if (!esito) return;
 
+  if (esito.tipo === "colpo" || esito.tipo === "raccolto") {
+    colpito = { tx: esito.tx, ty: esito.ty, resta: DURATA_TREMOLIO };
+    if (esito.scheggie) {
+      // Il colpo che stacca ne sparge di più e più lontano: è la differenza
+      // fra "l'hai preso" e "è venuto giù".
+      const finale = esito.tipo === "raccolto";
+      scheggie.sparge(
+        esito.tx * TASSELLO + TASSELLO / 2,
+        esito.ty * TASSELLO + TASSELLO / 2,
+        finale ? 26 : 12,
+        esito.scheggie,
+        finale ? 1.5 : 1
+      );
+    }
+  }
+
   if (esito.tipo === "raccolto") {
     const elenco = esito.ottenuto.map((v) => `+${v.quante} ${nomeDi(v.cosa)}`).join("  ");
     if (esito.avanzate.length > 0) annuncia("zaino pieno, perso qualcosa", "#c0705f");
@@ -118,7 +139,16 @@ function aggiorna(passo) {
   // arrivare la notte addosso mentre lo leggi è una punizione, non una sfida.
   if (!ricetteAperte && !aperturaVisibile) {
     tempo.avanza(passo);
+    // Quello che si ha in mano lo decide lo zaino, non l'entità: le entità
+    // stanno sotto le regole e non devono sapere cos'è un inventario.
+    eroe.impugnato = CATALOGO[cosaInMano()]?.impugnato ?? null;
     entita.aggiorna(passo);
+    scheggie.aggiorna(passo);
+
+    if (colpito) {
+      colpito.resta -= passo;
+      if (colpito.resta <= 0) colpito = null;
+    }
   }
 
   leggiComandi();
@@ -165,19 +195,33 @@ function disegna() {
   // per ultimo. È tutta la profondità che serve a una vista dall'alto 3/4.
   inPiedi.sort((a, b) => a.base - b.base);
 
-  for (const cosa of inPiedi) schermo.disegna(cosa.sprite, cosa.x, cosa.y);
+  for (const cosa of inPiedi) schermo.disegna(cosa.sprite, cosa.x + tremolioDi(cosa), cosa.y);
 
+  // Prima del buio, così di notte anche le scheggie si spengono con tutto il
+  // resto invece di brillare sopra l'oscurità come scintille.
+  scheggie.disegna();
   disegnaBuio();
   disegnaInterfaccia();
 
   if (!diagnostica.hidden) aggiornaDiagnostica();
 }
 
+// Lo scarto orizzontale di ciò che è stato appena colpito. Oscilla in fretta
+// e si spegne: è la stessa figura che fa una corda pizzicata.
+function tremolioDi(cosa) {
+  if (!colpito || cosa.tx !== colpito.tx || cosa.ty !== colpito.ty) return 0;
+  const quanto = colpito.resta / DURATA_TREMOLIO;
+  return Math.round(Math.sin(colpito.resta * 90) * AMPIEZZA_TREMOLIO * quanto);
+}
+
 function disegnaBuio() {
   lumi.length = 0;
   for (const luce of mappa.lumiVisibili()) lumi.push(luce);
-  if (cosaInMano() === "torcia") {
-    lumi.push({ x: eroe.px, y: eroe.py - 10, ...LUCE_TORCIA });
+  // La luce esce dalla fiamma disegnata in mano, non da un punto generico
+  // sopra la testa: ora che la torcia si vede, la luce deve venire da lì.
+  const luceInMano = CATALOGO[cosaInMano()]?.luce;
+  if (luceInMano) {
+    lumi.push({ x: eroe.impugnatura.x, y: eroe.impugnatura.y, ...luceInMano });
   }
   oscurita.disegna(schermo.pennello(), tempo.luceAmbiente(), tempo.tintaOscurita(), lumi);
 }
@@ -209,6 +253,7 @@ function aggiornaDiagnostica() {
     `terreno  ${NOMI_TERRENO[mappa.terrenoDi(tx, ty)]}`,
     `ora      ${tempo.orologio()}  giorno ${tempo.giornoCorrente()}  luce ${tempo.luceAmbiente().toFixed(2)}`,
     `settori  ${mappa.settoriInMemoria()}  in piedi ${inPiedi.length}  lumi ${lumi.length}`,
+    `scheggie ${scheggie.vive()}  figure ${giocatore.figureComposte()}`,
     `modifiche ${modifiche.quanti()}`,
   ].join("\n");
 }
@@ -276,6 +321,10 @@ if (parametri.has("diagnostica")) {
     tempo,
     inventario,
     azioni,
+    scheggie,
+    giocatore,
     scegliCasella: (i) => { casellaScelta = i; },
+    chiudiApertura: () => { aperturaVisibile = false; },
+    tremolio: () => (colpito ? { ...colpito } : null),
   };
 }
