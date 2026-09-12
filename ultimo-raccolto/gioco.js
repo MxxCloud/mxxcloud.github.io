@@ -22,6 +22,12 @@ import * as hud from "./interfaccia/hud.js";
 
 const { TASSELLO } = schermo;
 
+// La versione si vede nella schermata di apertura e nella diagnostica. Serve
+// a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
+// numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
+// browser è identica a un aggiornamento mai pubblicato.
+const VERSIONE = "M1";
+
 // --- elementi -------------------------------------------------------------
 
 const quadro = document.getElementById("quadro");
@@ -41,6 +47,7 @@ let ricetteAperte = false;
 let ricettaScelta = 0;
 let azioneCorrente = null;
 let messaggio = null;
+let aperturaVisibile = true;
 
 // La torcia in mano illumina. È l'unica cosa che l'oggetto selezionato fa di
 // suo, ed è voluto che sia leggibile così: prendi la torcia, ci vedi.
@@ -58,6 +65,19 @@ function annuncia(testo, colore) {
 // --- comandi --------------------------------------------------------------
 
 function leggiComandi() {
+  if (aperturaVisibile) {
+    // Il primo tasto chiude la schermata e basta: se valesse anche come
+    // comando, chi preme la barra per toglierla di mezzo darebbe una zappata
+    // a caso senza capire perché.
+    for (const azione of comandi.AZIONI) {
+      if (comandi.appenaPremuto(azione)) { aperturaVisibile = false; return; }
+    }
+    for (let i = 0; i < comandi.CASELLE; i += 1) {
+      if (comandi.appenaPremuto(`casella${i + 1}`)) { aperturaVisibile = false; return; }
+    }
+    return;
+  }
+
   for (let i = 0; i < comandi.CASELLE; i += 1) {
     if (comandi.appenaPremuto(`casella${i + 1}`)) {
       if (ricetteAperte && i < RICETTE.length) ricettaScelta = i;
@@ -96,13 +116,13 @@ function leggiComandi() {
 function aggiorna(passo) {
   // Il tempo non scorre mentre si sceglie cosa costruire: un menu che ti fa
   // arrivare la notte addosso mentre lo leggi è una punizione, non una sfida.
-  if (!ricetteAperte) {
+  if (!ricetteAperte && !aperturaVisibile) {
     tempo.avanza(passo);
     entita.aggiorna(passo);
   }
 
   leggiComandi();
-  azioneCorrente = ricetteAperte ? null : azioni.azionePossibile(eroe, cosaInMano());
+  azioneCorrente = ricetteAperte || aperturaVisibile ? null : azioni.azionePossibile(eroe, cosaInMano());
 
   if (messaggio) {
     messaggio.vita -= passo / 2.2;
@@ -166,9 +186,11 @@ function disegnaInterfaccia() {
   const p = schermo.pennello();
   hud.disegnaOrologio(p, tempo.giornoCorrente(), tempo.orologio(), tempo.eNotte());
   hud.disegnaAzione(p, azioneCorrente);
-  hud.disegnaZaino(p, casellaScelta);
+  const barra = hud.disegnaZaino(p, casellaScelta);
+  hud.disegnaPromemoria(p, barra);
   hud.disegnaMessaggio(p, messaggio);
   if (ricetteAperte) hud.disegnaRicette(p, ricettaScelta);
+  if (aperturaVisibile) hud.disegnaApertura(p, VERSIONE);
 }
 
 // --- diagnostica ----------------------------------------------------------
@@ -181,6 +203,7 @@ function aggiornaDiagnostica() {
   diagnostica.textContent = [
     `fps      ${ciclo.fpsCorrenti()}  peggiore ${(ciclo.peggiorFotogramma() * 1000).toFixed(1)} ms`,
     `scala    ${schermo.scalaCorrente()}x  (${schermo.LARGHEZZA}x${schermo.ALTEZZA})`,
+    `versione ${VERSIONE}`,
     `seme     ${SEME}`,
     `tassello ${tx}, ${ty}`,
     `terreno  ${NOMI_TERRENO[mappa.terrenoDi(tx, ty)]}`,
