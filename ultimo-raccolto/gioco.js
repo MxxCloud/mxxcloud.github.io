@@ -108,6 +108,11 @@ function leggiComandi() {
   if (!esito) return;
 
   if (esito.tipo === "colpo" || esito.tipo === "raccolto") {
+    // DEBITO: qui va il suono del colpo, quando esisterà il comparto audio
+    // (M6). Provando il gioco, tremolio e scheggie sono stati giudicati
+    // sufficienti per ora — ma come ripiego dichiarato, non come soluzione:
+    // il suono resta ciò che manca davvero al gesto. Un tonfo sordo per il
+    // legno, uno schiocco secco per la pietra.
     colpito = { tx: esito.tx, ty: esito.ty, resta: DURATA_TREMOLIO };
     if (esito.scheggie) {
       // Il colpo che stacca ne sparge di più e più lontano: è la differenza

@@ -59,7 +59,13 @@ incontrare.
 Le tappe successive, nell'ordine: bisogni, ferite, salvataggio e morte (M2) —
 da lì il gioco esiste come esperienza; coltivazione e stagioni (M3); infetti,
 rumore e combattimento (M4); costruzione e decadimento (M5); superstiti,
-abilità e rifinitura (M6).
+abilità, audio e rifinitura (M6).
+
+**Un debito già riconosciuto.** Il colpo oggi si sente perché l'oggetto trema
+e sputa scheggie, e provandolo è sembrato abbastanza. Ma è un ripiego
+accettato in attesa dell'audio: quando arriverà il comparto sonoro, colpire
+dovrà avere un suono. È la cosa che manca davvero al gesto, e il tremolio da
+solo la rimanda, non la sostituisce.
 
 ## Comandi
 
