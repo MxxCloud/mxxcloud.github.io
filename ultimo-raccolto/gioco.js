@@ -32,6 +32,9 @@ let eroe = null;
 
 function aggiorna(passo) {
   entita.aggiorna(passo);
+  // Prepara il terreno appena fuori dall'inquadratura mentre c'è tempo, così
+  // varcare il confine di un settore non costa niente nel momento sbagliato.
+  mappa.precuociVicini();
   // La camera insegue con un ritardo: seguire di colpo rende ogni cambio di
   // direzione uno strattone. Il fattore è tarato per recuperare quasi tutto in
   // un decimo di secondo — abbastanza da ammorbidire, troppo poco da notare.
@@ -74,7 +77,7 @@ function aggiornaDiagnostica() {
   const tx = Math.floor(eroe.px / TASSELLO);
   const ty = Math.floor(eroe.py / TASSELLO);
   diagnostica.textContent = [
-    `fps      ${ciclo.fpsCorrenti()}`,
+    `fps      ${ciclo.fpsCorrenti()}  peggiore ${(ciclo.peggiorFotogramma() * 1000).toFixed(1)} ms`,
     `scala    ${schermo.scalaCorrente()}x  (${schermo.LARGHEZZA}x${schermo.ALTEZZA})`,
     `seme     ${SEME}`,
     `tassello ${tx}, ${ty}`,

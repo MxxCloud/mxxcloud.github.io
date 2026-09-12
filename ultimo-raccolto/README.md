@@ -36,6 +36,10 @@ una delle cose che si andranno a fare.
 valle si genera dal seme, alberi e sassi fermano, l'acqua ferma. Non c'è ancora
 niente da raccogliere, nessun bisogno da soddisfare e nessuno da incontrare.
 
+I terreni non si toccano più di netto: il più forte invade il bordo del vicino
+con una frangia irregolare, così il confine fra roccia e prato non è più una
+scalinata da sedici pixel.
+
 Le tappe successive, nell'ordine: mondo completo con raccolta, inventario e
 ciclo giorno/notte (M1); bisogni, ferite, salvataggio e morte (M2) — da lì il
 gioco esiste come esperienza; coltivazione e stagioni (M3); infetti, rumore e
@@ -81,6 +85,12 @@ pixel per pixel a ogni fotogramma costerebbe quanto tutto il resto del gioco.
 La tavolozza è un parametro e non una costante: lo stesso sprite cotto con
 tavolozze diverse darà le stagioni senza ridisegnare niente.
 
+Le transizioni fra terreni sono **maschere**: stessa notazione, ma "x" vuol
+dire «qui prendi il pixel del vicino». Una maschera è pura forma e non sa nulla
+di colore, ed è per questo che ne bastano otto per tutte le coppie di terreni
+invece di servirne una per combinazione. A mano ne esistono solo due — il lato
+nord e l'angolo nord-ovest — e le altre sei si ottengono ruotandole.
+
 **`motore/`** — Lo schermo lavora a 384x216 pixel fissi e non sa quanto sia
 grande la finestra; la scala è sempre un numero intero, anche a costo di due
 bande nere, perché una scala frazionaria fa alcune righe di pixel più spesse
@@ -94,6 +104,14 @@ funzione pura delle sue coordinate e del seme, quindi non ci sono confini e non
 c'è niente da generare in anticipo. È anche ciò che renderà piccoli i
 salvataggi, perché basterà memorizzare i tasselli cambiati. `mappa.js` cuoce il
 terreno a settori di 16x16 tasselli e ridisegna solo quelli inquadrati.
+
+Per sfrangiare un tassello bisogna sapere cosa ha attorno, quindi ogni settore
+si legge con un tassello di bordo per lato: senza, la frangia si
+interromperebbe ogni sedici tasselli e disegnerebbe la griglia dei settori. E
+poiché cuocere un settore ora costa qualche millisecondo, i settori appena
+fuori dall'inquadratura vengono preparati in anticipo, uno per fotogramma: il
+costo non sparisce, ma smette di cadere tutto nel fotogramma in cui si varca un
+confine.
 
 **`entita/`** — Oggetti semplici con un campo `tipo` e una funzione registrata
 per quel tipo. Niente sistema a componenti: le entità resteranno nell'ordine
