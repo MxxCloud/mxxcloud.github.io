@@ -1,13 +1,26 @@
 // Cosa si può costruire.
 //
-// Due sole ricette, e non per fretta: a M1 il gioco ha un problema solo — fa
-// buio — e queste due sono le due risposte. La torcia è quella che ti porti
-// dietro, il falò quello che ti fa un posto. Aggiungere ricette che non
-// rispondono a niente riempirebbe un menu senza cambiare una partita.
+// Poche ricette, e ognuna risponde a qualcosa. Il gioco a M1 ha un problema —
+// fa buio — e torcia e falò sono le due risposte: una te la porti dietro,
+// l'altra ti fa un posto. L'ascia risponde a un problema diverso ma vero: dà
+// uno scopo alla pietra e fa in modo che il ciclo premi se stesso, perché si
+// raccoglie per costruire l'attrezzo che rende più svelto il raccogliere.
+//
+// Aggiungere ricette che non rispondono a niente riempirebbe un menu senza
+// cambiare una partita.
 
 import * as inventario from "./inventario.js";
 
 export const RICETTE = [
+  {
+    id: "ascia",
+    produce: { cosa: "ascia", quante: 1 },
+    costo: [
+      { cosa: "pietra", quante: 2 },
+      { cosa: "ramo", quante: 1 },
+      { cosa: "fibra", quante: 2 },
+    ],
+  },
   {
     id: "torcia",
     produce: { cosa: "torcia", quante: 1 },

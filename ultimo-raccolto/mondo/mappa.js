@@ -50,6 +50,14 @@ const CATALOGO_OGGETTI = {
     luce: { raggio: 64, intensita: 1 },
   },
   [OGGETTO.FALO_SPENTO]: { sprite: coseArte.FALO_SPENTO, solido: false },
+
+  // Una torcia piantata è luce fissa che costa molto meno di un falò, e non
+  // ferma: è un bastone, ci si passa accanto.
+  [OGGETTO.TORCIA_PIANTATA]: {
+    fotogrammi: coseArte.TORCIA_PIANTATA,
+    solido: false,
+    luce: { raggio: 42, intensita: 0.85 },
+  },
 };
 
 // --- transizioni ----------------------------------------------------------
@@ -120,6 +128,16 @@ export function oggettoDi(tx, ty) {
   const cambio = modifiche.di(tx, ty);
   if (cambio && cambio.oggetto !== undefined) return cambio.oggetto;
   return oggettoIn(tx, ty, seme, terrenoIn(tx, ty, seme));
+}
+
+// Annota qualcosa su un tassello senza toccare il disegno. Serve ai colpi
+// intermedi: un albero a metà abbattimento è ancora lo stesso albero, e
+// ricuocere duecentocinquantasei tasselli per aggiornare un contatore è
+// spreco puro. Peggio: la ricottura ricrea gli oggetti da zero e cancella
+// ogni stato temporaneo, quindi con l'invalidazione a ogni colpo l'albero
+// colpito non potrebbe nemmeno tremare.
+export function annotaTassello(tx, ty, cambio) {
+  modifiche.imposta(tx, ty, cambio);
 }
 
 // Cambia un tassello e butta via il settore che lo conteneva, così alla
