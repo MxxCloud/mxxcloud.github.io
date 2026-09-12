@@ -32,19 +32,29 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M0**: il motore e una valle esplorabile a piedi. Ci si muove, la
-valle si genera dal seme, alberi e sassi fermano, l'acqua ferma. Non c'è ancora
-niente da raccogliere, nessun bisogno da soddisfare e nessuno da incontrare.
+È finita **M1**. C'è un ciclo di gioco vero, anche se corto: **di giorno si
+raccoglie, di notte serve luce.**
 
-I terreni non si toccano più di netto: il più forte invade il bordo del vicino
-con una frangia irregolare, così il confine fra roccia e prato non è più una
-scalinata da sedici pixel.
+Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
+con un tocco — e quello che ne esce finisce in uno zaino di otto caselle. Con
+quei materiali si fanno torce e falò, e i falò si posano per terra dove
+serve. Il sole gira: un giorno dura dieci minuti veri, l'alba e il tramonto
+durano due ore ciascuno, e alle nove di sera è buio pieno. Una torcia in mano
+o un falò acceso scavano un cerchio di luce nel buio.
 
-Le tappe successive, nell'ordine: mondo completo con raccolta, inventario e
-ciclo giorno/notte (M1); bisogni, ferite, salvataggio e morte (M2) — da lì il
-gioco esiste come esperienza; coltivazione e stagioni (M3); infetti, rumore e
-combattimento (M4); costruzione e decadimento (M5); superstiti, abilità e
-rifinitura (M6).
+Il mondo si ricorda cosa hai fatto: l'albero che hai abbattuto resta
+abbattuto, il falò che hai posato resta dov'è. Il salvataggio su disco arriva
+a M2, ma la forma di ciò che va salvato è già questa.
+
+Il gioco è installabile e funziona senza rete.
+
+Non ci sono ancora bisogni da soddisfare, non si muore, e non c'è nessuno da
+incontrare.
+
+Le tappe successive, nell'ordine: bisogni, ferite, salvataggio e morte (M2) —
+da lì il gioco esiste come esperienza; coltivazione e stagioni (M3); infetti,
+rumore e combattimento (M4); costruzione e decadimento (M5); superstiti,
+abilità e rifinitura (M6).
 
 ## Comandi
 
@@ -52,18 +62,26 @@ rifinitura (M6).
 |---|---|
 | `W A S D` o frecce | camminare |
 | `Maiusc` | correre |
-| `Spazio` | usare (non fa ancora nulla) |
+| `Spazio` | colpire ciò che si ha davanti, o posare |
+| `1`-`8` | scegliere la casella dello zaino |
+| `C` | aprire e chiudere le costruzioni |
 | `F3` | diagnostica |
+
+Si agisce su quello che si ha **davanti**, non sotto i piedi: è anche l'unico
+modo di posare un falò senza restarci dentro. Con una torcia nella casella
+scelta si fa luce — non c'è da accenderla, basta tenerla in mano.
 
 I comandi su schermo per il telefono arrivano più avanti, ma il gioco non parla
 mai di tasti: chiede a `motore/comandi.js` se si sta andando avanti. È l'unico
 file da toccare quel giorno.
 
-## L'indirizzo accetta due parametri
+## L'indirizzo accetta tre parametri
 
 `?seme=ombra` apre una valle diversa. Il seme è un testo qualsiasi e la stessa
 parola dà sempre la stessa valle, quindi una valle che piace si condivide
-copiando l'indirizzo. `?diagnostica` accende il pannello dei numeri.
+copiando l'indirizzo. `?ora=22` comincia la partita a quell'ora, perché
+aspettare quindici minuti veri per vedere com'è la notte è il modo migliore
+per non guardarla mai. `?diagnostica` accende il pannello dei numeri.
 
 ## Com'è fatto
 
@@ -73,6 +91,10 @@ Le dipendenze vanno in una sola direzione, e non si invertono mai:
 arte/  motore/          non sanno nulla del gioco
    ↑
 mondo/  entita/         conoscono il motore, non l'interfaccia
+   ↑
+regole/                 le regole del gioco: tempo, cose, zaino, azioni
+   ↑
+interfaccia/            disegna lo stato, non lo cambia
    ↑
 gioco.js                orchestra, possiede il DOM
 ```
@@ -117,10 +139,35 @@ confine.
 per quel tipo. Niente sistema a componenti: le entità resteranno nell'ordine
 delle centinaia e i comportamenti distinti sono pochi.
 
+**`regole/`** — Il gioco come regole, senza sapere né come si disegna né come
+si preme un tasto. `tempo.js` è l'orologio e la curva della luce; `oggetti.js`
+il catalogo di cosa esiste e cosa rende; `inventario.js` lo zaino;
+`ricette.js` cosa si costruisce; `azioni.js` il gesto che collega il giocatore
+al mondo.
+
+**`interfaccia/`** — L'interfaccia sta sul canvas e non nel DOM, al contrario
+della diagnostica. Serve un font disegnato a pixel (`arte/sprite-testo.js`, 3x5),
+perché il browser disegnerebbe qualunque font di sistema con l'antialiasing e
+una scritta sfumata in mezzo alla pixel art si vede come una macchia.
+
 Entità e oggetti della mappa espongono la stessa forma — `x`, `y`, `base`,
 `sprite` — così chi disegna li ordina tutti insieme per la posizione dei piedi,
 senza sapere chi è un albero e chi un superstite. È tutta la profondità che
 serve a una vista dall'alto 3/4.
+
+**Il mondo che cambia.** Fino a M0 la valle era solo calcolata, il che è
+prezioso — niente da generare in anticipo, nessun confine — ma da solo la
+rende immutabile, e un survival in cui l'albero abbattuto ricresce appena
+giri lo sguardo non è un survival. `mondo/modifiche.js` tiene le eccezioni:
+solo i tasselli che il giocatore ha toccato, mentre tutto il resto continua a
+venire dalla generazione. È anche ciò che renderà piccolo il salvataggio —
+si scrive quella mappa, non il mondo.
+
+**Il buio.** Non si disegna direttamente sullo schermo: si stende su un telo
+a parte, ci si ritagliano sopra le luci con `destination-out`, e solo alla
+fine il telo finisce sul gioco. Facendolo direttamente si cancellerebbe anche
+il gioco sotto, invece che solo il buio. La notte non arriva mai a nero pieno:
+un nero assoluto non è notte, è schermo spento.
 
 ## Provarlo in locale
 
