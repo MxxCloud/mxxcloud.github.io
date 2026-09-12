@@ -20,6 +20,7 @@ import * as azioni from "./regole/azioni.js";
 import { RICETTE, fai } from "./regole/ricette.js";
 import { nomeDi, CATALOGO } from "./regole/oggetti.js";
 import * as hud from "./interfaccia/hud.js";
+import * as minimappa from "./interfaccia/minimappa.js";
 
 const { TASSELLO } = schermo;
 
@@ -27,7 +28,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M1.1";
+const VERSIONE = "M1.2";
 
 // --- elementi -------------------------------------------------------------
 
@@ -49,6 +50,7 @@ let ricettaScelta = 0;
 let azioneCorrente = null;
 let messaggio = null;
 let aperturaVisibile = true;
+let minimappaVisibile = true;
 
 const lumi = [];
 
@@ -89,6 +91,8 @@ function leggiComandi() {
       else casellaScelta = i;
     }
   }
+
+  if (comandi.appenaPremuto("minimappa")) minimappaVisibile = !minimappaVisibile;
 
   if (comandi.appenaPremuto("ricette")) {
     ricetteAperte = !ricetteAperte;
@@ -149,6 +153,10 @@ function aggiorna(passo) {
     eroe.impugnato = CATALOGO[cosaInMano()]?.impugnato ?? null;
     entita.aggiorna(passo);
     scheggie.aggiorna(passo);
+    // Si tiene aggiornata anche da spenta: scorrerla costa due centesimi di
+    // millisecondo, ricostruirla da zero quasi trenta. Meglio pagare sempre
+    // il poco che pagare il molto ogni volta che la si riaccende.
+    minimappa.aggiorna(eroe);
 
     if (colpito) {
       colpito.resta -= passo;
@@ -238,6 +246,7 @@ function disegnaInterfaccia() {
   const barra = hud.disegnaZaino(p, casellaScelta);
   hud.disegnaPromemoria(p, barra);
   hud.disegnaMessaggio(p, messaggio);
+  if (minimappaVisibile && !aperturaVisibile) minimappa.disegna(p);
   if (ricetteAperte) hud.disegnaRicette(p, ricettaScelta);
   if (aperturaVisibile) hud.disegnaApertura(p, VERSIONE);
 }
@@ -259,6 +268,7 @@ function aggiornaDiagnostica() {
     `ora      ${tempo.orologio()}  giorno ${tempo.giornoCorrente()}  luce ${tempo.luceAmbiente().toFixed(2)}`,
     `settori  ${mappa.settoriInMemoria()}  in piedi ${inPiedi.length}  lumi ${lumi.length}`,
     `scheggie ${scheggie.vive()}  figure ${giocatore.figureComposte()}`,
+    `minimappa ${minimappaVisibile ? "accesa" : "spenta"}  ricostruzioni ${minimappa.ricostruzioni()}`,
     `modifiche ${modifiche.quanti()}`,
   ].join("\n");
 }
@@ -331,5 +341,7 @@ if (parametri.has("diagnostica")) {
     scegliCasella: (i) => { casellaScelta = i; },
     chiudiApertura: () => { aperturaVisibile = false; },
     tremolio: () => (colpito ? { ...colpito } : null),
+    minimappa,
+    minimappaAccesa: () => minimappaVisibile,
   };
 }

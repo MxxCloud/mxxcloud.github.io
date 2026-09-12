@@ -39,6 +39,16 @@ export function tutti() {
   });
 }
 
+// Scorre i cambiamenti senza costruire niente. tutti() alloca un array nuovo a
+// ogni chiamata, il che va benissimo per salvare una volta e malissimo per
+// disegnare la minimappa sessanta volte al secondo.
+export function perOgnuno(funzione) {
+  for (const [k, v] of cambi) {
+    const virgola = k.indexOf(",");
+    funzione(Number(k.slice(0, virgola)), Number(k.slice(virgola + 1)), v);
+  }
+}
+
 export function svuota() {
   cambi.clear();
 }
