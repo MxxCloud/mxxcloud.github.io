@@ -87,6 +87,15 @@ export function tintaOscurita() {
   return `rgb(${c[0]} ${c[1]} ${c[2]})`;
 }
 
+// Quanti secondi reali mancano a un'ora del giorno. Serve a dormire: si
+// dorme "fino all'alba", non "per otto ore".
+export function secondiFinoAlle(bersaglio) {
+  const mancanti = (bersaglio - ore + 24) % 24;
+  return (mancanti === 0 ? 24 : mancanti) / ORE_AL_SECONDO / 24 * 24;
+}
+
+export const ALBA_PIENA = GIORNO_PIENO;
+
 export function reimposta() {
   ore = ORA_INIZIALE;
   giorno = 1;

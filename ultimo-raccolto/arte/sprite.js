@@ -105,6 +105,25 @@ export function riflesso(immagine) {
   return canvas;
 }
 
+// Sagome a tinta unita: un disegno fatto di soli "x" cotto nel colore che
+// serve. Le usano il font e gli indicatori dei bisogni, che sono forme e non
+// immagini — il colore lo decide chi disegna.
+//
+// Le tavolozze si tengono per colore e non si ricreano a ogni chiamata: cuoci
+// mette in cache per identità della tavolozza, quindi una tavolozza nuova a
+// ogni fotogramma vanificherebbe la cache e ridisegnerebbe tutto pixel per
+// pixel.
+const tinte = new Map();
+
+export function tinta(colore) {
+  let tavolozza = tinte.get(colore);
+  if (!tavolozza) {
+    tavolozza = { ".": null, x: colore };
+    tinte.set(colore, tavolozza);
+  }
+  return tavolozza;
+}
+
 // Le maschere di transizione esistono in un solo orientamento — nord e
 // nord-ovest — e gli altri sei si ricavano girandole. Vale la stessa economia
 // del riflesso: quello che non si disegna a mano è tempo guadagnato.

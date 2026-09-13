@@ -12,7 +12,15 @@ export const CATALOGO = {
   ramo: { nome: "Ramo", icona: arte.RAMO, pila: 40 },
   pietra: { nome: "Pietra", icona: arte.PIETRA, pila: 40 },
   fibra: { nome: "Fibra", icona: arte.FIBRA, pila: 60 },
-  bacche: { nome: "Bacche", icona: arte.BACCHE, pila: 20 },
+  // L'unico cibo che esiste, il che rende i cespugli improvvisamente
+  // preziosi. Fino a M3 non ce ne sarà altro: l'orto è la risposta a questa
+  // scarsità, non un contorno.
+  bacche: {
+    nome: "Bacche",
+    icona: arte.BACCHE,
+    pila: 20,
+    commestibile: { fame: 0.3 },
+  },
   // La torcia serve in due modi, entrambi visibili: in mano illumina chi la
   // porta, piantata resta accesa dove l'hai lasciata.
   torcia: {
@@ -30,6 +38,12 @@ export const CATALOGO = {
     // Più in basso della torcia: appesa al pugno, non issata accanto
     // all'orecchio.
     impugnato: { nome: "ascia", righe: impugnati.ASCIA, scartoY: 5 },
+  },
+  giaciglio: {
+    nome: "Giaciglio",
+    icona: arte.GIACIGLIO,
+    pila: 3,
+    posa: OGGETTO.GIACIGLIO,
   },
   falo: { nome: "Falò", icona: arte.FALO, pila: 5, posa: OGGETTO.FALO_ACCESO },
 };
@@ -102,6 +116,15 @@ export const RACCOLTA = {
     colpi: 1,
     scheggie: ["u", "v"],
     resa: [{ cosa: "torcia", quante: 1 }],
+  },
+  // Di giorno si raccoglie, di notte ci si dorme: è azioni.js a decidere
+  // quale dei due, in base all'ora. Un giaciglio che di notte si smonta
+  // invece di accogliere sarebbe una trappola.
+  [OGGETTO.GIACIGLIO]: {
+    verbo: "Raccogli",
+    colpi: 1,
+    scheggie: ["9", "a", "h"],
+    resa: [{ cosa: "giaciglio", quante: 1 }],
   },
   [OGGETTO.FALO_SPENTO]: {
     verbo: "Raccogli",
