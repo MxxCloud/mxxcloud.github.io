@@ -30,6 +30,14 @@ export const RICETTE = [
     ],
   },
   {
+    id: "giaciglio",
+    produce: { cosa: "giaciglio", quante: 1 },
+    costo: [
+      { cosa: "fibra", quante: 6 },
+      { cosa: "legna", quante: 2 },
+    ],
+  },
+  {
     id: "falo",
     produce: { cosa: "falo", quante: 1 },
     costo: [

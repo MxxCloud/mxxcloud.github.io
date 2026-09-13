@@ -15,6 +15,7 @@ import * as modifiche from "./mondo/modifiche.js";
 import * as entita from "./entita/entita.js";
 import * as giocatore from "./entita/giocatore.js";
 import * as tempo from "./regole/tempo.js";
+import * as bisogni from "./regole/bisogni.js";
 import * as inventario from "./regole/inventario.js";
 import * as azioni from "./regole/azioni.js";
 import { RICETTE, fai } from "./regole/ricette.js";
@@ -28,7 +29,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M1.2";
+const VERSIONE = "M2";
 
 // --- elementi -------------------------------------------------------------
 
@@ -94,6 +95,11 @@ function leggiComandi() {
 
   if (comandi.appenaPremuto("minimappa")) minimappaVisibile = !minimappaVisibile;
 
+  if (comandi.appenaPremuto("consuma")) {
+    const esito = azioni.consuma(cosaInMano());
+    if (esito) annuncia(`mangi: ${nomeDi(esito.cosa)}`, "#9ec97e");
+  }
+
   if (comandi.appenaPremuto("ricette")) {
     ricetteAperte = !ricetteAperte;
     ricettaScelta = 0;
@@ -132,6 +138,9 @@ function leggiComandi() {
     }
   }
 
+  if (esito.tipo === "bevi") annuncia("bevi", "#8fb8d8");
+  if (esito.tipo === "dormi") annuncia(`hai dormito fino all'alba`, "#9ec97e");
+
   if (esito.tipo === "raccolto") {
     const elenco = esito.ottenuto.map((v) => `+${v.quante} ${nomeDi(v.cosa)}`).join("  ");
     if (esito.avanzate.length > 0) annuncia("zaino pieno, perso qualcosa", "#c0705f");
@@ -149,9 +158,17 @@ function aggiorna(passo) {
   if (!ricetteAperte && !aperturaVisibile) {
     tempo.avanza(passo);
     // Quello che si ha in mano lo decide lo zaino, non l'entità: le entità
-    // stanno sotto le regole e non devono sapere cos'è un inventario.
+    // stanno sotto le regole e non devono sapere cos'è un inventario. Lo
+    // stesso vale per la forma fisica: quanto si è in forze è una regola.
     eroe.impugnato = CATALOGO[cosaInMano()]?.impugnato ?? null;
+    eroe.fattoreVelocita = bisogni.fattoreVelocita();
+    eroe.puoCorrere = bisogni.puoCorrere();
     entita.aggiorna(passo);
+
+    // Dopo il movimento, perché il consumo dipende da cosa si è appena fatto.
+    for (const vuoto of bisogni.avanza(passo, { corre: eroe.correndo, siMuove: eroe.inMovimento })) {
+      annuncia(AVVISI_BISOGNI[vuoto], "#c0705f");
+    }
     scheggie.aggiorna(passo);
     // Si tiene aggiornata anche da spenta: scorrerla costa due centesimi di
     // millisecondo, ricostruirla da zero quasi trenta. Meglio pagare sempre
@@ -241,10 +258,11 @@ function disegnaBuio() {
 
 function disegnaInterfaccia() {
   const p = schermo.pennello();
+  hud.disegnaBisogni(p);
   hud.disegnaOrologio(p, tempo.giornoCorrente(), tempo.orologio(), tempo.eNotte());
   hud.disegnaAzione(p, azioneCorrente);
   const barra = hud.disegnaZaino(p, casellaScelta);
-  hud.disegnaPromemoria(p, barra);
+  hud.disegnaPromemoria(p, barra, cosaInMano());
   hud.disegnaMessaggio(p, messaggio);
   if (minimappaVisibile && !aperturaVisibile) minimappa.disegna(p);
   if (ricetteAperte) hud.disegnaRicette(p, ricettaScelta);
@@ -254,6 +272,14 @@ function disegnaInterfaccia() {
 // --- diagnostica ----------------------------------------------------------
 
 const NOMI_TERRENO = ["acqua", "bassofondo", "sabbia", "erba", "sterpaglia", "roccia", "terra"];
+
+// Detto una volta sola, quando la barra tocca il fondo: ripeterlo a ogni
+// fotogramma sarebbe una sirena, non un avviso.
+const AVVISI_BISOGNI = {
+  fame: "hai fame",
+  sete: "hai sete",
+  stanchezza: "sei allo stremo",
+};
 
 function aggiornaDiagnostica() {
   const tx = Math.floor(eroe.px / TASSELLO);
@@ -265,6 +291,7 @@ function aggiornaDiagnostica() {
     `seme     ${SEME}`,
     `tassello ${tx}, ${ty}`,
     `terreno  ${NOMI_TERRENO[mappa.terrenoDi(tx, ty)]}`,
+    `bisogni  ${bisogni.ELENCO.map((n) => n[0] + " " + bisogni.livello(n).toFixed(2)).join("  ")}  velocità ${bisogni.fattoreVelocita().toFixed(2)}`,
     `ora      ${tempo.orologio()}  giorno ${tempo.giornoCorrente()}  luce ${tempo.luceAmbiente().toFixed(2)}`,
     `settori  ${mappa.settoriInMemoria()}  in piedi ${inPiedi.length}  lumi ${lumi.length}`,
     `scheggie ${scheggie.vive()}  figure ${giocatore.figureComposte()}`,
@@ -343,5 +370,6 @@ if (parametri.has("diagnostica")) {
     tremolio: () => (colpito ? { ...colpito } : null),
     minimappa,
     minimappaAccesa: () => minimappaVisibile,
+    bisogni,
   };
 }

@@ -51,6 +51,10 @@ const CATALOGO_OGGETTI = {
   },
   [OGGETTO.FALO_SPENTO]: { sprite: coseArte.FALO_SPENTO, solido: false },
 
+  // Non ferma: ci si deve poter camminare sopra per sdraiarcisi, e comunque
+  // un materasso per terra non è un ostacolo.
+  [OGGETTO.GIACIGLIO]: { sprite: coseArte.GIACIGLIO_STESO, solido: false },
+
   // Una torcia piantata è luce fissa che costa molto meno di un falò, e non
   // ferma: è un bastone, ci si passa accanto.
   [OGGETTO.TORCIA_PIANTATA]: {

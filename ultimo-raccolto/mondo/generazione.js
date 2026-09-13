@@ -33,6 +33,7 @@ export const OGGETTO = {
   FALO_ACCESO: 4,
   FALO_SPENTO: 5,
   TORCIA_PIANTATA: 6,
+  GIACIGLIO: 7,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati

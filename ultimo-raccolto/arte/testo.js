@@ -1,26 +1,13 @@
 // Scrittura di testo sul canvas del gioco.
 //
 // I glifi sono sagome senza colore (vedi sprite-testo.js) e vengono cotti una
-// volta per ogni colore richiesto. Le tavolozze si tengono in una mappa per
-// colore, e non si ricreano a ogni chiamata: cuoci() mette in cache per
-// identità della tavolozza, quindi una tavolozza nuova a ogni fotogramma
-// vanificherebbe la cache e ridisegnerebbe ogni lettera pixel per pixel.
+// volta per ogni colore richiesto, con le tavolozze a tinta unita di
+// sprite.js.
 
-import { cuoci } from "./sprite.js";
+import { cuoci, tinta } from "./sprite.js";
 import { GLIFI, ALTEZZA, SPAZIO } from "./sprite-testo.js";
 
 export { ALTEZZA };
-
-const tavolozzePerColore = new Map();
-
-function tavolozzaDi(colore) {
-  let tavolozza = tavolozzePerColore.get(colore);
-  if (!tavolozza) {
-    tavolozza = { ".": null, x: colore };
-    tavolozzePerColore.set(colore, tavolozza);
-  }
-  return tavolozza;
-}
 
 // Le minuscole non esistono nel font: si scrive tutto in maiuscolo invece di
 // disegnare un secondo alfabeto. A cinque pixel di altezza le minuscole con
@@ -36,7 +23,7 @@ export function larghezza(testo) {
 }
 
 export function disegna(pennello, testo, x, y, colore) {
-  const tavolozza = tavolozzaDi(colore);
+  const tavolozza = tinta(colore);
   let penna = Math.round(x);
   for (const carattere of testo) {
     const glifo = glifoDi(carattere);

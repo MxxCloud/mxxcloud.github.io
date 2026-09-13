@@ -8,7 +8,9 @@
 
 import * as schermo from "../motore/schermo.js";
 import * as testo from "../arte/testo.js";
-import { cuoci } from "../arte/sprite.js";
+import { cuoci, tinta } from "../arte/sprite.js";
+import * as indicatori from "../arte/sprite-indicatori.js";
+import * as bisogni from "../regole/bisogni.js";
 import { CATALOGO } from "../regole/oggetti.js";
 import * as inventario from "../regole/inventario.js";
 import { RICETTE, bastano } from "../regole/ricette.js";
@@ -72,6 +74,54 @@ export function disegnaZaino(p, scelta) {
   }
 
   return { x0, y, larghezza: totale };
+}
+
+// --- i bisogni ------------------------------------------------------------
+
+const ICONE_BISOGNI = {
+  fame: indicatori.FAME,
+  sete: indicatori.SETE,
+  stanchezza: indicatori.STANCHEZZA,
+};
+
+const LARGHEZZA_BARRA = 44;
+const ALTEZZA_BARRA = 5;
+const PASSO_BARRA = 10;
+
+// Il colore dice lo stato prima della lunghezza: di sottocoda si guarda una
+// barra per un decimo di secondo, e in quel decimo si legge una tinta, non
+// una misura.
+function coloreBisogno(livello) {
+  if (livello > 0.5) return "#7fae63";
+  if (livello > 0.2) return "#d8a44a";
+  return "#c0705f";
+}
+
+// In alto a sinistra: è l'unico angolo rimasto libero, con l'orologio in alto
+// a destra, lo zaino in basso al centro e la minimappa in basso a destra.
+export function disegnaBisogni(p) {
+  const livelli = bisogni.tutti();
+  let y = 5;
+
+  for (const quale of bisogni.ELENCO) {
+    const livello = livelli[quale];
+    const colore = coloreBisogno(livello);
+
+    p.drawImage(cuoci(ICONE_BISOGNI[quale], tinta(colore)), 5, y - 1);
+
+    const x = 15;
+    p.fillStyle = "rgb(16 18 22 / 0.78)";
+    p.fillRect(x - 1, y - 1, LARGHEZZA_BARRA + 2, ALTEZZA_BARRA + 2);
+    p.fillStyle = "#2b2f36";
+    p.fillRect(x, y, LARGHEZZA_BARRA, ALTEZZA_BARRA);
+    p.fillStyle = colore;
+    // Arrotondato per eccesso finché resta qualcosa: una barra che sparisce
+    // mentre il bisogno non è ancora a zero direbbe una bugia.
+    const pieno = livello > 0 ? Math.max(1, Math.round(LARGHEZZA_BARRA * livello)) : 0;
+    p.fillRect(x, y, pieno, ALTEZZA_BARRA);
+
+    y += PASSO_BARRA;
+  }
 }
 
 // --- orologio -------------------------------------------------------------
@@ -168,11 +218,21 @@ export function disegnaRicette(p, scelta) {
 // versione: chi raccoglieva legna non aveva modo di scoprire che serviva a
 // costruire, perché niente sullo schermo nominava il tasto. Un sistema che
 // non si trova è come se non ci fosse.
-export function disegnaPromemoria(p, barra) {
-  const scritta = "C  COSTRUIRE";
-  const x = barra.x0 - testo.larghezza(scritta) - 8;
-  const y = barra.y + 7;
-  testo.disegnaConOmbra(p, scritta, x, y, TENUE);
+export function disegnaPromemoria(p, barra, cosaInMano) {
+  const righe = ["C  COSTRUIRE"];
+
+  // Il promemoria del mangiare compare solo con qualcosa di commestibile in
+  // mano. È lo stesso difetto di prima in un'altra forma: un tasto che
+  // nessuno nomina è un tasto che non esiste — ma nominarlo sempre sarebbe
+  // rumore, perché quasi mai si ha del cibo selezionato.
+  const commestibile = cosaInMano && CATALOGO[cosaInMano]?.commestibile;
+  if (commestibile) righe.push(`E  MANGIA ${nomeDi(cosaInMano).toUpperCase()}`);
+
+  let y = barra.y + 7 - (righe.length - 1) * 7;
+  for (const scritta of righe) {
+    testo.disegnaConOmbra(p, scritta, barra.x0 - testo.larghezza(scritta) - 8, y, TENUE);
+    y += 7;
+  }
 }
 
 // --- schermata di apertura ------------------------------------------------
@@ -183,6 +243,7 @@ const COMANDI = [
   ["SPAZIO", "COLPIRE CIÒ CHE HAI DAVANTI"],
   ["1-8", "SCEGLIERE DALLO ZAINO"],
   ["C", "COSTRUIRE"],
+  ["E", "MANGIARE CIÒ CHE HAI IN MANO"],
   ["M", "MAPPA"],
   ["F3", "DIAGNOSTICA"],
 ];

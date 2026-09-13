@@ -145,7 +145,15 @@ function aggiornaAspetto(e) {
 
 export function aggiorna(e, passo) {
   const { x, y } = comandi.direzione();
-  const velocita = comandi.attiva("corri") ? VELOCITA_CORSA : VELOCITA;
+
+  // Quanto si è in forze lo decidono le regole, non l'entità: sapere cos'è
+  // la fame è roba di regole/, e le entità stanno sotto le regole. Chi
+  // orchestra riempie questi due campi prima di aggiornare.
+  const corre = comandi.attiva("corri") && e.puoCorrere !== false;
+  const velocita = (corre ? VELOCITA_CORSA : VELOCITA) * (e.fattoreVelocita ?? 1);
+
+  e.correndo = corre && (x !== 0 || y !== 0);
+  e.inMovimento = x !== 0 || y !== 0;
 
   if (x !== 0 || y !== 0) {
     // La direzione dello sguardo dà la precedenza all'orizzontale: in diagonale
@@ -185,6 +193,10 @@ export function crea(px, py) {
     // è una regola di gioco, e le entità stanno sotto le regole.
     impugnato: null,
     impugnatura: { x: px, y: py },
+    fattoreVelocita: 1,
+    puoCorrere: true,
+    correndo: false,
+    inMovimento: false,
   };
   aggiornaAspetto(e);
   return e;

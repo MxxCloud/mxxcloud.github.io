@@ -5,7 +5,9 @@ import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
 import * as inventario from "./inventario.js";
 import { impronta } from "../motore/casuale.js";
-import { OGGETTO } from "../mondo/generazione.js";
+import { OGGETTO, TERRENO } from "../mondo/generazione.js";
+import * as tempo from "./tempo.js";
+import * as bisogni from "./bisogni.js";
 import { CATALOGO, raccoltaDi, colpiNecessari } from "./oggetti.js";
 
 const { TASSELLO } = schermo;
@@ -28,8 +30,21 @@ export function bersaglio(eroe) {
 
 // Cosa succederebbe premendo adesso il tasto. Serve all'interfaccia, che deve
 // poterlo dire prima invece di lasciare indovinare.
+// Quanto ristora un sorso. Bastano un paio di volte al giorno, che è il
+// ritmo giusto perché bere sia un gesto e non un lavoro.
+const SORSO = 0.45;
+
 export function azionePossibile(eroe, cosaInMano) {
   const b = bersaglio(eroe);
+
+  // Di notte il giaciglio accoglie, di giorno si smonta. Un giaciglio che di
+  // notte si smonta invece di accogliere sarebbe una trappola; e dormire di
+  // giorno salterebbe la giornata invece della notte, che è il contrario di
+  // quello che serve.
+  if (b.oggetto === OGGETTO.GIACIGLIO && tempo.eNotte()) {
+    return { tipo: "dormi", verbo: "Dormi", bersaglio: b };
+  }
+
   const raccolta = raccoltaDi(b.oggetto);
   if (raccolta) {
     const dati = modifiche.di(b.tx, b.ty);
@@ -39,6 +54,16 @@ export function azionePossibile(eroe, cosaInMano) {
     const restano = Math.max(1, colpiNecessari(b.oggetto, cosaInMano) - gia);
     return { tipo: "raccogli", verbo: raccolta.verbo, restano, bersaglio: b };
   }
+  // L'acqua smette di essere solo un ostacolo. È già disegnata ed è già
+  // ovunque: darle un uso non costa un sistema nuovo, costa una riga qui.
+  const terreno = mappa.terrenoDi(b.tx, b.ty);
+  if (terreno === TERRENO.ACQUA || terreno === TERRENO.ACQUA_BASSA) {
+    if (bisogni.livello("sete") < 1) {
+      return { tipo: "bevi", verbo: "Bevi", bersaglio: b };
+    }
+    return null;
+  }
+
   const posa = cosaInMano && CATALOGO[cosaInMano]?.posa;
   if (posa !== undefined && posa !== null && posabile(b)) {
     return { tipo: "posa", verbo: "Posa", cosa: cosaInMano, bersaglio: b };
@@ -69,6 +94,22 @@ function resaDi(raccolta, tx, ty) {
   return ottenuto;
 }
 
+// Usare quello che si ha in mano su di sé. Sta fuori da agisci() perché non
+// ha un bersaglio: mangiare non ha un davanti, e infilarlo nella barra
+// avrebbe voluto dire decidere se si mangia o si abbatte l'albero che si ha
+// di fronte. Da M5 serve anche alle bende.
+export function consuma(cosaInMano) {
+  const effetto = cosaInMano && CATALOGO[cosaInMano]?.commestibile;
+  if (!effetto) return null;
+  if (!inventario.togli(cosaInMano, 1)) return null;
+
+  const ristorato = {};
+  for (const [quale, quanto] of Object.entries(effetto)) {
+    ristorato[quale] = bisogni.ristora(quale, quanto);
+  }
+  return { tipo: "consumato", cosa: cosaInMano, ristorato };
+}
+
 // Restituisce un resoconto di cosa è successo, perché l'interfaccia deve
 // poterlo dire al giocatore: un colpo che non ottiene niente e un colpo che
 // abbatte un albero non possono sembrare lo stesso gesto.
@@ -77,6 +118,22 @@ export function agisci(eroe, cosaInMano) {
   if (!azione) return null;
 
   const { tx, ty } = azione.bersaglio;
+
+  if (azione.tipo === "bevi") {
+    bisogni.ristora("sete", SORSO);
+    return { tipo: "bevi" };
+  }
+
+  if (azione.tipo === "dormi") {
+    // Il tempo saltato si paga: si salta la notte, non il proprio
+    // metabolismo. Senza questo, dormire sarebbe un tasto per far sparire i
+    // problemi invece di una scelta fra riposare e restare svegli.
+    const secondi = tempo.secondiFinoAlle(tempo.ALBA_PIENA);
+    tempo.avanza(secondi);
+    bisogni.passanoSecondi(secondi);
+    bisogni.ristora("stanchezza", 1);
+    return { tipo: "dormi", secondi };
+  }
 
   if (azione.tipo === "posa") {
     if (!inventario.togli(azione.cosa, 1)) return null;

@@ -224,3 +224,33 @@ export const TORCIA_PIANTATA = [
     "................",
   ],
 ];
+
+export const GIACIGLIO = [
+  "............",
+  "............",
+  "..hhhhhhhh..",
+  ".h99999999h.",
+  ".h9aaaaaa9h.",
+  ".h9aaaaaa9h.",
+  ".h99999999h.",
+  "..hhhhhhhh..",
+  "............",
+  "............",
+  "............",
+  "............",
+];
+
+// Il giaciglio steso per terra. Non è alto: si disegna quasi tutto dentro il
+// suo tassello, al contrario di alberi e falò che crescono verso l'alto.
+export const GIACIGLIO_STESO = [
+  "................",
+  "................",
+  "..hhhhhhhhhhhh..",
+  ".h999999999999h.",
+  ".h9aaaaaaaaaa9h.",
+  ".h9aaaaaaaaaa9h.",
+  ".h9aaaaaaaaaa9h.",
+  ".h9aaaaaaaaaa9h.",
+  ".h999999999999h.",
+  "..hhhhhhhhhhhh..",
+];

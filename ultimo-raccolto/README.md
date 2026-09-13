@@ -54,18 +54,54 @@ durano due ore ciascuno, e alle nove di sera è buio pieno. Una torcia in mano
 o un falò acceso scavano un cerchio di luce nel buio.
 
 Il mondo si ricorda cosa hai fatto: l'albero che hai abbattuto resta
-abbattuto, il falò che hai posato resta dov'è. Il salvataggio su disco arriva
-a M2, ma la forma di ciò che va salvato è già questa.
+abbattuto, il falò che hai posato resta dov'è — finché la scheda resta aperta.
+Il salvataggio su disco non c'è ancora, ma la forma di ciò che andrà salvato è
+già questa.
 
 Il gioco è installabile e funziona senza rete.
 
-Non ci sono ancora bisogni da soddisfare, non si muore, e non c'è nessuno da
-incontrare.
+**Fame, sete e stanchezza** si consumano a ritmi diversi: la sete morde prima
+della fame, e la stanchezza dipende da quanto ti muovi — correre la brucia in
+quattro minuti scarsi, il che trasforma la corsa da gratis a scelta. Si beve
+alla riva del lago, si mangiano le bacche, si dorme su un giaciglio costruito
+apposta. Dormire porta all'alba e ristora, ma il tempo saltato si paga: ci si
+sveglia assetati.
 
-Le tappe successive, nell'ordine: bisogni, ferite, salvataggio e morte (M2) —
-da lì il gioco esiste come esperienza; coltivazione e stagioni (M3); infetti,
-rumore e combattimento (M4); costruzione e decadimento (M5); superstiti,
-abilità, audio e rifinitura (M6).
+Un bisogno a zero non uccide — la morte arriva a M5 — ma toglie un quarto
+della velocità. Tre bisogni ignorati riducono a un quarto.
+
+Non si muore ancora, non si coltiva, e non c'è nessuno da incontrare.
+
+## La mappa di strada
+
+Il pilastro ha due metà: **un posto in cui investi** e **un mondo che se lo
+riprende**. Vanno costruite in tensione fra loro, non una dopo l'altra. Ogni
+tappa aggiunge o una ragione per investire, o una forza che si riprende
+quello che hai investito — perché se arrivano prima tutte le une e poi tutte
+le altre, per mezzo progetto il gioco non è quello che dice di essere.
+
+Da qui viene l'ordine, che non è quello immaginato all'inizio:
+
+| | | |
+|---|---|---|
+| **M2** | I bisogni | Fame, sete, stanchezza. Il corpo è la prima cosa che si consuma, e il tempo diventa una risorsa. |
+| **M3** | L'orto | Semini, innaffi, torni dopo giorni. La prima cosa tua. |
+| **M4** | Stagioni e decadimento | Le colture muoiono fuori stagione, quello che lasci si degrada. *Qui il gioco diventa ciò che dice di essere.* |
+| **M5** | Il corpo e la morte | Ferite, infezione, temperatura, morale; il nuovo superstite nella stessa valle, col cadavere del precedente. |
+| **M6** | Gli infetti | Rumore, inseguimento, combattimento. La notte da scomoda a pericolosa. |
+| **M7** | Costruzione | Riparo, contenitori, muri: l'investimento che si difende. |
+| **M8** | Superstiti, abilità, audio, rifinitura | |
+
+**Perché la morte così tardi.** Morire conta in proporzione a quanto hai da
+perdere: prima dell'orto e delle stagioni non avresti perso niente.
+
+**Il salvataggio sta fuori da questa scala** e si incastrerà dove verrà
+deciso. Finché non c'è, l'orto e le stagioni valgono meno di quanto valgono
+davvero — un posto che sparisce chiudendo la scheda è tuo solo per una seduta.
+
+Le tappe dalla M5 in poi sono volutamente abbozzate: l'ordine è già cambiato
+una volta per quello che è emerso giocando, e cambierà ancora. Si dettagliano
+quando ci si arriva.
 
 **Un debito già riconosciuto.** Il colpo oggi si sente perché l'oggetto trema
 e sputa scheggie, e provandolo è sembrato abbastanza. Ma è un ripiego
@@ -81,6 +117,7 @@ solo la rimanda, non la sostituisce.
 | `Maiusc` | correre |
 | `Spazio` | colpire ciò che si ha davanti, o posare |
 | `1`-`8` | scegliere la casella, cioè cosa si impugna |
+| `E` | mangiare o usare su di sé ciò che si ha in mano |
 | `C` | aprire e chiudere le costruzioni |
 | `M` | accendere e spegnere la minimappa |
 | `F3` | diagnostica |
