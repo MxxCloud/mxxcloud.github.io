@@ -28,10 +28,9 @@ import * as stagioni from "./stagioni.js";
 // Per usare un progetto proprio si cambiano queste due righe e nient'altro.
 export const PROGETTO = {
   projectId: "ultimo-raccolto",
-  // Comincia con "AIzaSy" ed è lunga 39 caratteri. Finché è vuota la
-  // sincronia si spegne da sola e lo dice, invece di provare a chiamare e
-  // fallire in un modo che sembra un guasto di rete.
-  apiKey: "",
+  // Finché è vuota la sincronia si spegne da sola e lo dice, invece di provare
+  // a chiamare e fallire in un modo che sembra un guasto di rete.
+  apiKey: "AIzaSyDYI5PLM1dKs21-sYZez6SSsQV1Gn7K3bo",
 };
 
 export function configurata() {
