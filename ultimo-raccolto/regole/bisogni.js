@@ -116,3 +116,13 @@ export function fattoreVelocita() {
 export function reimposta() {
   for (const quale of ELENCO) livelli[quale] = 1;
 }
+
+// Da un salvataggio. Quello che manca o non è un numero torna pieno: è la
+// scelta indulgente delle due, e un bisogno inventato a zero ucciderebbe —
+// quando ci sarà la morte — per colpa di un file storto.
+export function ripristina(salvati) {
+  for (const quale of ELENCO) {
+    const v = salvati?.[quale];
+    livelli[quale] = Number.isFinite(v) ? limita(v) : 1;
+  }
+}

@@ -74,6 +74,11 @@ export const GLIFI = {
   "/": ["..x", "..x", ".x.", "x..", "x.."],
   "+": ["...", ".x.", "xxx", ".x.", "..."],
   "!": ["x", "x", "x", ".", "x"],
+  // Un pixel solo, in alto. Mancava, e ogni "L'ORTO" o "C'È" finiva disegnato
+  // con il punto interrogativo che testo.js mette al posto dei caratteri che
+  // non conosce: in italiano è la punteggiatura più frequente che esista, e
+  // per mesi le scritte l'hanno detto invece di mostrarla.
+  "'": ["x", "x", ".", ".", "."],
   "?": ["xxx", "..x", ".xx", "...", ".x."],
   "(": [".x", "x.", "x.", "x.", ".x"],
   ")": ["x.", ".x", ".x", ".x", "x."],

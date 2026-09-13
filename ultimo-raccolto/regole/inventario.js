@@ -100,3 +100,19 @@ export function spazioPer(cosa) {
 export function svuota() {
   caselle.fill(null);
 }
+
+// Rimette lo zaino com'era in un salvataggio. Si copia dentro l'array che
+// esiste invece di sostituirlo: contenuto() restituisce quell'array, e chi lo
+// ha già in mano continuerebbe a leggere quello vecchio.
+export function ripristina(salvate) {
+  svuota();
+  if (!Array.isArray(salvate)) return;
+  for (let i = 0; i < CASELLE && i < salvate.length; i += 1) {
+    const c = salvate[i];
+    // Una casella malformata diventa vuota invece di far saltare il
+    // caricamento: un salvataggio storto deve costare una casella, non una
+    // partita.
+    if (!c || typeof c.cosa !== "string" || !(c.quantita > 0)) continue;
+    caselle[i] = { cosa: c.cosa, quantita: Math.min(c.quantita, CATALOGO[c.cosa]?.pila ?? 1) };
+  }
+}
