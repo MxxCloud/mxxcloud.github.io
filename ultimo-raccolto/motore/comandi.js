@@ -7,7 +7,7 @@
 
 export const AZIONI = [
   "su", "giu", "sinistra", "destra", "usa", "corri", "ricette", "minimappa",
-  "consuma", "getta", "partita", "esporta", "importa",
+  "consuma", "getta", "partita", "esporta", "importa", "spegni",
 ];
 
 // Otto caselle, otto tasti: la selezione con la rotellina o con Q/E costringe
@@ -32,6 +32,8 @@ const MAPPA = {
   // è l'unica cosa che si rischia di sbagliare fra le due.
   KeyF: "esporta",
   KeyI: "importa",
+  // "X" come cancella, e anche lui solo dentro la schermata della partita.
+  KeyX: "spegni",
 };
 
 for (let i = 1; i <= CASELLE; i += 1) MAPPA[`Digit${i}`] = `casella${i}`;
@@ -83,8 +85,77 @@ export function direzione() {
   return { x, y };
 }
 
+// --- scrittura ------------------------------------------------------------
+
+// Il gioco non ha campi di testo: l'interfaccia sta sul canvas, e un input del
+// DOM in mezzo alla pixel art si vede come una cosa incollata sopra un'altra.
+// Quando serve scrivere — e serve per una cosa sola, il codice di una partita
+// da riprendere altrove — la tastiera smette di essere comandi e torna a
+// essere lettere. Sta qui perché questo è l'unico modulo che sa che esiste
+// una tastiera, e quella regola non si piega per un caso solo.
+let scrittura = null;
+
+export function stoScrivendo() {
+  return scrittura !== null;
+}
+
+export function iniziaScrittura(lunghezzaMassima = 40) {
+  scrittura = { testo: "", massimo: lunghezzaMassima, confermato: false, annullato: false };
+}
+
+export function fineScrittura() {
+  const esito = scrittura;
+  scrittura = null;
+  return esito;
+}
+
+// Restituisce l'esito solo quando la scrittura è davvero finita — confermata
+// o annullata — e in quel caso la chiude. Serve a chi guarda a ogni passo se
+// è il momento di raccogliere quello che è stato scritto.
+export function fineScritturaSeFinita() {
+  if (!scrittura) return null;
+  if (!scrittura.confermato && !scrittura.annullato) return null;
+  return fineScrittura();
+}
+
+export function testoScritto() {
+  return scrittura?.testo ?? "";
+}
+
+// Quello che si accetta mentre si scrive un codice: lettere, cifre e il
+// trattino che separa i gruppi. Gli spazi no — un codice con uno spazio dentro
+// è un codice sbagliato che sembra giusto.
+const AMMESSI = /^[A-Za-z0-9-]$/;
+
+function scrivi(evento) {
+  if (evento.key === "Enter") {
+    scrittura.confermato = true;
+    return;
+  }
+  if (evento.key === "Escape") {
+    scrittura.annullato = true;
+    return;
+  }
+  if (evento.key === "Backspace") {
+    scrittura.testo = scrittura.testo.slice(0, -1);
+    return;
+  }
+  if (evento.key.length !== 1 || !AMMESSI.test(evento.key)) return;
+  if (scrittura.testo.length >= scrittura.massimo) return;
+  scrittura.testo += evento.key.toUpperCase();
+}
+
 export function collega() {
   addEventListener("keydown", (evento) => {
+    // Mentre si scrive la tastiera è tutta della scrittura: se W valesse anche
+    // come "vai avanti", scrivere un codice significherebbe camminare.
+    if (scrittura) {
+      evento.preventDefault();
+      if (evento.repeat && evento.key !== "Backspace") return;
+      scrivi(evento);
+      return;
+    }
+
     const azione = MAPPA[evento.code];
     if (!azione) return;
     // Le frecce e la barra spaziatrice farebbero scorrere la pagina, e la

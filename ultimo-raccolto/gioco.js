@@ -20,6 +20,7 @@ import * as orto from "./regole/orto.js";
 import * as stagioni from "./regole/stagioni.js";
 import * as decadimento from "./regole/decadimento.js";
 import * as salvataggio from "./regole/salvataggio.js";
+import * as sincronia from "./regole/sincronia.js";
 import { tavolozzaDi, tavolozzaBagnataDi } from "./arte/tavolozza.js";
 import * as inventario from "./regole/inventario.js";
 import * as azioni from "./regole/azioni.js";
@@ -60,7 +61,13 @@ let minimappaVisibile = true;
 let ultimoGiorno = 1;
 let partitaAperta = false;
 let slotScelto = 0;
+const MODI_PARTITA = ["carica", "salva", "rete"];
 let modoPartita = "salva";
+// Cosa c'è in rete, chiesto quando si entra nel modo rete: "attesa" mentre la
+// risposta non è arrivata, null se non si raggiunge, altrimenti quello che
+// c'è. Il disegno è sincrono e la rete no, quindi il disegno legge questa.
+let nuvola = "attesa";
+let scrittaInCorso = null;
 // L'ultimo giorno di cui si è già scritta l'alba. Senza, ogni fotogramma dopo
 // le sette riscriverebbe il salvataggio automatico.
 let albaScritta = 0;
@@ -180,6 +187,95 @@ ingressoFile.addEventListener("change", async () => {
   annuncia("partita importata dal file", "#9ec97e");
 });
 
+// --- la rete --------------------------------------------------------------
+
+// Ogni salvataggio sale, automatico o a mano che sia. Non si aspetta la
+// risposta: il ciclo di gioco non si ferma per la rete, e se la salita
+// fallisce il salvataggio locale è già scritto — il danno è che la copia in
+// rete resta indietro di un salvataggio, non che si perda qualcosa.
+// Vero quando in rete c'è una partita che questo computer non ha mai visto.
+// Finché è così le salite automatiche non ci provano nemmeno: ripetere lo
+// stesso rifiuto a ogni alba sarebbe rumore, e il posto dove si risolve è il
+// pannello della rete.
+let conflitto = false;
+
+function fallaSalire(stato) {
+  if (!sincronia.codiceAttivo() || !sincronia.configurata()) return;
+  if (conflitto) return;
+  sincronia.manda(stato).then((esito) => {
+    if (esito.ok) return;
+    if (esito.conflitto) {
+      conflitto = true;
+      annuncia("in rete c'è un'altra partita: apri P", "#c0705f");
+      return;
+    }
+    annuncia(`in rete non è salita: ${esito.perche}`, "#c0705f");
+  });
+}
+
+// Cosa c'è in rete, chiesto una volta sola quando serve mostrarlo. Il
+// risultato arriva dopo, e il disegno nel frattempo dice "controllo".
+function guardaLaRete() {
+  nuvola = "attesa";
+  if (!sincronia.codiceAttivo() || !sincronia.configurata()) {
+    nuvola = null;
+    return;
+  }
+  sincronia.sbircia().then((esito) => {
+    nuvola = esito.ok ? esito : null;
+  });
+}
+
+function accendiLaRete(codice) {
+  if (!sincronia.attiva(codice)) {
+    annuncia("non si riesce a ricordare il codice", "#c0705f");
+    return;
+  }
+  guardaLaRete();
+  conflitto = false;
+  annuncia("sincronia accesa", "#9ec97e");
+  // La partita in corso sale subito: senza, il codice esisterebbe ma in rete
+  // non ci sarebbe niente finché non capita un salvataggio, e sull'altro
+  // computer si troverebbe il vuoto.
+  fallaSalire(salvataggio.istantanea(eroe, casellaScelta));
+}
+
+function riprendiDallaRete() {
+  annuncia("scarico dalla rete...", "#8fa8d8");
+  sincronia.prendi().then((esito) => {
+    if (!esito.ok) {
+      annuncia(esito.perche, "#c0705f");
+      return;
+    }
+    const ripreso = salvataggio.applica(esito.stato);
+    if (!ripreso) {
+      annuncia("la partita in rete è illeggibile", "#c0705f");
+      return;
+    }
+    riprendi(ripreso);
+    // Riprendere è il modo legittimo di prendersi il turno: da qui in poi
+    // questo computer ha visto quello che c'è in rete e può riscriverlo.
+    conflitto = false;
+    annuncia("partita ripresa dalla rete", "#9ec97e");
+  });
+}
+
+// La via d'uscita dal conflitto quando si vuole tenere quella di qui. Sta
+// dietro un tasto suo e non capita mai da sola: è l'unico gesto del gioco che
+// cancella davvero qualcosa che sta altrove.
+function sovrascriviLaRete() {
+  annuncia("mando su comunque...", "#8fa8d8");
+  sincronia.manda(salvataggio.istantanea(eroe, casellaScelta), true).then((esito) => {
+    if (!esito.ok) {
+      annuncia(esito.perche, "#c0705f");
+      return;
+    }
+    conflitto = false;
+    guardaLaRete();
+    annuncia("la rete ora ha questa partita", "#9ec97e");
+  });
+}
+
 function caselleDiSalvataggio() {
   return salvataggio.elenco().map((voce) => ({
     ...voce,
@@ -192,11 +288,13 @@ function salvaIn(voce) {
     annuncia("questa casella la scrive l'alba", "#c0705f");
     return;
   }
-  const esito = salvataggio.scrivi(voce.slot, salvataggio.istantanea(eroe, casellaScelta));
+  const stato = salvataggio.istantanea(eroe, casellaScelta);
+  const esito = salvataggio.scrivi(voce.slot, stato);
   if (!esito.ok) {
     annuncia(esito.perche, "#c0705f");
     return;
   }
+  fallaSalire(stato);
   // Si chiude da sola: salvare è un gesto che finisce lì, e lasciare aperta la
   // schermata costringerebbe a un tasto in più per tornare a giocare.
   partitaAperta = false;
@@ -247,15 +345,94 @@ function riprendi(ripreso) {
   partitaAperta = false;
 }
 
+// I tasti del pannello della rete. Ogni ramo finisce con un ritorno perché
+// due azioni nello stesso fotogramma qui vorrebbero dire accendere e spegnere
+// la sincronia in un sessantesimo di secondo.
+function leggiRete() {
+  if (!sincronia.configurata()) return;
+
+  const codice = sincronia.codiceAttivo();
+
+  if (comandi.appenaPremuto("importa") && !codice) {
+    // Da qui in poi la tastiera scrive invece di comandare, finché non si
+    // conferma o si annulla.
+    comandi.iniziaScrittura(24);
+    scrittaInCorso = "";
+    return;
+  }
+
+  if (comandi.appenaPremuto("spegni") && codice) {
+    sincronia.spegni();
+    nuvola = null;
+    conflitto = false;
+    annuncia("sincronia spenta", "#c9b189");
+    return;
+  }
+
+  if (comandi.appenaPremuto("esporta") && codice) {
+    sovrascriviLaRete();
+    return;
+  }
+
+  if (!comandi.appenaPremuto("usa")) return;
+
+  if (codice) riprendiDallaRete();
+  else accendiLaRete(sincronia.codiceNuovo());
+}
+
+// La scrittura vive fuori dal giro dei comandi: mentre è attiva la tastiera è
+// tutta sua, e qui si guarda solo se è finita.
+function leggiScrittura() {
+  scrittaInCorso = comandi.testoScritto();
+  const stato = comandi.fineScritturaSeFinita();
+  if (!stato) return;
+
+  scrittaInCorso = null;
+  if (stato.annullato) return;
+
+  const codice = sincronia.normalizza(stato.testo);
+  if (!codice) {
+    annuncia("codice non valido", "#c0705f");
+    return;
+  }
+  // Accendere con un codice altrui non manda su la partita di qui: sarebbe il
+  // modo più veloce di cancellare quella che si voleva riprendere. Si guarda
+  // cosa c'è e si decide.
+  if (!sincronia.attiva(codice)) {
+    annuncia("non si riesce a ricordare il codice", "#c0705f");
+    return;
+  }
+  guardaLaRete();
+  // Chi scrive un codice altrui non ha ancora visto niente: finché non
+  // riprende, questo computer non deve mandare su niente.
+  conflitto = true;
+  annuncia("codice scritto: ora riprendi", "#9ec97e");
+}
+
 function leggiPartita() {
   const voci = caselleDiSalvataggio();
+
+  if (comandi.stoScrivendo() || scrittaInCorso !== null) {
+    leggiScrittura();
+    return;
+  }
+
   for (let i = 0; i < voci.length; i += 1) {
     if (comandi.appenaPremuto(`casella${i + 1}`)) slotScelto = i;
   }
   // Destra e sinistra dentro un menu vogliono già dire "cambia colonna": non
-  // serve un tasto nuovo per due modi.
-  if (comandi.appenaPremuto("sinistra")) modoPartita = "carica";
-  if (comandi.appenaPremuto("destra")) modoPartita = "salva";
+  // serve un tasto nuovo per cambiare modo.
+  if (comandi.appenaPremuto("sinistra") || comandi.appenaPremuto("destra")) {
+    const passo = comandi.appenaPremuto("destra") ? 1 : -1;
+    const quale = MODI_PARTITA.indexOf(modoPartita);
+    modoPartita = MODI_PARTITA[(quale + passo + MODI_PARTITA.length) % MODI_PARTITA.length];
+    if (modoPartita === "rete") guardaLaRete();
+  }
+
+  if (modoPartita === "rete") {
+    leggiRete();
+    return;
+  }
 
   // Il file non guarda le caselle: si esporta la partita in corso e si importa
   // dentro la partita in corso. Una casella è un posto dove tornare, un file è
@@ -299,6 +476,15 @@ function leggiComandi() {
     partitaAperta = !partitaAperta;
     slotScelto = 0;
     ricetteAperte = false;
+    // Chiudendo si lascia perdere anche una scrittura a metà: uscire dalla
+    // schermata con la tastiera ancora in modo scrittura vorrebbe dire un
+    // gioco che non risponde più ai comandi.
+    if (!partitaAperta) {
+      comandi.fineScrittura();
+      scrittaInCorso = null;
+    } else if (modoPartita === "rete") {
+      guardaLaRete();
+    }
     return;
   }
   if (partitaAperta) {
@@ -465,7 +651,9 @@ function aggiorna(passo) {
   // una partita ripresa non li rifà e non li salta.
   if (tempo.giornoCorrente() > albaScritta && tempo.oraCorrente() >= tempo.ALBA_PIENA) {
     albaScritta = tempo.giornoCorrente();
-    const esito = salvataggio.scrivi(salvataggio.ALBA, salvataggio.istantanea(eroe, casellaScelta));
+    const istantanea = salvataggio.istantanea(eroe, casellaScelta);
+    const esito = salvataggio.scrivi(salvataggio.ALBA, istantanea);
+    fallaSalire(istantanea);
     // Il fallimento si dice sempre, la riuscita solo se non copre altro: il
     // campo morto stanotte conta più della conferma di una cosa che doveva
     // funzionare, e nella schermata della partita l'ora della casella si vede.
@@ -558,7 +746,18 @@ function disegnaInterfaccia() {
   if (minimappaVisibile && !aperturaVisibile) minimappa.disegna(p);
   if (ricetteAperte) hud.disegnaRicette(p, ricettaScelta);
   if (partitaAperta) {
-    hud.disegnaPartita(p, { voci: caselleDiSalvataggio(), modo: modoPartita, scelta: slotScelto });
+    hud.disegnaPartita(p, {
+      voci: caselleDiSalvataggio(),
+      modo: modoPartita,
+      scelta: slotScelto,
+      rete: {
+        configurata: sincronia.configurata(),
+        codice: sincronia.codiceAttivo(),
+        nuvola,
+        conflitto,
+        scrittura: scrittaInCorso,
+      },
+    });
   }
   if (aperturaVisibile) hud.disegnaApertura(p, VERSIONE);
 }
@@ -695,6 +894,8 @@ if (parametri.has("diagnostica")) {
     stagioni,
     decadimento,
     salvataggio,
+    sincronia,
+    comandi,
     apriPartita: (modo) => { partitaAperta = true; modoPartita = modo ?? "salva"; slotScelto = 0; },
     partitaAperta: () => partitaAperta,
   };
