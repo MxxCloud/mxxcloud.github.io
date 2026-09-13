@@ -126,21 +126,53 @@ export function disegnaBisogni(p) {
 
 // --- orologio -------------------------------------------------------------
 
-export function disegnaOrologio(p, giorno, orologio, eNotte) {
+// La stagione ha il suo colore, preso dalla valle che disegna. Serve a farla
+// leggere in un colpo d'occhio anche a chi non sta leggendo: si guarda
+// l'orologio per sapere che ora è, e la stagione arriva lo stesso.
+const TINTA_STAGIONE = {
+  estate: "#c9b189",
+  autunno: "#a8762c",
+  inverno: "#8fa8d8",
+  primavera: "#7fb85a",
+};
+
+export function disegnaOrologio(p, { giorno, orologio, eNotte, stagione, giornoNellaStagione, giorniPerStagione }) {
   const riga1 = `GIORNO ${giorno}`;
-  const riga2 = orologio;
-  const larghezza = Math.max(testo.larghezza(riga1), testo.larghezza(riga2));
+  // Il giorno dentro la stagione e non solo il nome: "inverno" da solo non
+  // dice se conviene ancora seminare o se è meglio andare a fare legna.
+  const riga2 = `${stagione.toUpperCase()} ${giornoNellaStagione}/${giorniPerStagione}`;
+  const riga3 = orologio;
+  const larghezza = Math.max(
+    testo.larghezza(riga1),
+    testo.larghezza(riga2),
+    testo.larghezza(riga3)
+  );
   const x = schermo.LARGHEZZA - larghezza - 7;
 
-  riquadro(p, x - 4, 3, larghezza + 8, 18, FONDO, BORDO);
+  riquadro(p, x - 4, 3, larghezza + 8, 25, FONDO, BORDO);
   testo.disegna(p, riga1, x, 6, TENUE);
-  testo.disegna(p, riga2, x, 13, eNotte ? "#8fa8d8" : CHIARO);
+  testo.disegna(p, riga2, x, 13, TINTA_STAGIONE[stagione] ?? TENUE);
+  testo.disegna(p, riga3, x, 20, eNotte ? "#8fa8d8" : CHIARO);
 }
 
 // --- suggerimento dell'azione --------------------------------------------
 
 export function disegnaAzione(p, azione) {
   if (!azione) return;
+
+  // Un'azione impedita si dice al posto del tasto, non dopo averlo premuto.
+  // Il tasto nominato è una promessa, e prometterlo per poi non fare niente è
+  // peggio che non nominarlo: si finisce a pestare la barra chiedendosi se il
+  // gioco ha sentito.
+  if (azione.impedito) {
+    const scritta = azione.impedito.toUpperCase();
+    const larghezza = testo.larghezza(scritta);
+    const x = Math.round((schermo.LARGHEZZA - larghezza) / 2);
+    const y = schermo.ALTEZZA - LATO_CASELLA - MARGINE_BASSO - 14;
+    riquadro(p, x - 5, y - 4, larghezza + 10, 13, FONDO, BORDO);
+    testo.disegna(p, scritta, x, y, "#c0705f");
+    return;
+  }
 
   let etichetta = azione.verbo.toUpperCase();
   if (azione.tipo === "raccogli" && azione.restano > 1) etichetta += ` (${azione.restano})`;

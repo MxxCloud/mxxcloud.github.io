@@ -108,3 +108,11 @@ export function impostaOra(valore) {
   if (!Number.isFinite(valore)) return;
   ore = ((valore % 24) + 24) % 24;
 }
+
+// Lo stesso per il giorno, e per lo stesso motivo moltiplicato per otto: una
+// stagione dura ottanta minuti veri, quindi vedere l'inverno aspettandolo
+// significa non vederlo mai.
+export function impostaGiorno(valore) {
+  if (!Number.isFinite(valore) || valore < 1) return;
+  giorno = Math.floor(valore);
+}

@@ -159,13 +159,24 @@ export const RACCOLTA = {
   [OGGETTO.MATURA]: {
     verbo: "Raccogli",
     colpi: 1,
-    scheggie: ["k", "j", "5"],
+    scheggie: ["y", "x", "5"],
     resa: [
       { cosa: "rapa", quante: 2 },
       // Più semi di quanti ne siano serviti: un orto che non si ripaga i semi
       // non è un orto, è una spesa.
       { cosa: "semi", quante: 2 },
     ],
+  },
+
+  // Un campo morto si ripulisce, e qualcosa rende: gli steli secchi sono
+  // fibra. Non è un premio di consolazione da mettere in pari con il raccolto
+  // — due rape non tornano — ma lasciare la terra guasta per sempre
+  // trasformerebbe una stagione sbagliata in un pezzo di valle bruciato.
+  [OGGETTO.APPASSITA]: {
+    verbo: "Ripulisci",
+    colpi: 1,
+    scheggie: ["9", "a", "g"],
+    resa: [{ cosa: "fibra", quante: 1 }],
   },
   [OGGETTO.FALO_SPENTO]: {
     verbo: "Raccogli",

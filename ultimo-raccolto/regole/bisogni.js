@@ -9,6 +9,8 @@
 // dove hanno senso insieme. Tre indicatori sono già il massimo che un
 // giocatore tiene d'occhio mentre fa altro.
 
+import * as stagioni from "./stagioni.js";
+
 const GIORNO = 600; // secondi reali, come in tempo.js
 
 // Ritmi diversi di proposito: tre barre che calano insieme sono una barra
@@ -61,7 +63,12 @@ export function avanza(passo, { corre = false, siMuove = false } = {}) {
 
   for (const quale of ELENCO) {
     const prima = livelli[quale];
-    let calo = CALO[quale] * passo;
+    // D'inverno viene fame prima. È l'unico posto in cui il freddo esiste:
+    // la temperatura vera arriva con le ferite, ma un inverno che si vede
+    // soltanto sarebbe un fondale dipinto. Siccome d'inverno non si coltiva,
+    // questo è ciò che fa del raccolto d'autunno una provvista invece di una
+    // collezione.
+    let calo = CALO[quale] * passo * (quale === "fame" ? stagioni.fattoreFame() : 1);
     if (quale === "stanchezza") {
       if (corre) calo += STANCHEZZA_CORSA * passo;
       else if (siMuove) calo += STANCHEZZA_CAMMINO * passo;
@@ -88,7 +95,7 @@ export function consuma(quale, quanto) {
 // davvero: si salta la notte, non il proprio metabolismo. È ciò che impedisce
 // al sonno di essere un tasto per far sparire i problemi.
 export function passanoSecondi(secondi) {
-  livelli.fame = limita(livelli.fame - CALO.fame * secondi);
+  livelli.fame = limita(livelli.fame - CALO.fame * secondi * stagioni.fattoreFame());
   livelli.sete = limita(livelli.sete - CALO.sete * secondi);
 }
 
