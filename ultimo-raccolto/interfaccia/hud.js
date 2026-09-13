@@ -333,7 +333,7 @@ function quandoInBreve(quando) {
   return `${due(d.getDate())}/${due(d.getMonth() + 1)} ${due(d.getHours())}:${due(d.getMinutes())}`;
 }
 
-export function disegnaPartita(p, { voci, modo, scelta }) {
+export function disegnaPartita(p, { voci, modo, scelta, rete }) {
   const altezzaRiga = 16;
   const larghezza = 186;
   // Due righe di piede: i tasti sono sei, e su una riga sola non ci stanno
@@ -345,11 +345,18 @@ export function disegnaPartita(p, { voci, modo, scelta }) {
   riquadro(p, x, y, larghezza, altezza, FONDO_PIENO, BORDO);
   testo.disegna(p, "LA PARTITA", x + 7, y + 6, CHIARO);
 
-  // I due modi scritti entrambi, quello attivo acceso: una sola parola che
-  // cambia costringerebbe a ricordare cosa c'era scritto prima.
+  // I modi scritti tutti, quello attivo acceso: una sola parola che cambia
+  // costringerebbe a ricordare cosa c'era scritto prima.
   const salva = modo === "salva";
-  testo.disegna(p, "CARICA", x + 92, y + 6, salva ? GRIGIO : BORDO_SCELTO);
-  testo.disegna(p, "SALVA", x + 132, y + 6, salva ? BORDO_SCELTO : GRIGIO);
+  const acceso = (quale) => (modo === quale ? BORDO_SCELTO : GRIGIO);
+  testo.disegna(p, "CARICA", x + 74, y + 6, acceso("carica"));
+  testo.disegna(p, "SALVA", x + 110, y + 6, acceso("salva"));
+  testo.disegna(p, "RETE", x + 142, y + 6, acceso("rete"));
+
+  if (modo === "rete") {
+    disegnaRete(p, x, y, larghezza, altezza, rete);
+    return;
+  }
 
   voci.forEach((voce, i) => {
     const ry = y + 28 + i * altezzaRiga;
@@ -391,4 +398,76 @@ export function disegnaPartita(p, { voci, modo, scelta }) {
   // porta dentro la partita in corso, ed è quello che serve per cambiare
   // computer.
   testo.disegna(p, "F  SALVA SU FILE      I  APRI UN FILE", x + 7, y + altezza - 9, GRIGIO);
+}
+
+// Il pannello della rete, che prende il posto delle caselle nel modo "rete".
+// Non è un elenco: la sincronia è una cosa sola, accesa o spenta, e disegnarla
+// come una quinta riga la farebbe sembrare una quinta casella.
+function disegnaRete(p, x, y, larghezza, altezza, rete = {}) {
+  const riga = (n) => y + 28 + n * 9;
+
+  if (!rete.configurata) {
+    testo.disegna(p, "LA SINCRONIA NON È CONFIGURATA", x + 7, riga(0), ROSSO);
+    testo.disegna(p, "MANCA LA CHIAVE DEL PROGETTO IN", x + 7, riga(1), GRIGIO);
+    testo.disegna(p, "REGOLE/SINCRONIA.JS", x + 7, riga(2), GRIGIO);
+    testo.disegna(p, "A/D MODO   P CHIUDI", x + 7, y + altezza - 9, GRIGIO);
+    return;
+  }
+
+  // Mentre si scrive il codice il pannello diventa una riga sola: tutto il
+  // resto è roba che non si può fare finché non si è finito di scrivere, e
+  // lasciarla lì accesa sarebbe un invito a premere tasti che non rispondono.
+  if (rete.scrittura !== null && rete.scrittura !== undefined) {
+    testo.disegna(p, "SCRIVI IL CODICE DELL'ALTRA PARTITA", x + 7, riga(0), CHIARO);
+    // Il cursore lampeggia sul ritmo del tempo vero e non dei fotogrammi: a
+    // sessanta al secondo un lampeggio a fotogrammi è troppo veloce.
+    const cursore = Math.floor(Date.now() / 400) % 2 === 0 ? "-" : " ";
+    testo.disegna(p, rete.scrittura + cursore, x + 7, riga(2), BORDO_SCELTO);
+    testo.disegna(p, "INVIO CONFERMA   ESC ANNULLA", x + 7, y + altezza - 9, GRIGIO);
+    return;
+  }
+
+  if (!rete.codice) {
+    testo.disegna(p, "SINCRONIA SPENTA", x + 7, riga(0), GRIGIO);
+    testo.disegna(p, "UN CODICE LEGA QUESTA PARTITA ALLA", x + 7, riga(2), GRIGIO);
+    testo.disegna(p, "RETE. SCRIVILO SULL'ALTRO COMPUTER", x + 7, riga(3), GRIGIO);
+    testo.disegna(p, "E LA VALLE TI SEGUE.", x + 7, riga(4), GRIGIO);
+    testo.disegna(p, "SPAZIO CREA UN CODICE", x + 7, y + altezza - 17, GRIGIO);
+    testo.disegna(p, "I  SCRIVI UN CODICE CHE HAI GIÀ", x + 7, y + altezza - 9, GRIGIO);
+    return;
+  }
+
+  testo.disegna(p, "CODICE", x + 7, riga(0), GRIGIO);
+  // Il codice è la cosa da ricopiare a mano, quindi è la cosa più in vista
+  // della schermata.
+  testo.disegna(p, rete.codice, x + 40, riga(0), BORDO_SCELTO);
+
+  testo.disegna(p, "IN RETE", x + 7, riga(2), GRIGIO);
+  if (rete.nuvola === "attesa") {
+    testo.disegna(p, "CONTROLLO...", x + 40, riga(2), GRIGIO);
+  } else if (!rete.nuvola) {
+    testo.disegna(p, "NON RAGGIUNGIBILE", x + 40, riga(2), ROSSO);
+  } else if (rete.nuvola.vuota) {
+    testo.disegna(p, "ANCORA NIENTE", x + 40, riga(2), GRIGIO);
+  } else {
+    const quando = `GIORNO ${rete.nuvola.giorno}  ${(rete.nuvola.stagione ?? "").toUpperCase()}`;
+    testo.disegna(p, quando, x + 40, riga(2), CHIARO);
+    testo.disegna(p, rete.nuvola.seme ?? "", x + 40, riga(3), GRIGIO);
+  }
+
+  // Il conflitto si dice qui e non solo con un messaggio di passaggio: è uno
+  // stato in cui si resta finché non si decide, non una cosa successa una
+  // volta.
+  if (rete.conflitto) {
+    testo.disegna(p, "IN RETE C'È UNA PARTITA CHE QUESTO", x + 7, riga(4), ROSSO);
+    testo.disegna(p, "COMPUTER NON HA MAI VISTO. NIENTE", x + 7, riga(5), ROSSO);
+    testo.disegna(p, "SALE FINCHÉ NON DECIDI.", x + 7, riga(6), ROSSO);
+    testo.disegna(p, "SPAZIO RIPRENDI QUELLA IN RETE", x + 7, y + altezza - 17, GRIGIO);
+    testo.disegna(p, "F  TIENI QUESTA E SOVRASCRIVI", x + 7, y + altezza - 9, GRIGIO);
+    return;
+  }
+
+  testo.disegna(p, "OGNI SALVATAGGIO SALE DA SOLO.", x + 7, riga(5), GRIGIO);
+  testo.disegna(p, "SPAZIO RIPRENDI DALLA RETE", x + 7, y + altezza - 17, GRIGIO);
+  testo.disegna(p, "X  SPEGNI LA SINCRONIA", x + 7, y + altezza - 9, GRIGIO);
 }

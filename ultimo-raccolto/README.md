@@ -122,8 +122,28 @@ computer c'è il file: dalla stessa schermata, `F` scrive la partita in corso
 in un `.json` e `I` ne apre uno. È un file leggibile e non compresso, come il
 backup di Budget futuro: si apre, si guarda, e si mette dove si vuole.
 
-La sincronia vera — una partita che si ritrova da sola su un altro computer —
-è il passo dopo, e questo file ne è la metà difficile già fatta.
+**La sincronia in rete** è la terza via, e sta nel modo `RETE` della stessa
+schermata. Il gioco genera un codice, lo scrivi sull'altro computer, e da lì
+in poi ogni salvataggio — l'alba compresa — sale da solo. Niente account,
+niente password: chi ha il codice ha la partita, quindi il codice si tiene
+come si tiene una chiave di casa.
+
+Il locale resta la verità: la rete è una copia, e una connessione che non va
+costa la sincronia e mai la partita. Quello che sale è compresso, perché
+centotrenta kilobyte diventano otto e nessuno vuole spedirne centotrenta ogni
+volta che dorme.
+
+Due computer con lo stesso codice scrivono nello stesso posto, quindi c'è una
+guardia: si manda solo se in rete c'è ancora l'ultima scrittura che questo
+computer ha visto, e a deciderlo è il database insieme alla scrittura, non un
+controllo fatto prima. Se qualcun altro ha scritto nel frattempo, niente sale
+finché non decidi tu quale partita tenere — senza quella guardia basterebbe
+accendere il gioco sul portatile e arrivare all'alba per cancellare una
+settimana di lavoro.
+
+Serve un progetto Firebase gratuito: due stringhe in `regole/sincronia.js`.
+Finché la chiave è vuota la sincronia si spegne da sola e lo dice, invece di
+fallire in un modo che sembra un guasto di rete.
 
 Non si muore ancora, e non c'è nessuno da incontrare.
 
@@ -177,7 +197,7 @@ solo la rimanda, non la sostituisce.
 | `G` | posare per terra la casella scelta, davanti ai piedi |
 | `C` | aprire e chiudere le costruzioni |
 | `M` | accendere e spegnere la minimappa |
-| `P` | salvare e caricare: `1`-`4` la casella, `A` `D` il modo, `F` e `I` il file |
+| `P` | la partita: `1`-`4` la casella, `A` `D` il modo, `F` e `I` il file, `RETE` per la sincronia |
 | `F3` | diagnostica |
 
 Si agisce su quello che si ha **davanti**, non sotto i piedi: è anche l'unico
