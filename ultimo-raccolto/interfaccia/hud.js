@@ -336,7 +336,9 @@ function quandoInBreve(quando) {
 export function disegnaPartita(p, { voci, modo, scelta }) {
   const altezzaRiga = 16;
   const larghezza = 186;
-  const altezza = 27 + voci.length * altezzaRiga + 12;
+  // Due righe di piede: i tasti sono sei, e su una riga sola non ci stanno
+  // senza diventare sigle da decifrare.
+  const altezza = 27 + voci.length * altezzaRiga + 20;
   const x = Math.round((schermo.LARGHEZZA - larghezza) / 2);
   const y = Math.round((schermo.ALTEZZA - altezza) / 2) - 12;
 
@@ -384,5 +386,9 @@ export function disegnaPartita(p, { voci, modo, scelta }) {
   });
 
   const verbo = salva ? "SALVA" : "CARICA";
-  testo.disegna(p, `1-4 SCEGLI   A/D MODO   SPAZIO ${verbo}   P CHIUDI`, x + 7, y + altezza - 9, GRIGIO);
+  testo.disegna(p, `1-4 SCEGLI   A/D MODO   SPAZIO ${verbo}   P CHIUDI`, x + 7, y + altezza - 17, GRIGIO);
+  // Il file sta su una riga sua perché non riguarda le caselle: porta via e
+  // porta dentro la partita in corso, ed è quello che serve per cambiare
+  // computer.
+  testo.disegna(p, "F  SALVA SU FILE      I  APRI UN FILE", x + 7, y + altezza - 9, GRIGIO);
 }

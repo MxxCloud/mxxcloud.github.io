@@ -113,8 +113,17 @@ si cambia con `A` e `D`.
 
 Non si salva il mondo, si salva quello che hai cambiato: il resto è una
 funzione delle coordinate e del seme, e ricalcolarlo costa meno che scriverlo.
-I salvataggi stanno nell'archivio del browser, quindi su quel dispositivo e
-su quello soltanto, e svuotare i dati del sito li cancella.
+Un salvataggio pesa quarantaquattro byte per tassello toccato — una partita
+lunga sta sui centotrenta kilobyte.
+
+Le caselle stanno nell'archivio del browser, quindi su quel dispositivo e su
+quello soltanto, e svuotare i dati del sito le cancella. Per cambiare
+computer c'è il file: dalla stessa schermata, `F` scrive la partita in corso
+in un `.json` e `I` ne apre uno. È un file leggibile e non compresso, come il
+backup di Budget futuro: si apre, si guarda, e si mette dove si vuole.
+
+La sincronia vera — una partita che si ritrova da sola su un altro computer —
+è il passo dopo, e questo file ne è la metà difficile già fatta.
 
 Non si muore ancora, e non c'è nessuno da incontrare.
 
@@ -168,7 +177,7 @@ solo la rimanda, non la sostituisce.
 | `G` | posare per terra la casella scelta, davanti ai piedi |
 | `C` | aprire e chiudere le costruzioni |
 | `M` | accendere e spegnere la minimappa |
-| `P` | salvare e caricare: `1`-`4` la casella, `A` `D` il modo |
+| `P` | salvare e caricare: `1`-`4` la casella, `A` `D` il modo, `F` e `I` il file |
 | `F3` | diagnostica |
 
 Si agisce su quello che si ha **davanti**, non sotto i piedi: è anche l'unico

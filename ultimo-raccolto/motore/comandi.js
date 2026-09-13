@@ -7,7 +7,7 @@
 
 export const AZIONI = [
   "su", "giu", "sinistra", "destra", "usa", "corri", "ricette", "minimappa",
-  "consuma", "getta", "partita",
+  "consuma", "getta", "partita", "esporta", "importa",
 ];
 
 // Otto caselle, otto tasti: la selezione con la rotellina o con Q/E costringe
@@ -27,6 +27,11 @@ const MAPPA = {
   KeyG: "getta",
   // "P" come partita. Non "S", che è già camminare all'indietro.
   KeyP: "partita",
+  // Valgono solo dentro la schermata della partita, che è modale e se li
+  // prende tutti. "F" come file e "I" come importa: dicono la direzione, che
+  // è l'unica cosa che si rischia di sbagliare fra le due.
+  KeyF: "esporta",
+  KeyI: "importa",
 };
 
 for (let i = 1; i <= CASELLE; i += 1) MAPPA[`Digit${i}`] = `casella${i}`;
