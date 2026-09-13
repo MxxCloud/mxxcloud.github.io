@@ -16,7 +16,7 @@ import * as ortoArte from "../arte/sprite-orto.js";
 import * as transizioniArte from "../arte/sprite-transizioni.js";
 import { TERRENO, OGGETTO, terrenoIn, oggettoIn } from "./generazione.js";
 import * as modifiche from "./modifiche.js";
-import { TAVOLOZZA_BAGNATA } from "../arte/tavolozza.js";
+import { TAVOLOZZA, TAVOLOZZA_BAGNATA } from "../arte/tavolozza.js";
 
 const { TASSELLO } = schermo;
 export const SETTORE = 16;
@@ -67,6 +67,11 @@ const CATALOGO_OGGETTI = {
   [OGGETTO.CRESCIUTA]: { sprite: ortoArte.CRESCIUTA, solido: false, bagnabile: true },
   [OGGETTO.MATURA]: { sprite: ortoArte.MATURA, solido: false, bagnabile: true },
 
+  // L'appassita non è bagnabile: innaffiare un morto non lo riporta indietro,
+  // e lasciarla scurire come il resto dell'orto direbbe che si sta facendo
+  // qualcosa di utile.
+  [OGGETTO.APPASSITA]: { sprite: ortoArte.APPASSITA, solido: false },
+
   // Non ferma, e non potrebbe: un mucchio si raccoglie standoci davanti, ma
   // uno lasciato in mezzo a un passaggio stretto diventerebbe un muro che ti
   // sei costruito da solo.
@@ -94,6 +99,24 @@ export function registraIconeMucchio(icone) {
 // Quanto in alto sta l'icona sul sacco: i due pixel di margine la centrano in
 // larghezza, e la riga in meno la fa appoggiare invece che galleggiare.
 const SCARTO_ICONA = [2, 1];
+
+// Con che colori si cuoce il mondo adesso. Le stagioni sono una regola, e le
+// regole non si importano da qui: la coppia arriva dall'alto e la mappa sa
+// soltanto che esistono due tavolozze, una asciutta e una bagnata.
+let tavolozzaMondo = TAVOLOZZA;
+let tavolozzaMondoBagnata = TAVOLOZZA_BAGNATA;
+
+export function impostaTavolozze(asciutta, bagnata) {
+  if (asciutta === tavolozzaMondo && bagnata === tavolozzaMondoBagnata) return false;
+  tavolozzaMondo = asciutta;
+  tavolozzaMondoBagnata = bagnata;
+  // Ogni settore cotto porta addosso i colori vecchi: si buttano tutti, e
+  // vengono rifatti dalla stessa macchina che li fa la prima volta. È una
+  // stangata in un fotogramma solo, e capita quattro volte in trentadue
+  // giorni — misurata, non stimata: vedi costoCottura().
+  settori.clear();
+  return true;
+}
 
 // --- transizioni ----------------------------------------------------------
 
@@ -224,7 +247,7 @@ function grigliaTerreni(sx, sy) {
 function tasselloDi(tx, ty, terreno) {
   const varianti = CATALOGO[terreno].varianti;
   const quale = Math.floor(impronta(tx, ty, seme ^ 0x5bf03635) * varianti.length) % varianti.length;
-  return cuoci(varianti[quale]);
+  return cuoci(varianti[quale], tavolozzaMondo);
 }
 
 // La maschera cambia da un tassello all'altro lungo lo stesso confine: con una
@@ -281,7 +304,7 @@ function cuociSettore(sx, sy) {
         // Un tassello innaffiato si disegna con la terra scura: è la stessa
         // immagine cotta con un'altra tavolozza, non un secondo disegno.
         const bagnato = voce.bagnabile && modifiche.di(tx, ty)?.bagnato === true;
-        const tavolozza = bagnato ? TAVOLOZZA_BAGNATA : undefined;
+        const tavolozza = bagnato ? tavolozzaMondoBagnata : tavolozzaMondo;
         const fotogrammi = voce.fotogrammi
           ? voce.fotogrammi.map((f) => cuoci(f, tavolozza))
           : [cuoci(voce.sprite, tavolozza)];

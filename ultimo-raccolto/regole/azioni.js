@@ -10,6 +10,7 @@ import * as tempo from "./tempo.js";
 import * as bisogni from "./bisogni.js";
 import { CATALOGO, ATTREZZI, raccoltaDi, colpiNecessari } from "./oggetti.js";
 import * as orto from "./orto.js";
+import * as stagioni from "./stagioni.js";
 
 const { TASSELLO } = schermo;
 
@@ -84,6 +85,13 @@ export function azionePossibile(eroe, cosaInMano) {
   }
 
   if (cosaInMano === "semi" && b.oggetto === OGGETTO.TERRA_ZAPPATA) {
+    // Zappare d'inverno resta permesso — preparare il campo per la primavera è
+    // una cosa sensata da fare — ma seminare no: il seme morirebbe la notte
+    // stessa, e farglielo scoprire dopo sarebbe una trappola travestita da
+    // regola.
+    if (!stagioni.siColtiva()) {
+      return { tipo: "semina", verbo: "Semina", impedito: "d'inverno non germoglia", bersaglio: b };
+    }
     return { tipo: "semina", verbo: "Semina", bersaglio: b };
   }
 
@@ -199,7 +207,7 @@ export function consuma(cosaInMano) {
 // abbatte un albero non possono sembrare lo stesso gesto.
 export function agisci(eroe, cosaInMano) {
   const azione = azionePossibile(eroe, cosaInMano);
-  if (!azione) return null;
+  if (!azione || azione.impedito) return null;
 
   const { tx, ty } = azione.bersaglio;
 
@@ -265,7 +273,12 @@ export function agisci(eroe, cosaInMano) {
 
   if (azione.tipo === "posa") {
     if (!inventario.togli(azione.cosa, 1)) return null;
-    mappa.cambiaTassello(tx, ty, { oggetto: CATALOGO[azione.cosa].posa });
+    // Il giorno in cui è stato posato resta scritto sul tassello: è quello che
+    // permette ai fuochi di consumarsi invece di restare accesi per sempre.
+    mappa.cambiaTassello(tx, ty, {
+      oggetto: CATALOGO[azione.cosa].posa,
+      posata: tempo.giornoCorrente(),
+    });
     return { tipo: "posa", tx, ty, cosa: azione.cosa };
   }
 

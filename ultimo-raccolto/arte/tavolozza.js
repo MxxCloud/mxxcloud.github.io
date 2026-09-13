@@ -78,6 +78,15 @@ export const TAVOLOZZA = {
   // stesso, e una scheggia che non si vede non dice niente a nessuno.
   w: "#8a6a45",
 
+  // Il verde dell'orto, e non quello delle chiome: sono due verdi uguali con
+  // due chiavi diverse di proposito. Le chiome cambiano con la stagione, le
+  // piantine no — a quale stadio è una coltura è l'informazione su cui il
+  // giocatore agisce, e leggerla non può dipendere dal mese. È lo stesso
+  // motivo per cui la terra innaffiata è più scura: nell'orto il colore
+  // risponde a una domanda, non descrive la luce.
+  x: "#355a26",
+  y: "#48742f",
+
   t: "#a33b2a", // bacche
   u: "#e0913a", // fiamma
   v: "#f2d06b", // fiamma, cuore
@@ -100,3 +109,87 @@ export const TAVOLOZZA_BAGNATA = {
   c: "#4e3a26",
   g: "#221a11",
 };
+
+// --- le stagioni ----------------------------------------------------------
+
+// Quattro valli invece di una, e nemmeno un disegno in più: cambiano soltanto
+// le chiavi del verde. È il pagamento di una scelta fatta il primo giorno —
+// la tavolozza è un parametro della cottura, non una costante dentro sprite.js
+// — e il conto torna adesso, che l'autunno costa dodici righe invece di un
+// secondo atlante di tasselli.
+//
+// Si toccano solo erba, sterpaglia e chiome. Terra, roccia, acqua e legno
+// restano: una valle che cambia colore tutta insieme si legge come un filtro
+// applicato allo schermo, non come una stagione. Quello che cambia davvero
+// fuori dalla finestra è ciò che è vivo.
+const VESTI = {
+  // La tavolozza base è già di fine estate: l'estate non veste niente. Averla
+  // come voce vuota invece che come caso speciale tiene una strada sola.
+  estate: {},
+
+  // L'autunno vira al rame. La sterpaglia cambia poco — era già secca — e
+  // questo è giusto: in autunno l'erba raggiunge la sterpaglia, non il
+  // contrario.
+  autunno: {
+    "6": "#4a3b23",
+    "7": "#63502c",
+    "8": "#8a6430",
+    "9": "#7a6f35",
+    a: "#968447",
+    i: "#4a3218",
+    j: "#7a5320",
+    k: "#a8762c",
+  },
+
+  // L'inverno non è bianco. Una valle coperta di neve vorrebbe tasselli nuovi
+  // e un mondo dove il terreno non si legge più; questo è il gelo secco che
+  // toglie il colore alle cose senza nasconderle — l'erba spenta, le chiome
+  // ridotte a rami. Si riconosce a colpo d'occhio e resta leggibile.
+  inverno: {
+    // Più chiara della roccia e appena virata al freddo. La prima versione
+    // era grigio-verde e finiva sulla stessa tinta della roccia: un campo e
+    // una pietraia indistinguibili sono peggio di una stagione che non si
+    // vede, perché tolgono la lettura del terreno invece di un colore.
+    "6": "#56605c",
+    "7": "#68746e",
+    "8": "#7d8a83",
+    "9": "#6f7466",
+    a: "#888c7c",
+    i: "#2e2a22",
+    j: "#463d2f",
+    k: "#5c5040",
+  },
+
+  // La primavera è l'unica più viva della base: verdi più freddi e più chiari,
+  // il contrario del giallo di fine estate.
+  primavera: {
+    "6": "#2b4f28",
+    "7": "#3c6b31",
+    "8": "#56913f",
+    "9": "#6f7c3e",
+    a: "#8a9455",
+    i: "#26471f",
+    j: "#3a6b28",
+    k: "#55913a",
+  },
+};
+
+// Cotte una volta sola e tenute per sempre. L'identità dell'oggetto conta:
+// cuoci() mette in cache per identità della tavolozza, quindi ricostruirne una
+// a ogni cambio di stagione butterebbe via ogni sprite già cotto e lo
+// rifarebbe pixel per pixel.
+const PER_STAGIONE = {};
+const PER_STAGIONE_BAGNATA = {};
+
+for (const [stagione, veste] of Object.entries(VESTI)) {
+  PER_STAGIONE[stagione] = { ...TAVOLOZZA, ...veste };
+  PER_STAGIONE_BAGNATA[stagione] = { ...TAVOLOZZA_BAGNATA, ...veste };
+}
+
+export function tavolozzaDi(stagione) {
+  return PER_STAGIONE[stagione] ?? TAVOLOZZA;
+}
+
+export function tavolozzaBagnataDi(stagione) {
+  return PER_STAGIONE_BAGNATA[stagione] ?? TAVOLOZZA_BAGNATA;
+}

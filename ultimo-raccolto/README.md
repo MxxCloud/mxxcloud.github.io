@@ -32,8 +32,9 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M1**. C'è un ciclo di gioco vero, anche se corto: **di giorno si
-raccoglie, di notte serve luce.**
+È finita **M4**. Il ciclo di gioco è quello che il pilastro promette: **di
+giorno si raccoglie, di notte serve luce, e l'anno gira che tu sia pronto o
+no.**
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
 con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne
@@ -74,13 +75,34 @@ della velocità. Tre bisogni ignorati riducono a un quarto.
 quello che si è strappato dai cespugli, si innaffia con un secchio riempito al
 lago e si torna dopo giorni a raccogliere. Una coltura avanza di uno stadio
 per ogni giorno in cui è stata innaffiata: saltare un giorno non la uccide, la
-ferma — appassire è roba della tappa del decadimento. I solchi bagnati si
-riconoscono dal terreno più scuro.
+ferma. I solchi bagnati si riconoscono dal terreno più scuro.
 
 Dormire porta all'alba, quindi anche l'orto va avanti: è il modo di
 comprimere l'attesa senza toglierla.
 
-Non si muore ancora, non ci sono stagioni, e non c'è nessuno da incontrare.
+**Le stagioni** durano otto giorni l'una, cioè ottanta minuti veri, e si
+vedono: la valle cambia colore perché gli stessi disegni vengono cotti con
+un'altra tavolozza. Si comincia di fine estate, quindi la prima cosa che
+arriva è l'autunno — la stagione buona — e subito dopo l'inverno.
+
+**D'inverno non si coltiva.** Non si semina, e quello che è rimasto piantato
+muore, maturo compreso. Zappare resta permesso: preparare il campo per la
+primavera è una cosa sensata da fare. D'inverno viene anche fame prima, ed è
+questo a trasformare il raccolto d'autunno da collezione a provvista.
+
+**Quello che lasci si degrada.** Una coltura matura non raccolta regge tre
+giorni e poi marcisce in piedi; un campo morto si ripulisce e rende un po' di
+fibra, così una stagione sbagliata non lascia un pezzo di valle bruciato. I
+fuochi si consumano: la torcia piantata dura un giorno, il falò due e lascia
+la cenere — che si raccoglie e si ripianta, perché a mancare è il posto
+acceso, non l'oggetto.
+
+Non si degrada quello che sta in un mucchio per terra, e non per dimenticanza:
+finché non ci sono contenitori in cui mettere le cose al sicuro — e sono della
+tappa della costruzione — far marcire anche quello toglierebbe l'unico
+ripostiglio che esiste.
+
+Non si muore ancora, e non c'è nessuno da incontrare.
 
 ## La mappa di strada
 
@@ -147,13 +169,16 @@ I comandi su schermo per il telefono arrivano più avanti, ma il gioco non parla
 mai di tasti: chiede a `motore/comandi.js` se si sta andando avanti. È l'unico
 file da toccare quel giorno.
 
-## L'indirizzo accetta tre parametri
+## L'indirizzo accetta quattro parametri
 
 `?seme=ombra` apre una valle diversa. Il seme è un testo qualsiasi e la stessa
 parola dà sempre la stessa valle, quindi una valle che piace si condivide
 copiando l'indirizzo. `?ora=22` comincia la partita a quell'ora, perché
 aspettare quindici minuti veri per vedere com'è la notte è il modo migliore
-per non guardarla mai. `?diagnostica` accende il pannello dei numeri.
+per non guardarla mai. `?giorno=17` comincia in un altro punto dell'anno, ed è
+lo stesso motivo moltiplicato per otto: una stagione dura ottanta minuti veri,
+quindi vedere l'inverno aspettandolo significa non vederlo mai.
+`?diagnostica` accende il pannello dei numeri.
 
 ## Com'è fatto
 

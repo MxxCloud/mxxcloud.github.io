@@ -43,6 +43,9 @@ export const OGGETTO = {
   // che non ci stava. Cosa contiene e quanto non sta qui ma nelle modifiche,
   // perché sarebbero centoventi identificatori invece di uno.
   MUCCHIO: 13,
+  // Quello che resta di una coltura presa dall'inverno, o lasciata matura
+  // troppo a lungo. Non è un quinto stadio: è la fine di quella strada.
+  APPASSITA: 14,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati

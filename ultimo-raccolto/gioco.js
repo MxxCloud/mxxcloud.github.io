@@ -17,6 +17,9 @@ import * as giocatore from "./entita/giocatore.js";
 import * as tempo from "./regole/tempo.js";
 import * as bisogni from "./regole/bisogni.js";
 import * as orto from "./regole/orto.js";
+import * as stagioni from "./regole/stagioni.js";
+import * as decadimento from "./regole/decadimento.js";
+import { tavolozzaDi, tavolozzaBagnataDi } from "./arte/tavolozza.js";
 import * as inventario from "./regole/inventario.js";
 import * as azioni from "./regole/azioni.js";
 import { RICETTE, fai } from "./regole/ricette.js";
@@ -30,7 +33,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M3.1";
+const VERSIONE = "M4";
 
 // --- elementi -------------------------------------------------------------
 
@@ -70,6 +73,37 @@ function cosaInMano() {
 
 function annuncia(testo, colore) {
   messaggio = { testo: testo.toUpperCase(), colore, vita: 1 };
+}
+
+// --- le stagioni ----------------------------------------------------------
+
+// Quale stagione sta indossando la valle adesso. Serve a fare il lavoro una
+// volta sola: rivestirla significa buttare via tutti i settori cotti, e farlo
+// a ogni fotogramma sarebbe un modo creativo di non disegnare mai niente.
+let stagioneVestita = null;
+
+// Scritte a mano invece che composte: in italiano l'articolo e il participio
+// cambiano con il genere, e una regola che li indovini costerebbe più di
+// quattro righe scritte giuste.
+const ARRIVO = {
+  estate: "è arrivata l'estate",
+  autunno: "è arrivato l'autunno",
+  inverno: "è arrivato l'inverno",
+  primavera: "è arrivata la primavera",
+};
+
+// Restituisce la stagione appena arrivata, o null se non è cambiato niente:
+// chi chiama deve poter dire "l'inverno ha preso l'orto" invece di due
+// messaggi che si coprono a vicenda.
+function vestiLaValle() {
+  const stagione = stagioni.stagioneCorrente();
+  if (stagione === stagioneVestita) return null;
+  const prima = stagioneVestita;
+  stagioneVestita = stagione;
+  mappa.impostaTavolozze(tavolozzaDi(stagione), tavolozzaBagnataDi(stagione));
+  // Al primo giro non si annuncia niente: "è arrivata l'estate" appena aperto
+  // il gioco è rumore, perché non è arrivato niente — si è cominciato lì.
+  return prima === null ? null : stagione;
 }
 
 // --- comandi --------------------------------------------------------------
@@ -216,11 +250,28 @@ function aggiorna(passo) {
   // matura in giorni, e contarli è l'unico modo perché aspettare significhi
   // qualcosa. È un ciclo e non un confronto perché una notte dormita può far
   // passare un giorno intero in un colpo solo.
+  let cresciute = 0;
+  let appassite = 0;
+  let spenti = 0;
   while (ultimoGiorno < tempo.giornoCorrente()) {
-    const cresciute = orto.nuovoGiorno();
     ultimoGiorno += 1;
-    if (cresciute > 0) annuncia("l'orto è cresciuto", "#9ec97e");
+    const orti = orto.nuovoGiorno();
+    cresciute += orti.cresciute;
+    appassite += orti.appassite;
+    spenti += decadimento.nuovoGiorno();
   }
+
+  const arrivata = vestiLaValle();
+
+  // Un messaggio solo: durano un paio di secondi, e tre in fila vorrebbero
+  // dire vederne uno — l'ultimo, che non è detto sia il più importante.
+  // L'ordine è quello di gravità, e la stagione che si porta via il campo si
+  // dice in una frase sola invece che in due che si coprono.
+  if (appassite > 0 && arrivata) annuncia(`${arrivata}: l'orto è morto`, "#c0705f");
+  else if (appassite > 0) annuncia(`l'orto è marcito: ${appassite}`, "#c0705f");
+  else if (arrivata) annuncia(ARRIVO[arrivata], "#c9b189");
+  else if (spenti > 0) annuncia("il fuoco si è spento", "#c0705f");
+  else if (cresciute > 0) annuncia("l'orto è cresciuto", "#9ec97e");
 
   mappa.precuociVicini();
 
@@ -292,7 +343,14 @@ function disegnaBuio() {
 function disegnaInterfaccia() {
   const p = schermo.pennello();
   hud.disegnaBisogni(p);
-  hud.disegnaOrologio(p, tempo.giornoCorrente(), tempo.orologio(), tempo.eNotte());
+  hud.disegnaOrologio(p, {
+    giorno: tempo.giornoCorrente(),
+    orologio: tempo.orologio(),
+    eNotte: tempo.eNotte(),
+    stagione: stagioni.stagioneCorrente(),
+    giornoNellaStagione: stagioni.giornoNellaStagione(),
+    giorniPerStagione: stagioni.GIORNI_PER_STAGIONE,
+  });
   hud.disegnaAzione(p, azioneCorrente);
   const barra = hud.disegnaZaino(p, casellaScelta);
   hud.disegnaPromemoria(p, barra, cosaInMano());
@@ -359,9 +417,20 @@ mappa.registraIconeMucchio(
   Object.fromEntries(Object.entries(CATALOGO).map(([id, voce]) => [id, voce.icona]))
 );
 
-// "?ora=22" comincia di notte. Il seme e l'ora nell'indirizzo rendono una
-// situazione riproducibile: la stessa valle alla stessa ora, ogni volta.
+// "?ora=22" comincia di notte, "?giorno=20" comincia d'inverno. Il seme, l'ora
+// e il giorno nell'indirizzo rendono una situazione riproducibile: la stessa
+// valle nello stesso momento dell'anno, ogni volta.
 if (parametri.has("ora")) tempo.impostaOra(Number(parametri.get("ora")));
+if (parametri.has("giorno")) tempo.impostaGiorno(Number(parametri.get("giorno")));
+// Il conto dei giorni parte da dove parte la partita, altrimenti cominciando
+// dal giorno venti il ciclo del cambio giorno girerebbe diciannove volte
+// facendo appassire un orto che non è mai esistito.
+ultimoGiorno = tempo.giornoCorrente();
+
+// Dopo il giorno e non prima: la valle si veste della stagione in cui si
+// comincia, non di quella del primo giorno per poi cambiarsi al primo
+// fotogramma annunciando un arrivo che non c'è stato.
+vestiLaValle();
 
 entita.registra(giocatore.TIPO, giocatore.aggiorna);
 const partenza = giocatore.puntoDiPartenza(0, 0);
@@ -414,5 +483,7 @@ if (parametri.has("diagnostica")) {
     minimappaAccesa: () => minimappaVisibile,
     bisogni,
     orto,
+    stagioni,
+    decadimento,
   };
 }
