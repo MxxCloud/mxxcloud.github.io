@@ -46,6 +46,12 @@ export function azionePossibile(eroe, cosaInMano) {
     return { tipo: "dormi", verbo: "Dormi", bersaglio: b };
   }
 
+  // Prima di tutto il resto: un mucchio sta per terra e non copre niente, e
+  // chi ci si mette davanti lo sta guardando per riprenderselo.
+  if (b.oggetto === OGGETTO.MUCCHIO) {
+    return { tipo: "prendi", verbo: "Prendi", bersaglio: b };
+  }
+
   const raccolta = raccoltaDi(b.oggetto);
   if (raccolta) {
     const dati = modifiche.di(b.tx, b.ty);
@@ -108,6 +114,54 @@ function posabile(b) {
   return !mappa.solidoIn(b.tx, b.ty);
 }
 
+// --- mucchi per terra -----------------------------------------------------
+
+// Mettere qualcosa per terra. Un tassello regge un mucchio solo, quindi o è
+// libero, o contiene già la stessa cosa e allora si sommano: due mucchi di
+// legna affiancati sarebbero soltanto due tasselli occupati.
+function deponi(tx, ty, cosa, quante) {
+  const oggetto = mappa.oggettoDi(tx, ty);
+  if (oggetto === OGGETTO.MUCCHIO) {
+    const dati = modifiche.di(tx, ty);
+    if (dati?.cosa !== cosa) return false;
+    mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.MUCCHIO, cosa, quante: dati.quante + quante });
+    return true;
+  }
+  if (oggetto !== OGGETTO.NESSUNO || mappa.solidoIn(tx, ty)) return false;
+  mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.MUCCHIO, cosa, quante });
+  return true;
+}
+
+// Il tassello indicato, altrimenti uno degli otto attorno. Serve a quello che
+// avanza da un raccolto: la roba cade dove è cresciuta, e se lì non c'è posto
+// cade accanto invece di svanire.
+const INTORNO = [
+  [0, 0], [0, -1], [1, 0], [0, 1], [-1, 0],
+  [-1, -1], [1, -1], [1, 1], [-1, 1],
+];
+
+function deponiVicino(tx, ty, cosa, quante) {
+  for (const [dx, dy] of INTORNO) {
+    if (deponi(tx + dx, ty + dy, cosa, quante)) return { tx: tx + dx, ty: ty + dy };
+  }
+  return null;
+}
+
+// Gettare: si svuota una casella intera davanti ai piedi. Sta su un tasto suo
+// e non sulla barra perché la barra è già contesa da otto azioni che
+// dipendono dal contesto — con la zappa in mano davanti all'erba la barra
+// zappa, e non ci sarebbe verso di posare la zappa su un prato.
+export function getta(eroe, indice) {
+  const casella = inventario.contenuto()[indice];
+  if (!casella) return null;
+
+  const { tx, ty } = bersaglio(eroe);
+  if (!deponi(tx, ty, casella.cosa, casella.quantita)) return { tipo: "nonCePosto" };
+
+  inventario.svuotaCasella(indice);
+  return { tipo: "gettato", cosa: casella.cosa, quante: casella.quantita, tx, ty };
+}
+
 // L'esito della raccolta è deciso dalle coordinate, non dal caso del momento:
 // lo stesso cespuglio ha le bacche o non le ha, sempre. Oltre a rispettare la
 // regola che qui Math.random non esiste, rende il mondo una cosa che si può
@@ -152,6 +206,22 @@ export function agisci(eroe, cosaInMano) {
   if (azione.tipo === "bevi") {
     bisogni.ristora("sete", SORSO);
     return { tipo: "bevi" };
+  }
+
+  if (azione.tipo === "prendi") {
+    const dati = modifiche.di(tx, ty);
+    if (!dati) return null;
+    // Si prende quello che ci sta, e il resto resta lì. Far sparire un mucchio
+    // perché lo zaino era pieno sarebbe lo stesso difetto da cui nascono i
+    // mucchi.
+    const resto = inventario.aggiungi(dati.cosa, dati.quante);
+    if (resto === dati.quante) return { tipo: "zainoPieno" };
+    if (resto > 0) {
+      mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.MUCCHIO, cosa: dati.cosa, quante: resto });
+    } else {
+      mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
+    }
+    return { tipo: "preso", cosa: dati.cosa, quante: dati.quante - resto, resta: resto };
   }
 
   if (azione.tipo === "riempi") {
@@ -220,8 +290,18 @@ export function agisci(eroe, cosaInMano) {
     if (resto > 0) avanzate.push({ cosa: voce.cosa, quante: resto });
   }
 
-  // L'oggetto sparisce comunque, anche se lo zaino era pieno: è il prezzo di
-  // non guardare prima. L'interfaccia lo dice chiaramente.
+  // Il tassello si libera per primo, così quello che avanza può cadere proprio
+  // lì: è dove il giocatore sta già guardando.
   mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
-  return { tipo: "raccolto", tx, ty, scheggie: raccolta.scheggie, ottenuto, avanzate };
+
+  // Quello che non ci sta resta per terra invece di sparire. Prima spariva, e
+  // "zaino pieno, perso qualcosa" era un messaggio che annunciava un danno
+  // senza offrire niente da farci: il mondo si riprende quello che è tuo, ma
+  // non deve mangiarselo mentre guardi.
+  const perse = [];
+  for (const voce of avanzate) {
+    if (!deponiVicino(tx, ty, voce.cosa, voce.quante)) perse.push(voce);
+  }
+
+  return { tipo: "raccolto", tx, ty, scheggie: raccolta.scheggie, ottenuto, avanzate, perse };
 }

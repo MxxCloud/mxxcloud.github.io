@@ -228,6 +228,12 @@ export function disegnaPromemoria(p, barra, cosaInMano) {
   const commestibile = cosaInMano && CATALOGO[cosaInMano]?.commestibile;
   if (commestibile) righe.push(`E  MANGIA ${nomeDi(cosaInMano).toUpperCase()}`);
 
+  // Stessa regola per il gettare, e con lo stesso momento giusto: si nomina
+  // quando serve. A zaino pieno non poter costruire né raccogliere è un
+  // vicolo cieco, e il tasto che ne esce va detto lì, non in un elenco letto
+  // venti minuti prima.
+  if (inventario.pieno()) righe.push("G  GETTA PER TERRA");
+
   let y = barra.y + 7 - (righe.length - 1) * 7;
   for (const scritta of righe) {
     testo.disegnaConOmbra(p, scritta, barra.x0 - testo.larghezza(scritta) - 8, y, TENUE);
@@ -244,6 +250,7 @@ const COMANDI = [
   ["1-8", "SCEGLIERE DALLO ZAINO"],
   ["C", "COSTRUIRE"],
   ["E", "MANGIARE CIÒ CHE HAI IN MANO"],
+  ["G", "POSARE PER TERRA CIÒ CHE HAI IN MANO"],
   ["M", "MAPPA"],
   ["F3", "DIAGNOSTICA"],
 ];

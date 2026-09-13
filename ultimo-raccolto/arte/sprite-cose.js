@@ -332,3 +332,26 @@ export const RAPA = [
   "............",
   "............",
 ];
+
+// Il sacco su cui si posa quello che si toglie dallo zaino. È 16x16, cioè un
+// tassello intero, perché sta per terra e non in una casella: sopra ci va
+// l'icona della cosa contenuta, così un mucchio si riconosce da lontano per
+// quello che è invece che per il fatto di essere un mucchio.
+export const MUCCHIO = [
+  "................",
+  "................",
+  "................",
+  "................",
+  "................",
+  "................",
+  "................",
+  "................",
+  "................",
+  "................",
+  "....gggggggg....",
+  "..gghhhhhhhhgg..",
+  ".ghhhhhhhhhhhhg.",
+  ".ghhhhhhhhhhhhg.",
+  "..gghhhhhhhhgg..",
+  "....gggggggg....",
+];

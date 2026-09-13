@@ -30,7 +30,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M3";
+const VERSIONE = "M3.1";
 
 // --- elementi -------------------------------------------------------------
 
@@ -102,6 +102,15 @@ function leggiComandi() {
     if (esito) annuncia(`mangi: ${nomeDi(esito.cosa)}`, "#9ec97e");
   }
 
+  if (comandi.appenaPremuto("getta")) {
+    const esito = azioni.getta(eroe, casellaScelta);
+    if (esito?.tipo === "gettato") {
+      annuncia(`posato per terra: ${esito.quante} ${nomeDi(esito.cosa)}`, "#c9b189");
+    } else if (esito?.tipo === "nonCePosto") {
+      annuncia("davanti non c'è posto", "#c0705f");
+    }
+  }
+
   if (comandi.appenaPremuto("ricette")) {
     ricetteAperte = !ricetteAperte;
     ricettaScelta = 0;
@@ -111,7 +120,9 @@ function leggiComandi() {
 
   if (ricetteAperte) {
     const ricetta = RICETTE[ricettaScelta];
-    if (fai(ricetta)) annuncia(`fatto: ${nomeDi(ricetta.produce.cosa)}`, "#9ec97e");
+    const esito = fai(ricetta);
+    if (esito.fatto) annuncia(`fatto: ${nomeDi(ricetta.produce.cosa)}`, "#9ec97e");
+    else if (esito.perche === "zaino") annuncia("zaino pieno: getta qualcosa con G", "#c0705f");
     else annuncia("materiali insufficienti", "#c0705f");
     return;
   }
@@ -147,9 +158,15 @@ function leggiComandi() {
   if (esito.tipo === "innaffia") annuncia("innaffiato", "#8fb8d8");
   if (esito.tipo === "dormi") annuncia(`hai dormito fino all'alba`, "#9ec97e");
 
-  if (esito.tipo === "raccolto") {
+  if (esito.tipo === "preso") {
+    const quanto = `+${esito.quante} ${nomeDi(esito.cosa)}`;
+    annuncia(esito.resta > 0 ? `${quanto}, ne restano ${esito.resta}` : quanto, "#9ec97e");
+  } else if (esito.tipo === "zainoPieno") {
+    annuncia("zaino pieno: getta qualcosa con G", "#c0705f");
+  } else if (esito.tipo === "raccolto") {
     const elenco = esito.ottenuto.map((v) => `+${v.quante} ${nomeDi(v.cosa)}`).join("  ");
-    if (esito.avanzate.length > 0) annuncia("zaino pieno, perso qualcosa", "#c0705f");
+    if (esito.perse.length > 0) annuncia("zaino pieno, perso qualcosa", "#c0705f");
+    else if (esito.avanzate.length > 0) annuncia("zaino pieno: il resto è per terra", "#c9b189");
     else if (elenco) annuncia(elenco, "#9ec97e");
   } else if (esito.tipo === "posa") {
     annuncia(`posato: ${nomeDi(esito.cosa)}`, "#9ec97e");
@@ -334,6 +351,14 @@ schermo.prepara(quadro);
 comandi.collega();
 mappa.inizializza(SEME);
 
+// I mucchi per terra si disegnano con l'icona di quello che contengono, ma la
+// mappa non conosce il catalogo delle cose — le dipendenze vanno in un verso
+// solo. Il collegamento si fa qui, che è il punto in cui è lecito conoscere
+// entrambi i lati.
+mappa.registraIconeMucchio(
+  Object.fromEntries(Object.entries(CATALOGO).map(([id, voce]) => [id, voce.icona]))
+);
+
 // "?ora=22" comincia di notte. Il seme e l'ora nell'indirizzo rendono una
 // situazione riproducibile: la stessa valle alla stessa ora, ogni volta.
 if (parametri.has("ora")) tempo.impostaOra(Number(parametri.get("ora")));
@@ -384,6 +409,7 @@ if (parametri.has("diagnostica")) {
     scegliCasella: (i) => { casellaScelta = i; },
     chiudiApertura: () => { aperturaVisibile = false; },
     tremolio: () => (colpito ? { ...colpito } : null),
+    messaggio: () => (messaggio ? messaggio.testo : null),
     minimappa,
     minimappaAccesa: () => minimappaVisibile,
     bisogni,
