@@ -19,6 +19,7 @@ import * as bisogni from "./regole/bisogni.js";
 import * as orto from "./regole/orto.js";
 import * as stagioni from "./regole/stagioni.js";
 import * as decadimento from "./regole/decadimento.js";
+import * as salvataggio from "./regole/salvataggio.js";
 import { tavolozzaDi, tavolozzaBagnataDi } from "./arte/tavolozza.js";
 import * as inventario from "./regole/inventario.js";
 import * as azioni from "./regole/azioni.js";
@@ -57,6 +58,12 @@ let messaggio = null;
 let aperturaVisibile = true;
 let minimappaVisibile = true;
 let ultimoGiorno = 1;
+let partitaAperta = false;
+let slotScelto = 0;
+let modoPartita = "salva";
+// L'ultimo giorno di cui si è già scritta l'alba. Senza, ogni fotogramma dopo
+// le sette riscriverebbe il salvataggio automatico.
+let albaScritta = 0;
 
 const lumi = [];
 
@@ -106,6 +113,86 @@ function vestiLaValle() {
   return prima === null ? null : stagione;
 }
 
+// --- la partita: salvare e caricare ---------------------------------------
+
+function caselleDiSalvataggio() {
+  return salvataggio.elenco().map((voce) => ({
+    ...voce,
+    automatico: salvataggio.eAutomatico(voce.slot),
+  }));
+}
+
+function salvaIn(voce) {
+  if (voce.automatico) {
+    annuncia("questa casella la scrive l'alba", "#c0705f");
+    return;
+  }
+  const esito = salvataggio.scrivi(voce.slot, salvataggio.istantanea(eroe, casellaScelta));
+  if (!esito.ok) {
+    annuncia(esito.perche, "#c0705f");
+    return;
+  }
+  // Si chiude da sola: salvare è un gesto che finisce lì, e lasciare aperta la
+  // schermata costringerebbe a un tasto in più per tornare a giocare.
+  partitaAperta = false;
+  annuncia("partita salvata", "#9ec97e");
+}
+
+function caricaDa(voce) {
+  if (voce.vuoto) {
+    annuncia("questa casella è vuota", "#c0705f");
+    return;
+  }
+  const ripreso = salvataggio.applica(salvataggio.leggi(voce.slot));
+  if (!ripreso) {
+    annuncia("salvataggio illeggibile", "#c0705f");
+    return;
+  }
+
+  // L'eroe si rifà invece di essere spostato: un'entità caricata deve tornare
+  // allo stato che avrebbe appena creata — niente passo a metà, niente
+  // direzione ereditata dalla partita di prima.
+  entita.svuota();
+  eroe = entita.aggiungi(giocatore.crea(ripreso.eroe.px, ripreso.eroe.py));
+  eroe.guarda = ripreso.eroe.guarda ?? "giu";
+  schermo.centraSu(eroe.px, eroe.py);
+
+  casellaScelta = ripreso.casella;
+  ultimoGiorno = ripreso.giorno;
+  // L'alba di oggi conta come già scritta se è già passata: caricare non deve
+  // sovrascrivere la casella automatica con la partita appena ripresa.
+  albaScritta = tempo.oraCorrente() >= tempo.ALBA_PIENA ? ripreso.giorno : ripreso.giorno - 1;
+  colpito = null;
+  lumi.length = 0;
+
+  // La valle si rimette la stagione giusta senza annunciare un arrivo: non è
+  // arrivato niente, si è ripreso da lì.
+  stagioneVestita = null;
+  vestiLaValle();
+  minimappa.dimentica();
+  minimappa.aggiorna(eroe);
+
+  partitaAperta = false;
+  annuncia("partita ripresa", "#9ec97e");
+}
+
+function leggiPartita() {
+  const voci = caselleDiSalvataggio();
+  for (let i = 0; i < voci.length; i += 1) {
+    if (comandi.appenaPremuto(`casella${i + 1}`)) slotScelto = i;
+  }
+  // Destra e sinistra dentro un menu vogliono già dire "cambia colonna": non
+  // serve un tasto nuovo per due modi.
+  if (comandi.appenaPremuto("sinistra")) modoPartita = "carica";
+  if (comandi.appenaPremuto("destra")) modoPartita = "salva";
+
+  if (!comandi.appenaPremuto("usa")) return;
+  const voce = voci[slotScelto];
+  if (!voce) return;
+  if (modoPartita === "salva") salvaIn(voce);
+  else caricaDa(voce);
+}
+
 // --- comandi --------------------------------------------------------------
 
 function leggiComandi() {
@@ -119,6 +206,20 @@ function leggiComandi() {
     for (let i = 0; i < comandi.CASELLE; i += 1) {
       if (comandi.appenaPremuto(`casella${i + 1}`)) { aperturaVisibile = false; return; }
     }
+    return;
+  }
+
+  // La schermata della partita prende tutti i comandi finché è aperta. Un
+  // tasto che vale in due posti alla volta è un tasto che salva quando volevi
+  // camminare.
+  if (comandi.appenaPremuto("partita")) {
+    partitaAperta = !partitaAperta;
+    slotScelto = 0;
+    ricetteAperte = false;
+    return;
+  }
+  if (partitaAperta) {
+    leggiPartita();
     return;
   }
 
@@ -212,7 +313,7 @@ function leggiComandi() {
 function aggiorna(passo) {
   // Il tempo non scorre mentre si sceglie cosa costruire: un menu che ti fa
   // arrivare la notte addosso mentre lo leggi è una punizione, non una sfida.
-  if (!ricetteAperte && !aperturaVisibile) {
+  if (!ricetteAperte && !aperturaVisibile && !partitaAperta) {
     tempo.avanza(passo);
     // Quello che si ha in mano lo decide lo zaino, non l'entità: le entità
     // stanno sotto le regole e non devono sapere cos'è un inventario. Lo
@@ -239,7 +340,10 @@ function aggiorna(passo) {
   }
 
   leggiComandi();
-  azioneCorrente = ricetteAperte || aperturaVisibile ? null : azioni.azionePossibile(eroe, cosaInMano());
+  azioneCorrente =
+    ricetteAperte || aperturaVisibile || partitaAperta
+      ? null
+      : azioni.azionePossibile(eroe, cosaInMano());
 
   if (messaggio) {
     messaggio.vita -= passo / 2.2;
@@ -272,6 +376,19 @@ function aggiorna(passo) {
   else if (arrivata) annuncia(ARRIVO[arrivata], "#c9b189");
   else if (spenti > 0) annuncia("il fuoco si è spento", "#c0705f");
   else if (cresciute > 0) annuncia("l'orto è cresciuto", "#9ec97e");
+
+  // Il salvataggio dell'alba, e proprio qui: dopo che il giorno ha fatto i
+  // suoi conti — l'orto cresciuto, i fuochi spenti, la stagione girata — così
+  // una partita ripresa non li rifà e non li salta.
+  if (tempo.giornoCorrente() > albaScritta && tempo.oraCorrente() >= tempo.ALBA_PIENA) {
+    albaScritta = tempo.giornoCorrente();
+    const esito = salvataggio.scrivi(salvataggio.ALBA, salvataggio.istantanea(eroe, casellaScelta));
+    // Il fallimento si dice sempre, la riuscita solo se non copre altro: il
+    // campo morto stanotte conta più della conferma di una cosa che doveva
+    // funzionare, e nella schermata della partita l'ora della casella si vede.
+    if (!esito.ok) annuncia(esito.perche, "#c0705f");
+    else if (!messaggio) annuncia("salvato all'alba", "#8fa8d8");
+  }
 
   mappa.precuociVicini();
 
@@ -357,6 +474,9 @@ function disegnaInterfaccia() {
   hud.disegnaMessaggio(p, messaggio);
   if (minimappaVisibile && !aperturaVisibile) minimappa.disegna(p);
   if (ricetteAperte) hud.disegnaRicette(p, ricettaScelta);
+  if (partitaAperta) {
+    hud.disegnaPartita(p, { voci: caselleDiSalvataggio(), modo: modoPartita, scelta: slotScelto });
+  }
   if (aperturaVisibile) hud.disegnaApertura(p, VERSIONE);
 }
 
@@ -426,6 +546,12 @@ if (parametri.has("giorno")) tempo.impostaGiorno(Number(parametri.get("giorno"))
 // dal giorno venti il ciclo del cambio giorno girerebbe diciannove volte
 // facendo appassire un orto che non è mai esistito.
 ultimoGiorno = tempo.giornoCorrente();
+// L'alba di oggi conta come già passata se lo è: cominciando alle sette in
+// punto non si deve scrivere un salvataggio automatico prima ancora di aver
+// mosso un passo.
+albaScritta = tempo.oraCorrente() >= tempo.ALBA_PIENA
+  ? tempo.giornoCorrente()
+  : tempo.giornoCorrente() - 1;
 
 // Dopo il giorno e non prima: la valle si veste della stagione in cui si
 // comincia, non di quella del primo giorno per poi cambiarsi al primo
@@ -485,5 +611,8 @@ if (parametri.has("diagnostica")) {
     orto,
     stagioni,
     decadimento,
+    salvataggio,
+    apriPartita: (modo) => { partitaAperta = true; modoPartita = modo ?? "salva"; slotScelto = 0; },
+    partitaAperta: () => partitaAperta,
   };
 }

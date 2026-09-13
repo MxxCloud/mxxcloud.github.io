@@ -184,6 +184,13 @@ export function disegna(pennello) {
   pennello.strokeRect(x - 0.5, y - 0.5, LATO + 1, LATO + 1);
 }
 
+// Da chiamare quando il mondo sotto è cambiato sotto i piedi — un
+// caricamento, un seme diverso. Senza, la griglia resterebbe quella di prima e
+// scorrerebbe da lì: la minimappa mostrerebbe pezzi della partita precedente.
+export function dimentica() {
+  centro = null;
+}
+
 export function ricostruzioni() {
   return ricostruite;
 }

@@ -240,7 +240,7 @@ export function disegnaRicette(p, scelta) {
     }
   });
 
-  const piede = "1-2 SCEGLI   SPAZIO COSTRUISCI   C CHIUDI";
+  const piede = `1-${RICETTE.length} SCEGLI   SPAZIO COSTRUISCI   C CHIUDI`;
   testo.disegna(p, piede, x + 7, y + altezza - 9, GRIGIO);
 }
 
@@ -284,6 +284,7 @@ const COMANDI = [
   ["E", "MANGIARE CIÒ CHE HAI IN MANO"],
   ["G", "POSARE PER TERRA CIÒ CHE HAI IN MANO"],
   ["M", "MAPPA"],
+  ["P", "SALVARE E CARICARE"],
   ["F3", "DIAGNOSTICA"],
 ];
 
@@ -315,4 +316,73 @@ export function disegnaApertura(p, versione) {
 
   const chiudi = "UN TASTO QUALSIASI PER COMINCIARE";
   testo.disegna(p, chiudi, Math.round((schermo.LARGHEZZA - testo.larghezza(chiudi)) / 2), y + altezza - 11, GRIGIO);
+}
+
+// --- la partita: salvare e caricare ---------------------------------------
+
+// Due modi e non due schermate: le stesse quattro caselle si guardano per
+// salvare e per caricare, e vederle una volta sola insegna dove sono. Il modo
+// si cambia con destra e sinistra, che dentro un menu vogliono già dire
+// "cambia colonna" senza che nessuno lo spieghi.
+const NOMI_SLOT = { 1: "PRIMA", 2: "SECONDA", 3: "TERZA", alba: "ALBA" };
+
+function quandoInBreve(quando) {
+  const d = new Date(quando);
+  if (Number.isNaN(d.getTime())) return "";
+  const due = (n) => String(n).padStart(2, "0");
+  return `${due(d.getDate())}/${due(d.getMonth() + 1)} ${due(d.getHours())}:${due(d.getMinutes())}`;
+}
+
+export function disegnaPartita(p, { voci, modo, scelta }) {
+  const altezzaRiga = 16;
+  const larghezza = 186;
+  const altezza = 27 + voci.length * altezzaRiga + 12;
+  const x = Math.round((schermo.LARGHEZZA - larghezza) / 2);
+  const y = Math.round((schermo.ALTEZZA - altezza) / 2) - 12;
+
+  riquadro(p, x, y, larghezza, altezza, FONDO_PIENO, BORDO);
+  testo.disegna(p, "LA PARTITA", x + 7, y + 6, CHIARO);
+
+  // I due modi scritti entrambi, quello attivo acceso: una sola parola che
+  // cambia costringerebbe a ricordare cosa c'era scritto prima.
+  const salva = modo === "salva";
+  testo.disegna(p, "CARICA", x + 92, y + 6, salva ? GRIGIO : BORDO_SCELTO);
+  testo.disegna(p, "SALVA", x + 132, y + 6, salva ? BORDO_SCELTO : GRIGIO);
+
+  voci.forEach((voce, i) => {
+    const ry = y + 28 + i * altezzaRiga;
+    const eScelta = i === scelta;
+    // Una casella automatica non si scrive a mano, e una vuota non si carica:
+    // in entrambi i casi la riga resta lì ma spenta, perché sparire sposterebbe
+    // le altre e farebbe premere il numero sbagliato.
+    const usabile = salva ? !voce.automatico : !voce.vuoto;
+
+    if (eScelta) {
+      p.fillStyle = "rgb(255 255 255 / 0.08)";
+      p.fillRect(x + 3, ry - 2, larghezza - 6, altezzaRiga - 2);
+    }
+
+    testo.disegna(p, `${i + 1}`, x + 7, ry, eScelta ? BORDO_SCELTO : GRIGIO);
+    testo.disegna(p, NOMI_SLOT[voce.slot] ?? String(voce.slot), x + 16, ry, usabile ? CHIARO : GRIGIO);
+
+    // In modo salva la casella dell'alba dice cosa è invece di cosa contiene:
+    // il grigio da solo dice "non si può" e non dice "perché", ed è la stessa
+    // lezione del suggerimento impedito.
+    if (salva && voce.automatico) {
+      testo.disegna(p, "LA SCRIVE L'ALBA", x + 60, ry, GRIGIO);
+      return;
+    }
+
+    if (voce.vuoto) {
+      testo.disegna(p, "VUOTA", x + 60, ry, GRIGIO);
+      return;
+    }
+
+    const riga = `GIORNO ${voce.giorno}  ${voce.stagione.toUpperCase()}`;
+    testo.disegna(p, riga, x + 60, ry, usabile ? CHIARO : GRIGIO);
+    testo.disegna(p, `${voce.seme}  ${quandoInBreve(voce.quando)}`, x + 16, ry + 7, GRIGIO);
+  });
+
+  const verbo = salva ? "SALVA" : "CARICA";
+  testo.disegna(p, `1-4 SCEGLI   A/D MODO   SPAZIO ${verbo}   P CHIUDI`, x + 7, y + altezza - 9, GRIGIO);
 }

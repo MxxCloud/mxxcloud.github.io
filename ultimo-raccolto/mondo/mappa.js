@@ -207,6 +207,14 @@ export function cambiaTassello(tx, ty, cambio) {
   settori.delete(chiave(Math.floor(tx / SETTORE), Math.floor(ty / SETTORE)));
 }
 
+// Butta via tutti i settori cotti. Serve a chi cambia il mondo in blocco —
+// un caricamento — invece che un tassello per volta: cambiaTassello butta il
+// settore giusto, ma rifarlo per mille modifiche vorrebbe dire buttarli tutti
+// mille volte.
+export function scordaSettori() {
+  settori.clear();
+}
+
 export function solidoIn(tx, ty) {
   const terreno = terrenoIn(tx, ty, seme);
   if (CATALOGO[terreno].solido) return true;

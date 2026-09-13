@@ -9,7 +9,8 @@ CSS e JavaScript serviti così come sono. Nessuna compilazione, niente da
 installare.
 
 L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
-collegamenti e, quando arriveranno i salvataggi, le partite già cominciate.
+collegamenti e le partite già salvate, che stanno nell'archivio del browser
+sotto quell'indirizzo.
 
 ## L'idea
 
@@ -32,9 +33,9 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M4**. Il ciclo di gioco è quello che il pilastro promette: **di
-giorno si raccoglie, di notte serve luce, e l'anno gira che tu sia pronto o
-no.**
+È finita **M4**, più i salvataggi. Il ciclo di gioco è quello che il pilastro
+promette: **di giorno si raccoglie, di notte serve luce, e l'anno gira che tu
+sia pronto o no** — e adesso la valle ti aspetta anche domani.
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
 con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne
@@ -50,14 +51,15 @@ In basso a destra c'è una minimappa che mostra poco meno di tre schermate:
 abbastanza per capire dov'è il lago e da che parte finisce la roccia, troppo
 poco per essere una mappa del mondo — che toglierebbe il gusto di andare a
 vedere. I falò e le torce che hai posato ci compaiono come puntini caldi:
-sono i tuoi punti di riferimento, non quelli del mondo. Il sole gira: un giorno dura dieci minuti veri, l'alba e il tramonto
+sono i tuoi punti di riferimento, non quelli del mondo.
+
+Il sole gira: un giorno dura dieci minuti veri, l'alba e il tramonto
 durano due ore ciascuno, e alle nove di sera è buio pieno. Una torcia in mano
 o un falò acceso scavano un cerchio di luce nel buio.
 
 Il mondo si ricorda cosa hai fatto: l'albero che hai abbattuto resta
-abbattuto, il falò che hai posato resta dov'è — finché la scheda resta aperta.
-Il salvataggio su disco non c'è ancora, ma la forma di ciò che andrà salvato è
-già questa.
+abbattuto, il falò che hai posato resta dov'è. E adesso se lo ricorda anche
+dopo che hai chiuso la scheda — vedi i salvataggi, più sotto.
 
 Il gioco è installabile e funziona senza rete.
 
@@ -102,6 +104,18 @@ finché non ci sono contenitori in cui mettere le cose al sicuro — e sono dell
 tappa della costruzione — far marcire anche quello toglierebbe l'unico
 ripostiglio che esiste.
 
+**I salvataggi** sono quattro caselle: tre da scrivere a mano con `P`, e una
+scritta dall'alba di ogni giorno. L'alba perché è il momento in cui il mondo
+tira le somme — le colture crescono, i fuochi si spengono, la stagione cambia
+— e salvare subito dopo significa che una partita ripresa non rifà mai quel
+conto né lo salta. La stessa schermata serve a salvare e a caricare: il modo
+si cambia con `A` e `D`.
+
+Non si salva il mondo, si salva quello che hai cambiato: il resto è una
+funzione delle coordinate e del seme, e ricalcolarlo costa meno che scriverlo.
+I salvataggi stanno nell'archivio del browser, quindi su quel dispositivo e
+su quello soltanto, e svuotare i dati del sito li cancella.
+
 Non si muore ancora, e non c'è nessuno da incontrare.
 
 ## La mappa di strada
@@ -127,9 +141,10 @@ Da qui viene l'ordine, che non è quello immaginato all'inizio:
 **Perché la morte così tardi.** Morire conta in proporzione a quanto hai da
 perdere: prima dell'orto e delle stagioni non avresti perso niente.
 
-**Il salvataggio sta fuori da questa scala** e si incastrerà dove verrà
-deciso. Finché non c'è, l'orto e le stagioni valgono meno di quanto valgono
-davvero — un posto che sparisce chiudendo la scheda è tuo solo per una seduta.
+**Il salvataggio stava fuori da questa scala** e si è incastrato qui, dopo le
+stagioni: era il momento giusto, perché un posto che sparisce chiudendo la
+scheda è tuo solo per una seduta, e l'orto e le stagioni valevano meno di
+quanto valgono davvero.
 
 Le tappe dalla M5 in poi sono volutamente abbozzate: l'ordine è già cambiato
 una volta per quello che è emerso giocando, e cambierà ancora. Si dettagliano
@@ -153,6 +168,7 @@ solo la rimanda, non la sostituisce.
 | `G` | posare per terra la casella scelta, davanti ai piedi |
 | `C` | aprire e chiudere le costruzioni |
 | `M` | accendere e spegnere la minimappa |
+| `P` | salvare e caricare: `1`-`4` la casella, `A` `D` il modo |
 | `F3` | diagnostica |
 
 Si agisce su quello che si ha **davanti**, non sotto i piedi: è anche l'unico
