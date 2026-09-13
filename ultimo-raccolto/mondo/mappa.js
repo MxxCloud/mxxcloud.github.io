@@ -12,9 +12,11 @@ import { cuoci, mascherato, ruotato } from "../arte/sprite.js";
 import * as terrenoArte from "../arte/sprite-terreno.js";
 import * as oggettiArte from "../arte/sprite-oggetti.js";
 import * as coseArte from "../arte/sprite-cose.js";
+import * as ortoArte from "../arte/sprite-orto.js";
 import * as transizioniArte from "../arte/sprite-transizioni.js";
 import { TERRENO, OGGETTO, terrenoIn, oggettoIn } from "./generazione.js";
 import * as modifiche from "./modifiche.js";
+import { TAVOLOZZA_BAGNATA } from "../arte/tavolozza.js";
 
 const { TASSELLO } = schermo;
 export const SETTORE = 16;
@@ -54,6 +56,16 @@ const CATALOGO_OGGETTI = {
   // Non ferma: ci si deve poter camminare sopra per sdraiarcisi, e comunque
   // un materasso per terra non è un ostacolo.
   [OGGETTO.GIACIGLIO]: { sprite: coseArte.GIACIGLIO_STESO, solido: false },
+
+  // L'orto. Nessuno di questi ferma: ci si deve poter camminare in mezzo per
+  // innaffiarlo. "Bagnabile" dice alla cottura di guardare se il tassello è
+  // stato innaffiato e, in quel caso, di usare la tavolozza della terra
+  // bagnata — stesso disegno, terreno più scuro.
+  [OGGETTO.TERRA_ZAPPATA]: { sprite: ortoArte.TERRA_ZAPPATA, solido: false, bagnabile: true },
+  [OGGETTO.SEMINATO]: { sprite: ortoArte.SEMINATO, solido: false, bagnabile: true },
+  [OGGETTO.GERMOGLIO]: { sprite: ortoArte.GERMOGLIO, solido: false, bagnabile: true },
+  [OGGETTO.CRESCIUTA]: { sprite: ortoArte.CRESCIUTA, solido: false, bagnabile: true },
+  [OGGETTO.MATURA]: { sprite: ortoArte.MATURA, solido: false, bagnabile: true },
 
   // Una torcia piantata è luce fissa che costa molto meno di un falò, e non
   // ferma: è un bastone, ci si passa accanto.
@@ -247,9 +259,13 @@ function cuociSettore(sx, sy) {
       const oggetto = oggettoDi(tx, ty);
       if (oggetto !== OGGETTO.NESSUNO) {
         const voce = CATALOGO_OGGETTI[oggetto];
+        // Un tassello innaffiato si disegna con la terra scura: è la stessa
+        // immagine cotta con un'altra tavolozza, non un secondo disegno.
+        const bagnato = voce.bagnabile && modifiche.di(tx, ty)?.bagnato === true;
+        const tavolozza = bagnato ? TAVOLOZZA_BAGNATA : undefined;
         const fotogrammi = voce.fotogrammi
-          ? voce.fotogrammi.map((f) => cuoci(f))
-          : [cuoci(voce.sprite)];
+          ? voce.fotogrammi.map((f) => cuoci(f, tavolozza))
+          : [cuoci(voce.sprite, tavolozza)];
         const sprite = fotogrammi[0];
         oggetti.push({
           tipo: oggetto,

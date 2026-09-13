@@ -34,3 +34,15 @@ export const ASCIA = [
   "...hg",
   "...hg",
 ];
+
+export const ZAPPA = [
+  "eee..",
+  "eee..",
+  ".hg..",
+  ".hg..",
+  ".hg..",
+  ".hg..",
+  ".hg..",
+  ".hg..",
+  ".hg..",
+];

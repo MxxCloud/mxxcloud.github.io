@@ -16,6 +16,7 @@ import * as entita from "./entita/entita.js";
 import * as giocatore from "./entita/giocatore.js";
 import * as tempo from "./regole/tempo.js";
 import * as bisogni from "./regole/bisogni.js";
+import * as orto from "./regole/orto.js";
 import * as inventario from "./regole/inventario.js";
 import * as azioni from "./regole/azioni.js";
 import { RICETTE, fai } from "./regole/ricette.js";
@@ -29,7 +30,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M2";
+const VERSIONE = "M3";
 
 // --- elementi -------------------------------------------------------------
 
@@ -52,6 +53,7 @@ let azioneCorrente = null;
 let messaggio = null;
 let aperturaVisibile = true;
 let minimappaVisibile = true;
+let ultimoGiorno = 1;
 
 const lumi = [];
 
@@ -139,6 +141,10 @@ function leggiComandi() {
   }
 
   if (esito.tipo === "bevi") annuncia("bevi", "#8fb8d8");
+  if (esito.tipo === "riempi") annuncia(`riempiti ${esito.quanti} secchi`, "#8fb8d8");
+  if (esito.tipo === "zappa") annuncia("terra zappata", "#9ec97e");
+  if (esito.tipo === "semina") annuncia("seminato", "#9ec97e");
+  if (esito.tipo === "innaffia") annuncia("innaffiato", "#8fb8d8");
   if (esito.tipo === "dormi") annuncia(`hai dormito fino all'alba`, "#9ec97e");
 
   if (esito.tipo === "raccolto") {
@@ -187,6 +193,16 @@ function aggiorna(passo) {
   if (messaggio) {
     messaggio.vita -= passo / 2.2;
     if (messaggio.vita <= 0) messaggio = null;
+  }
+
+  // L'orto cresce al cambio di giorno, non a ogni fotogramma: una coltura
+  // matura in giorni, e contarli è l'unico modo perché aspettare significhi
+  // qualcosa. È un ciclo e non un confronto perché una notte dormita può far
+  // passare un giorno intero in un colpo solo.
+  while (ultimoGiorno < tempo.giornoCorrente()) {
+    const cresciute = orto.nuovoGiorno();
+    ultimoGiorno += 1;
+    if (cresciute > 0) annuncia("l'orto è cresciuto", "#9ec97e");
   }
 
   mappa.precuociVicini();
@@ -296,7 +312,7 @@ function aggiornaDiagnostica() {
     `settori  ${mappa.settoriInMemoria()}  in piedi ${inPiedi.length}  lumi ${lumi.length}`,
     `scheggie ${scheggie.vive()}  figure ${giocatore.figureComposte()}`,
     `minimappa ${minimappaVisibile ? "accesa" : "spenta"}  ricostruzioni ${minimappa.ricostruzioni()}`,
-    `modifiche ${modifiche.quanti()}`,
+    `modifiche ${modifiche.quanti()}  colture ${orto.quante()}`,
   ].join("\n");
 }
 
@@ -371,5 +387,6 @@ if (parametri.has("diagnostica")) {
     minimappa,
     minimappaAccesa: () => minimappaVisibile,
     bisogni,
+    orto,
   };
 }

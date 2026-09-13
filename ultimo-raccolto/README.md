@@ -70,7 +70,17 @@ sveglia assetati.
 Un bisogno a zero non uccide — la morte arriva a M5 — ma toglie un quarto
 della velocità. Tre bisogni ignorati riducono a un quarto.
 
-Non si muore ancora, non si coltiva, e non c'è nessuno da incontrare.
+**L'orto** è la prima cosa tua. Con una zappa si lavora la terra, si semina
+quello che si è strappato dai cespugli, si innaffia con un secchio riempito al
+lago e si torna dopo giorni a raccogliere. Una coltura avanza di uno stadio
+per ogni giorno in cui è stata innaffiata: saltare un giorno non la uccide, la
+ferma — appassire è roba della tappa del decadimento. I solchi bagnati si
+riconoscono dal terreno più scuro.
+
+Dormire porta all'alba, quindi anche l'orto va avanti: è il modo di
+comprimere l'attesa senza toglierla.
+
+Non si muore ancora, non ci sono stagioni, e non c'è nessuno da incontrare.
 
 ## La mappa di strada
 
@@ -115,7 +125,7 @@ solo la rimanda, non la sostituisce.
 |---|---|
 | `W A S D` o frecce | camminare |
 | `Maiusc` | correre |
-| `Spazio` | colpire ciò che si ha davanti, o posare |
+| `Spazio` | agire su ciò che si ha davanti: colpire, raccogliere, zappare, seminare, innaffiare, bere, dormire, posare |
 | `1`-`8` | scegliere la casella, cioè cosa si impugna |
 | `E` | mangiare o usare su di sé ciò che si ha in mano |
 | `C` | aprire e chiudere le costruzioni |

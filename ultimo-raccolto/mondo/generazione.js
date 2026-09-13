@@ -34,6 +34,11 @@ export const OGGETTO = {
   FALO_SPENTO: 5,
   TORCIA_PIANTATA: 6,
   GIACIGLIO: 7,
+  TERRA_ZAPPATA: 8,
+  SEMINATO: 9,
+  GERMOGLIO: 10,
+  CRESCIUTA: 11,
+  MATURA: 12,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati
