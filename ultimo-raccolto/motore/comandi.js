@@ -5,7 +5,10 @@
 // arriveranno i comandi su schermo per il telefono o la riconfigurazione dei
 // tasti. Nessuna altra parte del gioco sa che esiste una tastiera.
 
-export const AZIONI = ["su", "giu", "sinistra", "destra", "usa", "corri", "ricette", "minimappa", "consuma"];
+export const AZIONI = [
+  "su", "giu", "sinistra", "destra", "usa", "corri", "ricette", "minimappa",
+  "consuma", "getta",
+];
 
 // Otto caselle, otto tasti: la selezione con la rotellina o con Q/E costringe
 // a scorrere, e con solo otto caselle scorrere è più lento che puntare.
@@ -21,6 +24,7 @@ const MAPPA = {
   KeyC: "ricette", Tab: "ricette",
   KeyM: "minimappa",
   KeyE: "consuma",
+  KeyG: "getta",
 };
 
 for (let i = 1; i <= CASELLE; i += 1) MAPPA[`Digit${i}`] = `casella${i}`;

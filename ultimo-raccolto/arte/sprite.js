@@ -154,6 +154,36 @@ export function ruotato(immagine, quarti) {
   return canvas;
 }
 
+// Un'immagine appoggiata sopra un'altra, cotta una volta sola. Serve ai
+// mucchi per terra, che sono un sacco più l'icona di quello che contengono:
+// due disegni invece di uno per ciascuna delle cose che esistono.
+//
+// La cache è annidata come quella delle maschere, ma con lo scarto nella
+// chiave: lo stesso paio sovrapposto in due punti diversi sono due immagini.
+const sovrapposti = new WeakMap();
+
+export function sovrapposto(sotto, sopra, scartoX = 0, scartoY = 0) {
+  let perSotto = sovrapposti.get(sotto);
+  if (!perSotto) {
+    perSotto = new WeakMap();
+    sovrapposti.set(sotto, perSotto);
+  }
+  let perSopra = perSotto.get(sopra);
+  if (!perSopra) {
+    perSopra = new Map();
+    perSotto.set(sopra, perSopra);
+  }
+  const chiave = `${scartoX},${scartoY}`;
+  const gia = perSopra.get(chiave);
+  if (gia) return gia;
+
+  const { canvas, contesto } = telaio(sotto.width, sotto.height);
+  contesto.drawImage(sotto, 0, 0);
+  contesto.drawImage(sopra, scartoX, scartoY);
+  perSopra.set(chiave, canvas);
+  return canvas;
+}
+
 // Ritaglia un'immagine attraverso la sagoma di una maschera. È il cuore delle
 // transizioni fra terreni: il tassello del vicino passa solo dove la maschera
 // è opaca, e sotto resta il tassello di base già disegnato.

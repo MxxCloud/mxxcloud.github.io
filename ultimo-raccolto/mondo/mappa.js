@@ -8,7 +8,7 @@
 
 import * as schermo from "../motore/schermo.js";
 import { impronta, semeDaTesto } from "../motore/casuale.js";
-import { cuoci, mascherato, ruotato } from "../arte/sprite.js";
+import { cuoci, mascherato, ruotato, sovrapposto } from "../arte/sprite.js";
 import * as terrenoArte from "../arte/sprite-terreno.js";
 import * as oggettiArte from "../arte/sprite-oggetti.js";
 import * as coseArte from "../arte/sprite-cose.js";
@@ -67,6 +67,11 @@ const CATALOGO_OGGETTI = {
   [OGGETTO.CRESCIUTA]: { sprite: ortoArte.CRESCIUTA, solido: false, bagnabile: true },
   [OGGETTO.MATURA]: { sprite: ortoArte.MATURA, solido: false, bagnabile: true },
 
+  // Non ferma, e non potrebbe: un mucchio si raccoglie standoci davanti, ma
+  // uno lasciato in mezzo a un passaggio stretto diventerebbe un muro che ti
+  // sei costruito da solo.
+  [OGGETTO.MUCCHIO]: { sprite: coseArte.MUCCHIO, solido: false, mucchio: true },
+
   // Una torcia piantata è luce fissa che costa molto meno di un falò, e non
   // ferma: è un bastone, ci si passa accanto.
   [OGGETTO.TORCIA_PIANTATA]: {
@@ -75,6 +80,20 @@ const CATALOGO_OGGETTI = {
     luce: { raggio: 42, intensita: 0.85 },
   },
 };
+
+// Che disegno va sopra un mucchio. Lo registra dall'alto chi conosce il
+// catalogo delle cose, perché qui sotto le regole non si importano mai: la
+// mappa sa che su un tassello può esserci un mucchio, non che esiste una cosa
+// che si chiama "legna".
+let iconeMucchio = {};
+
+export function registraIconeMucchio(icone) {
+  iconeMucchio = icone;
+}
+
+// Quanto in alto sta l'icona sul sacco: i due pixel di margine la centrano in
+// larghezza, e la riga in meno la fa appoggiare invece che galleggiare.
+const SCARTO_ICONA = [2, 1];
 
 // --- transizioni ----------------------------------------------------------
 
@@ -266,6 +285,13 @@ function cuociSettore(sx, sy) {
         const fotogrammi = voce.fotogrammi
           ? voce.fotogrammi.map((f) => cuoci(f, tavolozza))
           : [cuoci(voce.sprite, tavolozza)];
+        // Un mucchio è il sacco più l'icona di quello che contiene. Se
+        // l'icona manca resta il sacco: un mucchio senza disegno si vede e si
+        // raccoglie lo stesso, mentre un errore qui lo farebbe sparire.
+        if (voce.mucchio) {
+          const icona = iconeMucchio[modifiche.di(tx, ty)?.cosa];
+          if (icona) fotogrammi[0] = sovrapposto(fotogrammi[0], cuoci(icona), ...SCARTO_ICONA);
+        }
         const sprite = fotogrammi[0];
         oggetti.push({
           tipo: oggetto,

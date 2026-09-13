@@ -70,6 +70,33 @@ export function togli(cosa, quantita) {
   return true;
 }
 
+// Svuota una casella e restituisce cosa c'era. Serve a gettare: si getta una
+// casella intera e non "una legna", perché a zaino pieno il problema è la
+// casella occupata, e liberarla un'unità alla volta sarebbe quaranta volte lo
+// stesso tasto per risolvere un problema che si vede a colpo d'occhio.
+export function svuotaCasella(indice) {
+  const casella = caselle[indice];
+  if (!casella) return null;
+  caselle[indice] = null;
+  return { cosa: casella.cosa, quantita: casella.quantita };
+}
+
+export function pieno() {
+  return caselle.every((casella) => casella !== null);
+}
+
+// Quanto ci starebbe, se si provasse ad aggiungere. Serve a chi deve decidere
+// prima di agire — le ricette — invece di aggiungere e poi disfare.
+export function spazioPer(cosa) {
+  const pila = CATALOGO[cosa]?.pila ?? 1;
+  let posto = 0;
+  for (const casella of caselle) {
+    if (casella === null) posto += pila;
+    else if (casella.cosa === cosa) posto += pila - casella.quantita;
+  }
+  return posto;
+}
+
 export function svuota() {
   caselle.fill(null);
 }

@@ -128,12 +128,20 @@ solo la rimanda, non la sostituisce.
 | `Spazio` | agire su ciò che si ha davanti: colpire, raccogliere, zappare, seminare, innaffiare, bere, dormire, posare |
 | `1`-`8` | scegliere la casella, cioè cosa si impugna |
 | `E` | mangiare o usare su di sé ciò che si ha in mano |
+| `G` | posare per terra la casella scelta, davanti ai piedi |
 | `C` | aprire e chiudere le costruzioni |
 | `M` | accendere e spegnere la minimappa |
 | `F3` | diagnostica |
 
 Si agisce su quello che si ha **davanti**, non sotto i piedi: è anche l'unico
 modo di posare un falò senza restarci dentro.
+
+Gettare sta su un tasto suo e non sulla barra perché la barra è già contesa
+da otto azioni che dipendono dal contesto: con la zappa in mano davanti a un
+prato la barra zappa, e non ci sarebbe verso di posare la zappa. Quello che
+si getta resta per terra come un mucchio, si vede da lontano per quello che
+contiene e si riprende con la barra. **Niente sparisce**: quello che non sta
+nello zaino finendo un raccolto cade accanto invece di andare perso.
 
 I comandi su schermo per il telefono arrivano più avanti, ma il gioco non parla
 mai di tasti: chiede a `motore/comandi.js` se si sta andando avanti. È l'unico

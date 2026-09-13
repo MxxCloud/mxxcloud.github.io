@@ -69,19 +69,23 @@ export function bastano(ricetta) {
   return ricetta.costo.every((voce) => inventario.quante(voce.cosa) >= voce.quante);
 }
 
+// Restituisce il motivo del rifiuto e non un no secco. I due modi di non
+// poter costruire sono diversi e si risolvono in modi diversi — andare a
+// raccogliere, o liberare una casella — e dirli entrambi "materiali
+// insufficienti" mandava a cercare pietre chi aveva solo lo zaino pieno.
 export function fai(ricetta) {
-  if (!bastano(ricetta)) return false;
-  // Prima si toglie e poi si aggiunge: l'ordine inverso potrebbe trovare lo
-  // zaino pieno con i materiali ancora dentro, e allora non si saprebbe se
-  // annullare o buttare via il risultato.
+  if (!bastano(ricetta)) return { fatto: false, perche: "materiali" };
+
+  // Lo spazio si guarda prima di toccare niente. I materiali che escono
+  // possono liberare la casella che serve al risultato — è il caso di una
+  // pila che si svuota del tutto — quindi non basta chiedere se lo zaino è
+  // pieno adesso: bisogna chiederlo al netto di quello che sta per uscire.
   for (const voce of ricetta.costo) inventario.togli(voce.cosa, voce.quante);
-  const avanzate = inventario.aggiungi(ricetta.produce.cosa, ricetta.produce.quante);
-  // Se lo zaino era pieno esattamente al pelo, i materiali hanno appena
-  // liberato spazio: questo caso in pratica non capita, ma se capitasse si
-  // rimetterebbe tutto a posto invece di far sparire il lavoro.
-  if (avanzate > 0) {
+  if (inventario.spazioPer(ricetta.produce.cosa) < ricetta.produce.quante) {
     for (const voce of ricetta.costo) inventario.aggiungi(voce.cosa, voce.quante);
-    return false;
+    return { fatto: false, perche: "zaino" };
   }
-  return true;
+
+  inventario.aggiungi(ricetta.produce.cosa, ricetta.produce.quante);
+  return { fatto: true };
 }

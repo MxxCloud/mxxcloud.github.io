@@ -39,6 +39,10 @@ export const OGGETTO = {
   GERMOGLIO: 10,
   CRESCIUTA: 11,
   MATURA: 12,
+  // Un mucchio per terra: roba tolta dallo zaino, o avanzata da un raccolto
+  // che non ci stava. Cosa contiene e quanto non sta qui ma nelle modifiche,
+  // perché sarebbero centoventi identificatori invece di uno.
+  MUCCHIO: 13,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati
