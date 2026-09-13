@@ -130,6 +130,35 @@ export function elenco() {
   });
 }
 
+// --- il file --------------------------------------------------------------
+
+// Un salvataggio è già un oggetto JSON, quindi il file è il salvataggio e
+// basta: niente formato a parte da tenere allineato con quello vero, che
+// sarebbe una seconda cosa da sbagliare a ogni modifica.
+//
+// Non compresso, al contrario di quello che andrà in rete: un file che si
+// apre e si legge vale più dei centoventi kilobyte risparmiati, ed è la
+// stessa scelta del backup di Budget futuro.
+export function valido(stato) {
+  return Boolean(
+    stato &&
+      stato.formato === FORMATO &&
+      typeof stato.seme === "string" &&
+      Number.isFinite(stato.giorno) &&
+      Number.isFinite(stato.ore) &&
+      stato.eroe &&
+      Number.isFinite(stato.eroe.px) &&
+      Number.isFinite(stato.eroe.py)
+  );
+}
+
+// Il nome dice a colpo d'occhio qual è il più avanti, che è la domanda vera
+// quando in una cartella ce ne sono cinque.
+export function nomeFile(stato) {
+  const stagione = stagioni.stagioneDi(stato.giorno);
+  return `ultimo-raccolto-${stato.seme}-giorno${stato.giorno}-${stagione}.json`;
+}
+
 export function cancella(slot) {
   const d = deposito();
   if (!d) return false;

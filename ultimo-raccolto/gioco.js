@@ -115,6 +115,71 @@ function vestiLaValle() {
 
 // --- la partita: salvare e caricare ---------------------------------------
 
+// L'unico pezzo di DOM che serve al gioco oltre al canvas: un ingresso per i
+// file, nascosto, aperto dal tasto. Sta qui perché questo è il modulo che
+// possiede il DOM — le regole non sanno nemmeno che esista una pagina.
+const ingressoFile = document.createElement("input");
+ingressoFile.type = "file";
+ingressoFile.accept = "application/json,.json";
+ingressoFile.hidden = true;
+document.body.appendChild(ingressoFile);
+
+function scarica(testo, nomeFile) {
+  const indirizzo = URL.createObjectURL(new Blob([testo], { type: "application/json" }));
+  const collegamento = document.createElement("a");
+  collegamento.href = indirizzo;
+  collegamento.download = nomeFile;
+  collegamento.click();
+  URL.revokeObjectURL(indirizzo);
+}
+
+// Si esporta la partita in corso e non una casella: il file è il modo di
+// portarsi la valle su un altro computer, e quello che si vuole portare è
+// dove si è arrivati adesso.
+function esportaSuFile() {
+  const stato = salvataggio.istantanea(eroe, casellaScelta);
+  try {
+    scarica(JSON.stringify(stato, null, 1), salvataggio.nomeFile(stato));
+  } catch {
+    annuncia("esportazione non riuscita", "#c0705f");
+    return;
+  }
+  annuncia("partita esportata", "#9ec97e");
+}
+
+function importaDaFile() {
+  ingressoFile.value = "";
+  ingressoFile.click();
+}
+
+// L'attesa del file è l'unica cosa asincrona del gioco, e sta fuori dal ciclo
+// apposta: il ciclo gira a sessanta fotogrammi al secondo e non può fermarsi
+// ad aspettare che qualcuno scelga un file.
+ingressoFile.addEventListener("change", async () => {
+  const file = ingressoFile.files?.[0];
+  if (!file) return;
+
+  let stato = null;
+  try {
+    stato = JSON.parse(await file.text());
+  } catch {
+    annuncia("il file non è leggibile", "#c0705f");
+    return;
+  }
+  if (!salvataggio.valido(stato)) {
+    annuncia("non è un salvataggio di questa versione", "#c0705f");
+    return;
+  }
+
+  const ripreso = salvataggio.applica(stato);
+  if (!ripreso) {
+    annuncia("salvataggio illeggibile", "#c0705f");
+    return;
+  }
+  riprendi(ripreso);
+  annuncia("partita importata dal file", "#9ec97e");
+});
+
 function caselleDiSalvataggio() {
   return salvataggio.elenco().map((voce) => ({
     ...voce,
@@ -148,7 +213,14 @@ function caricaDa(voce) {
     annuncia("salvataggio illeggibile", "#c0705f");
     return;
   }
+  riprendi(ripreso);
+  annuncia("partita ripresa", "#9ec97e");
+}
 
+// Quello che va rimesso a posto qui e non nelle regole: l'entità dell'eroe, la
+// camera, la minimappa, i conti del ciclo. Lo stesso pezzo serve a una casella
+// e a un file, e scritto due volte sarebbe la seconda a restare indietro.
+function riprendi(ripreso) {
   // L'eroe si rifà invece di essere spostato: un'entità caricata deve tornare
   // allo stato che avrebbe appena creata — niente passo a metà, niente
   // direzione ereditata dalla partita di prima.
@@ -159,8 +231,8 @@ function caricaDa(voce) {
 
   casellaScelta = ripreso.casella;
   ultimoGiorno = ripreso.giorno;
-  // L'alba di oggi conta come già scritta se è già passata: caricare non deve
-  // sovrascrivere la casella automatica con la partita appena ripresa.
+  // L'alba di oggi conta come già scritta se è già passata: riprendere non
+  // deve sovrascrivere la casella automatica con la partita appena ripresa.
   albaScritta = tempo.oraCorrente() >= tempo.ALBA_PIENA ? ripreso.giorno : ripreso.giorno - 1;
   colpito = null;
   lumi.length = 0;
@@ -173,7 +245,6 @@ function caricaDa(voce) {
   minimappa.aggiorna(eroe);
 
   partitaAperta = false;
-  annuncia("partita ripresa", "#9ec97e");
 }
 
 function leggiPartita() {
@@ -185,6 +256,18 @@ function leggiPartita() {
   // serve un tasto nuovo per due modi.
   if (comandi.appenaPremuto("sinistra")) modoPartita = "carica";
   if (comandi.appenaPremuto("destra")) modoPartita = "salva";
+
+  // Il file non guarda le caselle: si esporta la partita in corso e si importa
+  // dentro la partita in corso. Una casella è un posto dove tornare, un file è
+  // il modo di portarsi la valle altrove.
+  if (comandi.appenaPremuto("esporta")) {
+    esportaSuFile();
+    return;
+  }
+  if (comandi.appenaPremuto("importa")) {
+    importaDaFile();
+    return;
+  }
 
   if (!comandi.appenaPremuto("usa")) return;
   const voce = voci[slotScelto];
