@@ -82,3 +82,21 @@ export const TAVOLOZZA = {
   u: "#e0913a", // fiamma
   v: "#f2d06b", // fiamma, cuore
 };
+
+// La stessa tavolozza con la terra bagnata. Serve all'orto: guardando un campo
+// si deve capire quali solchi sono stati innaffiati e quali no, e la risposta
+// è il colore del terreno — che è come funziona anche fuori dal gioco.
+//
+// Cotta come tavolozza a parte invece che con sprite doppi: lo stesso disegno
+// con due tavolozze è tutto ciò che serve, ed è il motivo per cui la tavolozza
+// è un parametro della cottura fin dal primo giorno.
+// Scurisce anche il legno, che nell'orto è il colore dei semi appena sparsi:
+// alla tinta asciutta i semi finirebbero esattamente sul bruno della terra
+// bagnata, e un solco seminato e innaffiato — cioè il caso normale —
+// sembrerebbe vuoto.
+export const TAVOLOZZA_BAGNATA = {
+  ...TAVOLOZZA,
+  b: "#3b2c1e",
+  c: "#4e3a26",
+  g: "#221a11",
+};

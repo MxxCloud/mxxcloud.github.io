@@ -8,7 +8,8 @@ import { impronta } from "../motore/casuale.js";
 import { OGGETTO, TERRENO } from "../mondo/generazione.js";
 import * as tempo from "./tempo.js";
 import * as bisogni from "./bisogni.js";
-import { CATALOGO, raccoltaDi, colpiNecessari } from "./oggetti.js";
+import { CATALOGO, ATTREZZI, raccoltaDi, colpiNecessari } from "./oggetti.js";
+import * as orto from "./orto.js";
 
 const { TASSELLO } = schermo;
 
@@ -54,13 +55,35 @@ export function azionePossibile(eroe, cosaInMano) {
     const restano = Math.max(1, colpiNecessari(b.oggetto, cosaInMano) - gia);
     return { tipo: "raccogli", verbo: raccolta.verbo, restano, bersaglio: b };
   }
-  // L'acqua smette di essere solo un ostacolo. È già disegnata ed è già
-  // ovunque: darle un uso non costa un sistema nuovo, costa una riga qui.
   const terreno = mappa.terrenoDi(b.tx, b.ty);
-  if (terreno === TERRENO.ACQUA || terreno === TERRENO.ACQUA_BASSA) {
+  const acqua = terreno === TERRENO.ACQUA || terreno === TERRENO.ACQUA_BASSA;
+
+  // Alla riva: con un secchio vuoto in mano si riempie, altrimenti si beve.
+  // Decide quello che si ha in mano, come per tutto il resto — non il
+  // contesto, che costringerebbe a indovinare.
+  if (acqua && cosaInMano === "secchio") {
+    return { tipo: "riempi", verbo: "Riempi i secchi", bersaglio: b };
+  }
+  if (acqua) {
     if (bisogni.livello("sete") < 1) {
       return { tipo: "bevi", verbo: "Bevi", bersaglio: b };
     }
+    return null;
+  }
+
+  // La zappa non accorcia un lavoro: ne apre uno che senza di lei non
+  // esiste.
+  if (ATTREZZI[cosaInMano]?.zappa && b.oggetto === OGGETTO.NESSUNO && zappabile(terreno)) {
+    return { tipo: "zappa", verbo: "Zappa", bersaglio: b };
+  }
+
+  if (cosaInMano === "semi" && b.oggetto === OGGETTO.TERRA_ZAPPATA) {
+    return { tipo: "semina", verbo: "Semina", bersaglio: b };
+  }
+
+  if (cosaInMano === "secchio_pieno" && orto.siPuoInnaffiare(b.oggetto)) {
+    const gia = modifiche.di(b.tx, b.ty)?.bagnato === true;
+    if (!gia) return { tipo: "innaffia", verbo: "Innaffia", bersaglio: b };
     return null;
   }
 
@@ -69,6 +92,13 @@ export function azionePossibile(eroe, cosaInMano) {
     return { tipo: "posa", verbo: "Posa", cosa: cosaInMano, bersaglio: b };
   }
   return null;
+}
+
+// Si zappa dove cresce qualcosa di erbaceo, non sulla roccia né sulla
+// sabbia: un orto ha bisogno di terra, e dirlo con i terreni invece che con
+// un messaggio evita di spiegarlo.
+function zappabile(terreno) {
+  return terreno === TERRENO.ERBA || terreno === TERRENO.STERPAGLIA || terreno === TERRENO.TERRA;
 }
 
 function posabile(b) {
@@ -122,6 +152,34 @@ export function agisci(eroe, cosaInMano) {
   if (azione.tipo === "bevi") {
     bisogni.ristora("sete", SORSO);
     return { tipo: "bevi" };
+  }
+
+  if (azione.tipo === "riempi") {
+    // Si riempiono tutti in una volta: andare avanti e indietro una volta per
+    // secchio sarebbe una passeggiata obbligatoria, non una scelta.
+    const quanti = inventario.quante("secchio");
+    if (quanti === 0) return null;
+    inventario.togli("secchio", quanti);
+    inventario.aggiungi("secchio_pieno", quanti);
+    return { tipo: "riempi", quanti };
+  }
+
+  if (azione.tipo === "zappa") {
+    mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.TERRA_ZAPPATA });
+    return { tipo: "zappa" };
+  }
+
+  if (azione.tipo === "semina") {
+    if (!inventario.togli("semi", 1)) return null;
+    mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.SEMINATO });
+    return { tipo: "semina" };
+  }
+
+  if (azione.tipo === "innaffia") {
+    if (!inventario.togli("secchio_pieno", 1)) return null;
+    inventario.aggiungi("secchio", 1);
+    orto.innaffia(tx, ty, azione.bersaglio.oggetto);
+    return { tipo: "innaffia" };
   }
 
   if (azione.tipo === "dormi") {

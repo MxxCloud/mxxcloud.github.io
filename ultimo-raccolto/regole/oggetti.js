@@ -3,6 +3,7 @@
 import { OGGETTO } from "../mondo/generazione.js";
 import * as arte from "../arte/sprite-cose.js";
 import * as impugnati from "../arte/sprite-impugnati.js";
+import * as ortoArte from "../arte/sprite-orto.js";
 
 // Gli identificatori sono testo e non numeri di proposito: finiranno nei
 // salvataggi, e un salvataggio che dice "legna" sopravvive a un riordino del
@@ -39,6 +40,26 @@ export const CATALOGO = {
     // all'orecchio.
     impugnato: { nome: "ascia", righe: impugnati.ASCIA, scartoY: 5 },
   },
+  zappa: {
+    nome: "Zappa",
+    icona: arte.ZAPPA,
+    pila: 1,
+    impugnato: { nome: "zappa", righe: impugnati.ZAPPA, scartoY: 5 },
+  },
+  // Vuoto e pieno sono due cose distinte invece di un secchio con un livello
+  // dentro: lo zaino tiene coppie cosa-quantità e non stati, e due icone
+  // diverse si leggono meglio di un numero.
+  secchio: { nome: "Secchio", icona: arte.SECCHIO, pila: 4 },
+  secchio_pieno: { nome: "Secchio pieno", icona: arte.SECCHIO_PIENO, pila: 4 },
+  semi: { nome: "Semi", icona: arte.SEMI, pila: 40 },
+  // Sfama il doppio delle bacche: è il senso dell'orto, e senza questo
+  // divario coltivare sarebbe un passatempo invece di una risposta alla fame.
+  rapa: {
+    nome: "Rapa",
+    icona: arte.RAPA,
+    pila: 20,
+    commestibile: { fame: 0.6 },
+  },
   giaciglio: {
     nome: "Giaciglio",
     icona: arte.GIACIGLIO,
@@ -53,6 +74,9 @@ export const CATALOGO = {
 // illumina, quanto per l'ascia, che abbatte in meno colpi.
 export const ATTREZZI = {
   ascia: { colpi: { [OGGETTO.ALBERO]: 2 } },
+  // La zappa non accorcia niente: apre un'azione che senza di lei non
+  // esiste. È il secondo modo in cui un attrezzo può contare.
+  zappa: { zappa: true },
 };
 
 // Quanti colpi servono davvero, tenuto conto di cosa si ha in mano. A mani
@@ -103,6 +127,9 @@ export const RACCOLTA = {
       // Le bacche non escono sempre: un cespuglio su tre ne ha. Serve a dare
       // un motivo per strapparli tutti invece di quello più comodo.
       { cosa: "bacche", quante: 1, probabilita: 0.34 },
+      // I semi vengono da quello che già si raccoglie: l'orto non nasce da un
+      // oggetto trovato per caso ma da quello che hai strappato in giro.
+      { cosa: "semi", quante: 2, probabilita: 0.3 },
     ],
   },
   [OGGETTO.FALO_ACCESO]: {
@@ -125,6 +152,20 @@ export const RACCOLTA = {
     colpi: 1,
     scheggie: ["9", "a", "h"],
     resa: [{ cosa: "giaciglio", quante: 1 }],
+  },
+  // Solo la coltura matura si raccoglie: strappare un germoglio darebbe
+  // niente e toglierebbe il senso dell'aspettare. Gli stadi immaturi non
+  // stanno qui apposta, e azioni.js dice perché non si può.
+  [OGGETTO.MATURA]: {
+    verbo: "Raccogli",
+    colpi: 1,
+    scheggie: ["k", "j", "5"],
+    resa: [
+      { cosa: "rapa", quante: 2 },
+      // Più semi di quanti ne siano serviti: un orto che non si ripaga i semi
+      // non è un orto, è una spesa.
+      { cosa: "semi", quante: 2 },
+    ],
   },
   [OGGETTO.FALO_SPENTO]: {
     verbo: "Raccogli",

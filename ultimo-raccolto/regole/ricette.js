@@ -30,6 +30,23 @@ export const RICETTE = [
     ],
   },
   {
+    id: "zappa",
+    produce: { cosa: "zappa", quante: 1 },
+    costo: [
+      { cosa: "pietra", quante: 2 },
+      { cosa: "ramo", quante: 1 },
+      { cosa: "fibra", quante: 2 },
+    ],
+  },
+  {
+    id: "secchio",
+    produce: { cosa: "secchio", quante: 1 },
+    costo: [
+      { cosa: "legna", quante: 3 },
+      { cosa: "fibra", quante: 1 },
+    ],
+  },
+  {
     id: "giaciglio",
     produce: { cosa: "giaciglio", quante: 1 },
     costo: [

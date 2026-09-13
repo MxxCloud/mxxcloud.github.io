@@ -254,3 +254,81 @@ export const GIACIGLIO_STESO = [
   ".h999999999999h.",
   "..hhhhhhhhhhhh..",
 ];
+
+export const ZAPPA = [
+  "............",
+  "..eeee......",
+  "..eeee......",
+  "...ehg......",
+  "....hg......",
+  "....hg......",
+  ".....hg.....",
+  ".....hg.....",
+  "......hg....",
+  "......hg....",
+  "............",
+  "............",
+];
+
+export const SECCHIO = [
+  "............",
+  "..ssssssss..",
+  "..s......s..",
+  "..s......s..",
+  "..s......s..",
+  "..s......s..",
+  "..s......s..",
+  "...s....s...",
+  "...ssssss...",
+  "............",
+  "............",
+  "............",
+];
+
+// Pieno e vuoto sono due oggetti distinti invece di un secchio con un livello
+// dentro: lo zaino tiene coppie cosa-quantità e non stati, e due icone
+// diverse si distinguono a colpo d'occhio meglio di un numero.
+export const SECCHIO_PIENO = [
+  "............",
+  "..ssssssss..",
+  "..s333333s..",
+  "..s322223s..",
+  "..s222222s..",
+  "..s222222s..",
+  "..s222222s..",
+  "...s2222s...",
+  "...ssssss...",
+  "............",
+  "............",
+  "............",
+];
+
+export const SEMI = [
+  "............",
+  "............",
+  "...bb..bb...",
+  "..baab.baab.",
+  "..baab.baab.",
+  "...bb..bb...",
+  "....bb......",
+  "...baab.....",
+  "...baab.....",
+  "....bb......",
+  "............",
+  "............",
+];
+
+export const RAPA = [
+  "............",
+  "....k.k.....",
+  "...kkkkk....",
+  "....kkk.....",
+  "...55555....",
+  "..5555555...",
+  "..5555555...",
+  "...55555....",
+  "....555.....",
+  ".....5......",
+  "............",
+  "............",
+];
