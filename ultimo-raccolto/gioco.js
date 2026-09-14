@@ -35,12 +35,11 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M4.3";
+const VERSIONE = "M4.4";
 
 // --- elementi -------------------------------------------------------------
 
 const quadro = document.getElementById("quadro");
-const avvisoSospensione = document.getElementById("sospensione");
 const diagnostica = document.getElementById("diagnostica");
 
 // --- stato ----------------------------------------------------------------
@@ -845,12 +844,52 @@ const partenza = giocatore.puntoDiPartenza(0, 0);
 eroe = entita.aggiungi(giocatore.crea(partenza.px, partenza.py));
 schermo.centraSu(eroe.px, eroe.py);
 
-ciclo.collegaSospensione((sospeso) => {
-  avvisoSospensione.hidden = !sospeso;
-  // Senza questo, tornando dalla pausa si riparte con i tasti ancora premuti.
-  if (sospeso) comandi.rilasciaTutto();
-});
-ciclo.avvia({ aggiorna, disegna });
+// Il mondo non aspetta chi guarda un'altra scheda. Il browser smette di
+// chiamare il gioco — quello non si può impedire — ma il tempo passato si
+// recupera al ritorno, ed è lo stesso meccanismo del dormire: l'orologio
+// avanza, i bisogni calano, e il ciclo del cambio giorno fa crescere l'orto,
+// spegnere i fuochi e girare le stagioni al fotogramma dopo.
+//
+// Oltre il tetto il conto si ferma. Non è una gentilezza: recuperare mille
+// giorni vorrebbe dire mille giri del ciclo del giorno, cioè una pagina
+// bloccata per secondi, e a quel punto non cambierebbe più niente comunque —
+// l'orto è morto da un pezzo e i bisogni sono a zero da un pezzo.
+const ASSENZA_MASSIMA = 4 * 60 * 60; // quattro ore vere, cioè quarantotto giorni
+
+// Senza questo si riparte con i tasti ancora premuti: chi cambia applicazione
+// lascia il suo keyup dall'altra parte.
+ciclo.collegaSospensione(() => comandi.rilasciaTutto());
+
+// Il tempo che il ciclo non ha potuto simulare passo per passo. Arriva in
+// blocco al primo fotogramma dopo un'assenza, e qui diventa mondo: l'orologio
+// avanza, i bisogni calano, e il ciclo del cambio giorno fa crescere l'orto,
+// spegnere i fuochi e girare le stagioni al fotogramma dopo.
+function recuperaIlTempoPerso(secondiSaltati) {
+  if (aperturaVisibile || ricetteAperte || partitaAperta) return;
+  const secondi = Math.min(secondiSaltati, ASSENZA_MASSIMA);
+  if (secondi < 1) return;
+
+  tempo.avanza(secondi);
+  bisogni.passanoSecondi(secondi, { stanca: true });
+
+  // Si dice quanto è passato, perché tornare e trovare l'orto morto senza
+  // sapere perché è la differenza fra una regola e un guasto. In giorni se
+  // sono giorni, in ore se sono ore: "sei stato via 0 giorni" non è una
+  // risposta.
+  //
+  // Sotto un'ora di gioco non si dice niente. Un intoppo di mezzo secondo
+  // arriva qui come tutto il resto, e annunciarlo sarebbe rumore che insegna a
+  // non leggere i messaggi.
+  const ore = secondi / tempo.SECONDI_PER_GIORNO * 24;
+  if (ore >= 24) {
+    const giorni = Math.floor(ore / 24);
+    annuncia(`sei stato via ${giorni} giorn${giorni === 1 ? "o" : "i"}`, "#c9b189");
+  } else if (ore >= 1) {
+    const tonde = Math.round(ore);
+    annuncia(`sei stato via ${tonde} or${tonde === 1 ? "a" : "e"}`, "#c9b189");
+  }
+}
+ciclo.avvia({ aggiorna, disegna, salto: recuperaIlTempoPerso });
 
 // Il gioco si installa e funziona senza rete. Si registra dopo l'avvio e non
 // prima: il service worker non serve a far partire la partita, e metterlo
@@ -893,6 +932,7 @@ if (parametri.has("diagnostica")) {
     orto,
     stagioni,
     decadimento,
+    ciclo,
     salvataggio,
     sincronia,
     comandi,

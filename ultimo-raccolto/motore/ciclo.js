@@ -13,13 +13,15 @@
 export const PASSO = 1 / 60;
 
 // Oltre questo numero di passi recuperati in un colpo solo si preferisce
-// perdere tempo di gioco. Tornando da una scheda rimasta in secondo piano
-// l'accumulo vale minuti: ricorrerli tutti bloccherebbe la pagina, e nel
-// frattempo il giocatore attraverserebbe i muri a velocità di calcolo.
+// perdere tempo di simulazione. Il tempo di gioco non si perde lo stesso:
+// rientrando dallo schermo l'assenza si recupera in blocco (vedi
+// collegaSospensione), che è un'altra strada e molto più economica.
 const PASSI_MASSIMI = 5;
 
 let attivo = false;
-let sospeso = false;
+// Fuori dallo schermo, non in pausa: il ciclo non gira perché il browser non
+// lo chiama, non perché il gioco abbia deciso di fermarsi.
+let fuori = false;
 let accumulo = 0;
 let precedente = 0;
 
@@ -40,11 +42,10 @@ export function peggiorFotogramma() {
   return peggiore;
 }
 
-export function inPausa() {
-  return sospeso;
-}
-
-export function avvia({ aggiorna, disegna }) {
+// "salto" riceve il tempo reale che il ciclo non è riuscito a simulare passo
+// per passo. Capita tornando da una scheda in secondo piano, da un computer
+// che era sospeso, o dopo un intoppo lungo: chi orchestra decide cosa farne.
+export function avvia({ aggiorna, disegna, salto }) {
   attivo = true;
   precedente = performance.now();
 
@@ -55,10 +56,6 @@ export function avvia({ aggiorna, disegna }) {
     const delta = (ora - precedente) / 1000;
     precedente = ora;
 
-    // Da fermi non si accumula nulla: è ciò che evita la corsa di recupero al
-    // ritorno dalla pausa, senza dover azzerare niente a mano.
-    if (sospeso) return;
-
     accumulo += delta;
     let passi = 0;
     while (accumulo >= PASSO && passi < PASSI_MASSIMI) {
@@ -66,7 +63,20 @@ export function avvia({ aggiorna, disegna }) {
       accumulo -= PASSO;
       passi += 1;
     }
-    if (passi === PASSI_MASSIMI) accumulo = 0;
+
+    // Il tempo avanzato non si butta più: si consegna a chi sa farne qualcosa
+    // in blocco. È il tempo passato mentre il gioco non veniva chiamato, e
+    // buttarlo era quello che metteva il mondo in pausa.
+    //
+    // Misurarlo qui e non sul fuoco della finestra è la differenza fra un
+    // conto giusto e un conto doppio: una finestra visibile ma senza fuoco
+    // continua a ricevere fotogrammi, quindi quel tempo è già stato simulato
+    // e sommarlo di nuovo farebbe correre l'orologio al doppio.
+    if (passi === PASSI_MASSIMI && accumulo > 0) {
+      const saltato = accumulo;
+      accumulo = 0;
+      if (salto) salto(saltato);
+    }
 
     disegna();
 
@@ -89,20 +99,31 @@ export function ferma() {
   attivo = false;
 }
 
-// Una scheda in secondo piano non riceve requestAnimationFrame, ma perdere il
-// fuoco della finestra sì: senza questo, chi passa a un'altra applicazione
-// continua a camminare perché il tasto è rimasto premuto e non tornerà mai il
-// suo keyup.
-export function collegaSospensione(allaSospensione) {
-  const cambia = (valore) => {
-    if (sospeso === valore) return;
-    sospeso = valore;
-    accumulo = 0;
-    precedente = performance.now();
-    if (allaSospensione) allaSospensione(valore);
+// Uscire dallo schermo serve a una cosa sola: rilasciare i tasti. Senza, chi
+// passa a un'altra applicazione continua a camminare perché il tasto è
+// rimasto premuto e il suo keyup non arriverà mai.
+//
+// Il tempo passato fuori non si misura qui. Una scheda in secondo piano non
+// riceve requestAnimationFrame — il browser smette di chiamare il gioco e non
+// c'è codice che possa obbligarlo — ma quel tempo riappare da solo come un
+// salto enorme nel primo fotogramma al ritorno, ed è lì che viene raccolto
+// (vedi "salto" in avvia). Misurarlo da qui conterebbe due volte tutte le
+// volte che la finestra perde il fuoco senza sparire.
+export function collegaSospensione(allUscita) {
+  const esci = () => {
+    if (fuori) return;
+    fuori = true;
+    if (allUscita) allUscita();
   };
 
-  addEventListener("blur", () => cambia(true));
-  addEventListener("focus", () => cambia(false));
-  document.addEventListener("visibilitychange", () => cambia(document.hidden));
+  const rientra = () => {
+    fuori = false;
+  };
+
+  addEventListener("blur", esci);
+  addEventListener("focus", rientra);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) esci();
+    else rientra();
+  });
 }

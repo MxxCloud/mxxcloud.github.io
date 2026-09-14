@@ -102,12 +102,18 @@ export function consuma(quale, quanto) {
   ristora(quale, -quanto);
 }
 
-// Il tempo saltato dormendo consuma fame e sete come se fosse passato
-// davvero: si salta la notte, non il proprio metabolismo. È ciò che impedisce
-// al sonno di essere un tasto per far sparire i problemi.
-export function passanoSecondi(secondi) {
+// Il tempo saltato consuma i bisogni come se fosse passato davvero. Serve a
+// due cose che si assomigliano: dormire, dove si salta la notte e non il
+// proprio metabolismo, ed essere stati via, dove il mondo è andato avanti
+// senza di noi.
+//
+// La stanchezza è l'unica differenza fra i due casi, ed è il motivo per cui
+// c'è un parametro: chi dorme si riposa e quella barra la ristora dopo, chi
+// era altrove no — stava in piedi, e il tempo passato in piedi stanca.
+export function passanoSecondi(secondi, { stanca = false } = {}) {
   livelli.fame = limita(livelli.fame - CALO.fame * secondi * stagioni.fattoreFame());
   livelli.sete = limita(livelli.sete - CALO.sete * secondi);
+  if (stanca) livelli.stanchezza = limita(livelli.stanchezza - CALO.stanchezza * secondi);
 }
 
 export function quantiVuoti() {
