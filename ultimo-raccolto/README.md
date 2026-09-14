@@ -61,6 +61,13 @@ Il mondo si ricorda cosa hai fatto: l'albero che hai abbattuto resta
 abbattuto, il falò che hai posato resta dov'è. E adesso se lo ricorda anche
 dopo che hai chiuso la scheda — vedi i salvataggi, più sotto.
 
+**Il mondo non aspetta.** Cambiando scheda il browser smette di chiamare il
+gioco — non c'è codice che possa impedirlo — ma il tempo passato non si perde:
+torna tutto insieme al primo fotogramma del ritorno, e l'orologio avanza, i
+bisogni calano, l'orto cresce o muore. Se manca più di un'ora di gioco te lo
+dice. Oltre quattro ore vere di assenza il conto si ferma, perché recuperare
+mille giorni bloccherebbe la pagina e a quel punto non cambierebbe più niente.
+
 Il gioco è installabile e funziona senza rete.
 
 **Fame, sete e stanchezza** si consumano a ritmi diversi: la sete morde prima
