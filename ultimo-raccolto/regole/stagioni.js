@@ -6,14 +6,19 @@
 // che arriva che tu sia pronto o no, ed è metà del pilastro: il mondo si
 // riprende quello che è tuo anche solo passando.
 //
-// Otto giorni ciascuna, cioè ottanta minuti veri. È la misura che lascia
-// entrare due raccolti in una stagione buona: una coltura innaffiata ogni
-// giorno matura in quattro. Una stagione più corta renderebbe l'orto una
-// corsa, una più lunga toglierebbe la scadenza.
-
+// Quattro giorni ciascuna, cioè venti minuti veri con il giorno da cinque.
+// Una stagione entra in una pausa caffè, e l'anno intero in un'ora e venti:
+// è quello che serve adesso, con mezzo gioco ancora da costruire e le regole
+// che chiedono giorni per mostrarsi sbagliate.
+//
+// Il conto però si è stretto: una coltura innaffiata ogni giorno matura in
+// quattro, quindi in una stagione buona ci sta un raccolto solo, e appena.
+// Con otto ce ne stavano due. È una scelta da rivedere quando il gioco
+// smetterà di essere un cantiere — l'orto vuole una stagione in cui si possa
+// sbagliare un giorno senza perdere il raccolto.
 import * as tempo from "./tempo.js";
 
-export const GIORNI_PER_STAGIONE = 8;
+export const GIORNI_PER_STAGIONE = 4;
 
 // L'ordine è quello dell'anno, e l'indice conta: da esso si ricava la
 // stagione dal giorno con una divisione sola.
