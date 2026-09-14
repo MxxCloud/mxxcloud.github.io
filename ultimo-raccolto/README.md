@@ -75,9 +75,11 @@ della velocità. Tre bisogni ignorati riducono a un quarto.
 
 **L'orto** è la prima cosa tua. Con una zappa si lavora la terra, si semina
 quello che si è strappato dai cespugli, si innaffia con un secchio riempito al
-lago e si torna dopo giorni a raccogliere. Una coltura avanza di uno stadio
-per ogni giorno in cui è stata innaffiata: saltare un giorno non la uccide, la
-ferma. I solchi bagnati si riconoscono dal terreno più scuro.
+lago e si torna dopo giorni a raccogliere. Tre stadi, cioè due innaffiature
+dalla semina al raccolto: saltare un giorno non uccide la coltura, la ferma,
+e con la stagione da quattro giorni resta un giorno di margine — che è la
+differenza fra una scadenza e una trappola. I solchi bagnati si riconoscono
+dal terreno più scuro.
 
 Dormire porta all'alba, quindi anche l'orto va avanti: è il modo di
 comprimere l'attesa senza toglierla.
@@ -90,10 +92,7 @@ intero sta in un'ora e venti.
 
 Giorno e stagioni sono corti di proposito, finché il gioco è un cantiere:
 una regola che si mostra sbagliata solo dopo una settimana di gioco va
-provata in venti minuti, non in un pomeriggio. Il conto però si è stretto —
-una coltura matura in quattro giorni innaffiati e la stagione buona ne dura
-quattro, quindi ci sta un raccolto solo e appena. È una misura da rivedere
-quando il cantiere chiude.
+provata in venti minuti, non in un pomeriggio.
 
 **D'inverno non si coltiva.** Non si semina, e quello che è rimasto piantato
 muore, maturo compreso. Zappare resta permesso: preparare il campo per la
