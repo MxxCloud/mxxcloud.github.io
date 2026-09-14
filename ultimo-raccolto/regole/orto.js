@@ -15,13 +15,32 @@ import * as modifiche from "../mondo/modifiche.js";
 import * as tempo from "./tempo.js";
 import * as stagioni from "./stagioni.js";
 
-// In ordine di crescita: ogni giorno innaffiato avanza di uno.
+// In ordine di crescita: ogni giorno innaffiato avanza di uno. Tre stadi,
+// quindi due innaffiature dalla semina al raccolto.
+//
+// Erano quattro, e con le stagioni da quattro giorni non tornava il conto: il
+// raccolto arrivava l'ultimo giorno buono, e saltare una sola innaffiatura
+// voleva dire perdere tutto per l'inverno. Adesso c'è un giorno di margine, che
+// è la differenza fra una scadenza e una trappola.
+//
+// Lo stadio tolto è il germoglio, il secondo, e non il terzo: i disegni
+// crescono di nove, diciotto, quarantacinque e settantadue pixel di pianta, e
+// togliendo il terzo si passerebbe da diciotto a settantadue — un salto che si
+// legge come un errore di disegno invece che come una crescita.
 export const CRESCITA = [
   OGGETTO.SEMINATO,
-  OGGETTO.GERMOGLIO,
   OGGETTO.CRESCIUTA,
   OGGETTO.MATURA,
 ];
+
+// Gli stadi che non fanno più parte della crescita ma possono ancora trovarsi
+// in un salvataggio scritto prima. Restano colture a tutti gli effetti — si
+// innaffiano, l'inverno se le prende — e avanzano allo stadio che ha preso il
+// loro posto, invece di restare piantate lì per sempre in un campo che non
+// matura più.
+const RITIRATI = {
+  [OGGETTO.GERMOGLIO]: OGGETTO.CRESCIUTA,
+};
 
 // Quanti giorni una coltura matura resta buona. Tre: è il tempo di accorgersi
 // che è pronta e di tornare, ma non di dimenticarsene per una stagione. È la
@@ -30,7 +49,15 @@ export const CRESCITA = [
 export const GIORNI_DI_MATURITA = 3;
 
 export function eColtura(oggetto) {
-  return CRESCITA.includes(oggetto);
+  return CRESCITA.includes(oggetto) || oggetto in RITIRATI;
+}
+
+// Lo stadio dopo, o niente se è l'ultimo. Passa dai ritirati, così una coltura
+// di un salvataggio vecchio rientra nella catena nuova al primo giorno
+// innaffiato.
+function prossimoStadio(oggetto) {
+  if (oggetto in RITIRATI) return RITIRATI[oggetto];
+  return CRESCITA[CRESCITA.indexOf(oggetto) + 1];
 }
 
 export function eMatura(oggetto) {
@@ -107,7 +134,7 @@ export function nuovoGiorno() {
   let cresciute = 0;
   if (siColtiva) {
     for (const { tx, ty, oggetto } of coltureBagnate()) {
-      const prossimo = CRESCITA[CRESCITA.indexOf(oggetto) + 1];
+      const prossimo = prossimoStadio(oggetto);
       if (prossimo === undefined) continue;
       // Chi arriva a maturo si porta dietro la data: da lì parte il conto dei
       // giorni buoni.
