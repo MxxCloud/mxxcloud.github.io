@@ -53,7 +53,7 @@ poco per essere una mappa del mondo — che toglierebbe il gusto di andare a
 vedere. I falò e le torce che hai posato ci compaiono come puntini caldi:
 sono i tuoi punti di riferimento, non quelli del mondo.
 
-Il sole gira: un giorno dura dieci minuti veri, l'alba e il tramonto
+Il sole gira: un giorno dura cinque minuti veri, l'alba e il tramonto
 durano due ore ciascuno, e alle nove di sera è buio pieno. Una torcia in mano
 o un falò acceso scavano un cerchio di luce nel buio.
 
@@ -64,8 +64,8 @@ dopo che hai chiuso la scheda — vedi i salvataggi, più sotto.
 Il gioco è installabile e funziona senza rete.
 
 **Fame, sete e stanchezza** si consumano a ritmi diversi: la sete morde prima
-della fame, e la stanchezza dipende da quanto ti muovi — correre la brucia in
-quattro minuti scarsi, il che trasforma la corsa da gratis a scelta. Si beve
+della fame, e la stanchezza dipende da quanto ti muovi — mezza giornata di
+corsa la esaurisce, il che trasforma la corsa da gratis a scelta. Si beve
 alla riva del lago, si mangiano le bacche, si dorme su un giaciglio costruito
 apposta. Dormire porta all'alba e ristora, ma il tempo saltato si paga: ci si
 sveglia assetati.
@@ -82,10 +82,18 @@ ferma. I solchi bagnati si riconoscono dal terreno più scuro.
 Dormire porta all'alba, quindi anche l'orto va avanti: è il modo di
 comprimere l'attesa senza toglierla.
 
-**Le stagioni** durano otto giorni l'una, cioè ottanta minuti veri, e si
+**Le stagioni** durano quattro giorni l'una, cioè venti minuti veri, e si
 vedono: la valle cambia colore perché gli stessi disegni vengono cotti con
 un'altra tavolozza. Si comincia di fine estate, quindi la prima cosa che
-arriva è l'autunno — la stagione buona — e subito dopo l'inverno.
+arriva è l'autunno — la stagione buona — e subito dopo l'inverno. L'anno
+intero sta in un'ora e venti.
+
+Giorno e stagioni sono corti di proposito, finché il gioco è un cantiere:
+una regola che si mostra sbagliata solo dopo una settimana di gioco va
+provata in venti minuti, non in un pomeriggio. Il conto però si è stretto —
+una coltura matura in quattro giorni innaffiati e la stagione buona ne dura
+quattro, quindi ci sta un raccolto solo e appena. È una misura da rivedere
+quando il cantiere chiude.
 
 **D'inverno non si coltiva.** Non si semina, e quello che è rimasto piantato
 muore, maturo compreso. Zappare resta permesso: preparare il campo per la
@@ -220,9 +228,10 @@ file da toccare quel giorno.
 parola dà sempre la stessa valle, quindi una valle che piace si condivide
 copiando l'indirizzo. `?ora=22` comincia la partita a quell'ora, perché
 aspettare quindici minuti veri per vedere com'è la notte è il modo migliore
-per non guardarla mai. `?giorno=17` comincia in un altro punto dell'anno, ed è
-lo stesso motivo moltiplicato per otto: una stagione dura ottanta minuti veri,
-quindi vedere l'inverno aspettandolo significa non vederlo mai.
+per non guardarla mai. `?giorno=9` comincia d'inverno, ed è lo stesso motivo
+applicato all'anno: le stagioni cadono sui giorni 1, 5, 9 e 13, e aspettare
+di arrivarci è il modo migliore per non vederci mai una stagione fuori dalla
+prima.
 `?diagnostica` accende il pannello dei numeri.
 
 ## Com'è fatto

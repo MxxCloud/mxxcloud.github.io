@@ -1,11 +1,17 @@
 // L'orologio della valle.
 //
-// Un giorno dura dieci minuti veri. È una scelta di ritmo, non un dettaglio:
-// più corto e la notte diventa un lampeggio fastidioso, più lungo e non fai in
-// tempo a sentire la pressione del buio in una sessione breve. Stardew sta sui
-// quattordici, Don't Starve sotto i nove.
-
-const SECONDI_PER_GIORNO = 600;
+// Un giorno dura cinque minuti veri. È corto di proposito: con le stagioni, il
+// decadimento e le colture che maturano in giorni, provare qualcosa che chiede
+// una settimana di gioco a dieci minuti al giorno voleva dire un'ora e mezza
+// di attesa per vedere una regola sbagliata. Stardew sta sui quattordici,
+// Don't Starve sotto i nove — qui si sta sotto per scelta, perché il gioco è
+// ancora in costruzione e la cosa più preziosa è potergli girare intorno in
+// fretta.
+//
+// È esportato perché non è un dettaglio dell'orologio: i bisogni si consumano
+// in giorni, non in secondi, e finché la durata del giorno era scritta due
+// volte bastava cambiarne una per scollegare la fame dal calendario.
+export const SECONDI_PER_GIORNO = 300;
 const ORE_AL_SECONDO = 24 / SECONDI_PER_GIORNO;
 
 // Si comincia alle sette del mattino: c'è una giornata intera davanti per

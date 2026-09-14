@@ -9,9 +9,15 @@
 // dove hanno senso insieme. Tre indicatori sono già il massimo che un
 // giocatore tiene d'occhio mentre fa altro.
 
+import * as tempo from "./tempo.js";
 import * as stagioni from "./stagioni.js";
 
-const GIORNO = 600; // secondi reali, come in tempo.js
+// La durata del giorno viene da tempo.js e non è più ricopiata qui. Era una
+// copia innocua finché nessuno cambiava l'orologio, e una trappola dal momento
+// in cui qualcuno l'ha fatto: i ritmi qui sotto dicono "la fame si svuota in
+// un giorno e otto", e con due numeri diversi avrebbero smesso di dirlo senza
+// che nessuna prova se ne accorgesse.
+const GIORNO = tempo.SECONDI_PER_GIORNO;
 
 // Ritmi diversi di proposito: tre barre che calano insieme sono una barra
 // sola con tre disegni. La sete morde prima della fame, che è anche vero.
@@ -22,10 +28,15 @@ const CALO = {
 };
 
 // La stanchezza è l'unica che dipende da cosa fai e non solo dal tempo che
-// passa. Correre la brucia in quattro minuti scarsi: è quello che trasforma
-// la corsa da gratis a scelta.
-const STANCHEZZA_CAMMINO = 1 / 1800;
-const STANCHEZZA_CORSA = 1 / 300;
+// passa. Mezza giornata di corsa la esaurisce: è quello che trasforma la
+// corsa da gratis a scelta.
+//
+// Anche questi sono in giorni e non in secondi, per lo stesso motivo di
+// sopra: erano scritti in secondi reali, e accorciando la giornata la corsa
+// sarebbe diventata improvvisamente il triplo più cara senza che nessuno
+// l'avesse deciso.
+const STANCHEZZA_CAMMINO = 1 / (GIORNO * 3);
+const STANCHEZZA_CORSA = 1 / (GIORNO * 0.5);
 
 // Sotto questa soglia non si corre più. Non zero: restare senza fiato deve
 // succedere prima di essere allo stremo, altrimenti la corsa si spegne senza
