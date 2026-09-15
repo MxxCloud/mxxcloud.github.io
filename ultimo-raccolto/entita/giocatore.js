@@ -3,6 +3,7 @@
 import * as schermo from "../motore/schermo.js";
 import * as comandi from "../motore/comandi.js";
 import * as mappa from "../mondo/mappa.js";
+import * as urti from "./urti.js";
 import { cuoci, riflesso, telaio } from "../arte/sprite.js";
 import * as arte from "../arte/sprite-personaggi.js";
 
@@ -13,46 +14,10 @@ export const TIPO = "giocatore";
 const VELOCITA = 52; // pixel al secondo
 const VELOCITA_CORSA = 92;
 
-// Il rettangolo d'urto è molto più piccolo dello sprite e sta ai piedi. In una
-// vista dall'alto 3/4 il busto è disegnato "davanti" al terreno che occupa, non
-// sopra: far collidere anche la testa darebbe la sensazione di un personaggio
-// grasso il doppio di quello che si vede.
-const LARGHEZZA_URTO = 10;
-const ALTEZZA_URTO = 7;
-
 // Un fotogramma di camminata ogni tot pixel percorsi, non ogni tot secondi:
 // così l'animazione resta agganciata al passo anche quando si corre, invece di
 // scivolare come su ghiaccio.
 const PIXEL_PER_FOTOGRAMMA = 7;
-
-// --- urti -----------------------------------------------------------------
-
-function liberoIn(x, y) {
-  const sinistra = x - LARGHEZZA_URTO / 2;
-  const destra = x + LARGHEZZA_URTO / 2 - 0.001;
-  const sopra = y - ALTEZZA_URTO;
-  const sotto = y - 0.001;
-
-  const txPrimo = Math.floor(sinistra / TASSELLO);
-  const txUltimo = Math.floor(destra / TASSELLO);
-  const tyPrimo = Math.floor(sopra / TASSELLO);
-  const tyUltimo = Math.floor(sotto / TASSELLO);
-
-  for (let ty = tyPrimo; ty <= tyUltimo; ty += 1) {
-    for (let tx = txPrimo; tx <= txUltimo; tx += 1) {
-      if (mappa.solidoIn(tx, ty)) return false;
-    }
-  }
-  return true;
-}
-
-// I due assi si risolvono separatamente: è ciò che permette di scivolare lungo
-// un muro invece di incollarcisi. Provando lo spostamento come un unico
-// vettore, sfiorare un albero in diagonale fermerebbe del tutto.
-function muovi(e, dx, dy) {
-  if (dx !== 0 && liberoIn(e.px + dx, e.py)) e.px += dx;
-  if (dy !== 0 && liberoIn(e.px, e.py + dy)) e.py += dy;
-}
 
 // --- aspetto --------------------------------------------------------------
 
@@ -163,10 +128,7 @@ export function aggiorna(e, passo) {
     else if (y < 0) e.guarda = "su";
     else e.guarda = "giu";
 
-    const primaX = e.px;
-    const primaY = e.py;
-    muovi(e, x * velocita * passo, y * velocita * passo);
-    const percorso = Math.hypot(e.px - primaX, e.py - primaY);
+    const percorso = urti.muovi(e, x * velocita * passo, y * velocita * passo);
     e.passo += percorso / PIXEL_PER_FOTOGRAMMA;
   } else {
     // Fermi si torna al fotogramma di riposo, non a uno qualsiasi del ciclo.

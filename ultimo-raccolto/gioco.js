@@ -14,10 +14,14 @@ import * as mappa from "./mondo/mappa.js";
 import * as modifiche from "./mondo/modifiche.js";
 import * as entita from "./entita/entita.js";
 import * as giocatore from "./entita/giocatore.js";
+import * as infetto from "./entita/infetto.js";
+import * as urti from "./entita/urti.js";
 import * as tempo from "./regole/tempo.js";
 import * as bisogni from "./regole/bisogni.js";
 import * as salute from "./regole/salute.js";
 import * as freddo from "./regole/freddo.js";
+import * as infetti from "./regole/infetti.js";
+import * as chiasso from "./regole/chiasso.js";
 import * as orto from "./regole/orto.js";
 import * as stagioni from "./regole/stagioni.js";
 import * as decadimento from "./regole/decadimento.js";
@@ -38,7 +42,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M5";
+const VERSIONE = "M6";
 
 // --- elementi -------------------------------------------------------------
 
@@ -83,6 +87,10 @@ let corpo = null;
 // Se si sta gelando adesso. Calcolato una volta per passo e riusato dal
 // disegno: la regola non si interroga due volte per fotogramma.
 let gelando = false;
+// Quanto resta del lampo rosso di un morso preso. Sta qui e non nelle regole
+// perché è puro racconto: la ferita l'ha già applicata chi mordeva.
+let lampoDanno = 0;
+const DURATA_LAMPO = 0.45;
 
 const lumi = [];
 
@@ -132,8 +140,14 @@ function muori(causa) {
 function nuovoSuperstite() {
   salute.reimposta();
   bisogni.reimposta();
+  chiasso.reimposta();
   gelando = false;
+  lampoDanno = 0;
 
+  // Prima di svuotare le entità, così il conto di chi inseguiva torna a zero
+  // insieme a loro: senza, l'esclamativo resterebbe acceso per un fotogramma
+  // addosso a un superstite che non esisteva ancora.
+  infetti.svuota();
   entita.svuota();
   const partenza = giocatore.puntoDiPartenza(0, 0);
   eroe = entita.aggiungi(giocatore.crea(partenza.px, partenza.py));
@@ -393,6 +407,7 @@ function riprendi(ripreso) {
   // L'eroe si rifà invece di essere spostato: un'entità caricata deve tornare
   // allo stato che avrebbe appena creata — niente passo a metà, niente
   // direzione ereditata dalla partita di prima.
+  infetti.svuota();
   entita.svuota();
   eroe = entita.aggiungi(giocatore.crea(ripreso.eroe.px, ripreso.eroe.py));
   eroe.guarda = ripreso.eroe.guarda ?? "giu";
@@ -409,10 +424,14 @@ function riprendi(ripreso) {
   // La valle si rimette la stagione giusta senza annunciare un arrivo: non è
   // arrivato niente, si è ripreso da lì.
   // Un salvataggio si scrive da vivi, quindi riprendere significa sempre
-  // essere in piedi.
+  // essere in piedi. Gli infetti se ne sono andati con entita.svuota(): non
+  // stanno nel salvataggio, quindi quelli di prima non c'entrano niente con
+  // la notte in cui si riprende, e ne arriveranno di nuovi se è buio.
   mortoDi = null;
   corpo = null;
   gelando = false;
+  lampoDanno = 0;
+  chiasso.reimposta();
 
   stagioneVestita = null;
   vestiLaValle();
@@ -588,7 +607,12 @@ function leggiComandi() {
 
   if (comandi.appenaPremuto("consuma")) {
     const esito = azioni.consuma(cosaInMano());
-    if (esito) annuncia(`mangi: ${nomeDi(esito.cosa)}`, "#9ec97e");
+    if (esito?.tipo === "consumato") annuncia(`mangi: ${nomeDi(esito.cosa)}`, "#9ec97e");
+    else if (esito?.tipo === "medicato") {
+      annuncia(esito.curata ? "fasciato: l'infezione è passata" : "ti sei fasciato", "#9ec97e");
+    } else if (esito?.tipo === "nonServe") {
+      annuncia("non ne hai bisogno adesso", "#c9b189");
+    }
   }
 
   if (comandi.appenaPremuto("getta")) {
@@ -626,6 +650,9 @@ function leggiComandi() {
     // il suono resta ciò che manca davvero al gesto. Un tonfo sordo per il
     // legno, uno schiocco secco per la pietra.
     colpito = { tx: esito.tx, ty: esito.ty, resta: DURATA_TREMOLIO };
+    // Spaccare si sente da mezzo schermo. È il gesto che il giocatore fa più
+    // spesso senza pensarci, ed è qui che di notte smette di essere gratis.
+    chiasso.colpo();
     if (esito.scheggie) {
       // Il colpo che stacca ne sparge di più e più lontano: è la differenza
       // fra "l'hai preso" e "è venuto giù".
@@ -646,6 +673,14 @@ function leggiComandi() {
   if (esito.tipo === "semina") annuncia("seminato", "#9ec97e");
   if (esito.tipo === "innaffia") annuncia("innaffiato", "#8fb8d8");
   if (esito.tipo === "dormi") annuncia(`hai dormito fino all'alba`, "#9ec97e");
+
+  if (esito.tipo === "combattuto") {
+    // Il sangue esce sempre, e in quantità diversa: un colpo che va a segno e
+    // uno che finisce il lavoro non devono sembrare lo stesso gesto. È la
+    // stessa regola delle scheggie sugli alberi.
+    scheggie.sparge(esito.px, esito.py - 10, esito.caduto ? 24 : 9, ["A", "A", "n"], esito.caduto ? 1.5 : 0.9);
+    if (esito.caduto) annuncia("è caduto", "#9ec97e");
+  }
 
   if (esito.tipo === "frugato") {
     if (esito.presi.length === 0) annuncia("non aveva niente addosso", "#c9b189");
@@ -700,6 +735,20 @@ function aggiorna(passo) {
     if (gelando && !primaGelava) annuncia("stai gelando: serve una fiamma", "#8fa8d8");
 
     salute.avanza(passo, { vuoti: bisogni.vuoti(), alFreddo: gelando });
+    // Il chiasso dopo il movimento, perché dipende da come ci si è appena
+    // mossi; le decisioni degli infetti dopo il chiasso, perché lo ascoltano.
+    // Il morso invece si raccoglie dopo che si sono mossi loro: è l'unico
+    // momento in cui si sa se il braccio è arrivato.
+    chiasso.avanza(passo, { corre: eroe.correndo, siMuove: eroe.inMovimento });
+    const visto = infetti.decidi(passo, eroe, {
+      luceInMano: Boolean(CATALOGO[cosaInMano()]?.luce),
+    });
+    infetti.sgomitano();
+    const morsi = infetti.raccogliIMorsi();
+    if (morsi.morsi > 0) lampoDanno = DURATA_LAMPO;
+    if (morsi.infettato) annuncia("la ferita è sporca", "#9d7fb0");
+    else if (visto.appenaVisto && morsi.morsi === 0) annuncia("qualcosa ti ha visto", "#c0705f");
+
     scheggie.aggiorna(passo);
     // Si tiene aggiornata anche da spenta: scorrerla costa due centesimi di
     // millisecondo, ricostruirla da zero quasi trenta. Meglio pagare sempre
@@ -710,6 +759,7 @@ function aggiorna(passo) {
       colpito.resta -= passo;
       if (colpito.resta <= 0) colpito = null;
     }
+    if (lampoDanno > 0) lampoDanno -= passo;
   }
 
   // Un controllo solo, e fuori dal giro del mondo. La salute può arrivare a
@@ -811,6 +861,10 @@ function disegna() {
   // resto invece di brillare sopra l'oscurità come scintille.
   scheggie.disegna();
   disegnaBuio();
+  // Dopo il buio e prima dell'interfaccia: il lampo è una cosa che succede
+  // nel mondo, non un cartello sul vetro, quindi la notte non lo spegne ma i
+  // pannelli gli stanno sopra.
+  hud.disegnaDanno(schermo.pennello(), lampoDanno / DURATA_LAMPO);
   disegnaInterfaccia();
 
   if (!diagnostica.hidden) aggiornaDiagnostica();
@@ -818,7 +872,17 @@ function disegna() {
 
 // Lo scarto orizzontale di ciò che è stato appena colpito. Oscilla in fretta
 // e si spegne: è la stessa figura che fa una corda pizzicata.
+//
+// Due sorgenti, perché adesso ci sono due cose che si possono colpire. Le
+// cose del mondo stanno su un tassello e il tremolio le trova per coordinate;
+// chi cammina non sta su nessun tassello e se lo porta addosso. Stessa
+// oscillazione per entrambi: un colpo deve sentirsi uguale qualunque cosa
+// abbia preso.
 function tremolioDi(cosa) {
+  if (cosa.sussulto > 0) {
+    const quanto = cosa.sussulto / 0.18;
+    return Math.round(Math.sin(cosa.sussulto * 90) * AMPIEZZA_TREMOLIO * quanto);
+  }
   if (!colpito || cosa.tx !== colpito.tx || cosa.ty !== colpito.ty) return 0;
   const quanto = colpito.resta / DURATA_TREMOLIO;
   return Math.round(Math.sin(colpito.resta * 90) * AMPIEZZA_TREMOLIO * quanto);
@@ -838,7 +902,12 @@ function disegnaBuio() {
 
 function disegnaInterfaccia() {
   const p = schermo.pennello();
-  hud.disegnaBisogni(p, { salute: salute.livelloCorrente(), alFreddo: gelando });
+  hud.disegnaBisogni(p, {
+    salute: salute.livelloCorrente(),
+    alFreddo: gelando,
+    infetto: salute.eInfetto(),
+    inseguito: infetti.inseguono() > 0,
+  });
   hud.disegnaOrologio(p, {
     giorno: tempo.giornoCorrente(),
     orologio: tempo.orologio(),
@@ -903,7 +972,8 @@ function aggiornaDiagnostica() {
     `tassello ${tx}, ${ty}`,
     `terreno  ${NOMI_TERRENO[mappa.terrenoDi(tx, ty)]}`,
     `bisogni  ${bisogni.ELENCO.map((n) => n[0] + " " + bisogni.livello(n).toFixed(2)).join("  ")}  velocità ${bisogni.fattoreVelocita().toFixed(2)}`,
-    `salute   ${salute.livelloCorrente().toFixed(3)}  freddo ${gelando ? "sì" : "no"}  ${mortoDi ? `morto ${mortoDi}` : "vivo"}`,
+    `salute   ${salute.livelloCorrente().toFixed(3)}  freddo ${gelando ? "sì" : "no"}  ${salute.eInfetto() ? "infetto" : "sano"}  ${mortoDi ? `morto ${mortoDi}` : "vivo"}`,
+    `infetti  ${infetti.quanti()}  inseguono ${infetti.inseguono()}  chiasso ${chiasso.quanto()} (${Math.round(chiasso.raggio())}px)`,
     `ora      ${tempo.orologio()}  giorno ${tempo.giornoCorrente()}  luce ${tempo.luceAmbiente().toFixed(2)}`,
     `settori  ${mappa.settoriInMemoria()}  in piedi ${inPiedi.length}  lumi ${lumi.length}`,
     `scheggie ${scheggie.vive()}  figure ${giocatore.figureComposte()}`,
@@ -960,6 +1030,7 @@ albaScritta = tempo.oraCorrente() >= tempo.ALBA_PIENA
 vestiLaValle();
 
 entita.registra(giocatore.TIPO, giocatore.aggiorna);
+entita.registra(infetto.TIPO, infetto.aggiorna);
 const partenza = giocatore.puntoDiPartenza(0, 0);
 eroe = entita.aggiungi(giocatore.crea(partenza.px, partenza.py));
 schermo.centraSu(eroe.px, eroe.py);
@@ -1047,6 +1118,7 @@ if (parametri.has("diagnostica")) {
     azioni,
     scheggie,
     giocatore,
+    urti,
     scegliCasella: (i) => { casellaScelta = i; },
     chiudiApertura: () => { aperturaVisibile = false; },
     tremolio: () => (colpito ? { ...colpito } : null),
@@ -1056,6 +1128,10 @@ if (parametri.has("diagnostica")) {
     bisogni,
     salute,
     freddo,
+    infetti,
+    infetto,
+    chiasso,
+    entita,
     eMorto: () => mortoDi,
     nuovoSuperstite,
     orto,

@@ -41,6 +41,16 @@ const DANNO_FREDDO = 1 / (GIORNO * 0.75);
 // porta dietro per giorni, e in quei giorni si è fragili.
 const CURA = 1 / (GIORNO * 3);
 
+// L'infezione. Più lenta di un bisogno vuoto e senza scadenza: da sola non
+// uccide in fretta, ma non smette, e finché c'è non si guarisce di niente
+// altro. È questo a farne una cosa diversa dal danno — un morso si riposa,
+// un'infezione si cura o si peggiora, e l'unico modo di curarla è una benda.
+//
+// Quattro giorni per uccidere da salute piena. È il tempo per tornare a casa,
+// fare il punto e fasciarsi: abbastanza da non essere una condanna, troppo
+// poco per farci finta di niente fino alla primavera.
+const DANNO_INFEZIONE = 1 / (GIORNO * 4);
+
 // Come si racconta la morte. La causa non è un dettaglio di colore: senza,
 // una schermata di morte dice "sei morto" e lascia al giocatore il compito di
 // indovinare cosa avrebbe dovuto fare diversamente.
@@ -49,18 +59,21 @@ export const CAUSE = {
   sete: "di sete",
   stanchezza: "di sfinimento",
   freddo: "di freddo",
+  infetti: "sbranato",
+  infezione: "d'infezione",
 };
 
 let livello = 1;
 let morto = false;
 let causa = null;
+let infezione = false;
 
 // Quanto danno ha fatto ciascuna causa da quando questo superstite è vivo.
 // Serve a nominare la morte onestamente: chi aveva fame da due giorni e sete
 // da dieci secondi è morto di fame, anche se l'ultimo colpo l'ha dato la
 // sete. Nominare l'ultima causa sarebbe più facile da scrivere e più facile
 // da sbagliare.
-const danni = { fame: 0, sete: 0, stanchezza: 0, freddo: 0 };
+const danni = { fame: 0, sete: 0, stanchezza: 0, freddo: 0, infetti: 0, infezione: 0 };
 
 export function livelloCorrente() {
   return livello;
@@ -72,6 +85,10 @@ export function eMorto() {
 
 export function causaDellaMorte() {
   return causa;
+}
+
+export function eInfetto() {
+  return infezione;
 }
 
 function limita(valore) {
@@ -100,6 +117,42 @@ function ferisci(quale, quanto) {
   livello = limita(livello - quanto);
 }
 
+// Un colpo secco, e non un consumo: un morso toglie di colpo quello che la
+// fame toglie in mezza giornata. Sta fuori da avanza() perché non ha un
+// ritmo — capita, e chi lo infligge sa quando.
+//
+// L'infezione si prende da qui in poi (vedi infettati()), ma non si decide
+// qui: chi morde sa se ha lasciato qualcosa dentro, questo modulo sa solo
+// tenerne il conto.
+export function ferita(quanto, causaDelColpo = "infetti") {
+  if (morto) return false;
+  ferisci(causaDelColpo, quanto);
+  return controllaLaMorte() !== null;
+}
+
+export function infettati() {
+  if (morto) return false;
+  infezione = true;
+  return true;
+}
+
+// Restituisce quanto è stato tolto, così chi cura può dire se serviva.
+export function curati() {
+  const cera = infezione;
+  infezione = false;
+  return cera;
+}
+
+// Un posto solo in cui si muore, chiamato da tutte le strade che tolgono
+// salute. Era già la lezione di M5 — la salute arriva a zero in più modi e
+// ognuno sta altrove — e adesso i modi sono cinque invece di tre.
+function controllaLaMorte() {
+  if (morto || livello > 0) return null;
+  morto = true;
+  causa = peggiore();
+  return causa;
+}
+
 // Restituisce la causa della morte se si è appena morti, altrimenti null:
 // l'interfaccia deve poterlo annunciare una volta sola, come per i bisogni
 // che si svuotano.
@@ -108,15 +161,17 @@ export function avanza(passo, { vuoti = [], alFreddo = false } = {}) {
 
   for (const quale of vuoti) ferisci(quale, DANNO_VUOTO * passo);
   if (alFreddo) ferisci("freddo", DANNO_FREDDO * passo);
+  if (infezione) ferisci("infezione", DANNO_INFEZIONE * passo);
 
-  // Si guarisce solo quando non manca niente e non si sta gelando. Non è una
-  // cura a metà: o il corpo ha tutto quello che gli serve, o sta pagando.
-  if (vuoti.length === 0 && !alFreddo) livello = limita(livello + CURA * passo);
+  // Si guarisce solo quando non manca niente, non si gela e non si è
+  // infetti. Non è una cura a metà: o il corpo ha tutto quello che gli serve,
+  // o sta pagando. Ed è il motivo per cui l'infezione va curata e non
+  // aspettata — finché c'è, niente si rimargina.
+  if (vuoti.length === 0 && !alFreddo && !infezione) {
+    livello = limita(livello + CURA * passo);
+  }
 
-  if (livello > 0) return null;
-  morto = true;
-  causa = peggiore();
-  return causa;
+  return controllaLaMorte();
 }
 
 // Il tempo saltato fa danno come se fosse passato davvero, per la stessa
@@ -146,6 +201,7 @@ export function reimposta() {
   livello = 1;
   morto = false;
   causa = null;
+  infezione = false;
   for (const quale of Object.keys(danni)) danni[quale] = 0;
 }
 
@@ -156,7 +212,11 @@ export function reimposta() {
 // Non si salva né la morte né il conto delle cause, e non per dimenticanza:
 // un salvataggio si scrive all'alba o quando lo chiedi, cioè da vivi, e una
 // partita ripresa comincia da un superstite in piedi.
-export function ripristina(salvata) {
+export function ripristina(salvata, infetta = false) {
   reimposta();
   if (Number.isFinite(salvata)) livello = limita(salvata);
+  // L'infezione sì che si salva, al contrario della morte: è uno stato in cui
+  // si vive, e riprendere una partita guariti per il fatto di averla chiusa
+  // sarebbe il modo più comodo di curarsi che esista.
+  infezione = infetta === true;
 }

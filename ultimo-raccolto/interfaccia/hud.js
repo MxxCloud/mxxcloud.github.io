@@ -98,6 +98,7 @@ function coloreBisogno(livello) {
 }
 
 const FREDDO = "#8fa8d8";
+const MALATO = "#9d7fb0";
 
 function barra(p, y, icona, livello, colore) {
   p.drawImage(cuoci(icona, tinta(colore)), 5, y - 1);
@@ -121,14 +122,28 @@ function barra(p, y, icona, livello, colore) {
 // impaginazione: le tre di sotto dicono cosa manca, quella di sopra dice
 // quanto manca alla fine della partita, e mettendole in fila si sarebbero
 // lette come quattro cose dello stesso peso.
-export function disegnaBisogni(p, { salute = 1, alFreddo = false } = {}) {
+export function disegnaBisogni(
+  p,
+  { salute = 1, alFreddo = false, infetto = false, inseguito = false } = {}
+) {
   barra(p, 5, indicatori.SALUTE, salute, coloreBisogno(salute));
 
-  // Il gelo compare solo mentre gela, accanto alla barra che sta consumando.
-  // Una quinta barra sarebbe stata una misura da guardare; questo è un
-  // avviso, e un avviso o c'è o non c'è.
-  if (alFreddo) {
-    p.drawImage(cuoci(indicatori.FREDDO, tinta(FREDDO)), 15 + LARGHEZZA_BARRA + 4, 4);
+  // Gli avvisi stanno in fila accanto alla barra che stanno consumando, e
+  // compaiono solo quando valgono. Non sono barre: il gelo, l'infezione e
+  // l'essere inseguiti o ci sono o non ci sono, e disegnarli come misure
+  // avrebbe voluto dire tre numeri in più da guardare per sapere tre sì o no.
+  let ax = 15 + LARGHEZZA_BARRA + 4;
+  const avviso = (righe, colore) => {
+    p.drawImage(cuoci(righe, tinta(colore)), ax, 4);
+    ax += 9;
+  };
+  if (alFreddo) avviso(indicatori.FREDDO, FREDDO);
+  if (infetto) avviso(indicatori.INFEZIONE, MALATO);
+  // Lampeggia, al contrario degli altri due: il freddo e l'infezione sono
+  // stati in cui si è, questo è qualcosa che sta succedendo adesso, e la
+  // differenza si legge prima di leggere il simbolo.
+  if (inseguito && Math.floor(Date.now() / 300) % 2 === 0) {
+    avviso(indicatori.INSEGUITO, ROSSO);
   }
 
   const livelli = bisogni.tutti();
@@ -137,6 +152,32 @@ export function disegnaBisogni(p, { salute = 1, alFreddo = false } = {}) {
   for (const quale of bisogni.ELENCO) {
     barra(p, y, ICONE_BISOGNI[quale], livelli[quale], coloreBisogno(livelli[quale]));
     y += PASSO_BARRA;
+  }
+}
+
+// --- il colpo preso -------------------------------------------------------
+
+// Una cornice rossa che sbiadisce. Non un velo su tutto lo schermo: coprire
+// il gioco proprio nel momento in cui bisogna decidere se scappare o
+// rispondere sarebbe una punizione dentro la punizione. Dai bordi si vede
+// senza guardarla, che è quello che serve.
+const SPESSORE_DANNO = 10;
+
+export function disegnaDanno(p, forza) {
+  if (!(forza > 0)) return;
+
+  const a = Math.min(0.55, forza * 0.55);
+  const larghezza = schermo.LARGHEZZA;
+  const altezza = schermo.ALTEZZA;
+
+  for (let i = 0; i < SPESSORE_DANNO; i += 1) {
+    // Più fitto sul bordo estremo e trasparente verso il centro: una fascia
+    // piena si legge come una cornice disegnata, questa come un lampo.
+    p.fillStyle = `rgb(150 30 26 / ${(a * (1 - i / SPESSORE_DANNO)).toFixed(3)})`;
+    p.fillRect(i, i, larghezza - i * 2, 1);
+    p.fillRect(i, altezza - i - 1, larghezza - i * 2, 1);
+    p.fillRect(i, i, 1, altezza - i * 2);
+    p.fillRect(larghezza - i - 1, i, 1, altezza - i * 2);
   }
 }
 
@@ -314,6 +355,9 @@ export function disegnaPromemoria(p, barra, cosaInMano) {
   // rumore, perché quasi mai si ha del cibo selezionato.
   const commestibile = cosaInMano && CATALOGO[cosaInMano]?.commestibile;
   if (commestibile) righe.push(`E  MANGIA ${nomeDi(cosaInMano).toUpperCase()}`);
+  // Stessa regola per la benda, stesso tasto: si nomina quando si ha in mano
+  // qualcosa che si usa su di sé.
+  if (cosaInMano && CATALOGO[cosaInMano]?.cura) righe.push("E  FASCIATI");
 
   // Stessa regola per il gettare, e con lo stesso momento giusto: si nomina
   // quando serve. A zaino pieno non poter costruire né raccogliere è un
@@ -336,7 +380,7 @@ const COMANDI = [
   ["SPAZIO", "COLPIRE CIÒ CHE HAI DAVANTI"],
   ["1-8", "SCEGLIERE DALLO ZAINO"],
   ["C", "COSTRUIRE"],
-  ["E", "MANGIARE CIÒ CHE HAI IN MANO"],
+  ["E", "MANGIARE O FASCIARTI"],
   ["G", "POSARE PER TERRA CIÒ CHE HAI IN MANO"],
   ["M", "MAPPA"],
   ["P", "SALVARE E CARICARE"],

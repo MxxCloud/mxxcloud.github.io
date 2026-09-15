@@ -67,13 +67,35 @@ export const CATALOGO = {
     posa: OGGETTO.GIACIGLIO,
   },
   falo: { nome: "Falò", icona: arte.FALO, pila: 5, posa: OGGETTO.FALO_ACCESO },
+  // La benda è la risposta al morso, e fa due cose diverse: rimargina un po'
+  // e toglie l'infezione. Non è cibo, quindi non sta fra i commestibili — ma
+  // si usa con lo stesso tasto, perché "usa quello che hai in mano su di te"
+  // era già la regola e inventarne un secondo tasto per lo stesso gesto
+  // sarebbe un comando in più da imparare per niente.
+  //
+  // Di fibra, e questo è metà del suo senso: la fibra era il materiale meno
+  // interessante del gioco — due per una torcia e poi basta — e diventa
+  // quello che tieni da parte per quando le cose vanno male. È lo stesso
+  // trucco delle bacche a M2, e vale per la stessa ragione: una risorsa
+  // esiste davvero solo quando c'è qualcosa che la consuma.
+  benda: {
+    nome: "Benda",
+    icona: arte.BENDA,
+    pila: 10,
+    cura: { salute: 0.2, infezione: true },
+  },
 };
 
 // Cosa fa un attrezzo tenuto in mano. La regola del gioco è una sola —
 // quello che impugni è quello che usi — e vale tanto per la torcia, che
 // illumina, quanto per l'ascia, che abbatte in meno colpi.
 export const ATTREZZI = {
-  ascia: { colpi: { [OGGETTO.ALBERO]: 2 } },
+  // L'ascia adesso fa due mestieri, ed è lo stesso mestiere: stacca. Tre di
+  // danno contro i cinque punti di un infetto vuol dire due colpi invece di
+  // cinque, cioè prenderne uno invece di tre. È quello che la trasforma da
+  // attrezzo più veloce ad arma — senza aggiungere una spada, che avrebbe
+  // voluto dire un secondo oggetto per un gesto che già esiste.
+  ascia: { colpi: { [OGGETTO.ALBERO]: 2 }, danno: 3 },
   // La zappa non accorcia niente: apre un'azione che senza di lei non
   // esiste. È il secondo modo in cui un attrezzo può contare.
   zappa: { zappa: true },
@@ -82,6 +104,15 @@ export const ATTREZZI = {
 // Quanti colpi servono davvero, tenuto conto di cosa si ha in mano. A mani
 // nude restano quattro per un albero: l'attrezzo è una ricompensa, non un
 // rattoppo a un numero sbagliato.
+// Quanto fa male un colpo a qualcosa che si difende. A mani nude uno: si può
+// combattere senza niente in mano, ma è il genere di scelta che si fa una
+// volta sola.
+const DANNO_A_MANI_NUDE = 1;
+
+export function dannoDi(cosaInMano) {
+  return ATTREZZI[cosaInMano]?.danno ?? DANNO_A_MANI_NUDE;
+}
+
 export function colpiNecessari(oggetto, cosaInMano) {
   const raccolta = RACCOLTA[oggetto];
   if (!raccolta) return 0;

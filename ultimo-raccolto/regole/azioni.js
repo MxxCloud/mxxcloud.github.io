@@ -9,7 +9,9 @@ import { OGGETTO, TERRENO } from "../mondo/generazione.js";
 import * as tempo from "./tempo.js";
 import * as bisogni from "./bisogni.js";
 import * as salute from "./salute.js";
-import { CATALOGO, ATTREZZI, raccoltaDi, colpiNecessari } from "./oggetti.js";
+import { CATALOGO, ATTREZZI, raccoltaDi, colpiNecessari, dannoDi } from "./oggetti.js";
+import * as infetti from "./infetti.js";
+import * as chiasso from "./chiasso.js";
 import * as orto from "./orto.js";
 import * as stagioni from "./stagioni.js";
 
@@ -38,6 +40,15 @@ export function bersaglio(eroe) {
 const SORSO = 0.45;
 
 export function azionePossibile(eroe, cosaInMano) {
+  // Prima di qualunque cosa, perché nel momento in cui uno ti è addosso non
+  // esiste nient'altro da fare. Senza questa riga in cima, trovandosi un
+  // infetto sopra un cespuglio la barra strappava il cespuglio — e sarebbe
+  // stata l'ultima cosa fatta.
+  const addosso = infetti.quelloDavanti(eroe);
+  if (addosso) {
+    return { tipo: "combatti", verbo: "Colpisci", nemico: addosso };
+  }
+
   const b = bersaglio(eroe);
 
   // Di notte il giaciglio accoglie, di giorno si smonta. Un giaciglio che di
@@ -249,17 +260,38 @@ function resaDi(raccolta, tx, ty) {
 // Usare quello che si ha in mano su di sé. Sta fuori da agisci() perché non
 // ha un bersaglio: mangiare non ha un davanti, e infilarlo nella barra
 // avrebbe voluto dire decidere se si mangia o si abbatte l'albero che si ha
-// di fronte. Servirà anche alle bende, quando ci sarà qualcosa che ferisce.
+// di fronte. Adesso serve anche alle bende, che è quello che il commento qui
+// sopra prometteva da M2.
 export function consuma(cosaInMano) {
-  const effetto = cosaInMano && CATALOGO[cosaInMano]?.commestibile;
-  if (!effetto) return null;
-  if (!inventario.togli(cosaInMano, 1)) return null;
+  const voce = cosaInMano && CATALOGO[cosaInMano];
+  if (!voce) return null;
+  if (voce.commestibile) return mangia(cosaInMano, voce.commestibile);
+  if (voce.cura) return medicati(cosaInMano, voce.cura);
+  return null;
+}
+
+function mangia(cosa, effetto) {
+  if (!inventario.togli(cosa, 1)) return null;
 
   const ristorato = {};
   for (const [quale, quanto] of Object.entries(effetto)) {
     ristorato[quale] = bisogni.ristora(quale, quanto);
   }
-  return { tipo: "consumato", cosa: cosaInMano, ristorato };
+  return { tipo: "consumato", cosa, ristorato };
+}
+
+// Una benda si consuma anche quando non c'era un'infezione da togliere: cura
+// comunque un po' di salute, e a salute piena e senza infezione non si spreca
+// — si rifiuta. Consumarla per niente sarebbe la punizione più sciocca del
+// gioco, sprecata proprio su chi sta cercando di curarsi.
+function medicati(cosa, effetto) {
+  const serve = (effetto.infezione && salute.eInfetto()) || salute.livelloCorrente() < 1;
+  if (!serve) return { tipo: "nonServe", cosa };
+  if (!inventario.togli(cosa, 1)) return null;
+
+  const curata = effetto.infezione ? salute.curati() : false;
+  const rimarginato = salute.ristora(effetto.salute ?? 0);
+  return { tipo: "medicato", cosa, curata, rimarginato };
 }
 
 // Restituisce un resoconto di cosa è successo, perché l'interfaccia deve
@@ -268,6 +300,20 @@ export function consuma(cosaInMano) {
 export function agisci(eroe, cosaInMano) {
   const azione = azionePossibile(eroe, cosaInMano);
   if (!azione || azione.impedito) return null;
+
+  if (azione.tipo === "combatti") {
+    const esito = infetti.colpisci(azione.nemico, dannoDi(cosaInMano));
+    // Il combattimento si sente. È la ragione per cui uno che urla ne chiama
+    // altri, ed è anche il motivo per cui non conviene mettersi a fare a
+    // botte in mezzo alla valle di notte.
+    chiasso.colpo();
+    return {
+      tipo: "combattuto",
+      caduto: esito.caduto,
+      px: azione.nemico.px,
+      py: azione.nemico.py,
+    };
+  }
 
   const { tx, ty } = azione.bersaglio;
 
