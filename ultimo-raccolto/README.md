@@ -93,9 +93,14 @@ comprimere l'attesa senza toglierla.
 
 **Le stagioni** durano quattro giorni l'una, cioè venti minuti veri, e si
 vedono: la valle cambia colore perché gli stessi disegni vengono cotti con
-un'altra tavolozza. Si comincia di fine estate, quindi la prima cosa che
-arriva è l'autunno — la stagione buona — e subito dopo l'inverno. L'anno
-intero sta in un'ora e venti.
+un'altra tavolozza. L'autunno vira al rame, l'inverno spegne i verdi e li
+raffredda. La primavera fa un passo in più — fiorisce — perché un verde
+appena più freddo dell'estate, a colpo d'occhio, è ancora l'estate: un quarto
+dei tasselli d'erba e di sterpaglia porta un fiore di tre o quattro pixel,
+messo dove dicono le coordinate e non sempre nello stesso punto del tassello.
+Si comincia di fine estate, quindi la prima cosa che arriva è l'autunno — la
+stagione buona — e subito dopo l'inverno. L'anno intero sta in un'ora e
+venti.
 
 Giorno e stagioni sono corti di proposito, finché il gioco è un cantiere:
 una regola che si mostra sbagliata solo dopo una settimana di gioco va

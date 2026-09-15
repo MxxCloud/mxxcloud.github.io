@@ -56,6 +56,13 @@ export function siColtiva(stagione = stagioneCorrente()) {
   return stagione !== "inverno";
 }
 
+// L'unica stagione che fiorisce. Sta qui e non nella tavolozza perché è una
+// regola del calendario, non una tinta: la mappa riceve i disegni da spargere
+// o non li riceve, e non sa perché.
+export function fiorisce(stagione = stagioneCorrente()) {
+  return stagione === "primavera";
+}
+
 // Quanto più in fretta viene fame. Il freddo non ha ancora un sistema suo — la
 // temperatura arriva con le ferite — ma un inverno che si vede soltanto è un
 // fondale. Questo è il minimo perché si senta: d'inverno si mangia di più, e

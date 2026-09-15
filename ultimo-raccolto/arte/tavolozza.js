@@ -78,6 +78,13 @@ export const TAVOLOZZA = {
   // stesso, e una scheggia che non si vede non dice niente a nessuno.
   w: "#8a6a45",
 
+  // I petali dei fiori di primavera. Bianco panna e non giallo o rosa: il
+  // giallo finirebbe addosso alla sterpaglia, e il rosa vicino alle bacche,
+  // che sono uno dei due colori che il giocatore deve trovare da solo. Questo
+  // bianco freddo non assomiglia a niente di già usato tranne la sabbia, che
+  // però sta sulla riva e non in mezzo al prato.
+  z: "#d9dcc9",
+
   // Il verde dell'orto, e non quello delle chiome: sono due verdi uguali con
   // due chiavi diverse di proposito. Le chiome cambiano con la stagione, le
   // piantine no — a quale stadio è una coltura è l'informazione su cui il
@@ -161,7 +168,9 @@ const VESTI = {
   },
 
   // La primavera è l'unica più viva della base: verdi più freddi e più chiari,
-  // il contrario del giallo di fine estate.
+  // il contrario del giallo di fine estate. Da sola però non bastava: due
+  // verdi leggermente diversi a colpo d'occhio sono la stessa stagione, ed è
+  // il motivo per cui la primavera fiorisce (vedi sprite-fiori.js).
   primavera: {
     "6": "#2b4f28",
     "7": "#3c6b31",
