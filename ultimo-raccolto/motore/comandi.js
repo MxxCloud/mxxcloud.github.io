@@ -7,7 +7,7 @@
 
 export const AZIONI = [
   "su", "giu", "sinistra", "destra", "usa", "corri", "ricette", "minimappa",
-  "consuma", "getta", "partita", "esporta", "importa", "spegni",
+  "consuma", "getta", "partita", "esporta", "importa", "spegni", "mappa",
 ];
 
 // Otto caselle, otto tasti: la selezione con la rotellina o con Q/E costringe
@@ -21,8 +21,12 @@ const MAPPA = {
   KeyD: "destra", ArrowRight: "destra",
   Space: "usa", Enter: "usa",
   ShiftLeft: "corri", ShiftRight: "corri",
-  KeyC: "ricette", Tab: "ricette",
+  KeyC: "ricette",
   KeyM: "minimappa",
+  // TAB faceva la stessa cosa di C, cioè niente di suo. Adesso apre la mappa
+  // di quello che si è visto: è il tasto che in mezzo mondo apre una mappa, e
+  // averlo come secondo nome delle ricette era sprecarlo.
+  Tab: "mappa",
   KeyE: "consuma",
   KeyG: "getta",
   // "P" come partita. Non "S", che è già camminare all'indietro.

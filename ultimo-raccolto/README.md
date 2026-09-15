@@ -33,7 +33,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M6.5**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M6.6**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, e adesso si rimette a posto da sola se le dai
@@ -55,6 +55,24 @@ poco per essere una mappa del mondo — che toglierebbe il gusto di andare a
 vedere. I falò e le torce che hai posato ci compaiono come puntini caldi:
 sono i tuoi punti di riferimento, non quelli del mondo, e restano caldi in
 ogni stagione.
+
+**`TAB` apre la mappa di quello che hai visto.** In un mondo infinito una
+mappa del mondo non esiste: qualunque cosa si disegni è un ritaglio. Questa
+disegna l'unico ritaglio che abbia senso — i settori per cui sei passato — e
+lascia buio tutto il resto. Cresce esplorando, e ci finiscono sopra i tuoi
+punti di riferimento: i falò accesi e spenti, le torce, il tuo cadavere e il
+punto di partenza. Si salva con la partita: una mappa che si perde chiudendo
+la scheda non serve a niente, e un superstite nuovo la eredita — è l'unica
+cosa che ha per ritrovare il corpo del precedente.
+
+Cosa conta come «visto» non è una regola nuova: è quello che la minimappa ti
+ha già mostrato, cioè trentadue tasselli attorno a te. Inventarne una seconda
+avrebbe voluto dire due nozioni di visibilità che si contraddicono.
+
+Non si ricorda il terreno, si ricordano i settori: il terreno è una funzione
+delle coordinate e si ricalcola uguale, quindi memorizzarlo sarebbe scrivere
+su disco qualcosa che si sa già. Una partita con seicento settori esplorati
+pesa duemilaseicento byte di mappa.
 
 **Anche la minimappa segue le stagioni**, perché è la stessa valle vista da
 più in alto: una valle grigia in mezzo allo schermo e verde nell'angolo in
@@ -319,6 +337,7 @@ Da qui viene l'ordine, che non è quello immaginato all'inizio:
 | **M5** | Il corpo e la morte | Salute, freddo, morte con una causa; il nuovo superstite nella stessa valle, col cadavere del precedente. |
 | **M6** | Gli infetti | Chiasso, inseguimento, combattimento, ferite e infezione. La notte da scomoda a pericolosa. |
 | **M6.5** | Quello che la valle dà | La raccolta segue le stagioni, quello che prendi ricresce, il fuoco cucina. *Qui l'orto smette di essere facoltativo.* |
+| **M6.6** | La mappa | `TAB` apre quello che hai visto. L'esplorare lascia un segno. |
 | **M7** | Costruzione | Riparo, contenitori, muri: l'investimento che si difende. E il morale, che misura quel posto. Con essi il cibo che si guasta. |
 | **M8** | Superstiti, abilità, audio, rifinitura | |
 
@@ -376,6 +395,7 @@ pezzo che manca a due sistemi.
 | `G` | posare per terra la casella scelta, davanti ai piedi |
 | `C` | aprire e chiudere le costruzioni |
 | `M` | accendere e spegnere la minimappa |
+| `TAB` | la mappa di quello che hai visto |
 | `P` | la partita: `1`-`4` la casella, `A` `D` il modo, `F` e `I` il file, `RETE` per la sincronia |
 | `F3` | diagnostica |
 
@@ -392,6 +412,35 @@ nello zaino finendo un raccolto cade accanto invece di andare perso.
 I comandi su schermo per il telefono arrivano più avanti, ma il gioco non parla
 mai di tasti: chiede a `motore/comandi.js` se si sta andando avanti. È l'unico
 file da toccare quel giorno.
+
+## Il mondo è infinito, e non è circolare
+
+Non c'è niente di pre-generato e non ci sono confini: ogni tassello è una
+funzione pura delle sue coordinate e del seme. Sondato a coordinate assurde
+regge — a mille miliardi di tasselli dall'origine il terreno è ancora terreno
+e le proporzioni sono quelle dichiarate.
+
+**Non si torna mai al punto di partenza.** C'è però un dettaglio vero a metà:
+il mattone di tutta la casualità è `impronta(x, y, seme)`, che fa `x | 0`,
+cioè aritmetica a 32 bit — quindi l'impronta è esattamente periodica ogni 2³²
+tasselli, e `impronta(0, 0)` e `impronta(2³², 0)` danno lo stesso identico
+numero.
+
+Il terreno però non eredita quel periodo, per una fortuna di progetto: il
+rumore non campiona le coordinate dei tasselli ma quelle divise per le scale
+del paesaggio — 22 per le colline, 14 per l'umidità, 10 per i boschi, 4 per il
+disturbo. Uno spostamento di 2³² diviso 22 non è intero, quindi cade fra i
+punti del reticolo e non ci si allinea. Misurato su 400 punti: il terreno a
+distanza 2³² coincide 131 volte, esattamente quanto coincide a una distanza
+qualunque (123). Cioè non si ripete — coincide per caso come due posti
+qualsiasi.
+
+E anche se si ripetesse non sarebbe casa tua: le modifiche sono indicizzate
+sulle coordinate esatte, quindi ci si troverebbe una valle dall'aspetto
+identico e del tutto vergine.
+
+Per arrivare dove la matematica a 32 bit comincia a sfilacciarsi servono
+**ventitré anni veri di corsa senza fermarsi**.
 
 ## L'indirizzo accetta quattro parametri
 

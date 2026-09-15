@@ -15,34 +15,25 @@
 import * as schermo from "../motore/schermo.js";
 import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
-import { TERRENO, OGGETTO } from "../mondo/generazione.js";
-import { TAVOLOZZA } from "../arte/tavolozza.js";
+import { OGGETTO } from "../mondo/generazione.js";
+import * as tinte from "./tinte.js";
 import { telaio } from "../arte/sprite.js";
 
 const LATO = 64;
 const MARGINE = 6;
 
-// Una tinta sola per terreno. I tasselli veri sono screziati e non hanno un
-// colore unico, quindi si sceglie il più rappresentativo: a un pixel per
-// tassello conta solo che l'acqua si distingua dalla roccia a colpo d'occhio.
+// Le tinte del terreno vengono da tinte.js, che le divide con la mappa
+// grande: erano scritte qui, e due finestre che guardano la stessa valle non
+// possono avere due tabelle di colori da tenere allineate a mano.
 //
-// D'inverno l'erba e la sterpaglia finiscono sulla stessa tinta — undici
-// punti di distanza contro i quarantasette dell'estate — e la prateria si
+// D'inverno l'erba e la sterpaglia finiscono sulla stessa tinta — undici punti
+// di distanza contro i quarantasette dell'estate — e la prateria si
 // appiattisce. Non è un difetto da correggere scegliendo un'altra chiave:
-// nessuna chiave le separa, perché d'inverno *sono* lo stesso colore anche
-// nel mondo, e allontanarle qui vorrebbe dire una minimappa che racconta una
-// valle diversa da quella che si attraversa. In cambio si distingue meglio
-// quello per cui questa finestra esiste: l'erba e la roccia passano da
-// trentotto punti a cinquantadue.
-const CHIAVI_TERRENO = {
-  [TERRENO.ACQUA]: "1",
-  [TERRENO.ACQUA_BASSA]: "3",
-  [TERRENO.SABBIA]: "5",
-  [TERRENO.ERBA]: "7",
-  [TERRENO.STERPAGLIA]: "9",
-  [TERRENO.ROCCIA]: "e",
-  [TERRENO.TERRA]: "b",
-};
+// nessuna chiave le separa, perché d'inverno *sono* lo stesso colore anche nel
+// mondo, e allontanarle qui vorrebbe dire una minimappa che racconta una valle
+// diversa da quella che si attraversa. In cambio si distingue meglio quello
+// per cui questa finestra esiste: l'erba e la roccia passano da trentotto
+// punti a cinquantadue.
 
 // Le cose che il giocatore ha posato sono l'unica parte della minimappa che
 // vale più del paesaggio: sono i suoi punti di riferimento, non quelli del
@@ -56,40 +47,6 @@ const SEGNAPOSTI = {
 const CORNICE = "#3a3f48";
 const FONDO = "rgb(16 18 22 / 0.82)";
 const EROE = "#ffffff";
-
-function componenti(esadecimale) {
-  const n = Number.parseInt(esadecimale.slice(1), 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-
-// Le chiavi restano le stesse, la tavolozza cambia. È lo stesso conto che
-// vale per il mondo — la tavolozza è un parametro, non una costante — e qui
-// costa ancora meno: la griglia tiene quale terreno c'è, non di che colore è,
-// quindi una stagione nuova rifà sette tinte e ridipinge 4096 pixel invece di
-// ricalcolare 4096 tasselli di rumore.
-let tavolozza = TAVOLOZZA;
-const COLORI = [];
-
-function rifaiColori() {
-  for (const [id, chiave] of Object.entries(CHIAVI_TERRENO)) {
-    COLORI[id] = componenti(tavolozza[chiave]);
-  }
-}
-
-rifaiColori();
-
-// Gliela passa dall'alto chi conosce il calendario, come già succede per la
-// mappa: qui non si sa cosa sia una stagione, si sa che ogni tanto arrivano
-// colori nuovi.
-export function impostaTavolozza(nuova) {
-  if (nuova === tavolozza) return false;
-  tavolozza = nuova;
-  rifaiColori();
-  // Solo se c'è già qualcosa da ridipingere. La griglia non si tocca: i
-  // terreni sono dove erano, è cambiato il mese.
-  if (centro) ridipingi();
-  return true;
-}
 
 let griglia = null;
 let scorta = null;
@@ -148,7 +105,7 @@ function riempiTutto(tx, ty) {
 function ridipingi() {
   const p = dati.data;
   for (let i = 0; i < griglia.length; i += 1) {
-    const colore = COLORI[griglia[i]] ?? COLORI[TERRENO.ERBA];
+    const colore = tinte.coloreDi(griglia[i]);
     const j = i * 4;
     p[j] = colore[0];
     p[j + 1] = colore[1];
@@ -222,6 +179,14 @@ export function disegna(pennello) {
 // scorrerebbe da lì: la minimappa mostrerebbe pezzi della partita precedente.
 export function dimentica() {
   centro = null;
+}
+
+// Da chiamare quando le tinte sono cambiate sotto i piedi, cioè a un cambio
+// di stagione. La griglia non si tocca: i terreni sono dove erano, è cambiato
+// il mese — quindi una stagione nuova ridipinge 4096 pixel invece di
+// ricalcolare 4096 tasselli di rumore.
+export function ridipingiSeServe() {
+  if (centro) ridipingi();
 }
 
 export function ricostruzioni() {

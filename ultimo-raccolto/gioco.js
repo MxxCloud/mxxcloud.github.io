@@ -36,6 +36,9 @@ import { RICETTE, fai } from "./regole/ricette.js";
 import { nomeDi, CATALOGO } from "./regole/oggetti.js";
 import * as hud from "./interfaccia/hud.js";
 import * as minimappa from "./interfaccia/minimappa.js";
+import * as mappaGrande from "./interfaccia/mappa.js";
+import * as tinte from "./interfaccia/tinte.js";
+import * as esplorato from "./regole/esplorato.js";
 
 const { TASSELLO } = schermo;
 
@@ -43,7 +46,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M6.5";
+const VERSIONE = "M6.6";
 
 // --- elementi -------------------------------------------------------------
 
@@ -65,6 +68,10 @@ let azioneCorrente = null;
 let messaggio = null;
 let aperturaVisibile = true;
 let minimappaVisibile = true;
+// La mappa grande è modale come le ricette e la partita: il mondo non avanza
+// mentre la si guarda. Un mondo che tira avanti dietro una schermata a tutto
+// campo sarebbe una notte che ti arriva addosso mentre cerchi la strada.
+let mappaAperta = false;
 let ultimoGiorno = 1;
 let partitaAperta = false;
 let slotScelto = 0;
@@ -117,7 +124,7 @@ function annuncia(testo, colore) {
 // invece di restare tre condizioni ricopiate in tre punti: la quarta sarebbe
 // stata la prima a essere dimenticata da qualche parte.
 function mondoFermo() {
-  return ricetteAperte || aperturaVisibile || partitaAperta || mortoDi !== null;
+  return ricetteAperte || aperturaVisibile || partitaAperta || mappaAperta || mortoDi !== null;
 }
 
 // Si cade. Il corpo resta dove sei caduto con tutto quello che portavi, e la
@@ -165,6 +172,9 @@ function nuovoSuperstite() {
   const cera = corpo !== null;
   mortoDi = null;
   corpo = null;
+  mappaAperta = false;
+  // La mappa non si perde morendo: è quello che ha visto il superstite di
+  // prima, ma è anche l'unica cosa che il nuovo ha per ritrovarne il corpo.
   annuncia(cera ? "riprenditi quello che era tuo" : "un nuovo superstite", "#9ec97e");
 }
 
@@ -198,10 +208,14 @@ function vestiLaValle() {
   const prima = stagioneVestita;
   stagioneVestita = stagione;
   mappa.impostaTavolozze(tavolozzaDi(stagione), tavolozzaBagnataDi(stagione));
-  // Anche la minimappa: è la stessa valle vista da più in alto, e una valle
-  // che d'inverno è grigia in mezzo allo schermo e verde nell'angolo in basso
-  // a destra si legge come un riquadro dimenticato acceso.
-  minimappa.impostaTavolozza(tavolozzaDi(stagione));
+  // Anche le finestre che guardano la valle dall'alto: è la stessa valle, e
+  // una valle grigia in mezzo allo schermo e verde nell'angolo in basso a
+  // destra si legge come un riquadro dimenticato acceso. Le tinte stanno in
+  // un posto solo e le due finestre si ridipingono da sé.
+  if (tinte.impostaTavolozza(tavolozzaDi(stagione))) {
+    minimappa.ridipingiSeServe();
+    mappaGrande.ridipingiSeServe();
+  }
   // I fiori sono l'altra metà della primavera: due verdi leggermente diversi
   // non bastavano a distinguerla dall'estate.
   mappa.impostaFioritura(stagioni.fiorisce(stagione) ? FIORI : null);
@@ -442,8 +456,14 @@ function riprendi(ripreso) {
   vestiLaValle();
   minimappa.dimentica();
   minimappa.aggiorna(eroe);
+  // L'atlante di prima descrive un'altra valle. Si rifà da quello che il
+  // salvataggio dice di aver visto: qualche centinaio di settori, sedici
+  // valutazioni l'uno, e capita una volta per caricamento.
+  mappaGrande.dimentica();
+  mappaGrande.aggiorna();
 
   partitaAperta = false;
+  mappaAperta = false;
 }
 
 // I tasti del pannello della rete. Ogni ramo finisce con un ritorno perché
@@ -585,6 +605,7 @@ function leggiComandi() {
     partitaAperta = !partitaAperta;
     slotScelto = 0;
     ricetteAperte = false;
+    mappaAperta = false;
     // Chiudendo si lascia perdere anche una scrittura a metà: uscire dalla
     // schermata con la tastiera ancora in modo scrittura vorrebbe dire un
     // gioco che non risponde più ai comandi.
@@ -609,6 +630,15 @@ function leggiComandi() {
   }
 
   if (comandi.appenaPremuto("minimappa")) minimappaVisibile = !minimappaVisibile;
+
+  if (comandi.appenaPremuto("mappa")) {
+    mappaAperta = !mappaAperta;
+    ricetteAperte = false;
+    return;
+  }
+  // Aperta, si prende tutti i tasti: non c'è niente da fare guardando una
+  // mappa, e lasciar passare la barra vorrebbe dire dare una zappata al buio.
+  if (mappaAperta) return;
 
   if (comandi.appenaPremuto("consuma")) {
     const esito = azioni.consuma(cosaInMano());
@@ -768,6 +798,12 @@ function aggiorna(passo) {
     // il poco che pagare il molto ogni volta che la si riaccende.
     minimappa.aggiorna(eroe);
 
+    // Dove si è passati resta segnato. Il disegno del settore nuovo si fa
+    // subito, nel fotogramma in cui lo si scopre — sedici valutazioni di
+    // rumore — così premere TAB non calcola niente.
+    const scoperti = esplorato.segna(eroe);
+    if (scoperti.length > 0) mappaGrande.aggiungi(scoperti);
+
     if (colpito) {
       colpito.resta -= passo;
       if (colpito.resta <= 0) colpito = null;
@@ -920,6 +956,17 @@ function disegnaBuio() {
 
 function disegnaInterfaccia() {
   const p = schermo.pennello();
+
+  // La mappa prende lo schermo per sé e nient'altro viene disegnato. Le altre
+  // schermate si sovrappongono al gioco perché quello che coprono resta utile
+  // — l'orologio mentre si sceglie una ricetta dice se conviene ancora uscire
+  // — ma qui no: sotto una mappa si legge una mappa, e barre e zaino
+  // diventerebbero righe che si intravedono attraverso la carta.
+  if (mappaAperta) {
+    mappaGrande.disegna(p, eroe);
+    return;
+  }
+
   hud.disegnaBisogni(p, {
     salute: salute.livelloCorrente(),
     alFreddo: gelando,
@@ -996,6 +1043,7 @@ function aggiornaDiagnostica() {
     `settori  ${mappa.settoriInMemoria()}  in piedi ${inPiedi.length}  lumi ${lumi.length}`,
     `scheggie ${scheggie.vive()}  figure ${giocatore.figureComposte()}`,
     `minimappa ${minimappaVisibile ? "accesa" : "spenta"}  ricostruzioni ${minimappa.ricostruzioni()}`,
+    `esplorato ${esplorato.quanti()} settori  atlante ridipinto ${mappaGrande.ridipinte()} volte`,
     `modifiche ${modifiche.quanti()}  colture ${orto.quante()}`,
   ].join("\n");
 }
@@ -1142,7 +1190,10 @@ if (parametri.has("diagnostica")) {
     tremolio: () => (colpito ? { ...colpito } : null),
     messaggio: () => (messaggio ? messaggio.testo : null),
     minimappa,
+    mappaGrande,
+    esplorato,
     minimappaAccesa: () => minimappaVisibile,
+    mappaAperta: () => mappaAperta,
     bisogni,
     salute,
     freddo,
