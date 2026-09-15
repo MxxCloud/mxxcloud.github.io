@@ -73,6 +73,16 @@ export function azionePossibile(eroe, cosaInMano) {
     return { tipo: "fruga", verbo: "Fruga", bersaglio: b };
   }
 
+  // Davanti al fuoco, con qualcosa di crudo in mano, si cucina invece di
+  // raccogliere il falò. Decide quello che si ha in mano, come decide il
+  // secchio alla riva: è la stessa regola scritta due volte in due punti, e
+  // sta prima del catalogo della raccolta perché senza di essa il falò
+  // acceso vincerebbe sempre con "Raccogli".
+  const cotto = cosaInMano && CATALOGO[cosaInMano]?.cuoce;
+  if (cotto && b.oggetto === OGGETTO.FALO_ACCESO) {
+    return { tipo: "cucina", verbo: "Cucina", cosa: cosaInMano, diventa: cotto, bersaglio: b };
+  }
+
   const raccolta = raccoltaDi(b.oggetto);
   if (raccolta) {
     const dati = modifiche.di(b.tx, b.ty);
@@ -245,12 +255,20 @@ export function lasciaIlCadavere(eroe, giorno) {
 // lo stesso cespuglio ha le bacche o non le ha, sempre. Oltre a rispettare la
 // regola che qui Math.random non esiste, rende il mondo una cosa che si può
 // imparare invece di una lotteria.
+//
+// La soglia però si sposta con il mese (vedi il cespuglio in oggetti.js).
+// Resta una funzione delle coordinate, quindi non diventa una lotteria: è un
+// calendario. E siccome un cespuglio si strappa una volta sola, quello che il
+// giocatore vede non è "questo cespuglio è cambiato" ma "d'inverno ne servono
+// quattro per quello che d'estate ne dava uno", che è la cosa da imparare.
 function resaDi(raccolta, tx, ty) {
   const seme = mappa.semeCorrente().valore;
   const ottenuto = [];
   raccolta.resa.forEach((voce, i) => {
     if (voce.probabilita !== undefined) {
-      if (impronta(tx + i * 101, ty - i * 57, seme ^ 0x3c6ef372) > voce.probabilita) return;
+      const soglia = stagioni.valoreStagionale(voce.probabilita);
+      if (soglia <= 0) return;
+      if (impronta(tx + i * 101, ty - i * 57, seme ^ 0x3c6ef372) > soglia) return;
     }
     ottenuto.push({ cosa: voce.cosa, quante: voce.quante });
   });
@@ -277,7 +295,15 @@ function mangia(cosa, effetto) {
   for (const [quale, quanto] of Object.entries(effetto)) {
     ristorato[quale] = bisogni.ristora(quale, quanto);
   }
-  return { tipo: "consumato", cosa, ristorato };
+
+  // Un contenitore non si consuma, si svuota: il secchio bevuto torna
+  // secchio. Se non ci sta più — zaino pieno di altro — resta comunque
+  // bevuto, perché l'alternativa sarebbe non poter bere avendo l'acqua in
+  // mano, che è esattamente il difetto che questo campo è venuto a togliere.
+  const diventa = CATALOGO[cosa]?.diventa;
+  if (diventa) inventario.aggiungi(diventa, 1);
+
+  return { tipo: "consumato", cosa, ristorato, diventa: diventa ?? null };
 }
 
 // Una benda si consuma anche quando non c'era un'infezione da togliere: cura
@@ -365,6 +391,20 @@ export function agisci(eroe, cosaInMano) {
     return { tipo: "frugato", presi, resta: rimasto.length };
   }
 
+  if (azione.tipo === "cucina") {
+    // Una per volta, e di proposito: cuocere l'intera pila con un tasto
+    // toglierebbe l'unica cosa che il fuoco chiede, cioè di restarci accanto.
+    if (!inventario.togli(azione.cosa, 1)) return null;
+    const resto = inventario.aggiungi(azione.diventa, 1);
+    if (resto > 0) {
+      // Non ci sta: si rimette com'era invece di far sparire la rapa. Lo
+      // stesso riguardo che ricette.js ha per i materiali.
+      inventario.aggiungi(azione.cosa, 1);
+      return { tipo: "zainoPieno" };
+    }
+    return { tipo: "cotto", cosa: azione.cosa, diventa: azione.diventa };
+  }
+
   if (azione.tipo === "riempi") {
     // Si riempiono tutti in una volta: andare avanti e indietro una volta per
     // secchio sarebbe una passeggiata obbligatoria, non una scelta.
@@ -447,7 +487,12 @@ export function agisci(eroe, cosaInMano) {
 
   // Il tassello si libera per primo, così quello che avanza può cadere proprio
   // lì: è dove il giocatore sta già guardando.
-  mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
+  //
+  // Il giorno resta scritto: è da lì che parte il conto della ricrescita. La
+  // stessa data che i fuochi chiamano "posata" e le colture "maturata" — e
+  // come loro, chi la trova mancante assume adesso e la scrive, così i
+  // salvataggi di prima non restano spogli per sempre.
+  mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO, svuotata: tempo.giornoCorrente() });
 
   // Quello che non ci sta resta per terra invece di sparire. Prima spariva, e
   // "zaino pieno, perso qualcosa" era un messaggio che annunciava un danno

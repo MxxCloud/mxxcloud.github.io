@@ -21,6 +21,7 @@ export const CATALOGO = {
     icona: arte.BACCHE,
     pila: 20,
     commestibile: { fame: 0.3 },
+    cuoce: "bacche_secche",
   },
   // La torcia serve in due modi, entrambi visibili: in mano illumina chi la
   // porta, piantata resta accesa dove l'hai lasciata.
@@ -50,7 +51,20 @@ export const CATALOGO = {
   // dentro: lo zaino tiene coppie cosa-quantità e non stati, e due icone
   // diverse si leggono meglio di un numero.
   secchio: { nome: "Secchio", icona: arte.SECCHIO, pila: 4 },
-  secchio_pieno: { nome: "Secchio pieno", icona: arte.SECCHIO_PIENO, pila: 4 },
+  // Si beve. Sembra ovvio e per sei tappe non lo è stato: si poteva avere
+  // l'acqua in mano e dover tornare al lago per bere, che è il genere di
+  // assurdità che si nota solo giocando.
+  //
+  // Un secchio è un secchio e non una borraccia: una bevuta e torna vuoto.
+  // "Diventa" serve proprio a questo — la casella non si svuota, cambia
+  // contenuto — e servirà a qualunque contenitore arrivi dopo.
+  secchio_pieno: {
+    nome: "Secchio pieno",
+    icona: arte.SECCHIO_PIENO,
+    pila: 4,
+    commestibile: { sete: 0.5 },
+    diventa: "secchio",
+  },
   semi: { nome: "Semi", icona: arte.SEMI, pila: 40 },
   // Sfama il doppio delle bacche: è il senso dell'orto, e senza questo
   // divario coltivare sarebbe un passatempo invece di una risposta alla fame.
@@ -59,6 +73,25 @@ export const CATALOGO = {
     icona: arte.RAPA,
     pila: 20,
     commestibile: { fame: 0.6 },
+    cuoce: "rapa_arrostita",
+  },
+  // I due cibi cotti. Non sono una dispensa — quella vuole i contenitori, che
+  // sono della tappa della costruzione — sono lo stesso raccolto che vale
+  // quasi il doppio, ed è questo a far passare l'inverno. Il fuoco guadagna
+  // il terzo mestiere dopo la luce e il calore, e con esso una ragione per
+  // tornare all'accampamento: che è anche il posto in cui di notte non ti
+  // trovano.
+  rapa_arrostita: {
+    nome: "Rapa arrostita",
+    icona: arte.RAPA_ARROSTITA,
+    pila: 20,
+    commestibile: { fame: 1 },
+  },
+  bacche_secche: {
+    nome: "Bacche secche",
+    icona: arte.BACCHE_SECCHE,
+    pila: 20,
+    commestibile: { fame: 0.45 },
   },
   giaciglio: {
     nome: "Giaciglio",
@@ -149,18 +182,45 @@ export const RACCOLTA = {
     scheggie: ["f", "s", "e"],
     resa: [{ cosa: "pietra", quante: 2 }],
   },
+  // L'unico oggetto della valle la cui resa dipende dal mese, ed è giusto che
+  // sia l'unico: il legno e la pietra non hanno stagioni, una bacca sì.
+  //
+  // Prima di questa tabella un cespuglio a gennaio dava bacche esattamente
+  // come ad agosto, e la conseguenza non era estetica: si attraversava
+  // l'inverno di sola raccolta, quindi l'orto era facoltativo e il raccolto
+  // d'autunno era una collezione invece di una provvista — proprio il
+  // contrario di quello che il resto del gioco dichiara.
   [OGGETTO.CESPUGLIO]: {
     verbo: "Strappa",
     colpi: 1,
     scheggie: ["k", "a", "w"],
     resa: [
+      // La fibra non ha finestra, e non per pigrizia: è stelo secco, ce n'è
+      // in ogni mese, ed è l'unica cosa che la valle dà sempre. Da M6 vuol
+      // dire che le bende restano possibili anche nell'inverno peggiore, che
+      // è la differenza fra una stagione dura e un vicolo cieco.
       { cosa: "fibra", quante: 2 },
-      // Le bacche non escono sempre: un cespuglio su tre ne ha. Serve a dare
-      // un motivo per strapparli tutti invece di quello più comodo.
-      { cosa: "bacche", quante: 1, probabilita: 0.34 },
+      // Le bacche maturano a fine estate e reggono l'autunno. D'inverno ne
+      // resta un quarto: poco, non niente. Un muro alla prima invernata —
+      // prima che il giocatore sappia cosa lo aspetta — sarebbe una regola
+      // che toglie il gioco invece di complicarlo, e così invece si può
+      // sopravvivere raccogliendo, ma costa quattro volte il cammino, al
+      // freddo e col buio addosso.
+      {
+        cosa: "bacche",
+        quante: 1,
+        probabilita: { estate: 0.45, autunno: 0.34, inverno: 0.11, primavera: 0.14 },
+      },
       // I semi vengono da quello che già si raccoglie: l'orto non nasce da un
-      // oggetto trovato per caso ma da quello che hai strappato in giro.
-      { cosa: "semi", quante: 2, probabilita: 0.3 },
+      // oggetto trovato per caso ma da quello che hai strappato in giro. La
+      // pianta va a seme quando ha finito di fiorire, quindi estate e
+      // autunno; d'inverno niente, e non fa male perché d'inverno non si
+      // semina comunque.
+      {
+        cosa: "semi",
+        quante: 2,
+        probabilita: { estate: 0.3, autunno: 0.3, inverno: 0, primavera: 0.15 },
+      },
     ],
   },
   [OGGETTO.FALO_ACCESO]: {

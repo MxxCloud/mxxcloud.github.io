@@ -33,10 +33,11 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M6**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M6.5**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
-pronto o no — e si muore.** La valle però ti aspetta anche domani, e ti
-aspetta anche dopo che sei morto.
+pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
+anche dopo che sei morto, e adesso si rimette a posto da sola se le dai
+tempo.
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
 con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne
@@ -92,6 +93,47 @@ sveglia assetati.
 Un bisogno a zero toglie un quarto della velocità — tre ignorati riducono a
 un quarto — e adesso fa anche danno: vedi la salute, più sotto.
 
+**La valle non dà lo stesso in ogni mese.** Un cespuglio ha le bacche nel 45%
+dei casi d'estate, nel 34% d'autunno, nel 14% di primavera e nell'11%
+d'inverno — misurato su milleseicento cespugli per stagione con lo stesso
+seme, non stimato: l'inverno rende un quarto dell'estate. I
+semi vengono solo dalle piante andate a seme, cioè d'estate e d'autunno. La
+fibra invece non ha stagione: è stelo secco, ce n'è sempre, ed è quello che
+tiene aperta la strada delle bende anche nell'inverno peggiore.
+
+D'inverno la valle dà **poco, non niente**: si sopravvive raccogliendo, ma
+costa quattro volte il cammino, al freddo e col buio addosso. È questo a fare
+del raccolto d'autunno una provvista invece di una collezione — e quando
+l'autunno arriva, il gioco te lo dice.
+
+**Quello che prendi torna, se gli dai tempo.** Un cespuglio ricresce dopo una
+stagione, un albero dopo tre. Il sasso mai: la pietra è minerale, e resta
+l'unica risorsa che si esaurisce davvero. D'inverno non torna niente, quindi
+chi strappa in autunno rivede il cespuglio in primavera.
+
+Prima di questo ogni cosa raccolta era tolta per sempre: la valle attorno alla
+fattoria si spogliava e l'unica risposta era andarsene più lontano, che da M6
+è anche più pericoloso. Il gioco spingeva fuori invece di dare un motivo per
+restare.
+
+Far ricrescere, qui, vuol dire **dimenticare una modifica**: il mondo è una
+funzione delle coordinate e si ricordano solo le eccezioni, quindi togliendo
+«qui non c'è niente» il cespuglio torna da sé. Il salvataggio si accorcia
+invece di crescere per sempre — duecento cespugli strappati e poi ricresciuti
+lasciano zero byte, misurato.
+
+**Il fuoco cucina**, ed è il suo terzo mestiere dopo la luce e il calore. Con
+qualcosa di crudo in mano davanti a un falò acceso si arrostisce: una rapa
+passa da 0,6 a 1,0 di fame, le bacche da 0,3 a 0,45. Non è una dispensa —
+quella vuole i contenitori — è lo stesso raccolto che vale quasi il doppio, ed
+è la differenza fra sei rape e quattro per attraversare un inverno (misurato:
+una stagione fredda costa 3,56 di fame). Dà anche una ragione per tornare
+all'accampamento, che è pure il posto in cui di notte non ti trovano.
+
+**Si beve da quello che si porta.** Il secchio pieno si beve con `E` e torna
+secchio. Per sei tappe si poteva avere l'acqua in mano e dover tornare al lago:
+il genere di assurdità che si nota solo giocando.
+
 **L'orto** è la prima cosa tua. Con una zappa si lavora la terra, si semina
 quello che si è strappato dai cespugli, si innaffia con un secchio riempito al
 lago e si torna dopo giorni a raccogliere. Tre stadi, cioè due innaffiature
@@ -133,7 +175,10 @@ acceso, non l'oggetto.
 Non si degrada quello che sta in un mucchio per terra, e non per dimenticanza:
 finché non ci sono contenitori in cui mettere le cose al sicuro — e sono della
 tappa della costruzione — far marcire anche quello toglierebbe l'unico
-ripostiglio che esiste.
+ripostiglio che esiste. Per la stessa ragione non si guasta nemmeno il cibo
+nello zaino: farlo marcire mentre il terreno è una dispensa eterna
+insegnerebbe soltanto a usare il terreno come dispensa. Il guasto va con i
+contenitori.
 
 **I salvataggi** sono quattro caselle: tre da scrivere a mano con `P`, e una
 scritta dall'alba di ogni giorno. L'alba perché è il momento in cui il mondo
@@ -273,11 +318,21 @@ Da qui viene l'ordine, che non è quello immaginato all'inizio:
 | **M4** | Stagioni e decadimento | Le colture muoiono fuori stagione, quello che lasci si degrada. *Qui il gioco diventa ciò che dice di essere.* |
 | **M5** | Il corpo e la morte | Salute, freddo, morte con una causa; il nuovo superstite nella stessa valle, col cadavere del precedente. |
 | **M6** | Gli infetti | Chiasso, inseguimento, combattimento, ferite e infezione. La notte da scomoda a pericolosa. |
-| **M7** | Costruzione | Riparo, contenitori, muri: l'investimento che si difende. E il morale, che misura quel posto. |
+| **M6.5** | Quello che la valle dà | La raccolta segue le stagioni, quello che prendi ricresce, il fuoco cucina. *Qui l'orto smette di essere facoltativo.* |
+| **M7** | Costruzione | Riparo, contenitori, muri: l'investimento che si difende. E il morale, che misura quel posto. Con essi il cibo che si guasta. |
 | **M8** | Superstiti, abilità, audio, rifinitura | |
 
 **Perché la morte così tardi.** Morire conta in proporzione a quanto hai da
 perdere: prima dell'orto e delle stagioni non avresti perso niente.
+
+**M6.5 sta fra due tappe e non è un ripensamento.** M7 è stata rimandata per
+guardare indietro: dei sistemi già in piedi, la catena del cibo era l'unico
+che nessun altro aveva mai messo sotto pressione. La valle nutriva identica in
+ogni mese, quindi l'orto e le stagioni non pagavano; e niente ricresceva,
+quindi il mondo non si riprendeva nulla — subiva. Nessuna delle due è una
+funzione mancante: sono due sistemi esistenti che non facevano il loro
+mestiere, ed è il genere di debito che conviene pagare prima di costruirci
+sopra.
 
 **M5 si è ristretta, e M6 ha raccolto quasi tutto.** M5 doveva portare anche
 ferite, infezione e morale: ferite e infezione sono arrivate qui, con gli

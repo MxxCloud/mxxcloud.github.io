@@ -353,8 +353,13 @@ export function disegnaPromemoria(p, barra, cosaInMano) {
   // mano. È lo stesso difetto di prima in un'altra forma: un tasto che
   // nessuno nomina è un tasto che non esiste — ma nominarlo sempre sarebbe
   // rumore, perché quasi mai si ha del cibo selezionato.
+  // "Mangia" o "bevi" a seconda di cosa ristora: con il secchio pieno in mano
+  // un promemoria che dice di mangiarlo si legge come un errore del gioco.
   const commestibile = cosaInMano && CATALOGO[cosaInMano]?.commestibile;
-  if (commestibile) righe.push(`E  MANGIA ${nomeDi(cosaInMano).toUpperCase()}`);
+  if (commestibile) {
+    const beve = (commestibile.sete ?? 0) > 0 && !(commestibile.fame > 0);
+    righe.push(beve ? "E  BEVI" : `E  MANGIA ${nomeDi(cosaInMano).toUpperCase()}`);
+  }
   // Stessa regola per la benda, stesso tasto: si nomina quando si ha in mano
   // qualcosa che si usa su di sé.
   if (cosaInMano && CATALOGO[cosaInMano]?.cura) righe.push("E  FASCIATI");

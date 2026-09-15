@@ -214,6 +214,15 @@ export function oggettoDi(tx, ty) {
   return oggettoIn(tx, ty, seme, terrenoIn(tx, ty, seme));
 }
 
+// Cosa ci sarebbe su questo tassello se il giocatore non l'avesse mai
+// toccato. È l'oggettoDi() senza l'ultima parola delle modifiche, e serve alla
+// ricrescita: cosa può tornare lo decide la generazione, non cosa è stato
+// tolto. Un tassello dove non c'era niente resta niente anche dopo averci
+// posato e ripreso un mucchio.
+export function oggettoGenerato(tx, ty) {
+  return oggettoIn(tx, ty, seme, terrenoIn(tx, ty, seme));
+}
+
 // Annota qualcosa su un tassello senza toccare il disegno. Serve ai colpi
 // intermedi: un albero a metà abbattimento è ancora lo stesso albero, e
 // ricuocere duecentocinquantasei tasselli per aggiornare un contatore è
