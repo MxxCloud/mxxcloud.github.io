@@ -22,6 +22,7 @@ import * as decadimento from "./regole/decadimento.js";
 import * as salvataggio from "./regole/salvataggio.js";
 import * as sincronia from "./regole/sincronia.js";
 import { tavolozzaDi, tavolozzaBagnataDi } from "./arte/tavolozza.js";
+import { FIORI } from "./arte/sprite-fiori.js";
 import * as inventario from "./regole/inventario.js";
 import * as azioni from "./regole/azioni.js";
 import { RICETTE, fai } from "./regole/ricette.js";
@@ -35,7 +36,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M4.4";
+const VERSIONE = "M4.5";
 
 // --- elementi -------------------------------------------------------------
 
@@ -114,6 +115,9 @@ function vestiLaValle() {
   const prima = stagioneVestita;
   stagioneVestita = stagione;
   mappa.impostaTavolozze(tavolozzaDi(stagione), tavolozzaBagnataDi(stagione));
+  // I fiori sono l'altra metà della primavera: due verdi leggermente diversi
+  // non bastavano a distinguerla dall'estate.
+  mappa.impostaFioritura(stagioni.fiorisce(stagione) ? FIORI : null);
   // Al primo giro non si annuncia niente: "è arrivata l'estate" appena aperto
   // il gioco è rumore, perché non è arrivato niente — si è cominciato lì.
   return prima === null ? null : stagione;

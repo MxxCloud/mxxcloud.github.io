@@ -11,11 +11,12 @@
 // dimenticato non darebbe errore online, e si scoprirebbe solo la prima volta
 // che qualcuno prova a giocare in treno.
 
-const VERSIONE = "ultimo-raccolto-v15";
+const VERSIONE = "ultimo-raccolto-v16";
 
 const RISORSE = [
   "./",
   "./arte/sprite-cose.js",
+  "./arte/sprite-fiori.js",
   "./arte/sprite-impugnati.js",
   "./arte/sprite-indicatori.js",
   "./arte/sprite-oggetti.js",

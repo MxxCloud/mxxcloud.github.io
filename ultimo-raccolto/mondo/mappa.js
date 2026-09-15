@@ -30,8 +30,11 @@ const CATALOGO = {
   [TERRENO.ACQUA]: { varianti: terrenoArte.ACQUA, solido: true },
   [TERRENO.ACQUA_BASSA]: { varianti: terrenoArte.ACQUA_BASSA, solido: true },
   [TERRENO.SABBIA]: { varianti: terrenoArte.SABBIA, solido: false },
-  [TERRENO.ERBA]: { varianti: terrenoArte.ERBA, solido: false },
-  [TERRENO.STERPAGLIA]: { varianti: terrenoArte.STERPAGLIA, solido: false },
+  // "Fiorabile" dice soltanto che su questo terreno può crescere qualcosa di
+  // piccolo. Quando — cioè in che stagione — non lo sa la mappa: glielo passa
+  // dall'alto chi conosce il calendario.
+  [TERRENO.ERBA]: { varianti: terrenoArte.ERBA, solido: false, fiorabile: true },
+  [TERRENO.STERPAGLIA]: { varianti: terrenoArte.STERPAGLIA, solido: false, fiorabile: true },
   [TERRENO.ROCCIA]: { varianti: terrenoArte.ROCCIA, solido: false },
   [TERRENO.TERRA]: { varianti: terrenoArte.TERRA, solido: false },
 };
@@ -95,6 +98,24 @@ let iconeMucchio = {};
 export function registraIconeMucchio(icone) {
   iconeMucchio = icone;
 }
+
+// I disegni dei fiori da spargere sui terreni fiorabili, o niente. La mappa
+// non sa cosa sia la primavera: sa che ogni tanto le viene detto di spargere
+// questi, e ogni tanto di non spargere niente.
+let fioritura = null;
+
+export function impostaFioritura(fiori) {
+  const nuova = fiori ?? null;
+  if (nuova === fioritura) return false;
+  fioritura = nuova;
+  settori.clear();
+  return true;
+}
+
+// Quanti tasselli fiorabili portano un fiore. Un quarto: più fitto sembra un
+// giardino curato invece di una valle lasciata andare, più rado e la stagione
+// non si vede attraversando lo schermo.
+const QUOTA_FIORI = 0.25;
 
 // Quanto in alto sta l'icona sul sacco: i due pixel di margine la centrano in
 // larghezza, e la riga in meno la fa appoggiare invece che galleggiare.
@@ -305,6 +326,7 @@ function cuociSettore(sx, sy) {
 
       pennello.drawImage(tasselloDi(tx, ty, terreno), x * TASSELLO, y * TASSELLO);
       sfrangia(pennello, leggi, x, y, tx, ty, terreno);
+      fiorisci(pennello, tx, ty, terreno, x, y);
 
       const oggetto = oggettoDi(tx, ty);
       if (oggetto !== OGGETTO.NESSUNO) {
@@ -352,6 +374,33 @@ function cuociSettore(sx, sy) {
   ultimiTempi.push(durata);
   if (ultimiTempi.length > 12) ultimiTempi.shift();
   return { canvas, oggetti };
+}
+
+// Sparge un fiore sul tassello, se è di quelli che fioriscono e se le sue
+// coordinate lo vogliono.
+//
+// Quale fiore e dove cade li decidono le coordinate, come tutto il resto del
+// mondo: lo stesso tassello ha lo stesso fiore nello stesso punto, sempre.
+// Serve a due cose insieme — il settore ricotto non cambia aspetto, e il prato
+// non è un reticolo. Una prima versione metteva i fiori dentro i tasselli
+// stessi, e cadevano tutti allo stesso punto dentro il loro tassello: si
+// vedeva la griglia da sedici pixel a occhio nudo.
+function fiorisci(pennello, tx, ty, terreno, x, y) {
+  if (!fioritura || !CATALOGO[terreno].fiorabile) return;
+  if (impronta(tx, ty, seme ^ 0x1d7f3ab5) >= QUOTA_FIORI) return;
+
+  const quale = fioritura[
+    Math.floor(impronta(tx + 13, ty - 29, seme ^ 0x6ad91c37) * fioritura.length) % fioritura.length
+  ];
+  const cotto = cuoci(quale, tavolozzaMondo);
+  // Dentro il tassello, con un margine che tiene il fiore lontano dai bordi:
+  // un fiore a cavallo di due tasselli si spezza, perché i settori si cuociono
+  // uno per volta.
+  const spazioX = TASSELLO - cotto.width - 2;
+  const spazioY = TASSELLO - cotto.height - 2;
+  const dx = 1 + Math.floor(impronta(tx - 7, ty + 41, seme ^ 0x2be4f019) * spazioX);
+  const dy = 1 + Math.floor(impronta(tx + 61, ty + 5, seme ^ 0x51c0a7d3) * spazioY);
+  pennello.drawImage(cotto, x * TASSELLO + dx, y * TASSELLO + dy);
 }
 
 // Sovrappone al tassello appena disegnato le frange dei vicini più forti.
