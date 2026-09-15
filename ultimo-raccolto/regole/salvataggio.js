@@ -22,6 +22,7 @@ import * as inventario from "./inventario.js";
 import * as stagioni from "./stagioni.js";
 import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
+import * as esplorato from "./esplorato.js";
 
 // Cambiando la forma di quello che si scrive, questo numero sale e i
 // salvataggi vecchi vengono rifiutati dicendolo, invece di essere caricati a
@@ -90,6 +91,14 @@ export function istantanea(eroe, casellaScelta) {
     // cambiare mentre il salvataggio aspetta di essere scritto.
     inventario: inventario.contenuto().map((c) => (c ? { ...c } : null)),
     modifiche: modifiche.tutti(),
+    // I settori visti, non il terreno che contengono: il terreno è una
+    // funzione delle coordinate e si ricalcola uguale. È la stessa ragione per
+    // cui qui sopra ci sono le modifiche e non il mondo.
+    //
+    // Anche questo non alza il formato: una partita scritta prima non ha il
+    // campo e si riapre con la mappa da rifare, che è la cosa giusta — non si
+    // può inventare dove sia stato qualcuno.
+    esplorato: esplorato.tutti(),
   };
 }
 
@@ -212,6 +221,7 @@ export function applica(stato) {
   bisogni.ripristina(stato.bisogni);
   salute.ripristina(stato.salute, stato.infezione === true);
   inventario.ripristina(stato.inventario);
+  esplorato.ripristina(stato.esplorato);
 
   return {
     eroe: stato.eroe,

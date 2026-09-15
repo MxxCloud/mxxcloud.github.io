@@ -387,7 +387,8 @@ const COMANDI = [
   ["C", "COSTRUIRE"],
   ["E", "MANGIARE O FASCIARTI"],
   ["G", "POSARE PER TERRA CIÒ CHE HAI IN MANO"],
-  ["M", "MAPPA"],
+  ["M", "MINIMAPPA"],
+  ["TAB", "LA MAPPA DI QUELLO CHE HAI VISTO"],
   ["P", "SALVARE E CARICARE"],
   ["F3", "DIAGNOSTICA"],
 ];
