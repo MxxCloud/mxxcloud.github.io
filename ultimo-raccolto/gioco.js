@@ -179,6 +179,10 @@ function vestiLaValle() {
   const prima = stagioneVestita;
   stagioneVestita = stagione;
   mappa.impostaTavolozze(tavolozzaDi(stagione), tavolozzaBagnataDi(stagione));
+  // Anche la minimappa: è la stessa valle vista da più in alto, e una valle
+  // che d'inverno è grigia in mezzo allo schermo e verde nell'angolo in basso
+  // a destra si legge come un riquadro dimenticato acceso.
+  minimappa.impostaTavolozza(tavolozzaDi(stagione));
   // I fiori sono l'altra metà della primavera: due verdi leggermente diversi
   // non bastavano a distinguerla dall'estate.
   mappa.impostaFioritura(stagioni.fiorisce(stagione) ? FIORI : null);

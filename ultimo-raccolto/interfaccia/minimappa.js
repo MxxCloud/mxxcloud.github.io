@@ -25,6 +25,15 @@ const MARGINE = 6;
 // Una tinta sola per terreno. I tasselli veri sono screziati e non hanno un
 // colore unico, quindi si sceglie il più rappresentativo: a un pixel per
 // tassello conta solo che l'acqua si distingua dalla roccia a colpo d'occhio.
+//
+// D'inverno l'erba e la sterpaglia finiscono sulla stessa tinta — undici
+// punti di distanza contro i quarantasette dell'estate — e la prateria si
+// appiattisce. Non è un difetto da correggere scegliendo un'altra chiave:
+// nessuna chiave le separa, perché d'inverno *sono* lo stesso colore anche
+// nel mondo, e allontanarle qui vorrebbe dire una minimappa che racconta una
+// valle diversa da quella che si attraversa. In cambio si distingue meglio
+// quello per cui questa finestra esiste: l'erba e la roccia passano da
+// trentotto punti a cinquantadue.
 const CHIAVI_TERRENO = {
   [TERRENO.ACQUA]: "1",
   [TERRENO.ACQUA_BASSA]: "3",
@@ -53,9 +62,33 @@ function componenti(esadecimale) {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
+// Le chiavi restano le stesse, la tavolozza cambia. È lo stesso conto che
+// vale per il mondo — la tavolozza è un parametro, non una costante — e qui
+// costa ancora meno: la griglia tiene quale terreno c'è, non di che colore è,
+// quindi una stagione nuova rifà sette tinte e ridipinge 4096 pixel invece di
+// ricalcolare 4096 tasselli di rumore.
+let tavolozza = TAVOLOZZA;
 const COLORI = [];
-for (const [id, chiave] of Object.entries(CHIAVI_TERRENO)) {
-  COLORI[id] = componenti(TAVOLOZZA[chiave]);
+
+function rifaiColori() {
+  for (const [id, chiave] of Object.entries(CHIAVI_TERRENO)) {
+    COLORI[id] = componenti(tavolozza[chiave]);
+  }
+}
+
+rifaiColori();
+
+// Gliela passa dall'alto chi conosce il calendario, come già succede per la
+// mappa: qui non si sa cosa sia una stagione, si sa che ogni tanto arrivano
+// colori nuovi.
+export function impostaTavolozza(nuova) {
+  if (nuova === tavolozza) return false;
+  tavolozza = nuova;
+  rifaiColori();
+  // Solo se c'è già qualcosa da ridipingere. La griglia non si tocca: i
+  // terreni sono dove erano, è cambiato il mese.
+  if (centro) ridipingi();
+  return true;
 }
 
 let griglia = null;

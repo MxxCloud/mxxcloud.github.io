@@ -52,7 +52,18 @@ In basso a destra c'è una minimappa che mostra poco meno di tre schermate:
 abbastanza per capire dov'è il lago e da che parte finisce la roccia, troppo
 poco per essere una mappa del mondo — che toglierebbe il gusto di andare a
 vedere. I falò e le torce che hai posato ci compaiono come puntini caldi:
-sono i tuoi punti di riferimento, non quelli del mondo.
+sono i tuoi punti di riferimento, non quelli del mondo, e restano caldi in
+ogni stagione.
+
+**Anche la minimappa segue le stagioni**, perché è la stessa valle vista da
+più in alto: una valle grigia in mezzo allo schermo e verde nell'angolo in
+basso a destra si legge come un riquadro dimenticato acceso. D'inverno però
+la prateria si appiattisce — l'erba e la sterpaglia, che d'estate distano
+quarantasette punti di colore, d'inverno ne distano undici — ed è giusto
+così: sono la stessa tinta anche nel mondo. In cambio si distingue meglio
+quello per cui la minimappa esiste, cioè dov'è il lago e da che parte
+finisce la roccia: l'erba e la roccia passano da trentotto punti a
+cinquantadue.
 
 Il sole gira: un giorno dura cinque minuti veri, l'alba e il tramonto
 durano due ore ciascuno, e alle nove di sera è buio pieno. Una torcia in mano
@@ -371,6 +382,12 @@ si spostano e si calcola solo la striscia appena entrata — una riga, due
 centesimi di millisecondo. Continua a scorrere anche da spenta, perché
 mantenerla costa pochissimo e ricostruirla da zero costa molto: riaccenderla
 non deve far perdere un fotogramma.
+
+Il cambio di stagione non la ricalcola affatto, ed è lo stesso conto che
+rende economiche le stagioni nel mondo: la griglia tiene **quale** terreno
+c'è, non di che colore è, quindi una stagione nuova rifà sette tinte e
+ridipinge 4096 pixel invece di rivalutare 4096 tasselli di rumore. Una
+ricostruzione sola per stagione, misurata contandole.
 
 **`interfaccia/`** — L'interfaccia sta sul canvas e non nel DOM, al contrario
 della diagnostica. Serve un font disegnato a pixel (`arte/sprite-testo.js`, 3x5),
