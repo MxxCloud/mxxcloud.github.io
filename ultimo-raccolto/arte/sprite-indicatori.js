@@ -64,3 +64,31 @@ export const FREDDO = [
   ".x.x.x.",
   "x..x..x",
 ];
+
+// L'infezione: due archi di denti che si chiudono. Non una croce né una
+// fiala, che dicono "medicina" cioè il rimedio, mentre qui va detto il
+// problema — e il problema è che qualcosa ti ha morso.
+export const INFEZIONE = [
+  "xx...xx",
+  ".x...x.",
+  "..x.x..",
+  "...x...",
+  "..x.x..",
+  ".x...x.",
+  "xx...xx",
+];
+
+// Ti hanno visto. Un punto esclamativo e non un occhio: a sette pixel un
+// occhio diventa un anello, mentre questo si legge senza impararlo.
+//
+// Compare e basta, senza dire quanti: il buio nasconde già abbastanza, e
+// contarli a schermo toglierebbe la parte in cui ci si volta.
+export const INSEGUITO = [
+  "..xxx..",
+  "..xxx..",
+  "..xxx..",
+  "..xxx..",
+  "..xxx..",
+  ".......",
+  "..xxx..",
+];

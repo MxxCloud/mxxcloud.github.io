@@ -33,10 +33,10 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M5**. Il ciclo di gioco è quello che il pilastro promette: **di
-giorno si raccoglie, di notte serve luce, l'anno gira che tu sia pronto o no
-— e adesso si muore.** La valle però ti aspetta anche domani, e ti aspetta
-anche dopo che sei morto.
+È finita **M6**. Il ciclo di gioco è quello che il pilastro promette: **di
+giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
+pronto o no — e si muore.** La valle però ti aspetta anche domani, e ti
+aspetta anche dopo che sei morto.
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
 con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne
@@ -212,7 +212,49 @@ secondo viaggio. Il corpo non si degrada — come i mucchi, e per una ragione
 più forte: un cadavere che marcisce prima che tu riesca a tornarci non è una
 regola, è una porta chiusa.
 
-Non c'è ancora nessuno da incontrare.
+**Gli infetti** escono col buio. Non c'è un secondo concetto — niente tane,
+niente orde, nessun contatore — perché la frase da consegnare è una: di notte
+è pericoloso. Quanti ce ne sono lo decide la luce, da nessuno al tramonto a
+cinque nel cuore della notte, e all'alba se ne vanno.
+
+Sono il superstite con un'altra tavolozza: stessa sagoma, stessa andatura,
+stessi vestiti, svuotati. Non è pigrizia, è la cosa che dice di loro più di
+qualunque disegno nuovo — erano come te — ed è possibile per la stessa
+ragione che dà le stagioni, cioè che la tavolozza è un parametro della
+cottura e non una costante.
+
+**Ti trovano in due modi: perché ti vedono e perché ti sentono.** Al buio
+vedono poco, quindi una notte si può attraversare stando zitti; con una
+fiamma in pugno si vede da molto più lontano, ed è il prezzo dell'unica cosa
+che d'inverno tiene caldo mentre si cammina. Camminare si sente da due
+tasselli, correre da sei, **spaccare legna da venti** — quasi quanto vedi. È
+il gesto che fai più spesso senza pensarci, ed è qui che la notte smette di
+essere una questione di luce: di notte non si fa legna.
+
+**Si scappa o si combatte.** Sono più veloci di chi cammina e più lenti di
+chi corre, quindi la fuga funziona sempre e costa sempre: correre consuma
+stanchezza, e sotto una soglia non si corre più. È la barra che esiste da M2
+e comincia a contare adesso. Se invece ci si volta, vale la solita regola —
+quello che tieni in mano è quello che usi: l'ascia ne abbatte uno in due
+colpi, a mani nude ce ne vogliono cinque, e nel frattempo lui non smette.
+Combattere fa rumore, e il rumore chiama gli altri.
+
+Non lasciano niente per terra, ed è voluto: ucciderne uno non ne toglie uno
+dal mondo, come spegnere un temporale non toglie pioggia all'inverno.
+Combattere non è un modo per ripulire la valle, è quello che si fa quando non
+si può più scappare.
+
+**Un morso toglie salute di colpo, e uno su tre lascia dentro l'infezione.**
+L'infezione non si aspetta: toglie salute piano e senza fermarsi, e finché
+c'è non si rimargina più niente — né il morso, né il freddo, né la fame. Si
+cura con una **benda**, tre fibre, usata con `E` come si mangia. È la seconda
+volta che una risorsa senza scopo ne trova uno: la fibra serviva a due torce
+e poi a niente, e adesso è quello che tieni da parte per quando le cose vanno
+male.
+
+Gli infetti non stanno nel salvataggio e non stanno nel mondo: non si contano,
+si incontrano. L'infezione invece sì che si salva — è uno stato in cui si
+vive, e chiudere la scheda non è una cura.
 
 ## La mappa di strada
 
@@ -230,33 +272,42 @@ Da qui viene l'ordine, che non è quello immaginato all'inizio:
 | **M3** | L'orto | Semini, innaffi, torni dopo giorni. La prima cosa tua. |
 | **M4** | Stagioni e decadimento | Le colture muoiono fuori stagione, quello che lasci si degrada. *Qui il gioco diventa ciò che dice di essere.* |
 | **M5** | Il corpo e la morte | Salute, freddo, morte con una causa; il nuovo superstite nella stessa valle, col cadavere del precedente. |
-| **M6** | Gli infetti | Rumore, inseguimento, combattimento; e con loro ferite, infezione e morale. La notte da scomoda a pericolosa. |
-| **M7** | Costruzione | Riparo, contenitori, muri: l'investimento che si difende. |
+| **M6** | Gli infetti | Chiasso, inseguimento, combattimento, ferite e infezione. La notte da scomoda a pericolosa. |
+| **M7** | Costruzione | Riparo, contenitori, muri: l'investimento che si difende. E il morale, che misura quel posto. |
 | **M8** | Superstiti, abilità, audio, rifinitura | |
 
 **Perché la morte così tardi.** Morire conta in proporzione a quanto hai da
 perdere: prima dell'orto e delle stagioni non avresti perso niente.
 
-**M5 si è ristretta.** Doveva portare anche ferite, infezione e morale, e
-quelli sono passati a M6 insieme agli infetti. Il motivo è lo stesso che
-ordina tutta la scala: oggi non esiste niente che ferisca, e un sistema di
-ferite senza una causa è una regola che non risponde a nessuna domanda. Il
-freddo invece una causa ce l'aveva già — l'inverno — ed è entrato subito.
+**M5 si è ristretta, e M6 ha raccolto quasi tutto.** M5 doveva portare anche
+ferite, infezione e morale: ferite e infezione sono arrivate qui, con gli
+infetti, perché è qui che hanno una causa. Il motivo è lo stesso che ordina
+tutta la scala — un sistema che non risponde a nessuna domanda è peggio di un
+sistema che manca.
+
+**Il morale è passato a M7**, e non è un rinvio: è il posto giusto. Quello
+che il morale può misurare in questo gioco è quanto tieni al tuo posto — un
+fuoco acceso, un orto curato, un letto — e quel posto comincia a esistere
+davvero con la costruzione. Un morale oggi sarebbe un quarto numero che dice
+"è notte e ti inseguono", cioè quello che schermo e orecchie dicono già.
 
 **Il salvataggio stava fuori da questa scala** e si è incastrato qui, dopo le
 stagioni: era il momento giusto, perché un posto che sparisce chiudendo la
 scheda è tuo solo per una seduta, e l'orto e le stagioni valevano meno di
 quanto valgono davvero.
 
-Le tappe dalla M5 in poi sono volutamente abbozzate: l'ordine è già cambiato
-una volta per quello che è emerso giocando, e cambierà ancora. Si dettagliano
+Le tappe restanti sono volutamente abbozzate: l'ordine è già cambiato due
+volte per quello che è emerso costruendo, e cambierà ancora. Si dettagliano
 quando ci si arriva.
 
-**Un debito già riconosciuto.** Il colpo oggi si sente perché l'oggetto trema
-e sputa scheggie, e provandolo è sembrato abbastanza. Ma è un ripiego
-accettato in attesa dell'audio: quando arriverà il comparto sonoro, colpire
-dovrà avere un suono. È la cosa che manca davvero al gesto, e il tremolio da
-solo la rimanda, non la sostituisce.
+**Un debito già riconosciuto, e cresciuto.** Il colpo si sente perché
+l'oggetto trema e sputa scheggie, e provandolo era sembrato abbastanza. È un
+ripiego accettato in attesa dell'audio, e con gli infetti il conto è
+raddoppiato: metà di questa tappa è un sistema di rumore che il giocatore non
+può sentire. Sa di aver fatto chiasso perché ha corso o spaccato legna, non
+perché l'ha udito, e quando ne arriva uno dal buio l'unico avviso è un
+esclamativo in alto a sinistra. Il comparto sonoro non è più rifinitura: è il
+pezzo che manca a due sistemi.
 
 ## Comandi
 
@@ -264,9 +315,9 @@ solo la rimanda, non la sostituisce.
 |---|---|
 | `W A S D` o frecce | camminare |
 | `Maiusc` | correre |
-| `Spazio` | agire su ciò che si ha davanti: colpire, raccogliere, zappare, seminare, innaffiare, bere, dormire, posare, frugare un cadavere |
+| `Spazio` | agire su ciò che si ha davanti: colpire, raccogliere, zappare, seminare, innaffiare, bere, dormire, posare, frugare un cadavere, difendersi |
 | `1`-`8` | scegliere la casella, cioè cosa si impugna |
-| `E` | mangiare o usare su di sé ciò che si ha in mano |
+| `E` | mangiare, o fasciarsi con una benda |
 | `G` | posare per terra la casella scelta, davanti ai piedi |
 | `C` | aprire e chiudere le costruzioni |
 | `M` | accendere e spegnere la minimappa |
@@ -354,6 +405,13 @@ confine.
 **`entita/`** — Oggetti semplici con un campo `tipo` e una funzione registrata
 per quel tipo. Niente sistema a componenti: le entità resteranno nell'ordine
 delle centinaia e i comportamenti distinti sono pochi.
+
+Un'entità non sa cos'è la paura, il rumore o il danno: sono regole, e le
+entità stanno sotto le regole. L'infetto riceve dall'alto due campi — chi
+inseguire e dove andare a guardare — e in cambio alza una bandierina quando
+il colpo va a segno; chi la raccoglie decide quanto costa. È la stessa
+divisione per cui il superstite non sa cosa sia uno zaino e si fa dire cosa
+ha in mano.
 
 **`regole/`** — Il gioco come regole, senza sapere né come si disegna né come
 si preme un tasto. `tempo.js` è l'orologio e la curva della luce; `oggetti.js`

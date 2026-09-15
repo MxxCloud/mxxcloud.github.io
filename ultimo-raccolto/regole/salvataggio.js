@@ -81,6 +81,11 @@ export function istantanea(eroe, casellaScelta) {
     // campo e viene ripreso con la salute piena, che è la cosa giusta — chi
     // aveva salvato in un gioco dove non si moriva non deve svegliarsi ferito.
     salute: salute.livelloCorrente(),
+    // L'infezione sì che si salva, al contrario della morte: è uno stato in
+    // cui si vive, e chiudere la scheda non è una cura. Anche questo non alza
+    // il formato — un salvataggio che non ce l'ha si riapre sano, che è la
+    // cosa giusta perché è stato scritto in un gioco dove non esisteva.
+    infezione: salute.eInfetto(),
     // Copie e non riferimenti: l'array dello zaino continua a vivere e a
     // cambiare mentre il salvataggio aspetta di essere scritto.
     inventario: inventario.contenuto().map((c) => (c ? { ...c } : null)),
@@ -205,7 +210,7 @@ export function applica(stato) {
   tempo.impostaGiorno(stato.giorno);
   tempo.impostaOra(stato.ore);
   bisogni.ripristina(stato.bisogni);
-  salute.ripristina(stato.salute);
+  salute.ripristina(stato.salute, stato.infezione === true);
   inventario.ripristina(stato.inventario);
 
   return {

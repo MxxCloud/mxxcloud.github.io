@@ -94,6 +94,13 @@ export const TAVOLOZZA = {
   x: "#355a26",
   y: "#48742f",
 
+  // Il sangue degli infetti. Scuro e smorto, non il rosso delle bacche: le
+  // bacche sono uno dei due colori che il giocatore deve trovare da solo, e
+  // uno spruzzo di sangue acceso ogni volta che si colpisce qualcosa li
+  // renderebbe un colore qualunque. Questo è sangue vecchio, che è anche
+  // quello che ci si aspetta da un corpo che cammina da mesi.
+  A: "#5e2a24",
+
   t: "#a33b2a", // bacche
   u: "#e0913a", // fiamma
   v: "#f2d06b", // fiamma, cuore
@@ -115,6 +122,34 @@ export const TAVOLOZZA_BAGNATA = {
   b: "#3b2c1e",
   c: "#4e3a26",
   g: "#221a11",
+};
+
+// --- gli infetti ----------------------------------------------------------
+
+// Gli infetti non hanno disegni propri: sono il superstite cotto con questa.
+// Non è pigrizia ed è la cosa che dice di loro più di qualunque sprite nuovo
+// — la stessa sagoma, la stessa andatura, gli stessi vestiti, svuotati. Erano
+// come te, e il giocatore lo capisce senza che nessuno glielo scriva.
+//
+// È anche la stessa scelta che dà le stagioni: la tavolozza è un parametro
+// della cottura, quindi un nemico intero costa sei righe invece di dodici
+// fotogrammi da disegnare a mano.
+//
+// Si toccano solo le sei chiavi che i personaggi usano davvero — contate, non
+// indovinate: contorno, capelli, pelle, due vesti e le scarpe.
+export const TAVOLOZZA_INFETTO = {
+  ...TAVOLOZZA,
+  // Più scuro del contorno normale: di notte un infetto deve leggersi come un
+  // buco nel paesaggio prima ancora che se ne distingua la faccia.
+  r: "#0b0c0f",
+  q: "#2a2a26",
+  // La pelle è l'unica cosa che si riconosce a colpo d'occhio a sedici pixel,
+  // quindi è dove sta tutto il lavoro: un grigio-verde che non assomiglia a
+  // nessuna pelle e nemmeno all'erba, che è l'altra cosa verde in giro.
+  m: "#8f9a7e",
+  n: "#2f3330",
+  o: "#454b44",
+  g: "#241f1a",
 };
 
 // --- le stagioni ----------------------------------------------------------

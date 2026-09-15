@@ -377,3 +377,24 @@ export const CADAVERE = [
   "....rrrr...rrrrr",
   "................",
 ];
+
+// La benda: una fascia di tela arrotolata. Bianco sporco e non bianco pulito
+// — è fibra strappata e bollita, non garza da farmacia — e con un capo che
+// pende, perché un rotolo perfetto a dodici pixel si legge come una moneta.
+//
+// La macchia scura al centro è il rotolo visto di taglio: senza, la fascia
+// era un rettangolo chiaro identico a mezza dozzina di altre cose.
+export const BENDA = [
+  "............",
+  "............",
+  "..zzzzzzz...",
+  ".zzAAAAAzz..",
+  ".zzAzzzAzz..",
+  ".zzAzzzAzz..",
+  ".zzAAAAAzz..",
+  "..zzzzzzz...",
+  "....zz......",
+  "...zz.......",
+  "............",
+  "............",
+];
