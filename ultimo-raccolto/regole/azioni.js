@@ -8,6 +8,7 @@ import { impronta } from "../motore/casuale.js";
 import { OGGETTO, TERRENO } from "../mondo/generazione.js";
 import * as tempo from "./tempo.js";
 import * as bisogni from "./bisogni.js";
+import * as salute from "./salute.js";
 import { CATALOGO, ATTREZZI, raccoltaDi, colpiNecessari } from "./oggetti.js";
 import * as orto from "./orto.js";
 import * as stagioni from "./stagioni.js";
@@ -51,6 +52,14 @@ export function azionePossibile(eroe, cosaInMano) {
   // chi ci si mette davanti lo sta guardando per riprenderselo.
   if (b.oggetto === OGGETTO.MUCCHIO) {
     return { tipo: "prendi", verbo: "Prendi", bersaglio: b };
+  }
+
+  // Il corpo del superstite di prima. "Fruga" e non "Prendi" perché non è la
+  // stessa cosa: un mucchio contiene quello che ci hai messo, un cadavere
+  // contiene tutto quello che avevi addosso quando sei caduto, e il verbo è
+  // l'unico posto in cui dirlo prima che il giocatore prema il tasto.
+  if (b.oggetto === OGGETTO.CADAVERE) {
+    return { tipo: "fruga", verbo: "Fruga", bersaglio: b };
   }
 
   const raccolta = raccoltaDi(b.oggetto);
@@ -170,6 +179,57 @@ export function getta(eroe, indice) {
   return { tipo: "gettato", cosa: casella.cosa, quante: casella.quantita, tx, ty };
 }
 
+// --- il cadavere ----------------------------------------------------------
+
+// Dove si è caduti, o il più vicino possibile. Si allarga ad anelli invece di
+// fermarsi agli otto tasselli attorno perché qui non si può fallire: quello
+// che il cadavere non riceve è tutto quello che il superstite aveva addosso,
+// e perderlo per un albero messo male sarebbe la peggiore delle punizioni —
+// invisibile e senza rimedio.
+const RAGGIO_CADAVERE = 6;
+
+function postoPerIlCorpo(tx0, ty0) {
+  for (let raggio = 0; raggio <= RAGGIO_CADAVERE; raggio += 1) {
+    for (let dy = -raggio; dy <= raggio; dy += 1) {
+      for (let dx = -raggio; dx <= raggio; dx += 1) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== raggio) continue;
+        const tx = tx0 + dx;
+        const ty = ty0 + dy;
+        if (mappa.oggettoDi(tx, ty) !== OGGETTO.NESSUNO) continue;
+        if (mappa.solidoIn(tx, ty)) continue;
+        return { tx, ty };
+      }
+    }
+  }
+  return null;
+}
+
+// Il superstite cade e lascia lì il corpo con tutto quello che portava. Lo
+// zaino si svuota qui e non altrove: il corpo e lo zaino sono la stessa roba
+// in due posti diversi, e svuotarlo in un altro file vorrebbe dire poterlo
+// dimenticare.
+//
+// Il cadavere non si degrada, come non si degradano i mucchi, e per la stessa
+// ragione scritta nel README: finché non esistono i contenitori, farlo marcire
+// toglierebbe l'unico ripostiglio che c'è. Qui però la ragione è più forte —
+// un cadavere che marcisce prima che tu riesca a tornarci non è una regola,
+// è una porta chiusa.
+export function lasciaIlCadavere(eroe, giorno) {
+  const roba = inventario
+    .contenuto()
+    .filter(Boolean)
+    .map((casella) => ({ cosa: casella.cosa, quantita: casella.quantita }));
+  inventario.svuota();
+
+  const tx0 = Math.floor(eroe.px / TASSELLO);
+  const ty0 = Math.floor(eroe.py / TASSELLO);
+  const posto = postoPerIlCorpo(tx0, ty0);
+  if (!posto) return null;
+
+  mappa.cambiaTassello(posto.tx, posto.ty, { oggetto: OGGETTO.CADAVERE, roba, giorno });
+  return { ...posto, quante: roba.length };
+}
+
 // L'esito della raccolta è deciso dalle coordinate, non dal caso del momento:
 // lo stesso cespuglio ha le bacche o non le ha, sempre. Oltre a rispettare la
 // regola che qui Math.random non esiste, rende il mondo una cosa che si può
@@ -189,7 +249,7 @@ function resaDi(raccolta, tx, ty) {
 // Usare quello che si ha in mano su di sé. Sta fuori da agisci() perché non
 // ha un bersaglio: mangiare non ha un davanti, e infilarlo nella barra
 // avrebbe voluto dire decidere se si mangia o si abbatte l'albero che si ha
-// di fronte. Da M5 serve anche alle bende.
+// di fronte. Servirà anche alle bende, quando ci sarà qualcosa che ferisce.
 export function consuma(cosaInMano) {
   const effetto = cosaInMano && CATALOGO[cosaInMano]?.commestibile;
   if (!effetto) return null;
@@ -232,6 +292,33 @@ export function agisci(eroe, cosaInMano) {
     return { tipo: "preso", cosa: dati.cosa, quante: dati.quante - resto, resta: resto };
   }
 
+  if (azione.tipo === "fruga") {
+    const dati = modifiche.di(tx, ty);
+    const roba = Array.isArray(dati?.roba) ? dati.roba : [];
+
+    // Si prende quello che ci sta e il resto resta addosso al corpo, casella
+    // per casella: è la stessa regola del mucchio, ma qui serve di più — chi
+    // torna a riprendersi otto caselle con lo zaino mezzo pieno deve poter
+    // fare due viaggi invece di scegliere cosa perdere.
+    const rimasto = [];
+    const presi = [];
+    for (const voce of roba) {
+      const resto = inventario.aggiungi(voce.cosa, voce.quantita);
+      if (resto < voce.quantita) presi.push({ cosa: voce.cosa, quante: voce.quantita - resto });
+      if (resto > 0) rimasto.push({ cosa: voce.cosa, quantita: resto });
+    }
+
+    if (presi.length === 0 && rimasto.length > 0) return { tipo: "zainoPieno" };
+
+    // Il corpo sparisce solo quando è vuoto. Un cadavere spogliato che resta
+    // lì sarebbe un secondo lutto senza informazione: quello che c'era da
+    // dire l'ha già detto.
+    if (rimasto.length > 0) mappa.cambiaTassello(tx, ty, { ...dati, roba: rimasto });
+    else mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
+
+    return { tipo: "frugato", presi, resta: rimasto.length };
+  }
+
   if (azione.tipo === "riempi") {
     // Si riempiono tutti in una volta: andare avanti e indietro una volta per
     // secchio sarebbe una passeggiata obbligatoria, non una scelta.
@@ -267,6 +354,15 @@ export function agisci(eroe, cosaInMano) {
     const secondi = tempo.secondiFinoAlle(tempo.ALBA_PIENA);
     tempo.avanza(secondi);
     bisogni.passanoSecondi(secondi);
+    // Anche la salute paga la notte saltata: chi si corica con la fame a zero
+    // non deve poterla dormire senza conseguenze, che sarebbe il modo più
+    // comodo di rendere innocua l'unica cosa che uccide.
+    //
+    // Il freddo invece la notte non la fa: dormire la salta, e saltarla
+    // significa saltare il gelo. È un secondo mestiere per il giaciglio che
+    // non costa una riga — d'inverno si sceglie fra accendere un fuoco e
+    // andare a letto, ed entrambe sono cose che bisogna essersi costruiti.
+    salute.passanoSecondi(secondi, { vuoti: bisogni.vuoti() });
     bisogni.ristora("stanchezza", 1);
     return { tipo: "dormi", secondi };
   }

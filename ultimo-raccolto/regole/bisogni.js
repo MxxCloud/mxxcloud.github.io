@@ -5,9 +5,11 @@
 // — finché la fame non esiste, un giorno vale l'altro e non c'è motivo di
 // fare qualcosa adesso invece che dopo.
 //
-// Non ci sono temperatura e morale: quelli vanno con le ferite più avanti,
-// dove hanno senso insieme. Tre indicatori sono già il massimo che un
-// giocatore tiene d'occhio mentre fa altro.
+// Non ci sono morale né ferite: quelli vanno con gli infetti, dove hanno una
+// causa. Il freddo invece una causa ce l'aveva già — l'inverno — e sta in
+// freddo.js, non qui: non è una barra che si svuota, è una condizione in cui
+// ci si trova. Tre indicatori sono già il massimo che un giocatore tiene
+// d'occhio mentre fa altro.
 
 import * as tempo from "./tempo.js";
 import * as stagioni from "./stagioni.js";
@@ -44,8 +46,10 @@ const STANCHEZZA_CORSA = 1 / (GIORNO * 0.5);
 const SOGLIA_CORSA = 0.08;
 
 // Quanto pesa ogni bisogno ignorato. Tre a zero riducono a un quarto: si
-// sente, ma si cammina ancora — a M5 questo diventerà danno, e allora la
-// lentezza da sola non basterà più.
+// sente, ma si cammina ancora. La lentezza non è più tutto quello che costa —
+// da M5 un bisogno vuoto fa anche danno, e di quello si occupa salute.js —
+// ma resta la conseguenza immediata, quella che si nota prima di guardare una
+// barra.
 const PESO_VUOTO = 0.25;
 
 export const ELENCO = ["fame", "sete", "stanchezza"];
@@ -74,11 +78,10 @@ export function avanza(passo, { corre = false, siMuove = false } = {}) {
 
   for (const quale of ELENCO) {
     const prima = livelli[quale];
-    // D'inverno viene fame prima. È l'unico posto in cui il freddo esiste:
-    // la temperatura vera arriva con le ferite, ma un inverno che si vede
-    // soltanto sarebbe un fondale dipinto. Siccome d'inverno non si coltiva,
-    // questo è ciò che fa del raccolto d'autunno una provvista invece di una
-    // collezione.
+    // D'inverno viene fame prima. È la metà lenta di come si sente l'inverno
+    // — l'altra è il gelo, che morde una notte alla volta — e siccome
+    // d'inverno non si coltiva, è ciò che fa del raccolto d'autunno una
+    // provvista invece di una collezione.
     let calo = CALO[quale] * passo * (quale === "fame" ? stagioni.fattoreFame() : 1);
     if (quale === "stanchezza") {
       if (corre) calo += STANCHEZZA_CORSA * passo;
@@ -116,6 +119,19 @@ export function passanoSecondi(secondi, { stanca = false } = {}) {
   if (stanca) livelli.stanchezza = limita(livelli.stanchezza - CALO.stanchezza * secondi);
 }
 
+// Quali sono a zero adesso — non quali si sono appena svuotati, che è quello
+// che restituisce avanza(). Serve alla salute, che fa danno per ognuno finché
+// resta vuoto e non una volta sola quando lo diventa.
+//
+// Riusato come appenaVuoti e per lo stesso motivo: viene chiesto a ogni passo.
+const elencoVuoti = [];
+
+export function vuoti() {
+  elencoVuoti.length = 0;
+  for (const quale of ELENCO) if (livelli[quale] <= 0) elencoVuoti.push(quale);
+  return elencoVuoti;
+}
+
 export function quantiVuoti() {
   let n = 0;
   for (const quale of ELENCO) if (livelli[quale] <= 0) n += 1;
@@ -135,8 +151,8 @@ export function reimposta() {
 }
 
 // Da un salvataggio. Quello che manca o non è un numero torna pieno: è la
-// scelta indulgente delle due, e un bisogno inventato a zero ucciderebbe —
-// quando ci sarà la morte — per colpa di un file storto.
+// scelta indulgente delle due, e adesso che si muore la differenza fra le due
+// è che un bisogno inventato a zero ucciderebbe per colpa di un file storto.
 export function ripristina(salvati) {
   for (const quale of ELENCO) {
     const v = salvati?.[quale];

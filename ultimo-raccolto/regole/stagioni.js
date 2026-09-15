@@ -63,10 +63,11 @@ export function fiorisce(stagione = stagioneCorrente()) {
   return stagione === "primavera";
 }
 
-// Quanto più in fretta viene fame. Il freddo non ha ancora un sistema suo — la
-// temperatura arriva con le ferite — ma un inverno che si vede soltanto è un
-// fondale. Questo è il minimo perché si senta: d'inverno si mangia di più, e
-// siccome d'inverno non si coltiva, si mangia quello che si è messo da parte.
+// Quanto più in fretta viene fame. Non è più l'unico modo in cui l'inverno si
+// sente — il freddo adesso esiste, e sta in freddo.js — ma resta la metà
+// lenta: il gelo morde una notte alla volta, questo si accumula per quattro
+// giorni. E siccome d'inverno non si coltiva, si mangia quello che si è messo
+// da parte.
 const FAME = { estate: 1, autunno: 1, inverno: 1.6, primavera: 1 };
 
 export function fattoreFame(stagione = stagioneCorrente()) {
