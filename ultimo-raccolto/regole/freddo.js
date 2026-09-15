@@ -1,0 +1,51 @@
+// Il freddo.
+//
+// Fino a M4 l'inverno si vedeva e si sentiva solo nello stomaco: la valle
+// cambiava colore e veniva fame prima. Era il minimo perché la stagione non
+// fosse un fondale dipinto, e lo diceva il commento in stagioni.js —
+// «la temperatura vera arriva con le ferite». Arriva adesso.
+//
+// La regola è una sola frase: d'inverno, di notte, lontano da una fiamma, si
+// gela. Tre condizioni e nessuna scala di gradi, perché una temperatura
+// continua vorrebbe un indicatore in più da guardare e direbbe al giocatore
+// la stessa identica cosa che gli dicono già l'orologio e il calendario.
+//
+// Quello che ne esce è che falò e torcia smettono di servire solo a vedere.
+// Una notte d'inverno diventa una domanda: accendo, dormo, o ci passo in
+// mezzo e pago. E il giaciglio guadagna un secondo mestiere senza una riga
+// nuova — chi dorme salta la notte, e saltando la notte salta il gelo.
+
+import * as tempo from "./tempo.js";
+import * as stagioni from "./stagioni.js";
+import * as mappa from "../mondo/mappa.js";
+import { CATALOGO } from "./oggetti.js";
+import * as schermo from "../motore/schermo.js";
+
+const { TASSELLO } = schermo;
+
+// Quanto lontano da un fuoco si comincia a gelare. Tre tasselli, cioè
+// quarantotto pixel: più o meno il cerchio di luce di un falò, che è anche il
+// modo in cui il giocatore impara il raggio senza che nessuno glielo dica —
+// si sta al caldo dove si vede.
+const RAGGIO_FUOCO = 3;
+
+// Si risponde a ogni fotogramma, senza tenere da parte niente. La prima
+// versione teneva la risposta per un quarto di secondo per non rifare il giro
+// dei quarantanove tasselli, poi il giro è stato misurato: due centesimi di
+// millisecondo, cioè un ottocentesimo di fotogramma, e per tre stagioni su
+// quattro nemmeno quello — le due righe qui sotto escludono tutto il resto
+// dell'anno prima di guardare un solo tassello.
+export function alFreddo(eroe, cosaInMano) {
+  if (stagioni.stagioneCorrente() !== "inverno") return false;
+  if (!tempo.eNotte()) return false;
+
+  // La torcia in pugno scalda, come scalda il falò per terra. È la stessa
+  // regola di sempre — quello che tieni in mano è quello che usi — e senza
+  // di essa attraversare la valle di notte d'inverno sarebbe impossibile
+  // invece che caro.
+  if (cosaInMano && CATALOGO[cosaInMano]?.luce) return false;
+
+  const tx = Math.floor(eroe.px / TASSELLO);
+  const ty = Math.floor(eroe.py / TASSELLO);
+  return !mappa.luceVicina(tx, ty, RAGGIO_FUOCO);
+}

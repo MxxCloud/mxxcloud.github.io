@@ -46,6 +46,10 @@ export const OGGETTO = {
   // Quello che resta di una coltura presa dall'inverno, o lasciata matura
   // troppo a lungo. Non è un quinto stadio: è la fine di quella strada.
   APPASSITA: 14,
+  // Il superstite di prima, con addosso quello che portava. Come il mucchio,
+  // quello che contiene sta nelle modifiche: qui c'è solo "su questo tassello
+  // c'è un corpo".
+  CADAVERE: 15,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati

@@ -37,3 +37,30 @@ export const STANCHEZZA = [
   "xxxxxx.",
   ".......",
 ];
+
+// Il cuore della salute. Sta sopra le altre tre barre e non in mezzo: è la
+// sola che, arrivando a zero, finisce la partita — le altre fanno male, questa
+// conclude.
+export const SALUTE = [
+  ".xx.xx.",
+  "xxxxxxx",
+  "xxxxxxx",
+  "xxxxxxx",
+  ".xxxxx.",
+  "..xxx..",
+  "...x...",
+];
+
+// Il gelo. Non è una barra: compare accanto alla salute solo mentre si sta
+// gelando, perché il freddo o c'è o non c'è — d'inverno, di notte, lontano da
+// una fiamma. Un cristallo e non un termometro, che a sette pixel sarebbe una
+// riga verticale indistinguibile da tutto il resto.
+export const FREDDO = [
+  "x..x..x",
+  ".x.x.x.",
+  "..xxx..",
+  "xxxxxxx",
+  "..xxx..",
+  ".x.x.x.",
+  "x..x..x",
+];

@@ -16,6 +16,8 @@ import * as entita from "./entita/entita.js";
 import * as giocatore from "./entita/giocatore.js";
 import * as tempo from "./regole/tempo.js";
 import * as bisogni from "./regole/bisogni.js";
+import * as salute from "./regole/salute.js";
+import * as freddo from "./regole/freddo.js";
 import * as orto from "./regole/orto.js";
 import * as stagioni from "./regole/stagioni.js";
 import * as decadimento from "./regole/decadimento.js";
@@ -36,7 +38,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M4.5";
+const VERSIONE = "M5";
 
 // --- elementi -------------------------------------------------------------
 
@@ -71,6 +73,16 @@ let scrittaInCorso = null;
 // L'ultimo giorno di cui si è già scritta l'alba. Senza, ogni fotogramma dopo
 // le sette riscriverebbe il salvataggio automatico.
 let albaScritta = 0;
+// La causa della morte, o null da vivi. È lo stato più esclusivo del gioco:
+// finché c'è, il mondo non avanza e nessun altro tasto risponde.
+let mortoDi = null;
+// Dove è rimasto il corpo, o null se non c'è stato posto. Serve alla
+// schermata della morte, che deve dire se c'è qualcosa da andare a
+// riprendere: è l'unica differenza fra un lutto e una spedizione.
+let corpo = null;
+// Se si sta gelando adesso. Calcolato una volta per passo e riusato dal
+// disegno: la regola non si interroga due volte per fotogramma.
+let gelando = false;
 
 const lumi = [];
 
@@ -87,6 +99,58 @@ function cosaInMano() {
 
 function annuncia(testo, colore) {
   messaggio = { testo: testo.toUpperCase(), colore, vita: 1 };
+}
+
+// --- la morte -------------------------------------------------------------
+
+// Il mondo non avanza quando c'è una schermata davanti. La morte è una di
+// quelle, ed è la ragione per cui questa domanda è diventata una funzione
+// invece di restare tre condizioni ricopiate in tre punti: la quarta sarebbe
+// stata la prima a essere dimenticata da qualche parte.
+function mondoFermo() {
+  return ricetteAperte || aperturaVisibile || partitaAperta || mortoDi !== null;
+}
+
+// Si cade. Il corpo resta dove sei caduto con tutto quello che portavi, e la
+// valle non cambia di una virgola: è l'altra metà del patto scritta nel
+// README dal primo giorno, e senza di essa morire sarebbe la fine della
+// partita invece della fine di un superstite.
+function muori(causa) {
+  mortoDi = causa;
+  corpo = azioni.lasciaIlCadavere(eroe, tempo.giornoCorrente());
+  // Niente messaggio di passaggio: ce n'è una schermata intera che lo dice, e
+  // un messaggio che svanisce dietro di essa sarebbe rumore.
+  messaggio = null;
+  ricetteAperte = false;
+  partitaAperta = false;
+}
+
+// Un superstite nuovo nella stessa valle. Non si ricomincia: l'orologio, il
+// calendario, l'orto e tutto quello che hai costruito continuano da dove
+// erano. Quello che riparte è il corpo — pieno, a mani vuote, e al punto di
+// partenza, che è lontano da dove sei morto quanto ti eri allontanato.
+function nuovoSuperstite() {
+  salute.reimposta();
+  bisogni.reimposta();
+  gelando = false;
+
+  entita.svuota();
+  const partenza = giocatore.puntoDiPartenza(0, 0);
+  eroe = entita.aggiungi(giocatore.crea(partenza.px, partenza.py));
+  schermo.centraSu(eroe.px, eroe.py);
+
+  casellaScelta = 0;
+  colpito = null;
+  lumi.length = 0;
+  minimappa.dimentica();
+  minimappa.aggiorna(eroe);
+
+  // Letto prima di azzerarlo: il messaggio che serve è diverso a seconda che
+  // ci sia o no qualcosa da andare a riprendere.
+  const cera = corpo !== null;
+  mortoDi = null;
+  corpo = null;
+  annuncia(cera ? "riprenditi quello che era tuo" : "un nuovo superstite", "#9ec97e");
 }
 
 // --- le stagioni ----------------------------------------------------------
@@ -340,6 +404,12 @@ function riprendi(ripreso) {
 
   // La valle si rimette la stagione giusta senza annunciare un arrivo: non è
   // arrivato niente, si è ripreso da lì.
+  // Un salvataggio si scrive da vivi, quindi riprendere significa sempre
+  // essere in piedi.
+  mortoDi = null;
+  corpo = null;
+  gelando = false;
+
   stagioneVestita = null;
   vestiLaValle();
   minimappa.dimentica();
@@ -459,6 +529,14 @@ function leggiPartita() {
 // --- comandi --------------------------------------------------------------
 
 function leggiComandi() {
+  // La morte viene prima di tutto il resto, apertura compresa: è l'unica
+  // schermata che non si toglie con un tasto qualsiasi. Si legge cos'è
+  // successo, e poi si decide di continuare.
+  if (mortoDi !== null) {
+    if (comandi.appenaPremuto("usa")) nuovoSuperstite();
+    return;
+  }
+
   if (aperturaVisibile) {
     // Il primo tasto chiude la schermata e basta: se valesse anche come
     // comando, chi preme la barra per toglierla di mezzo darebbe una zappata
@@ -565,6 +643,14 @@ function leggiComandi() {
   if (esito.tipo === "innaffia") annuncia("innaffiato", "#8fb8d8");
   if (esito.tipo === "dormi") annuncia(`hai dormito fino all'alba`, "#9ec97e");
 
+  if (esito.tipo === "frugato") {
+    if (esito.presi.length === 0) annuncia("non aveva niente addosso", "#c9b189");
+    else {
+      const elenco = esito.presi.map((v) => `+${v.quante} ${nomeDi(v.cosa)}`).join("  ");
+      annuncia(esito.resta > 0 ? `${elenco}, il resto è ancora lì` : elenco, "#9ec97e");
+    }
+  }
+
   if (esito.tipo === "preso") {
     const quanto = `+${esito.quante} ${nomeDi(esito.cosa)}`;
     annuncia(esito.resta > 0 ? `${quanto}, ne restano ${esito.resta}` : quanto, "#9ec97e");
@@ -585,7 +671,7 @@ function leggiComandi() {
 function aggiorna(passo) {
   // Il tempo non scorre mentre si sceglie cosa costruire: un menu che ti fa
   // arrivare la notte addosso mentre lo leggi è una punizione, non una sfida.
-  if (!ricetteAperte && !aperturaVisibile && !partitaAperta) {
+  if (!mondoFermo()) {
     tempo.avanza(passo);
     // Quello che si ha in mano lo decide lo zaino, non l'entità: le entità
     // stanno sotto le regole e non devono sapere cos'è un inventario. Lo
@@ -599,6 +685,17 @@ function aggiorna(passo) {
     for (const vuoto of bisogni.avanza(passo, { corre: eroe.correndo, siMuove: eroe.inMovimento })) {
       annuncia(AVVISI_BISOGNI[vuoto], "#c0705f");
     }
+
+    // La salute viene dopo i bisogni, e non è un caso: raccoglie le
+    // conseguenze di quello che è appena successo sopra di lei. Il freddo si
+    // chiede una volta per passo e la risposta la riusa anche il disegno: non
+    // per costo — è un ottocentesimo di fotogramma — ma perché la barra e il
+    // danno devono raccontare lo stesso momento.
+    const primaGelava = gelando;
+    gelando = freddo.alFreddo(eroe, cosaInMano());
+    if (gelando && !primaGelava) annuncia("stai gelando: serve una fiamma", "#8fa8d8");
+
+    salute.avanza(passo, { vuoti: bisogni.vuoti(), alFreddo: gelando });
     scheggie.aggiorna(passo);
     // Si tiene aggiornata anche da spenta: scorrerla costa due centesimi di
     // millisecondo, ricostruirla da zero quasi trenta. Meglio pagare sempre
@@ -611,11 +708,15 @@ function aggiorna(passo) {
     }
   }
 
+  // Un controllo solo, e fuori dal giro del mondo. La salute può arrivare a
+  // zero in tre modi — un passo di gioco, una notte dormita, un'assenza — e
+  // ognuno dei tre sta in un posto diverso: chiedere qui "sei morto?" invece
+  // di far rispondere a ognuno era l'unico modo di non lasciarne fuori uno.
+  // Il terzo, il sonno, era già sfuggito una volta scrivendolo.
+  if (salute.eMorto() && mortoDi === null) muori(salute.causaDellaMorte());
+
   leggiComandi();
-  azioneCorrente =
-    ricetteAperte || aperturaVisibile || partitaAperta
-      ? null
-      : azioni.azionePossibile(eroe, cosaInMano());
+  azioneCorrente = mondoFermo() ? null : azioni.azionePossibile(eroe, cosaInMano());
 
   if (messaggio) {
     messaggio.vita -= passo / 2.2;
@@ -733,7 +834,7 @@ function disegnaBuio() {
 
 function disegnaInterfaccia() {
   const p = schermo.pennello();
-  hud.disegnaBisogni(p);
+  hud.disegnaBisogni(p, { salute: salute.livelloCorrente(), alFreddo: gelando });
   hud.disegnaOrologio(p, {
     giorno: tempo.giornoCorrente(),
     orologio: tempo.orologio(),
@@ -763,6 +864,16 @@ function disegnaInterfaccia() {
     });
   }
   if (aperturaVisibile) hud.disegnaApertura(p, VERSIONE);
+  // Ultima di tutte: copre anche lo zaino e la minimappa, che a quel punto non
+  // sono più cose su cui si possa agire.
+  if (mortoDi !== null) {
+    hud.disegnaMorte(p, {
+      causa: salute.CAUSE[mortoDi] ?? "",
+      giorno: tempo.giornoCorrente(),
+      stagione: stagioni.stagioneCorrente(),
+      corpo,
+    });
+  }
 }
 
 // --- diagnostica ----------------------------------------------------------
@@ -788,6 +899,7 @@ function aggiornaDiagnostica() {
     `tassello ${tx}, ${ty}`,
     `terreno  ${NOMI_TERRENO[mappa.terrenoDi(tx, ty)]}`,
     `bisogni  ${bisogni.ELENCO.map((n) => n[0] + " " + bisogni.livello(n).toFixed(2)).join("  ")}  velocità ${bisogni.fattoreVelocita().toFixed(2)}`,
+    `salute   ${salute.livelloCorrente().toFixed(3)}  freddo ${gelando ? "sì" : "no"}  ${mortoDi ? `morto ${mortoDi}` : "vivo"}`,
     `ora      ${tempo.orologio()}  giorno ${tempo.giornoCorrente()}  luce ${tempo.luceAmbiente().toFixed(2)}`,
     `settori  ${mappa.settoriInMemoria()}  in piedi ${inPiedi.length}  lumi ${lumi.length}`,
     `scheggie ${scheggie.vive()}  figure ${giocatore.figureComposte()}`,
@@ -869,12 +981,17 @@ ciclo.collegaSospensione(() => comandi.rilasciaTutto());
 // avanza, i bisogni calano, e il ciclo del cambio giorno fa crescere l'orto,
 // spegnere i fuochi e girare le stagioni al fotogramma dopo.
 function recuperaIlTempoPerso(secondiSaltati) {
-  if (aperturaVisibile || ricetteAperte || partitaAperta) return;
+  if (mondoFermo()) return;
   const secondi = Math.min(secondiSaltati, ASSENZA_MASSIMA);
   if (secondi < 1) return;
 
   tempo.avanza(secondi);
   bisogni.passanoSecondi(secondi, { stanca: true });
+  // Si può tornare e trovarsi morti, ed è giusto così: "il mondo non aspetta"
+  // è una frase che vale anche per il corpo. Il freddo no — di quelle ore
+  // nessuno sa quante fossero d'inverno e di notte, e inventarlo sarebbe
+  // peggio che lasciarlo fuori.
+  salute.passanoSecondi(secondi, { vuoti: bisogni.vuoti() });
 
   // Si dice quanto è passato, perché tornare e trovare l'orto morto senza
   // sapere perché è la differenza fra una regola e un guasto. In giorni se
@@ -933,6 +1050,10 @@ if (parametri.has("diagnostica")) {
     minimappa,
     minimappaAccesa: () => minimappaVisibile,
     bisogni,
+    salute,
+    freddo,
+    eMorto: () => mortoDi,
+    nuovoSuperstite,
     orto,
     stagioni,
     decadimento,

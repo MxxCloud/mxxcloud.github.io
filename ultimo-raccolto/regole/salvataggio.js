@@ -17,6 +17,7 @@
 
 import * as tempo from "./tempo.js";
 import * as bisogni from "./bisogni.js";
+import * as salute from "./salute.js";
 import * as inventario from "./inventario.js";
 import * as stagioni from "./stagioni.js";
 import * as mappa from "../mondo/mappa.js";
@@ -72,6 +73,14 @@ export function istantanea(eroe, casellaScelta) {
     eroe: { px: eroe.px, py: eroe.py, guarda: eroe.guarda },
     casella: casellaScelta,
     bisogni: { ...bisogni.tutti() },
+    // La salute sta accanto ai bisogni e non dentro: non è un quarto bisogno,
+    // e infilarcela avrebbe voluto dire che bisogni.ripristina() se la
+    // sarebbe trovata fra le mani senza sapere cosa farne.
+    //
+    // Il formato non sale: un salvataggio scritto prima di M5 non ha questo
+    // campo e viene ripreso con la salute piena, che è la cosa giusta — chi
+    // aveva salvato in un gioco dove non si moriva non deve svegliarsi ferito.
+    salute: salute.livelloCorrente(),
     // Copie e non riferimenti: l'array dello zaino continua a vivere e a
     // cambiare mentre il salvataggio aspetta di essere scritto.
     inventario: inventario.contenuto().map((c) => (c ? { ...c } : null)),
@@ -196,6 +205,7 @@ export function applica(stato) {
   tempo.impostaGiorno(stato.giorno);
   tempo.impostaOra(stato.ore);
   bisogni.ripristina(stato.bisogni);
+  salute.ripristina(stato.salute);
   inventario.ripristina(stato.inventario);
 
   return {

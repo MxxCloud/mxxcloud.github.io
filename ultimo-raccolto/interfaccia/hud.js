@@ -97,31 +97,86 @@ function coloreBisogno(livello) {
   return "#c0705f";
 }
 
+const FREDDO = "#8fa8d8";
+
+function barra(p, y, icona, livello, colore) {
+  p.drawImage(cuoci(icona, tinta(colore)), 5, y - 1);
+
+  const x = 15;
+  p.fillStyle = "rgb(16 18 22 / 0.78)";
+  p.fillRect(x - 1, y - 1, LARGHEZZA_BARRA + 2, ALTEZZA_BARRA + 2);
+  p.fillStyle = "#2b2f36";
+  p.fillRect(x, y, LARGHEZZA_BARRA, ALTEZZA_BARRA);
+  p.fillStyle = colore;
+  // Arrotondato per eccesso finché resta qualcosa: una barra che sparisce
+  // mentre il bisogno non è ancora a zero direbbe una bugia.
+  const pieno = livello > 0 ? Math.max(1, Math.round(LARGHEZZA_BARRA * livello)) : 0;
+  p.fillRect(x, y, pieno, ALTEZZA_BARRA);
+}
+
 // In alto a sinistra: è l'unico angolo rimasto libero, con l'orologio in alto
 // a destra, lo zaino in basso al centro e la minimappa in basso a destra.
-export function disegnaBisogni(p) {
+//
+// La salute sta sopra e staccata dalle altre tre. Non è un vezzo di
+// impaginazione: le tre di sotto dicono cosa manca, quella di sopra dice
+// quanto manca alla fine della partita, e mettendole in fila si sarebbero
+// lette come quattro cose dello stesso peso.
+export function disegnaBisogni(p, { salute = 1, alFreddo = false } = {}) {
+  barra(p, 5, indicatori.SALUTE, salute, coloreBisogno(salute));
+
+  // Il gelo compare solo mentre gela, accanto alla barra che sta consumando.
+  // Una quinta barra sarebbe stata una misura da guardare; questo è un
+  // avviso, e un avviso o c'è o non c'è.
+  if (alFreddo) {
+    p.drawImage(cuoci(indicatori.FREDDO, tinta(FREDDO)), 15 + LARGHEZZA_BARRA + 4, 4);
+  }
+
   const livelli = bisogni.tutti();
-  let y = 5;
+  let y = 5 + PASSO_BARRA + 3;
 
   for (const quale of bisogni.ELENCO) {
-    const livello = livelli[quale];
-    const colore = coloreBisogno(livello);
-
-    p.drawImage(cuoci(ICONE_BISOGNI[quale], tinta(colore)), 5, y - 1);
-
-    const x = 15;
-    p.fillStyle = "rgb(16 18 22 / 0.78)";
-    p.fillRect(x - 1, y - 1, LARGHEZZA_BARRA + 2, ALTEZZA_BARRA + 2);
-    p.fillStyle = "#2b2f36";
-    p.fillRect(x, y, LARGHEZZA_BARRA, ALTEZZA_BARRA);
-    p.fillStyle = colore;
-    // Arrotondato per eccesso finché resta qualcosa: una barra che sparisce
-    // mentre il bisogno non è ancora a zero direbbe una bugia.
-    const pieno = livello > 0 ? Math.max(1, Math.round(LARGHEZZA_BARRA * livello)) : 0;
-    p.fillRect(x, y, pieno, ALTEZZA_BARRA);
-
+    barra(p, y, ICONE_BISOGNI[quale], livelli[quale], coloreBisogno(livelli[quale]));
     y += PASSO_BARRA;
   }
+}
+
+// --- la morte -------------------------------------------------------------
+
+// Occupa lo schermo intero e non si chiude da sola. È l'unica schermata del
+// gioco che non si può togliere di mezzo con un tasto qualsiasi: si legge
+// cos'è successo, e poi si decide di continuare.
+export function disegnaMorte(p, { causa, giorno, stagione, corpo }) {
+  p.fillStyle = "rgb(8 9 12 / 0.86)";
+  p.fillRect(0, 0, schermo.LARGHEZZA, schermo.ALTEZZA);
+
+  const larghezza = 210;
+  const altezza = 82;
+  const x = Math.round((schermo.LARGHEZZA - larghezza) / 2);
+  const y = Math.round((schermo.ALTEZZA - altezza) / 2);
+
+  riquadro(p, x, y, larghezza, altezza, FONDO_PIENO, ROSSO);
+
+  const centrata = (scritta, ry, colore) => {
+    testo.disegna(p, scritta, Math.round((schermo.LARGHEZZA - testo.larghezza(scritta)) / 2), ry, colore);
+  };
+
+  // La causa e non solo il fatto: "sei morto" lascia al giocatore il compito
+  // di indovinare cosa avrebbe dovuto fare diversamente, ed è esattamente la
+  // cosa che una morte deve insegnare.
+  centrata(`SEI MORTO ${causa.toUpperCase()}`, y + 12, ROSSO);
+  centrata(`GIORNO ${giorno}  ${stagione.toUpperCase()}`, y + 24, TENUE);
+
+  // Quello che la morte non porta via si dice qui, perché è la metà del
+  // patto: senza, si legge come una partita finita.
+  centrata("LA VALLE RESTA COM'ERA.", y + 40, GRIGIO);
+  centrata(
+    corpo ? "IL TUO CORPO È DOVE SEI CADUTO, CON" : "QUELLO CHE AVEVI ADDOSSO È PERDUTO.",
+    y + 48,
+    GRIGIO
+  );
+  if (corpo) centrata("TUTTO QUELLO CHE AVEVI ADDOSSO.", y + 56, GRIGIO);
+
+  centrata("SPAZIO  UN NUOVO SUPERSTITE", y + altezza - 13, BORDO_SCELTO);
 }
 
 // --- orologio -------------------------------------------------------------

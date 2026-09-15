@@ -80,6 +80,11 @@ const CATALOGO_OGGETTI = {
   // sei costruito da solo.
   [OGGETTO.MUCCHIO]: { sprite: coseArte.MUCCHIO, solido: false, mucchio: true },
 
+  // Il corpo del superstite di prima. Non ferma, e la ragione è la stessa del
+  // mucchio ma più forte: si muore dove capita, e un cadavere caduto in un
+  // passaggio stretto sarebbe un muro costruito dalla propria sfortuna.
+  [OGGETTO.CADAVERE]: { sprite: coseArte.CADAVERE, solido: false },
+
   // Una torcia piantata è luce fissa che costa molto meno di un falò, e non
   // ferma: è un bastone, ci si passa accanto.
   [OGGETTO.TORCIA_PIANTATA]: {
@@ -234,6 +239,20 @@ export function cambiaTassello(tx, ty, cambio) {
 // mille volte.
 export function scordaSettori() {
   settori.clear();
+}
+
+// C'è qualcosa di acceso entro questo raggio di tasselli? Serve al freddo, e
+// serve che sia una domanda sul mondo e non sull'inquadratura: lumiVisibili()
+// risponderebbe quasi sempre uguale e ogni tanto no, perché dipende da dove
+// sta la camera — cioè una regola di sopravvivenza decisa dal disegno.
+export function luceVicina(tx, ty, raggio) {
+  for (let dy = -raggio; dy <= raggio; dy += 1) {
+    for (let dx = -raggio; dx <= raggio; dx += 1) {
+      const oggetto = oggettoDi(tx + dx, ty + dy);
+      if (oggetto !== OGGETTO.NESSUNO && CATALOGO_OGGETTI[oggetto].luce) return true;
+    }
+  }
+  return false;
 }
 
 export function solidoIn(tx, ty) {

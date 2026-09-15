@@ -355,3 +355,25 @@ export const MUCCHIO = [
   "..gghhhhhhhhgg..",
   "....gggggggg....",
 ];
+
+// Il corpo del superstite di prima, steso. Sedici per dieci, cioè un tassello
+// in larghezza e poco più di mezzo in altezza: è quanto occupa una persona
+// distesa, e l'altezza bassa è metà del disegno — tutto il resto della valle
+// sta in piedi, e una figura orizzontale si legge come "caduta" prima ancora
+// che si distingua cosa sia.
+//
+// Il viso usa l'ombra della pelle e non la luce: è l'unico posto del gioco in
+// cui la pelle è più scura del normale, e a questa dimensione il pallore è
+// l'unico modo di dire "morto" invece di "sdraiato".
+export const CADAVERE = [
+  "................",
+  "................",
+  "................",
+  "....rrrr........",
+  "...rqqqqrrrrr...",
+  "..rqlmmlqoooor..",
+  "..rqllllqooonnnr",
+  "...rqqqqrrrnnnnr",
+  "....rrrr...rrrrr",
+  "................",
+];

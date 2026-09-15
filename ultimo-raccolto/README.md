@@ -33,9 +33,10 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M4**, più i salvataggi. Il ciclo di gioco è quello che il pilastro
-promette: **di giorno si raccoglie, di notte serve luce, e l'anno gira che tu
-sia pronto o no** — e adesso la valle ti aspetta anche domani.
+È finita **M5**. Il ciclo di gioco è quello che il pilastro promette: **di
+giorno si raccoglie, di notte serve luce, l'anno gira che tu sia pronto o no
+— e adesso si muore.** La valle però ti aspetta anche domani, e ti aspetta
+anche dopo che sei morto.
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
 con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne
@@ -77,8 +78,8 @@ alla riva del lago, si mangiano le bacche, si dorme su un giaciglio costruito
 apposta. Dormire porta all'alba e ristora, ma il tempo saltato si paga: ci si
 sveglia assetati.
 
-Un bisogno a zero non uccide — la morte arriva a M5 — ma toglie un quarto
-della velocità. Tre bisogni ignorati riducono a un quarto.
+Un bisogno a zero toglie un quarto della velocità — tre ignorati riducono a
+un quarto — e adesso fa anche danno: vedi la salute, più sotto.
 
 **L'orto** è la prima cosa tua. Con una zappa si lavora la terra, si semina
 quello che si è strappato dai cespugli, si innaffia con un secchio riempito al
@@ -164,7 +165,43 @@ Serve un progetto Firebase gratuito: due stringhe in `regole/sincronia.js`.
 Finché la chiave è vuota la sincronia si spegne da sola e lo dice, invece di
 fallire in un modo che sembra un guasto di rete.
 
-Non si muore ancora, e non c'è nessuno da incontrare.
+**La salute** è la quarta barra, in cima alle altre tre, e non è un quarto
+bisogno: non cala da sola. Sta sotto agli altri e raccoglie le conseguenze —
+ogni bisogno a zero fa danno, il freddo fa danno, e quando non manca niente il
+corpo si rimette piano. Un bisogno ignorato uccide in due giorni, tre insieme
+in sedici ore; guarire del tutto ne richiede tre, perché arrivare a un passo
+dalla morte non deve essere un inconveniente da risolvere mangiando una rapa.
+
+**Il freddo** è il secondo mestiere dell'inverno, e la regola sta in una
+frase: d'inverno, di notte, lontano da una fiamma, si gela. Una notte intera
+all'aperto senza fuoco costa più di metà della salute, e due di fila
+uccidono. Non c'è una scala di gradi: una temperatura continua vorrebbe un
+indicatore in più da guardare e direbbe quello che dicono già l'orologio e il
+calendario. Un cristallo azzurro compare accanto alla salute mentre si gela,
+e basta.
+
+È qui che il falò e la torcia smettono di servire solo a vedere — anche la
+torcia in pugno scalda, come tutto il resto vale per quello che si ha in mano
+— e il giaciglio guadagna un secondo mestiere senza una riga in più: chi
+dorme salta la notte, e saltando la notte salta il gelo. D'inverno si sceglie
+fra accendere un fuoco e andare a letto, e sono entrambe cose che bisogna
+essersi costruiti prima.
+
+**Quando la salute arriva a zero si muore**, e la schermata dice di cosa: la
+causa è quella che ha fatto più danno, non l'ultima arrivata. Poi muore il
+superstite e non il mondo. La valle non cambia di una virgola — il campo, i
+falò, tutto quello che hai toccato resta dov'era — e il tuo corpo resta dove
+sei caduto con addosso tutto quello che portavi.
+
+Il nuovo superstite comincia al punto di partenza, pieno e a mani vuote, e
+l'orologio e il calendario continuano da dove erano. **Riprendersi la propria
+roba è un viaggio**: si torna al corpo, ci si mette davanti e si preme la
+barra, e quello che non sta nello zaino resta addosso al cadavere per il
+secondo viaggio. Il corpo non si degrada — come i mucchi, e per una ragione
+più forte: un cadavere che marcisce prima che tu riesca a tornarci non è una
+regola, è una porta chiusa.
+
+Non c'è ancora nessuno da incontrare.
 
 ## La mappa di strada
 
@@ -181,13 +218,19 @@ Da qui viene l'ordine, che non è quello immaginato all'inizio:
 | **M2** | I bisogni | Fame, sete, stanchezza. Il corpo è la prima cosa che si consuma, e il tempo diventa una risorsa. |
 | **M3** | L'orto | Semini, innaffi, torni dopo giorni. La prima cosa tua. |
 | **M4** | Stagioni e decadimento | Le colture muoiono fuori stagione, quello che lasci si degrada. *Qui il gioco diventa ciò che dice di essere.* |
-| **M5** | Il corpo e la morte | Ferite, infezione, temperatura, morale; il nuovo superstite nella stessa valle, col cadavere del precedente. |
-| **M6** | Gli infetti | Rumore, inseguimento, combattimento. La notte da scomoda a pericolosa. |
+| **M5** | Il corpo e la morte | Salute, freddo, morte con una causa; il nuovo superstite nella stessa valle, col cadavere del precedente. |
+| **M6** | Gli infetti | Rumore, inseguimento, combattimento; e con loro ferite, infezione e morale. La notte da scomoda a pericolosa. |
 | **M7** | Costruzione | Riparo, contenitori, muri: l'investimento che si difende. |
 | **M8** | Superstiti, abilità, audio, rifinitura | |
 
 **Perché la morte così tardi.** Morire conta in proporzione a quanto hai da
 perdere: prima dell'orto e delle stagioni non avresti perso niente.
+
+**M5 si è ristretta.** Doveva portare anche ferite, infezione e morale, e
+quelli sono passati a M6 insieme agli infetti. Il motivo è lo stesso che
+ordina tutta la scala: oggi non esiste niente che ferisca, e un sistema di
+ferite senza una causa è una regola che non risponde a nessuna domanda. Il
+freddo invece una causa ce l'aveva già — l'inverno — ed è entrato subito.
 
 **Il salvataggio stava fuori da questa scala** e si è incastrato qui, dopo le
 stagioni: era il momento giusto, perché un posto che sparisce chiudendo la
@@ -210,7 +253,7 @@ solo la rimanda, non la sostituisce.
 |---|---|
 | `W A S D` o frecce | camminare |
 | `Maiusc` | correre |
-| `Spazio` | agire su ciò che si ha davanti: colpire, raccogliere, zappare, seminare, innaffiare, bere, dormire, posare |
+| `Spazio` | agire su ciò che si ha davanti: colpire, raccogliere, zappare, seminare, innaffiare, bere, dormire, posare, frugare un cadavere |
 | `1`-`8` | scegliere la casella, cioè cosa si impugna |
 | `E` | mangiare o usare su di sé ciò che si ha in mano |
 | `G` | posare per terra la casella scelta, davanti ai piedi |
