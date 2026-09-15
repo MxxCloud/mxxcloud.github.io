@@ -56,6 +56,22 @@ export function siColtiva(stagione = stagioneCorrente()) {
   return stagione !== "inverno";
 }
 
+// Un valore che può dipendere dal mese. Se è un numero vale sempre quello; se
+// è un oggetto con le stagioni per chiave, si legge quella di adesso.
+//
+// Sta qui e non in oggetti.js perché è il calendario a decidere cosa vuol
+// dire "in questa stagione": il catalogo delle cose sa che una bacca è più
+// facile da trovare d'estate, non quando comincia l'estate.
+//
+// Una stagione che manca vale zero e non uno. È la scelta prudente delle due:
+// scrivendo una finestra si sta dicendo "solo in questi mesi", e il mese
+// dimenticato deve restare fuori invece di entrare di straforo.
+export function valoreStagionale(valore, stagione = stagioneCorrente()) {
+  if (typeof valore === "number") return valore;
+  if (!valore) return 0;
+  return valore[stagione] ?? 0;
+}
+
 // L'unica stagione che fiorisce. Sta qui e non nella tavolozza perché è una
 // regola del calendario, non una tinta: la mappa riceve i disegni da spargere
 // o non li riceve, e non sa perché.

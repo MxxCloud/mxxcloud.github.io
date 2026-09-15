@@ -25,6 +25,7 @@ import * as chiasso from "./regole/chiasso.js";
 import * as orto from "./regole/orto.js";
 import * as stagioni from "./regole/stagioni.js";
 import * as decadimento from "./regole/decadimento.js";
+import * as ricrescita from "./regole/ricrescita.js";
 import * as salvataggio from "./regole/salvataggio.js";
 import * as sincronia from "./regole/sincronia.js";
 import { tavolozzaDi, tavolozzaBagnataDi } from "./arte/tavolozza.js";
@@ -42,7 +43,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M6";
+const VERSIONE = "M6.5";
 
 // --- elementi -------------------------------------------------------------
 
@@ -179,7 +180,11 @@ let stagioneVestita = null;
 // quattro righe scritte giuste.
 const ARRIVO = {
   estate: "è arrivata l'estate",
-  autunno: "è arrivato l'autunno",
+  // L'autunno è l'unica stagione che annuncia anche la prossima, e non è un
+  // vezzo: da questa tappa l'inverno non dà quasi niente, e una scadenza che
+  // non si annuncia è una trappola. È la stessa lezione del suggerimento
+  // impedito — si dice prima, non dopo aver premuto il tasto.
+  autunno: "è arrivato l'autunno: d'inverno la valle dà poco",
   inverno: "è arrivato l'inverno",
   primavera: "è arrivata la primavera",
 };
@@ -607,7 +612,13 @@ function leggiComandi() {
 
   if (comandi.appenaPremuto("consuma")) {
     const esito = azioni.consuma(cosaInMano());
-    if (esito?.tipo === "consumato") annuncia(`mangi: ${nomeDi(esito.cosa)}`, "#9ec97e");
+    if (esito?.tipo === "consumato") {
+      // Bere e mangiare sono lo stesso tasto ma non lo stesso gesto, e a
+      // deciderlo è cosa è stato ristorato invece di un elenco di cose da
+      // bere da tenere aggiornato altrove.
+      const beve = (esito.ristorato?.sete ?? 0) > 0;
+      annuncia(beve ? "bevi" : `mangi: ${nomeDi(esito.cosa)}`, beve ? "#8fb8d8" : "#9ec97e");
+    }
     else if (esito?.tipo === "medicato") {
       annuncia(esito.curata ? "fasciato: l'infezione è passata" : "ti sei fasciato", "#9ec97e");
     } else if (esito?.tipo === "nonServe") {
@@ -673,6 +684,8 @@ function leggiComandi() {
   if (esito.tipo === "semina") annuncia("seminato", "#9ec97e");
   if (esito.tipo === "innaffia") annuncia("innaffiato", "#8fb8d8");
   if (esito.tipo === "dormi") annuncia(`hai dormito fino all'alba`, "#9ec97e");
+
+  if (esito.tipo === "cotto") annuncia(`sul fuoco: ${nomeDi(esito.diventa)}`, "#e0913a");
 
   if (esito.tipo === "combattuto") {
     // Il sangue esce sempre, e in quantità diversa: un colpo che va a segno e
@@ -784,12 +797,14 @@ function aggiorna(passo) {
   let cresciute = 0;
   let appassite = 0;
   let spenti = 0;
+  let tornati = 0;
   while (ultimoGiorno < tempo.giornoCorrente()) {
     ultimoGiorno += 1;
     const orti = orto.nuovoGiorno();
     cresciute += orti.cresciute;
     appassite += orti.appassite;
     spenti += decadimento.nuovoGiorno();
+    tornati += ricrescita.nuovoGiorno();
   }
 
   const arrivata = vestiLaValle();
@@ -803,6 +818,9 @@ function aggiorna(passo) {
   else if (arrivata) annuncia(ARRIVO[arrivata], "#c9b189");
   else if (spenti > 0) annuncia("il fuoco si è spento", "#c0705f");
   else if (cresciute > 0) annuncia("l'orto è cresciuto", "#9ec97e");
+  // Ultima di tutte, perché è l'unica buona notizia che non riguarda una cosa
+  // che il giocatore ha fatto: la valle si è rimessa a posto da sola.
+  else if (tornati > 0) annuncia(`la valle è ricresciuta: ${tornati}`, "#7fae63");
 
   // Il salvataggio dell'alba, e proprio qui: dopo che il giorno ha fatto i
   // suoi conti — l'orto cresciuto, i fuochi spenti, la stagione girata — così
@@ -1137,6 +1155,7 @@ if (parametri.has("diagnostica")) {
     orto,
     stagioni,
     decadimento,
+    ricrescita,
     ciclo,
     salvataggio,
     sincronia,

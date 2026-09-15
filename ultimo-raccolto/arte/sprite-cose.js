@@ -398,3 +398,44 @@ export const BENDA = [
   "............",
   "............",
 ];
+
+// La rapa arrostita. Non è la rapa con un'altra tinta: è infilzata su uno
+// spiedo, e la differenza sta nella sagoma prima che nel colore.
+//
+// Il motivo è pratico e si vede solo in una casella da diciotto pixel: rapa e
+// rapa arrostita finiscono quasi sempre in due caselle adiacenti dello zaino,
+// e due tondi dello stesso disegno in tinte diverse a quella dimensione sono
+// la stessa cosa vista due volte. Lo spiedo si riconosce prima del colore.
+export const RAPA_ARROSTITA = [
+  "..........gh",
+  ".........hg.",
+  "........hg..",
+  "...cccccg...",
+  "..cc44ccc...",
+  "..cc44ccc...",
+  "...ccccc....",
+  "..hg.cc.....",
+  ".hg.........",
+  "g...........",
+  "............",
+  "............",
+];
+
+// Le bacche secche, sparse su un pezzo di tela invece che attaccate al ramo.
+// Stessa ragione della rapa: quello che cambia è dove stanno, non di che
+// colore sono. Il rosso è spento — sono passate dal fuoco — e sono più
+// piccole, perché seccando si raggrinziscono.
+export const BACCHE_SECCHE = [
+  "............",
+  "............",
+  ".zzzzzzzzzz.",
+  ".z.A..A...z.",
+  ".zA.A...A.z.",
+  ".z...A.A..z.",
+  ".zA..A...Az.",
+  ".z..A...A.z.",
+  ".zzzzzzzzzz.",
+  "............",
+  "............",
+  "............",
+];
