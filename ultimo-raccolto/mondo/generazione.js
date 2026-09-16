@@ -10,6 +10,7 @@
 // si riottengono da qui identici.
 
 import { impronta, rumoreFrattale } from "../motore/casuale.js";
+import * as rovine from "./rovine.js";
 
 export const TERRENO = {
   ACQUA: 0,
@@ -53,6 +54,13 @@ export const OGGETTO = {
   // La cassa. Come il mucchio e il cadavere, quello che contiene non sta qui
   // ma nelle modifiche: qui c'è solo "su questo tassello c'è una cassa".
   CASSA: 16,
+  // Gli ultimi due invece li posa la generazione, ed è la prima volta: sono i
+  // muri delle case di chi c'era prima. Fin qui il mondo generato era soltanto
+  // natura — albero, sasso, cespuglio — e il gioco apriva dicendo "un paese
+  // abbandonato da saccheggiare" mostrando una valle in cui non era mai
+  // crollato niente.
+  MURO: 17,
+  MURO_ROTTO: 18,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati
@@ -98,7 +106,14 @@ export function quotaIn(x, y, seme) {
   return base + frangia * DISTURBO;
 }
 
-export function terrenoIn(x, y, seme) {
+// Il terreno che dice il rumore, senza sapere niente delle rovine.
+//
+// Esiste separato per una ragione che non è estetica: decidere se una cella
+// può ospitare una casa vuol dire guardare il terreno sotto la pianta, e se
+// quella domanda passasse da terrenoIn() — che le rovine le consulta — si
+// chiamerebbero a vicenda per sempre. La ricorsione si spezza qui, e questo
+// commento c'è perché è il tipo di trappola in cui si ricasca rileggendo.
+function terrenoDelRumore(x, y, seme) {
   const quota = quotaIn(x, y, seme);
   if (quota < QUOTA_ACQUA) return TERRENO.ACQUA;
   if (quota < QUOTA_BASSOFONDO) return TERRENO.ACQUA_BASSA;
@@ -111,7 +126,59 @@ export function terrenoIn(x, y, seme) {
   return umidita > UMIDITA_ERBA ? TERRENO.ERBA : TERRENO.STERPAGLIA;
 }
 
+// --- le rovine ------------------------------------------------------------
+
+// Il seme con cui rispondere ad "adatto". Si tiene da parte invece di
+// passarlo a ogni chiamata perché quella domanda attraversa tre file — qui,
+// rovine.js e di nuovo qui — e trascinarselo dietro avrebbe voluto dire un
+// parametro in più in ognuno, per un valore che durante una partita non cambia.
+let semeDelleRovine = 0;
+
+// Ci si costruisce dove non c'è acqua. La roccia va benissimo — ci si
+// costruisce sopra da sempre — e così la sabbia: l'unica cosa che esclude una
+// casa è starci dentro un lago.
+function adatto(tx, ty) {
+  const terreno = terrenoDelRumore(tx, ty, semeDelleRovine);
+  return terreno !== TERRENO.ACQUA && terreno !== TERRENO.ACQUA_BASSA;
+}
+
+export function preparaRovine(seme) {
+  semeDelleRovine = seme;
+  rovine.inizializza(seme);
+}
+
+// Cosa c'è di costruito su questo tassello, o null. Il carattere della pianta
+// arriva da rovine.js, che di muri e casse non sa niente: il vocabolario dei
+// tasselli vive qui, e la traduzione va fatta dove vive.
+const PAVIMENTO = TERRENO.TERRA;
+const COSTRUITO = {
+  "#": OGGETTO.MURO,
+  "%": OGGETTO.MURO_ROTTO,
+  ".": OGGETTO.NESSUNO,
+  c: OGGETTO.CASSA,
+  f: OGGETTO.FALO_SPENTO,
+};
+
+export function rovinaNellaCella(cx, cy) {
+  return rovine.nellaCella(cx, cy, adatto);
+}
+
+// Il pavimento delle rovine è TERRENO.TERRA, che esisteva da sempre — sprite,
+// tinta, voce di catalogo, ed è persino zappabile — e non lo produceva
+// nessuno. Era un terreno in attesa di un motivo, e questo è il motivo.
+export function terrenoIn(x, y, seme) {
+  if (rovine.tasselloDi(x, y, adatto) !== null) return PAVIMENTO;
+  return terrenoDelRumore(x, y, seme);
+}
+
 export function oggettoIn(x, y, seme, terreno) {
+  // Le rovine vengono prima di tutto: dentro una casa non cresce un albero, e
+  // lasciando decidere prima alla natura ci sarebbe cresciuto — il pavimento è
+  // TERRA, che non produce niente, ma un muro deve poter stare anche dove il
+  // rumore avrebbe messo un bosco.
+  const segno = rovine.tasselloDi(x, y, adatto);
+  if (segno !== null) return COSTRUITO[segno] ?? OGGETTO.NESSUNO;
+
   const sorte = impronta(x, y, scarto(seme, 3));
 
   if (terreno === TERRENO.ERBA) {

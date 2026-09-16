@@ -14,7 +14,7 @@ import * as oggettiArte from "../arte/sprite-oggetti.js";
 import * as coseArte from "../arte/sprite-cose.js";
 import * as ortoArte from "../arte/sprite-orto.js";
 import * as transizioniArte from "../arte/sprite-transizioni.js";
-import { TERRENO, OGGETTO, terrenoIn, oggettoIn } from "./generazione.js";
+import { TERRENO, OGGETTO, terrenoIn, oggettoIn, preparaRovine } from "./generazione.js";
 import * as modifiche from "./modifiche.js";
 import { TAVOLOZZA, TAVOLOZZA_BAGNATA } from "../arte/tavolozza.js";
 
@@ -84,6 +84,12 @@ const CATALOGO_OGGETTI = {
   // mucchio ma più forte: si muore dove capita, e un cadavere caduto in un
   // passaggio stretto sarebbe un muro costruito dalla propria sfortuna.
   [OGGETTO.CADAVERE]: { sprite: coseArte.CADAVERE, solido: false },
+
+  // I muri di chi c'era prima. Il muro ferma, le macerie no — ed è tutta la
+  // differenza fra un ostacolo e una porta: si entra in una casa in rovina da
+  // dove il muro è venuto giù.
+  [OGGETTO.MURO]: { sprite: oggettiArte.MURO, solido: true },
+  [OGGETTO.MURO_ROTTO]: { sprite: oggettiArte.MURO_ROTTO, solido: false },
 
   // La cassa ferma, e deve: è un mobile. Camminarci dentro toglierebbe
   // l'unica cosa che la rende un posto invece di un oggetto — che sta lì,
@@ -198,7 +204,17 @@ export function inizializza(nome) {
   nomeSeme = nome;
   seme = semeDaTesto(nome);
   settori.clear();
+  // Le rovine tengono una memoria per cella e un seme loro: cambiando valle va
+  // buttata, altrimenti la valle nuova si troverebbe addosso le case della
+  // vecchia.
+  preparaRovine(seme);
 }
+
+// La rovina di una cella, per chi disegna la mappa grande. Il mondo la sa già
+// — la maglia è in rovine.js — e passare di qui evita che l'interfaccia debba
+// sapere che esiste un seme.
+export { rovinaNellaCella } from "./generazione.js";
+export { CELLA as CELLA_ROVINE } from "./rovine.js";
 
 export function semeCorrente() {
   return { nome: nomeSeme, valore: seme };

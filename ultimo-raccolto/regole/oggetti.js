@@ -322,6 +322,34 @@ export const RACCOLTA = {
     voce: "pietra",
     resa: [{ cosa: "falo", quante: 1 }],
   },
+  // I muri di chi c'era prima si abbattono, e rendono pietra.
+  //
+  // Cinque colpi, più di un albero: un muro è la cosa più solida della valle e
+  // deve sembrarlo. L'ascia non aiuta — è fatta per il legno — e questo è
+  // l'unico posto del gioco in cui avere l'attrezzo giusto non serve: la
+  // pietra vorrebbe un piccone, e un piccone che non esiste non si finge.
+  //
+  // È anche l'unica fonte di pietra che non sia un sasso, e la pietra era
+  // l'unica risorsa dichiarata finita del gioco. Una casa in rovina ne ha
+  // dentro più di quanta se ne trovi in un giorno di cammino.
+  [OGGETTO.MURO]: {
+    verbo: "Abbatti",
+    colpi: 5,
+    voce: "pietra",
+    scheggie: ["e", "f", "d"],
+    resa: [{ cosa: "pietra", quante: 2 }],
+  },
+  // Le macerie si spalano via in un colpo. Ci si passa già sopra, quindi
+  // toglierle non apre niente: rendono poco e servono a chi sta raccogliendo
+  // pietra e non vuole passare cinque colpi su ogni muro.
+  [OGGETTO.MURO_ROTTO]: {
+    verbo: "Spala",
+    colpi: 1,
+    voce: "pietra",
+    scheggie: ["e", "d"],
+    resa: [{ cosa: "pietra", quante: 1 }],
+  },
+
   // Una cassa si riprende, ma solo vuota, e a dirlo è azioni.js. Il motivo è
   // che una cassa piena sollevabile sarebbe uno zaino da dodici caselle: il
   // limite dello zaino è una delle poche cose che in un survival costringono

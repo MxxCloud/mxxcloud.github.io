@@ -70,13 +70,24 @@ export function quantoEAndata(casella, inCassa = false) {
   return Math.min(1, Math.max(0, (tempo.giornoCorrente() - dal) / vita));
 }
 
-// L'ultimo giorno. Sotto questa soglia non si dice niente: un avviso che
-// compare appena raccolte le bacche non è un avviso, è un'etichetta.
-const SOGLIA_AVVISO = 0.7;
+// L'avviso si conta in GIORNI e non in frazioni della vita, e ci è arrivato
+// per prova: la prima stesura diceva "oltre sette decimi", e su una cosa che
+// dura tre giorni non scattava mai. I giorni sono interi, quindi le bacche
+// passano da due terzi — che è meno di sette decimi — direttamente a guaste.
+// L'avviso esisteva senza succedere, che è il difetto che questo progetto
+// insegue da sempre, e stava dentro la sua stessa correzione.
+//
+// Un giorno di preavviso e non due: deve arrivare quando c'è ancora tempo di
+// farci qualcosa — mangiarlo, cuocerlo, metterlo in cassa — e con le scadenze
+// corte che ha questo gioco due giorni prima vorrebbe dire quasi sempre.
+const GIORNI_DI_AVVISO = 1;
 
 export function staPerGuastarsi(casella, inCassa = false) {
-  const andata = quantoEAndata(casella, inCassa);
-  return andata !== null && andata >= SOGLIA_AVVISO;
+  if (!casella) return false;
+  const vita = vitaDi(casella.cosa, inCassa);
+  if (vita === undefined) return false;
+  const dal = casella.dal ?? tempo.giornoCorrente();
+  return tempo.giornoCorrente() - dal >= vita - GIORNI_DI_AVVISO;
 }
 
 // Guasta quello che è ora di guastare, in una fila di caselle qualunque —
@@ -110,6 +121,9 @@ export function nuovoGiorno() {
 
   // Lo zaino per primo, che è l'unico posto che non sta nelle modifiche.
   let guaste = guastaLaFila(inventario.contenuto(), false, giorno);
+  // Quante pile stanno per andare. Si conta dopo aver guastato, altrimenti
+  // quello che è appena marcito verrebbe contato anche come "sta per".
+  let inScadenza = inventario.contenuto().filter((c) => staPerGuastarsi(c, false)).length;
 
   // Si raccoglie scorrendo e si agisce dopo: perOgnuno scorre la mappa dei
   // cambiamenti, e cambiarla mentre la si scorre è il modo più corto per
@@ -152,6 +166,7 @@ export function nuovoGiorno() {
     const fila = contenitori.contenutoDi(tx, ty);
     const perse = guastaLaFila(fila, true, giorno);
     guaste += perse;
+    inScadenza += fila.filter((c) => staPerGuastarsi(c, true)).length;
     // Si riscrive sempre e non solo quando qualcosa è andato: guastaLaFila
     // riempie anche le date mancanti, e perderle vorrebbe dire rifare quel
     // lavoro a ogni alba per sempre.
@@ -165,5 +180,5 @@ export function nuovoGiorno() {
     mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
   }
 
-  return { fuochi: spenti.length, guaste };
+  return { fuochi: spenti.length, guaste, inScadenza };
 }

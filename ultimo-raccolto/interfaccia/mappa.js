@@ -57,7 +57,28 @@ const SEGNAPOSTI = {
   // questa dice dove devi andare. Recuperare il proprio corpo è un viaggio, e
   // un viaggio vuole una destinazione segnata.
   [OGGETTO.CADAVERE]: "#c0705f",
+  // La cassa e il giaciglio, per la stessa ragione e con più diritto di tutti
+  // gli altri. Si segnava il falò SPENTO e non il proprio ripostiglio: una
+  // svista di quando le casse sono arrivate. Questa mappa dice dove devi
+  // andare, e dove sta la tua roba è la destinazione per eccellenza — insieme
+  // al posto in cui puoi dormire, che d'inverno vuol dire saltare il gelo.
+  [OGGETTO.CASSA]: "#c9b189",
+  [OGGETTO.GIACIGLIO]: "#8fa8d8",
 };
+
+// Le rovine hanno un segnaposto loro, e ci sono arrivate per prova.
+//
+// L'idea era che non servisse: il pavimento di una rovina è TERRENO.TERRA, che
+// ha una tinta sua, quindi una casa si disegna da sé. Sulla minimappa è vero e
+// si vede benissimo — un rettangolo scuro in mezzo al verde. Su questa no:
+// qui un settore sta in pochi pixel, una casa di otto tasselli ne occupa tre,
+// e tre pixel di terra battuta in mezzo alla sterpaglia sono tre pixel di
+// sterpaglia. Fotografato prima di accorgersene.
+//
+// È anche l'unico segnaposto che non indica roba tua, ed è il motivo per cui
+// questa mappa comincia a servire a qualcosa: fin qui segnava solo i posti in
+// cui eri già stato con le tue mani.
+const ROVINA = "#b9a48a";
 
 // --- l'atlante ------------------------------------------------------------
 
@@ -293,6 +314,28 @@ export function disegna(p, eroe) {
     p.fillStyle = colore;
     p.fillRect(rx, ry, lato, lato);
   };
+
+  // Le rovine dei settori visti. Si passa per le celle e non per i tasselli:
+  // una cella è quattro settori per lato, quindi le celle da guardare sono un
+  // sedicesimo dei settori esplorati — poche decine anche in una partita
+  // lunga, e solo mentre la mappa è aperta.
+  const celleViste = new Set();
+  esplorato.perOgnuno((sx, sy) => {
+    celleViste.add(`${Math.floor(sx * SETTORE / mappa.CELLA_ROVINE)},${Math.floor(sy * SETTORE / mappa.CELLA_ROVINE)}`);
+  });
+  for (const chiave of celleViste) {
+    const [cx, cy] = chiave.split(",").map(Number);
+    const rovina = mappa.rovinaNellaCella(cx, cy);
+    if (!rovina) continue;
+    const tx = rovina.tx0 + (rovina.larghezza >> 1);
+    const ty = rovina.ty0 + (rovina.altezza >> 1);
+    // Una cella è più grande di un settore: si può aver visto la cella senza
+    // essere mai passati dove sta la casa, e segnare una cosa che non si è
+    // vista è il contrario di quello che questa mappa fa.
+    if (!esplorato.eVisto(Math.floor(tx / SETTORE), Math.floor(ty / SETTORE))) continue;
+    const { x, y } = suSchermo(tx, ty);
+    segnale(x, y, ROVINA, 3);
+  }
 
   modifiche.perOgnuno((tx, ty, cambio) => {
     const colore = SEGNAPOSTI[cambio.oggetto];

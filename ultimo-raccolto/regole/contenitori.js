@@ -13,6 +13,7 @@
 // roba di un cadavere e il contenuto di un mucchio.
 
 import { OGGETTO } from "../mondo/generazione.js";
+import { impronta, generatore } from "../motore/casuale.js";
 import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
 import { CATALOGO } from "./oggetti.js";
@@ -39,6 +40,76 @@ function vuote() {
   return new Array(CASELLE).fill(null);
 }
 
+// --- quello che avevano lasciato dentro -----------------------------------
+
+// Il bottino di una cassa che era già lì.
+//
+// Non sta scritto da nessuna parte finché nessuno la apre: è una funzione
+// delle coordinate e del seme, come il terreno. **Una valle piena di rovine
+// mai visitate pesa zero byte**, ed è la stessa proprietà per cui una partita
+// con seicento settori esplorati pesa duemilaseicento byte di mappa. Al primo
+// prelievo si scrive una modifica, e da lì in poi è una cassa come le altre.
+//
+// Roba che esiste già e niente di nuovo: questa tappa porta il posto, non
+// un'economia. I pesi guardano a quanto costa fare una cosa da sé — una benda
+// sono tre fibre, un'ascia è un viaggio — perché il senso di frugare una casa
+// è trovarsi in mano qualcosa che non avevi voglia di costruire.
+const BOTTINO = [
+  { cosa: "pietra", da: 2, a: 6, peso: 3 },
+  { cosa: "fibra", da: 2, a: 6, peso: 3 },
+  { cosa: "legna", da: 2, a: 5, peso: 3 },
+  { cosa: "semi", da: 2, a: 4, peso: 2 },
+  { cosa: "benda", da: 1, a: 2, peso: 2 },
+  { cosa: "bacche_secche", da: 2, a: 5, peso: 2 },
+  { cosa: "torcia", da: 1, a: 2, peso: 2 },
+  { cosa: "secchio", da: 1, a: 1, peso: 1 },
+  { cosa: "ascia", da: 1, a: 1, peso: 1 },
+  { cosa: "zappa", da: 1, a: 1, peso: 1 },
+];
+
+const PESO_TOTALE = BOTTINO.reduce((somma, v) => somma + v.peso, 0);
+
+function pesca(caso) {
+  let tiro = caso() * PESO_TOTALE;
+  for (const voce of BOTTINO) {
+    tiro -= voce.peso;
+    if (tiro <= 0) return voce;
+  }
+  return BOTTINO[0];
+}
+
+// Da una a tre pile. Mai vuota: una casa attraversata per venire a trovare una
+// cassa vuota insegna a non entrare più, e il viaggio deve pagare sempre
+// qualcosa — poco, ma qualcosa.
+const PILE = [1, 3];
+
+function bottinoDi(tx, ty) {
+  const fila = vuote();
+  // Un generatore seminato sulle coordinate: la stessa cassa dà sempre lo
+  // stesso bottino, e due casse vicine no. In questo gioco Math.random non
+  // esiste, e qui la regola paga anche in pratica — riaprire una cassa che non
+  // si è toccata non deve rimescolare quello che c'è dentro.
+  const caso = generatore(Math.floor(impronta(tx, ty, 0xb07715) * 4294967296));
+  const quante = PILE[0] + Math.floor(caso() * (PILE[1] - PILE[0] + 1));
+  // Mai due volte la stessa cosa. Non è pulizia: gli attrezzi si impilano a
+  // uno, quindi due zappe sono due caselle occupate da due zappe — visto in
+  // una prova, e una casa che contiene due zappe e nient'altro racconta un
+  // sorteggio, non un posto in cui è vissuto qualcuno.
+  const gia = new Set();
+  for (let i = 0; i < quante; i += 1) {
+    let voce = pesca(caso);
+    for (let prova = 0; prova < 4 && gia.has(voce.cosa); prova += 1) voce = pesca(caso);
+    if (gia.has(voce.cosa)) continue;
+    gia.add(voce.cosa);
+    const n = voce.da + Math.floor(caso() * (voce.a - voce.da + 1));
+    // Si passa da mettiIn come tutto il resto: impila come lo zaino, e al cibo
+    // mette la data di oggi — quello che trovi è quello che si è conservato
+    // fin qui, non quello che è marcito mentre non guardavi.
+    inventario.mettiIn(fila, voce.cosa, n);
+  }
+  return fila;
+}
+
 // Il contenuto di una cassa, sempre della lunghezza giusta.
 //
 // Si normalizza leggendo e non scrivendo, ed è la stessa scelta di
@@ -48,7 +119,13 @@ function vuote() {
 export function contenutoDi(tx, ty) {
   const dati = modifiche.di(tx, ty);
   const fila = vuote();
-  if (!Array.isArray(dati?.contenuto)) return fila;
+  if (!Array.isArray(dati?.contenuto)) {
+    // Nessuno ci ha ancora messo né tolto niente. Se la cassa c'era già prima
+    // di noi, quello che contiene lo dice la generazione; se l'abbiamo posata
+    // noi, è vuota perché l'abbiamo posata vuota.
+    if (mappa.oggettoGenerato(tx, ty) === OGGETTO.CASSA) return bottinoDi(tx, ty);
+    return fila;
+  }
   for (let i = 0; i < CASELLE && i < dati.contenuto.length; i += 1) {
     const c = dati.contenuto[i];
     if (!c || typeof c.cosa !== "string" || !(c.quantita > 0)) continue;

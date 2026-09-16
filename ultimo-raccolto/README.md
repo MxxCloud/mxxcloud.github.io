@@ -33,11 +33,12 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.1**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.2**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
-e adesso c'è **un posto in cui mettere le cose** — e una ragione per averlo.
+c'è un posto in cui mettere le cose, e adesso **non è più soltanto natura**:
+in giro ci sono le case di chi ci abitava prima.
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
 con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne
@@ -318,6 +319,65 @@ Gli infetti non stanno nel salvataggio e non stanno nel mondo: non si contano,
 si incontrano. L'infezione invece sì che si salva — è uno stato in cui si
 vive, e chiudere la scheda non è una cura.
 
+## Le rovine, e un motivo per andare
+
+Per sette tappe il mondo generato è stato **solo natura**: albero, sasso,
+cespuglio, e nient'altro. Il gioco apriva dicendo «un paese abbandonato da
+saccheggiare» e mostrava una valle in cui non era mai crollato niente.
+
+Ne discendeva un problema di gioco e non di racconto: **non c'era motivo di
+allontanarsi.** Il rumore che fa la valle è stazionario — non c'è un termine
+che dipenda dalla distanza dall'origine — quindi un tassello a cinquanta e uno
+a cinquantamila hanno la stessa distribuzione. Gli infetti nascono relativi a
+te, quindi nemmeno andare lontano è più rischioso. Da M6.5 le risorse
+ricrescono a casa propria. E la mappa di M6.6 segnava soltanto la roba tua.
+*Avevamo dato una mappa a un mondo che non aveva niente da mappare.*
+
+**Adesso ci sono le case.** Una ogni due schermate e mezza, misurato: il muro
+in pietra, il pavimento di terra battuta, il focolare spento, e una cassa con
+dentro quello che non si sono portati via. Si entra da dove il muro è venuto
+giù — ogni pianta ha almeno due varchi su lati diversi, perché un posto in cui
+si entra da un buco solo e ci si trova un infetto è una trappola, non un posto.
+
+**La maglia.** Il mondo è una funzione delle coordinate e non si pregenera
+niente, ma una casa occupa settanta tasselli e un tassello deve poter sapere da
+solo se gli tocca un muro. Quindi il mondo si divide in celle di 64 tasselli, e
+una pianta si posa sempre **interamente dentro la sua cella**: da lì discende
+tutto, perché un tassello interroga la propria cella e nessun'altra.
+
+**Le piante sono disegni.** Una pianta è un array di stringhe, un carattere per
+tassello — esattamente come uno sprite è un carattere per pixel. `#` è muro, `%`
+è muro crollato, `.` è pavimento, `c` è una cassa. Si legge a occhio e in git il
+diff dice quale muro è caduto. Non c'è un generatore di stanze e non ci sarà:
+una casa disegnata a mano è una casa, una casa generata è la pianta di una casa.
+
+**Il bottino non pesa un byte finché non lo tocchi.** Quello che c'è in una
+cassa di rovina non sta scritto da nessuna parte: è una funzione delle
+coordinate e del seme, come il terreno. Al primo prelievo si scrive una
+modifica e da lì in poi è una cassa come le altre — quindi una valle piena di
+case mai visitate pesa zero, che è la stessa proprietà per cui una partita con
+seicento settori esplorati pesa duemilaseicento byte di mappa.
+
+**Il pavimento è un terreno che aspettava da sempre.** `TERRENO.TERRA` esisteva
+dalla prima tappa — con lo sprite, la tinta, la voce di catalogo, ed era pure
+zappabile — e non lo produceva nessuno. Era un terreno in attesa di un motivo.
+
+**I muri si abbattono**, cinque colpi, e rendono pietra. L'ascia non aiuta: è
+fatta per il legno, la pietra vorrebbe un piccone, e un piccone che non esiste
+non si finge. È l'unica fonte di pietra che non sia un sasso, e la pietra era
+l'unica risorsa dichiarata finita del gioco.
+
+**E la mappa comincia a servire.** Le rovine ci compaiono, e sono la prima cosa
+segnata che non hai messo tu. Sulla minimappa non serve nemmeno un segnaposto —
+il pavimento di terra si vede da sé come un rettangolo scuro — ma sulla mappa
+grande sì: lì un settore sta in pochi pixel, e tre pixel di terra battuta in
+mezzo alla sterpaglia sono tre pixel di sterpaglia. Fotografata prima di
+accorgersene.
+
+Con le rovine sono arrivati anche **la cassa e il giaciglio fra i segnaposti**,
+che era una svista di M7.1: si segnava il falò *spento* e non il proprio
+ripostiglio, mentre questa mappa dice di sé che serve a dire dove devi andare.
+
 ## La cassa, e il cibo che si guasta
 
 **La cassa è il primo posto tuo che non sia il terreno.** Dodici caselle contro
@@ -455,8 +515,10 @@ Da qui viene l'ordine, che non è quello immaginato all'inizio:
 | **M6.6** | La mappa | `TAB` apre quello che hai visto. L'esplorare lascia un segno. |
 | **M6.7** | Il suono | Il colpo si sente, e la notte si ascolta. *Qui il chiasso smette di essere un numero.* |
 | **M7.1** | I contenitori | La cassa, e con essa il cibo che si guasta. *Il terreno smette di essere una dispensa eterna.* |
-| **M7.2** | Riparo e muri | L'investimento che si difende, e il chiasso che diventa una questione di geometria. |
-| **M7.3** | Il morale | Quanto tieni al tuo posto — che a quel punto esiste. |
+| **M7.2** | Le rovine | Le case di chi c'era prima, e dentro quello che non si sono portati via. *Qui la mappa comincia a servire.* |
+| **M7.3** | La fattoria e il paese | Il punto di partenza smette di essere un prato, e da qualche parte c'è un paese. |
+| **M7.4** | Riparo e muri | L'investimento che si difende, e il chiasso che diventa una questione di geometria. |
+| **M7.5** | Il morale | Quanto tieni al tuo posto — che a quel punto esiste. |
 | **M8** | Superstiti, abilità, rifinitura | |
 
 **Perché la morte così tardi.** Morire conta in proporzione a quanto hai da
@@ -505,7 +567,14 @@ alto a sinistra.
 non fa il suo mestiere è un debito che conviene pagare prima di costruirci
 sopra**, e costruirci sopra era esattamente quello che M7 stava per fare.
 
-**E M7 si è divisa in tre**, per la ragione che ha diviso anche le altre: i
+**Le rovine vengono prima dei muri, e non è un salto di fila.** M7.2 doveva
+essere «riparo e muri», cioè costruirli. Ma una casa in rovina è fatta di muri:
+questa tappa consegna già il tassello del muro, la sua collisione e il suo
+disegno, e costruirne uno diventa *fare quello che facevano loro* invece di
+inventare un oggetto nuovo. Un muro che esiste nel mondo prima di poterlo
+alzare è un muro che si è già capito a cosa serve.
+
+**E M7 si è divisa**, per la ragione che ha diviso anche le altre: i
 contenitori non erano un pezzo della costruzione fra gli altri, erano la
 condizione di un debito scritto tre volte nel progetto. Farli da soli li fa
 arrivare con la cosa che sbloccano — il guasto — invece che in mezzo a muri e
@@ -601,7 +670,7 @@ interfaccia/            disegna lo stato, non lo cambia
 gioco.js                orchestra, possiede il DOM
 ```
 
-**`arte/`** — La tavolozza, gli sprite e le voci. Uno sprite è un array di
+**`arte/`** — La tavolozza, gli sprite, le voci e le piante. Uno sprite è un array di
 stringhe, una per riga di pixel, un carattere per colore: si legge a occhio, si
 modifica in un editor di testo e in git il diff mostra quali righe di pixel sono
 cambiate. Una voce (`voci.js`) è la stessa idea per le orecchie — una manciata
@@ -630,7 +699,13 @@ interpolare: con la camera arrotondata al pixel, interpolare darebbe tremolio e
 non fluidità. `casuale.js` è un generatore seminato più un rumore di valore
 scritto a mano — nel gioco non esiste `Math.random`.
 
-**`mondo/`** — La valle non viene creata, viene calcolata: ogni tassello è una
+**`mondo/`** — `rovine.js` è la maglia: celle di 64 tasselli, tre impronte per
+cella, e una memoria di quelle già risolte. Non sa cosa siano un muro o una
+cassa — restituisce il carattere della pianta e lascia tradurre a
+`generazione.js`, dove vive il vocabolario dei tasselli. Non è pudore: è la
+ragione per cui fra i due file non c'è un ciclo.
+
+La valle non viene creata, viene calcolata: ogni tassello è una
 funzione pura delle sue coordinate e del seme, quindi non ci sono confini e non
 c'è niente da generare in anticipo. È anche ciò che renderà piccoli i
 salvataggi, perché basterà memorizzare i tasselli cambiati. `mappa.js` cuoce il

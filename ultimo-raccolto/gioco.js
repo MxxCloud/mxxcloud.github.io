@@ -57,7 +57,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.1";
+const VERSIONE = "M7.2";
 
 // --- elementi -------------------------------------------------------------
 
@@ -1031,6 +1031,7 @@ function aggiorna(passo) {
   let appassite = 0;
   let spenti = 0;
   let guaste = 0;
+  let inScadenza = 0;
   let tornati = 0;
   while (ultimoGiorno < tempo.giornoCorrente()) {
     ultimoGiorno += 1;
@@ -1040,6 +1041,9 @@ function aggiorna(passo) {
     const lasciato = decadimento.nuovoGiorno();
     spenti += lasciato.fuochi;
     guaste += lasciato.guaste;
+    // Non si somma: è una fotografia di com'è messa la dispensa adesso, e
+    // sommandola su tre giorni recuperati direbbe il triplo del vero.
+    inScadenza = lasciato.inScadenza;
     tornati += ricrescita.nuovoGiorno();
   }
 
@@ -1058,6 +1062,10 @@ function aggiorna(passo) {
   // fare nulla.
   else if (guaste > 0) annuncia(`si è guastato del cibo: ${guaste}`, "#c0705f");
   else if (spenti > 0) annuncia("il fuoco si è spento", "#c0705f");
+  // L'avviso prima del fatto, e dopo tutte le notizie di cose già successe:
+  // è l'unico messaggio del giorno che parla di domani, e chi ha appena perso
+  // un campo non ha bisogno di sapere anche che le bacche sono vecchie.
+  else if (inScadenza > 0) annuncia("del cibo sta per guastarsi", "#c9b189");
   else if (cresciute > 0) annuncia("l'orto è cresciuto", "#9ec97e");
   // Ultima di tutte, perché è l'unica buona notizia che non riguarda una cosa
   // che il giocatore ha fatto: la valle si è rimessa a posto da sola.

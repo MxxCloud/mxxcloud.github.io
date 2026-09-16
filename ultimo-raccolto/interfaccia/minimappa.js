@@ -42,6 +42,12 @@ const SEGNAPOSTI = {
   [OGGETTO.FALO_ACCESO]: "#f2d06b",
   [OGGETTO.TORCIA_PIANTATA]: "#e0913a",
   [OGGETTO.FALO_SPENTO]: "#7b756a",
+  // Gli stessi colori della mappa grande, per le stesse cose. Il cadavere
+  // resta fuori da qui — questa dice dove sei, non dove devi andare — ma la
+  // cassa e il giaciglio ci stanno: sono roba tua che si cerca con gli occhi
+  // mentre si cammina, non una destinazione da pianificare.
+  [OGGETTO.CASSA]: "#c9b189",
+  [OGGETTO.GIACIGLIO]: "#8fa8d8",
 };
 
 const CORNICE = "#3a3f48";
