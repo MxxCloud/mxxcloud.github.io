@@ -61,6 +61,9 @@ export const OGGETTO = {
   // crollato niente.
   MURO: 17,
   MURO_ROTTO: 18,
+  // Il banco da lavoro. Torna a essere una cosa che posa il giocatore, ed è
+  // la prima che gli dà un privilegio: certe cose si fanno solo qui.
+  BANCO: 19,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati

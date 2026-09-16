@@ -35,6 +35,26 @@ export const ASCIA = [
   "...hg",
 ];
 
+// La lancia è più lunga di tutto il resto, e deve esserlo: è l'unica cosa che
+// si tiene in mano il cui senso è la distanza. Un'asta di tre pixel per tredici
+// sporge sopra la testa e sotto il pugno, e si riconosce da lontano per quello
+// che è — qualcosa che arriva prima di te.
+export const LANCIA = [
+  ".s.",
+  "sss",
+  ".s.",
+  ".h.",
+  "ghg",
+  "ghg",
+  "ghg",
+  "ghg",
+  "ghg",
+  "ghg",
+  "ghg",
+  "ghg",
+  ".g.",
+];
+
 export const ZAPPA = [
   "eee..",
   "eee..",

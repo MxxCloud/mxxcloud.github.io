@@ -268,7 +268,10 @@ const SCARTI = {
 // tassello: gli infetti si muovono di frazioni di pixel e non stanno mai
 // comodamente dentro una casella, quindi chiedere "che c'è sul tassello
 // davanti" avrebbe mancato il bersaglio quasi sempre.
-export function quelloDavanti(eroe) {
+// "portata" arriva da fuori: da quanto lontano si colpisce lo decide quello
+// che si ha in mano, e cosa si ha in mano è roba di regole/oggetti.js. Questo
+// modulo sa solo che un numero c'è.
+export function quelloDavanti(eroe, portata = PORTATA_NOSTRA) {
   const [dx, dy] = SCARTI[eroe.guarda] ?? SCARTI.giu;
   let migliore = null;
   let minima = Infinity;
@@ -278,7 +281,7 @@ export function quelloDavanti(eroe) {
     const vx = e.px - eroe.px;
     const vy = e.py - eroe.py;
     const distanza = Math.hypot(vx, vy);
-    if (distanza > PORTATA_NOSTRA || distanza >= minima) continue;
+    if (distanza > portata || distanza >= minima) continue;
     // Deve stare dalla parte in cui si guarda. Il prodotto scalare con la
     // direzione dello sguardo è positivo solo in quel mezzo piano — e per chi
     // è praticamente addosso si lascia perdere il controllo, perché a due

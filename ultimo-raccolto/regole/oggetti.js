@@ -134,6 +134,33 @@ export const CATALOGO = {
   // perché portarsene dietro una scorta non ha senso: quello che conta di una
   // cassa è dove la metti, e una volta messa non la sposti più.
   cassa: { nome: "Cassa", icona: arte.CASSA_ICONA, pila: 3, posa: OGGETTO.CASSA },
+  // Il banco da lavoro: la prima cosa che si posa e che non serve a essere
+  // usata, ma a stare lì. È quello che trasforma un accampamento in un posto
+  // in cui si può fare qualcosa che altrove non si può.
+  banco: { nome: "Banco", icona: arte.BANCO_ICONA, pila: 2, posa: OGGETTO.BANCO },
+  // La lancia. Colpisce meno di un'ascia e arriva molto più lontano, ed è
+  // tutta qui la scelta: tre colpi tenendolo a distanza, o due lasciandogli
+  // dare il suo.
+  lancia: {
+    nome: "Lancia",
+    icona: arte.LANCIA,
+    pila: 1,
+    impugnato: { nome: "lancia", righe: impugnati.LANCIA, scartoY: 7 },
+  },
+  // La conserva: il gradino più alto della dispensa.
+  //
+  // Nutre meno di tre bacche crude — sei bacche danno due vasi, e due vasi
+  // valgono 1,4 contro 1,8 — e dura un anno di gioco. È il baratto che fa
+  // ogni conserva vera: si perde qualcosa adesso per avere qualcosa a marzo.
+  // Seccare al fuoco resta la via del cibo che nutre; questa è la via del cibo
+  // che aspetta.
+  conserva: {
+    nome: "Conserva",
+    icona: arte.CONSERVA,
+    pila: 10,
+    commestibile: { fame: 0.7 },
+    dura: 16,
+  },
   // La benda è la risposta al morso, e fa due cose diverse: rimargina un po'
   // e toglie l'infezione. Non è cibo, quindi non sta fra i commestibili — ma
   // si usa con lo stesso tasto, perché "usa quello che hai in mano su di te"
@@ -166,6 +193,13 @@ export const ATTREZZI = {
   // La zappa non accorcia niente: apre un'azione che senza di lei non
   // esiste. È il secondo modo in cui un attrezzo può contare.
   zappa: { zappa: true },
+  // La lancia è il terzo modo: non accorcia un lavoro e non ne apre uno, ma
+  // cambia da dove si fa. Due di danno contro i tre dell'ascia — cioè tre
+  // colpi invece di due — e trentadue pixel di portata contro venti: due
+  // tasselli, mentre il loro braccio ne arriva a poco più di uno. Chi ha una
+  // lancia può colpire e fare un passo indietro; chi ha un'ascia deve stare
+  // dentro il loro raggio per tutto il tempo.
+  lancia: { danno: 2, portata: 32 },
 };
 
 // Quanti colpi servono davvero, tenuto conto di cosa si ha in mano. A mani
@@ -176,8 +210,19 @@ export const ATTREZZI = {
 // volta sola.
 const DANNO_A_MANI_NUDE = 1;
 
+// Quanto lontano arriva un colpo normale. Vale a mani nude e con l'ascia:
+// poco più del braccio di un infetto, che ne ha tredici. Chi impugna qualcosa
+// deve poter colpire per primo, ma di un soffio.
+const PORTATA_A_MANI_NUDE = 20;
+
 export function dannoDi(cosaInMano) {
   return ATTREZZI[cosaInMano]?.danno ?? DANNO_A_MANI_NUDE;
+}
+
+// Da quanto lontano arriva un colpo. A mani nude e con quasi tutto il resto
+// si deve stare addosso; con la lancia no, ed è l'unica cosa che fa.
+export function portataDi(cosaInMano) {
+  return ATTREZZI[cosaInMano]?.portata ?? PORTATA_A_MANI_NUDE;
 }
 
 export function colpiNecessari(oggetto, cosaInMano) {
@@ -348,6 +393,17 @@ export const RACCOLTA = {
     voce: "pietra",
     scheggie: ["e", "d"],
     resa: [{ cosa: "pietra", quante: 1 }],
+  },
+
+  // Il banco si riprende sempre: non contiene niente, quindi non c'è niente
+  // da svuotare prima. Due colpi perché è legno inchiodato e non un mobile
+  // che si solleva.
+  [OGGETTO.BANCO]: {
+    verbo: "Smonta",
+    colpi: 2,
+    voce: "legno",
+    scheggie: ["w", "c", "h"],
+    resa: [{ cosa: "banco", quante: 1 }],
   },
 
   // Una cassa si riprende, ma solo vuota, e a dirlo è azioni.js. Il motivo è

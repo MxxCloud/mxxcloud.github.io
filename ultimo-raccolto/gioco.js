@@ -57,7 +57,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.3";
+const VERSIONE = "M7.4";
 
 // --- elementi -------------------------------------------------------------
 
@@ -75,6 +75,12 @@ let eroe = null;
 let casellaScelta = 0;
 let ricetteAperte = false;
 let ricettaScelta = 0;
+// Se c'è un banco a portata, chiesto una volta all'apertura del pannello e non
+// a ogni fotogramma. Si può: con il pannello aperto il mondo è fermo e il
+// superstite non si muove, quindi la risposta non può cambiare mentre lo si
+// guarda — e chiederla a ogni fotogramma vorrebbe dire quarantanove tasselli
+// di mondo generati sessanta volte al secondo per sapere una cosa sola.
+let alBanco = false;
 let azioneCorrente = null;
 let messaggio = null;
 let aperturaVisibile = true;
@@ -635,6 +641,35 @@ function leggiPartita() {
   else caricaDa(voce);
 }
 
+// --- le ricette -----------------------------------------------------------
+
+function bancoQui() {
+  return mappa.bancoVicino(Math.floor(eroe.px / TASSELLO), Math.floor(eroe.py / TASSELLO));
+}
+
+// Le frecce e non più i tasti da 1 a 8.
+//
+// Le cifre sceglievano la ricetta, e con otto ricette il menu era pieno: la
+// nona sarebbe stata irraggiungibile. Non era una scelta di misura, era un
+// tetto — e toglierlo vuol dire un cursore, che è poi quello che la cassa fa
+// già dalla sua schermata. Un pannello, un modo di muoversi dentro.
+function leggiLeRicette() {
+  const prima = ricettaScelta;
+  if (comandi.appenaPremuto("su")) ricettaScelta = Math.max(0, ricettaScelta - 1);
+  if (comandi.appenaPremuto("giu")) ricettaScelta = Math.min(RICETTE.length - 1, ricettaScelta + 1);
+  if (ricettaScelta !== prima) suono.suona(SCELTA);
+
+  if (!comandi.appenaPremuto("usa")) return;
+
+  const ricetta = RICETTE[ricettaScelta];
+  const esito = fai(ricetta, alBanco);
+  suono.suona(esito.fatto ? FATTO : NEGATO);
+  if (esito.fatto) annuncia(`fatto: ${nomeDi(ricetta.produce.cosa)}`, "#9ec97e");
+  else if (esito.perche === "banco") annuncia("questo vuole un banco da lavoro", "#c9b189");
+  else if (esito.perche === "zaino") annuncia("zaino pieno: getta qualcosa con G", "#c0705f");
+  else annuncia("materiali insufficienti", "#c0705f");
+}
+
 // --- la cassa -------------------------------------------------------------
 
 function chiudiLaCassa() {
@@ -752,6 +787,22 @@ function leggiComandi() {
     return;
   }
 
+  // Le ricette, come la cassa, prendono tutti i comandi finché sono aperte.
+  // Da quando si scelgono con le frecce non potrebbe essere altrimenti: le
+  // frecce sono anche il camminare, e un pannello che lascia passare il
+  // movimento è un pannello che fa camminare mentre si sceglie.
+  if (comandi.appenaPremuto("ricette")) {
+    ricetteAperte = !ricetteAperte;
+    ricettaScelta = 0;
+    if (ricetteAperte) alBanco = bancoQui();
+    return;
+  }
+
+  if (ricetteAperte) {
+    leggiLeRicette();
+    return;
+  }
+
   // La schermata della partita prende tutti i comandi finché è aperta. Un
   // tasto che vale in due posti alla volta è un tasto che salva quando volevi
   // camminare.
@@ -779,8 +830,7 @@ function leggiComandi() {
   for (let i = 0; i < comandi.CASELLE; i += 1) {
     if (comandi.appenaPremuto(`casella${i + 1}`)) {
       suono.suona(SCELTA);
-      if (ricetteAperte && i < RICETTE.length) ricettaScelta = i;
-      else casellaScelta = i;
+      casellaScelta = i;
     }
   }
 
@@ -834,22 +884,7 @@ function leggiComandi() {
     }
   }
 
-  if (comandi.appenaPremuto("ricette")) {
-    ricetteAperte = !ricetteAperte;
-    ricettaScelta = 0;
-  }
-
   if (!comandi.appenaPremuto("usa")) return;
-
-  if (ricetteAperte) {
-    const ricetta = RICETTE[ricettaScelta];
-    const esito = fai(ricetta);
-    suono.suona(esito.fatto ? FATTO : NEGATO);
-    if (esito.fatto) annuncia(`fatto: ${nomeDi(ricetta.produce.cosa)}`, "#9ec97e");
-    else if (esito.perche === "zaino") annuncia("zaino pieno: getta qualcosa con G", "#c0705f");
-    else annuncia("materiali insufficienti", "#c0705f");
-    return;
-  }
 
   const esito = azioni.agisci(eroe, cosaInMano());
   if (!esito) return;
@@ -1217,7 +1252,7 @@ function disegnaInterfaccia() {
   if (!cassaAperta) hud.disegnaPromemoria(p, barra, cosaInMano());
   hud.disegnaMessaggio(p, messaggio);
   if (minimappaVisibile && !aperturaVisibile) minimappa.disegna(p);
-  if (ricetteAperte) hud.disegnaRicette(p, ricettaScelta);
+  if (ricetteAperte) hud.disegnaRicette(p, { scelta: ricettaScelta, alBanco });
   if (cassaAperta) {
     hud.disegnaCassa(p, {
       contenuto: contenitori.contenutoDi(cassaAperta.tx, cassaAperta.ty),
@@ -1470,6 +1505,9 @@ if (parametri.has("diagnostica")) {
     udito,
     contenitori,
     cassaAperta: () => (cassaAperta ? { ...cassaAperta } : null),
+    ricetteAperte: () => ricetteAperte,
+    ricettaScelta: () => ricettaScelta,
+    alBanco: () => alBanco,
     cursoreCassa: () => cassaScelta,
     entita,
     eMorto: () => mortoDi,

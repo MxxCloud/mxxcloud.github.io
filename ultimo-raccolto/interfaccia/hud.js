@@ -380,21 +380,62 @@ export function disegnaMessaggio(p, messaggio) {
 
 // --- pannello delle ricette ----------------------------------------------
 
-export function disegnaRicette(p, scelta) {
-  const righe = RICETTE.length;
+// Quante righe ci stanno. Sette e non undici, e non è l'altezza dello schermo
+// a deciderlo — undici ci starebbero per un pelo: è che un elenco che si legge
+// tutto in un colpo smette di essere un elenco quando diventa una parete.
+//
+// Fino a M7.3 questo pannello disegnava tutta la lista in colonna e le ricette
+// si sceglievano con i tasti da 1 a 8. Erano due tetti veri, non due scelte di
+// misura: le ricette erano esattamente otto, quindi la nona sarebbe stata
+// irraggiungibile, e a undici il riquadro sfondava lo schermo. Con una
+// finestra che scorre e un cursore, il tetto non c'è più.
+const RICETTE_VISIBILI = 7;
+
+export function disegnaRicette(p, { scelta, alBanco }) {
+  const righe = Math.min(RICETTE_VISIBILI, RICETTE.length);
   const altezzaRiga = 16;
-  const larghezza = 150;
+  const larghezza = 164;
   const altezza = 16 + righe * altezzaRiga + 12;
   const x = Math.round((schermo.LARGHEZZA - larghezza) / 2);
   const y = Math.round((schermo.ALTEZZA - altezza) / 2) - 12;
 
+  // La finestra tiene il cursore in mezzo finché può, e si incolla agli
+  // estremi quando ci arriva: scorrere di continuo anche in cima a un elenco
+  // corto fa perdere il senso di dove si è.
+  const primo = Math.max(0, Math.min(scelta - (righe >> 1), RICETTE.length - righe));
+
   riquadro(p, x, y, larghezza, altezza, FONDO_PIENO, BORDO);
   testo.disegna(p, "COSTRUIRE", x + 7, y + 6, CHIARO);
 
-  RICETTE.forEach((ricetta, i) => {
+  // Due cose nell'intestazione, e nessuna è decorazione. Il conto dice che
+  // l'elenco continua sotto — con una finestra che scorre, senza non si sa
+  // quanto manca. "AL BANCO" acceso dice che il banco lì accanto sta
+  // funzionando: senza, l'unico modo di saperlo sarebbe provare.
+  //
+  // Stanno una accanto al titolo e una a destra, e non si scambiano il posto:
+  // la prima stesura le metteva tutte e due a destra, una esclusa dall'altra,
+  // e arrivando al banco spariva il conto proprio quando si comincia a
+  // scorrere davvero.
+  if (RICETTE.length > righe) {
+    const conto = `${scelta + 1}/${RICETTE.length}`;
+    testo.disegna(p, conto, x + 14 + testo.larghezza("COSTRUIRE"), y + 6, GRIGIO);
+  }
+  if (alBanco) {
+    const eti = "AL BANCO";
+    testo.disegna(p, eti, x + larghezza - 7 - testo.larghezza(eti), y + 6, BORDO_SCELTO);
+  }
+
+  for (let i = 0; i < righe; i += 1) {
+    const indice = primo + i;
+    const ricetta = RICETTE[indice];
     const ry = y + 17 + i * altezzaRiga;
-    const possibile = bastano(ricetta);
-    const eScelta = i === scelta;
+    // Due modi diversi di non poter costruire, e vanno detti diversi: manca la
+    // roba, o manca il posto. Il primo si risolve raccogliendo, il secondo
+    // tornando a casa — e un grigio solo li manderebbe a fare la cosa
+    // sbagliata.
+    const manca = ricetta.banco && !alBanco;
+    const possibile = !manca && bastano(ricetta);
+    const eScelta = indice === scelta;
 
     if (eScelta) {
       p.fillStyle = "rgb(255 255 255 / 0.08)";
@@ -404,12 +445,27 @@ export function disegnaRicette(p, scelta) {
     const icona = CATALOGO[ricetta.produce.cosa]?.icona;
     if (icona) p.drawImage(cuoci(icona), x + 5, ry - 2);
 
-    testo.disegna(p, `${i + 1}`, x + 20, ry, eScelta ? BORDO_SCELTO : GRIGIO);
-    testo.disegna(p, nomeDi(ricetta.produce.cosa).toUpperCase(), x + 28, ry, possibile ? CHIARO : GRIGIO);
+    const nome = nomeDi(ricetta.produce.cosa).toUpperCase();
+    testo.disegna(p, nome, x + 20, ry, possibile ? CHIARO : GRIGIO);
+
+    // Quante ne escono, se sono più di una: due conserve da sei bacche è
+    // metà di quello che c'è da sapere su quella riga.
+    if (ricetta.produce.quante > 1) {
+      testo.disegna(p, `x${ricetta.produce.quante}`, x + 22 + testo.larghezza(nome), ry, GRIGIO);
+    }
+
+    // Le ricette del banco lo dicono sempre, anche quando il banco c'è: chi
+    // apre il pannello in mezzo a un prato deve poter vedere che esistono e
+    // cosa gli manca, che è il solo modo di imparare il sistema senza che
+    // nessuno glielo spieghi.
+    if (ricetta.banco) {
+      const eti = "BANCO";
+      testo.disegna(p, eti, x + larghezza - 7 - testo.larghezza(eti), ry, manca ? ROSSO : BORDO_SCELTO);
+    }
 
     // Il costo dice quanto hai e quanto serve, non solo quanto serve: senza,
     // bisogna aprire lo zaino per capire perché la riga è grigia.
-    let cx = x + 28;
+    let cx = x + 20;
     const cy = ry + 7;
     for (const voce of ricetta.costo) {
       const posseduti = inventario.quante(voce.cosa);
@@ -417,10 +473,10 @@ export function disegnaRicette(p, scelta) {
       testo.disegna(p, pezzo, cx, cy, posseduti >= voce.quante ? VERDE : ROSSO);
       cx += testo.larghezza(pezzo) + 5;
     }
-  });
+  }
 
-  const piede = `1-${RICETTE.length} SCEGLI   SPAZIO COSTRUISCI   C CHIUDI`;
-  testo.disegna(p, piede, x + 7, y + altezza - 9, GRIGIO);
+  const piede = "FRECCE SCEGLI   SPAZIO COSTRUISCI   C CHIUDI";
+  testo.disegna(p, piede, x + Math.round((larghezza - testo.larghezza(piede)) / 2), y + altezza - 9, GRIGIO);
 }
 
 // --- promemoria dei comandi ----------------------------------------------

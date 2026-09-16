@@ -91,6 +91,10 @@ const CATALOGO_OGGETTI = {
   [OGGETTO.MURO]: { sprite: oggettiArte.MURO, solido: true },
   [OGGETTO.MURO_ROTTO]: { sprite: oggettiArte.MURO_ROTTO, solido: false },
 
+  // Il banco ferma, come la cassa: sono le due cose che fanno di un prato un
+  // posto, e un posto ha degli ingombri.
+  [OGGETTO.BANCO]: { sprite: coseArte.BANCO, solido: true },
+
   // La cassa ferma, e deve: è un mobile. Camminarci dentro toglierebbe
   // l'unica cosa che la rende un posto invece di un oggetto — che sta lì,
   // ingombra, e bisogna girarci attorno per arrivare alla porta.
@@ -280,6 +284,26 @@ export function luceVicina(tx, ty, raggio) {
     for (let dx = -raggio; dx <= raggio; dx += 1) {
       const oggetto = oggettoDi(tx + dx, ty + dy);
       if (oggetto !== OGGETTO.NESSUNO && CATALOGO_OGGETTI[oggetto].luce) return true;
+    }
+  }
+  return false;
+}
+
+// C'è un banco da lavoro a portata di braccio?
+//
+// Si guarda il mondo e non l'inquadratura, per la stessa ragione per cui lo fa
+// luceVicina: una regola di gioco decisa da dove sta la camera è una regola
+// decisa dal disegno.
+//
+// Tre tasselli e non zero. "Davanti al banco" sarebbe stato più severo e più
+// coerente con il fuoco, ma il fuoco si guarda mentre si cucina e il banco no:
+// si gira per l'accampamento a raccogliere quello che serve, e doversi
+// riallineare ogni volta sarebbe una tassa su un gesto che non ha niente da
+// insegnare.
+export function bancoVicino(tx, ty, raggio = 3) {
+  for (let dy = -raggio; dy <= raggio; dy += 1) {
+    for (let dx = -raggio; dx <= raggio; dx += 1) {
+      if (oggettoDi(tx + dx, ty + dy) === OGGETTO.BANCO) return true;
     }
   }
   return false;

@@ -384,6 +384,77 @@ export const CADAVERE = [
 //
 // La macchia scura al centro è il rotolo visto di taglio: senza, la fascia
 // era un rettangolo chiaro identico a mezza dozzina di altre cose.
+// Il banco da lavoro.
+//
+// Un piano e quattro gambe, e sopra due cose lasciate lì. I due oggetti sul
+// piano sono metà del disegno: un tavolo vuoto è un tavolo, un tavolo con
+// sopra degli attrezzi è un posto in cui si lavora — e a sedici pixel la
+// differenza fra le due cose sta tutta in sei pixel grigi.
+export const BANCO = [
+  "................",
+  "................",
+  ".....eee........",
+  "....effe..cww...",
+  "....eee...cww...",
+  ".wwwwwwwwwwwwww.",
+  ".cccccccccccccc.",
+  ".hg..........gh.",
+  ".hg..........gh.",
+  ".hgccccccccccgh.",
+  ".hg..........gh.",
+  ".hg..........gh.",
+  ".hg..........gh.",
+  ".gg..........gg.",
+];
+
+export const BANCO_ICONA = [
+  "............",
+  "...eee......",
+  "..effe..ww..",
+  "..eee...ww..",
+  ".wwwwwwwwww.",
+  ".cccccccccc.",
+  ".hg......gh.",
+  ".hgccccccgh.",
+  ".hg......gh.",
+  ".hg......gh.",
+  ".gg......gg.",
+  "............",
+];
+
+// La lancia. Lunga e sottile, che è tutto quello che ha da dire: arriva più
+// lontano di un'ascia e pesa meno di quanto colpisca.
+export const LANCIA = [
+  "..........s.",
+  ".........ss.",
+  "........ss..",
+  ".......sh...",
+  "......hh....",
+  ".....hh.....",
+  "....hh......",
+  "...hh.......",
+  "..hh........",
+  ".hh.........",
+  ".h..........",
+  "............",
+];
+
+// La conserva: un vaso con dentro quello che non sarebbe arrivato a marzo.
+export const CONSERVA = [
+  "............",
+  "...gggggg...",
+  "..pppppppp..",
+  "..p......p..",
+  "..p.tttt.p..",
+  "..p.tttt.p..",
+  "..p.tttt.p..",
+  "..p.tttt.p..",
+  "..p......p..",
+  "..pppppppp..",
+  "............",
+  "............",
+];
+
 // La cassa: il primo posto tuo in cui mettere le cose.
 //
 // Il coperchio più chiaro del corpo, e in mezzo una piastra di metallo. Il

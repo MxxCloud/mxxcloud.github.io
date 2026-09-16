@@ -33,13 +33,13 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.3**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.4**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
-c'è un posto in cui mettere le cose, non è più soltanto natura — e adesso
-**si comincia da una fattoria in rovina**, che era la prima riga di questo
-file dal primo giorno.
+c'è un posto in cui mettere le cose, non è più soltanto natura, si comincia da
+una fattoria in rovina — e adesso **quel posto serve a qualcosa**: certe cose
+si fanno solo al banco da lavoro.
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
 con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne
@@ -321,6 +321,63 @@ Gli infetti non stanno nel salvataggio e non stanno nel mondo: non si contano,
 si incontrano. L'infezione invece sì che si salva — è uno stato in cui si
 vive, e chiudere la scheda non è una cura.
 
+## Il banco da lavoro
+
+Il sistema delle ricette non era corto per scelta: **era pieno.** Le ricette si
+sceglievano con i tasti da `1` a `8` e di ricette ce n'erano esattamente otto,
+quindi la nona sarebbe stata irraggiungibile; e il pannello disegnava tutta la
+lista in colonna, quindi a undici sfondava lo schermo. Due tetti veri, non due
+scelte di misura. Adesso c'è un cursore e una finestra che scorre, e il tetto
+non c'è più — il che sposta tutto il peso su quella regola che questo file si
+dà da M1: *aggiungere ricette che non rispondono a niente riempirebbe un menu
+senza cambiare una partita.*
+
+**Fino a qui si costruiva ovunque.** Una cassa in mezzo a un bosco, di notte,
+lontano da tutto. In un gioco il cui pilastro è *il posto è tuo*, l'accampamento
+non aveva un solo privilegio — ed era la cosa più strana della tappa che si
+chiama Costruzione.
+
+Adesso le ricette sono **due elenchi**. Quelle a mani nude si fanno dove capita
+e sono la sopravvivenza: la luce, il fuoco, il letto, la benda, l'acqua. Quelle
+al banco vogliono un posto, e sono tutto il resto — gli attrezzi compresi.
+
+Il banco è **il primo della lista**, e non per cortesia: è la ricetta che apre
+tutte le altre, quindi è quella che si deve vedere per prima aprendo il
+pannello il primo giorno. Sei legne e sei pietre, cioè due alberi e tre sassi:
+mezz'ora, ed è la mezz'ora che decide dov'è casa. Prima l'ascia era la prima
+cosa che si faceva, in piedi in mezzo a un prato; adesso è la seconda, e la
+prima è aver deciso dove stare.
+
+Il pannello lo insegna da sé, senza che nessuno lo spieghi: le ricette del
+banco portano sempre la loro etichetta, **rossa quando il banco non c'è** e
+accesa quando c'è. Chi apre le costruzioni il primo giorno vede che esistono
+cose che non può ancora fare, e vede esattamente cosa gli manca — che non è la
+roba, è il posto. I due modi di non poter costruire vanno detti diversi: il
+primo si risolve raccogliendo, il secondo tornando a casa, e un grigio solo li
+manderebbe a fare la cosa sbagliata.
+
+**Tre ricette nuove, e ognuna risponde a qualcosa che il gioco aveva e non
+risolveva.**
+
+La **lancia** risponde al combattimento. Da M6 battersi vuol dire scambiare
+colpi, e non per caso: la propria portata è venti pixel e il loro braccio ne
+arriva a tredici, quindi si è sempre dentro il loro raggio mentre si sta dentro
+il proprio. La lancia arriva a trentadue — due tasselli — e fa due di danno
+invece dei tre dell'ascia. Tre colpi tenendolo a distanza, o due lasciandogli
+dare il suo: è una scelta, non un aggiornamento.
+
+La **conserva** risponde all'inverno, che da M7.1 ha un orologio addosso.
+Seccare al fuoco resta la via del cibo che nutre; questa è la via del cibo che
+aspetta. Sei bacche diventano due vasi che valgono meno di quelle sei — 1,4
+contro 1,8 — e durano sedici giorni invece di tre, cioè un anno di gioco invece
+di meno di una stagione. È il baratto che fa ogni conserva vera: si perde
+qualcosa adesso per avere qualcosa a marzo.
+
+Il **banco** stesso risponde a un'altra cosa ancora, ed è economia: la pietra
+era l'unica risorsa che il gioco dichiara finita e ne chiedeva **sei in tutto**.
+Adesso ne chiede quindici, e i muri delle rovine di M7.2 sono lì apposta per
+darle.
+
 ## Le rovine, e un motivo per andare
 
 Per sette tappe il mondo generato è stato **solo natura**: albero, sasso,
@@ -560,8 +617,9 @@ Da qui viene l'ordine, che non è quello immaginato all'inizio:
 | **M7.1** | I contenitori | La cassa, e con essa il cibo che si guasta. *Il terreno smette di essere una dispensa eterna.* |
 | **M7.2** | Le rovine | Le case di chi c'era prima, e dentro quello che non si sono portati via. *Qui la mappa comincia a servire.* |
 | **M7.3** | La fattoria e il paese | Si comincia da una fattoria in rovina, e da qualche parte c'è un paese. *Qui l'apertura di questo file smette di essere una promessa.* |
-| **M7.4** | Riparo e muri | L'investimento che si difende, e il chiasso che diventa una questione di geometria. |
-| **M7.5** | Il morale | Quanto tieni al tuo posto — che a quel punto esiste. |
+| **M7.4** | Il banco da lavoro | Le ricette diventano due elenchi, e l'accampamento comincia a valere qualcosa. *Qui il menu smette di avere un tetto.* |
+| **M7.5** | Riparo e muri | L'investimento che si difende, e il chiasso che diventa una questione di geometria. |
+| **M7.6** | Il morale | Quanto tieni al tuo posto — che a quel punto esiste. |
 | **M8** | Superstiti, abilità, rifinitura | |
 
 **Perché la morte così tardi.** Morire conta in proporzione a quanto hai da
@@ -636,6 +694,7 @@ e un posto con dentro una cassa e niente altro è ancora un accampamento.
 | `E` | mangiare, o fasciarsi con una benda |
 | `G` | posare per terra la casella scelta, davanti ai piedi |
 | `C` | aprire e chiudere le costruzioni, e chiudere la cassa |
+| `frecce` | dentro le costruzioni e la cassa: scegliere |
 | `M` | accendere e spegnere la minimappa |
 | `TAB` | la mappa di quello che hai visto |
 | `V` | il volume: muto, piano, forte |

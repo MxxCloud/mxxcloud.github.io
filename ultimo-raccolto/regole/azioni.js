@@ -9,7 +9,7 @@ import { OGGETTO, TERRENO } from "../mondo/generazione.js";
 import * as tempo from "./tempo.js";
 import * as bisogni from "./bisogni.js";
 import * as salute from "./salute.js";
-import { CATALOGO, ATTREZZI, raccoltaDi, colpiNecessari, dannoDi } from "./oggetti.js";
+import { CATALOGO, ATTREZZI, raccoltaDi, colpiNecessari, dannoDi, portataDi } from "./oggetti.js";
 import * as infetti from "./infetti.js";
 import * as urti from "../entita/urti.js";
 import * as chiasso from "./chiasso.js";
@@ -46,7 +46,7 @@ export function azionePossibile(eroe, cosaInMano) {
   // esiste nient'altro da fare. Senza questa riga in cima, trovandosi un
   // infetto sopra un cespuglio la barra strappava il cespuglio — e sarebbe
   // stata l'ultima cosa fatta.
-  const addosso = infetti.quelloDavanti(eroe);
+  const addosso = infetti.quelloDavanti(eroe, portataDi(cosaInMano));
   if (addosso) {
     return { tipo: "combatti", verbo: "Colpisci", nemico: addosso };
   }
