@@ -132,8 +132,14 @@ function accendi() {
 //
 // Qui non serve, e la ragione è che il gesto c'è già: la schermata di apertura
 // si chiude al primo tasto (vedi gioco.js), quindi il tasto che comincia la
-// partita è anche il gesto che accende il suono. Chiamare questa da lì è
-// tutto quello che serve.
+// partita è anche il gesto che accende il suono.
+//
+// Va però chiamata da dentro il gestore del tasto, e non un fotogramma dopo.
+// Chrome e Firefox non se ne curano — tengono l'attivazione dell'utente come
+// uno stato appiccicoso — ma WebKit vuole la resume() nello stesso compito del
+// gesto, quindi gioco.js la chiama da un ascoltatore suo che scatta una volta
+// sola. Chiamarla due volte non costa niente: accendere un contesto già acceso
+// esce subito.
 export function sblocca() {
   const c = accendi();
   if (c && c.state === "suspended") c.resume().catch(() => {});

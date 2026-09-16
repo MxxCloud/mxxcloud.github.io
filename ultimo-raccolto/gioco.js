@@ -134,6 +134,12 @@ function annuncia(testo, colore) {
 // l'audio". Qui il gesto c'era già — questa schermata si toglie con un tasto
 // qualsiasi — quindi il tasto che comincia la partita è anche il gesto che
 // accende le casse, e di cartelli non ne serve nessuno.
+//
+// Questa chiamata però non basta da sola, e sotto, accanto al tasto della
+// diagnostica, c'è il perché: qui siamo dentro un fotogramma, non dentro il
+// gestore del tasto. Resta perché è il posto in cui la decisione si legge —
+// "il suono comincia quando comincia la partita" — ed è innocua: accendere un
+// contesto già acceso non fa niente.
 function chiudiLApertura() {
   aperturaVisibile = false;
   suono.sblocca();
@@ -1137,6 +1143,27 @@ addEventListener("keydown", (evento) => {
     diagnostica.hidden = !diagnostica.hidden;
   }
 });
+
+// Lo sblocco dell'audio, dentro il gesto vero.
+//
+// Chiuderlo dalla schermata d'apertura sembrava bastare, e su Chrome e Firefox
+// basta: tengono l'attivazione dell'utente come uno stato appiccicoso, quindi
+// una "resume()" chiamata più tardi va bene lo stesso. Ma quella chiamata non
+// avviene dentro il gestore del tasto — comandi.js annota l'azione e finisce,
+// e il gioco la legge un fotogramma dopo, dentro requestAnimationFrame — e
+// WebKit è più severo: vuole la resume() nello stesso compito del gesto.
+// Su Safari, e soprattutto su iPhone, il gioco sarebbe rimasto muto.
+//
+// Quindi lo sblocco sta anche qui, che è l'unico punto in cui si è davvero
+// dentro il gesto. Sta in gioco.js e non in comandi.js perché questo è il
+// modulo che possiede il DOM, e perché comandi.js è l'unico che sa cos'è una
+// tastiera: non deve diventare anche l'unico che sa cos'è l'audio.
+//
+// "once" perché serve una volta sola, e pointerdown insieme a keydown perché
+// il giorno che ci saranno i comandi su schermo il primo gesto sarà un dito.
+for (const gesto of ["keydown", "pointerdown"]) {
+  addEventListener(gesto, () => suono.sblocca(), { once: true, passive: true });
+}
 
 // --- avvio ----------------------------------------------------------------
 
