@@ -11,6 +11,7 @@ import * as bisogni from "./bisogni.js";
 import * as salute from "./salute.js";
 import { CATALOGO, ATTREZZI, raccoltaDi, colpiNecessari, dannoDi } from "./oggetti.js";
 import * as infetti from "./infetti.js";
+import * as urti from "../entita/urti.js";
 import * as chiasso from "./chiasso.js";
 import * as orto from "./orto.js";
 import * as contenitori from "./contenitori.js";
@@ -497,6 +498,14 @@ export function agisci(eroe, cosaInMano) {
       oggetto: CATALOGO[azione.cosa].posa,
       posata: tempo.giornoCorrente(),
     });
+    // E poi ci si fa da parte, se la cosa posata ha preso il posto dei propri
+    // piedi. Capita con quello che ferma — il falò e la cassa — perché si posa
+    // sul tassello davanti al punto dei piedi mentre il riquadro d'urto è
+    // largo dieci e alto sette: camminando, quel riquadro sborda spesso nel
+    // tassello davanti. Senza questa riga si restava incastrati dentro la
+    // propria cassa, senza più un modo di uscire.
+    const [dx, dy] = SCARTI[eroe.guarda] ?? SCARTI.giu;
+    urti.spingiFuori(eroe, dx, dy);
     return { tipo: "posa", tx, ty, cosa: azione.cosa };
   }
 
