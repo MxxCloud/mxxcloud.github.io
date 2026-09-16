@@ -345,10 +345,13 @@ export function disegna(p, eroe) {
     segnale(x, y, colore, 2);
   });
 
-  // Il punto di partenza, cioè dove ricomincia un superstite nuovo: la cosa
-  // più simile a "casa" che il gioco abbia. Vuoto invece che pieno, perché
-  // non è una cosa che hai posato — è il posto da cui si riparte.
-  const casa = suSchermo(0, 0);
+  // La fattoria: dove comincia la partita e dove ricomincia un superstite
+  // nuovo. Vuoto invece che pieno, perché non è una cosa che hai posato — è
+  // il posto da cui si riparte, e adesso è un posto per davvero. Fin qui
+  // questo segno stava fisso su (0,0), che era la cosa più simile a casa che
+  // il gioco avesse.
+  const fattoria = mappa.laFattoria();
+  const casa = suSchermo(fattoria?.tx ?? 0, fattoria?.ty ?? 0);
   const cx = Math.round(casa.x) - 2;
   const cy = Math.round(casa.y) - 2;
   p.fillStyle = "#11131a";

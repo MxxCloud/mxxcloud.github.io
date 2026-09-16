@@ -163,6 +163,11 @@ export function rovinaNellaCella(cx, cy) {
   return rovine.nellaCella(cx, cy, adatto);
 }
 
+// Dove comincia la partita: la fattoria, non l'origine delle coordinate.
+export function laFattoria() {
+  return rovine.laFattoria(adatto);
+}
+
 // Il pavimento delle rovine è TERRENO.TERRA, che esisteva da sempre — sprite,
 // tinta, voce di catalogo, ed è persino zappabile — e non lo produceva
 // nessuno. Era un terreno in attesa di un motivo, e questo è il motivo.

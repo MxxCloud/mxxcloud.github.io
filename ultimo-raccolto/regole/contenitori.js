@@ -67,15 +67,43 @@ const BOTTINO = [
   { cosa: "zappa", da: 1, a: 1, peso: 1 },
 ];
 
-const PESO_TOTALE = BOTTINO.reduce((somma, v) => somma + v.peso, 0);
+// Quello che resta nelle casse della fattoria da cui si comincia.
+//
+// Materiali e basta: nessun attrezzo. Non è avarizia, è la sola cosa che
+// regge il racconto e il gioco insieme. Chi se n'è andato di casa propria si è
+// portato via l'ascia e la zappa — quello che resta è la roba che non valeva
+// il viaggio — e dall'altra parte l'inizio di questo gioco è "raccogli
+// abbastanza da farti un'ascia": trovarne una posata nel primo minuto lo
+// toglierebbe di mezzo per sempre.
+//
+// I semi sì, e sono il regalo vero: davanti alla fattoria c'è il campo di
+// qualcun altro, già terra battuta, e i semi lo rendono un campo tuo prima
+// ancora di aver trovato una zappa.
+const BOTTINO_FATTORIA = [
+  { cosa: "fibra", da: 2, a: 5, peso: 3 },
+  { cosa: "legna", da: 2, a: 4, peso: 3 },
+  { cosa: "semi", da: 2, a: 4, peso: 3 },
+  { cosa: "pietra", da: 1, a: 3, peso: 2 },
+  { cosa: "bacche_secche", da: 1, a: 3, peso: 1 },
+];
 
-function pesca(caso) {
-  let tiro = caso() * PESO_TOTALE;
-  for (const voce of BOTTINO) {
+const pesoDi = (tavola) => tavola.reduce((somma, v) => somma + v.peso, 0);
+const PESO_TOTALE = pesoDi(BOTTINO);
+
+function pesca(caso, tavola, totale) {
+  let tiro = caso() * totale;
+  for (const voce of tavola) {
     tiro -= voce.peso;
     if (tiro <= 0) return voce;
   }
-  return BOTTINO[0];
+  return tavola[0];
+}
+
+// Questa cassa sta dentro la fattoria da cui si comincia?
+function dellaFattoria(tx, ty) {
+  const f = mappa.laFattoria();
+  if (!f) return false;
+  return tx >= f.tx0 && ty >= f.ty0 && tx < f.tx0 + f.larghezza && ty < f.ty0 + f.altezza;
 }
 
 // Da una a tre pile. Mai vuota: una casa attraversata per venire a trovare una
@@ -90,6 +118,8 @@ function bottinoDi(tx, ty) {
   // esiste, e qui la regola paga anche in pratica — riaprire una cassa che non
   // si è toccata non deve rimescolare quello che c'è dentro.
   const caso = generatore(Math.floor(impronta(tx, ty, 0xb07715) * 4294967296));
+  const tavola = dellaFattoria(tx, ty) ? BOTTINO_FATTORIA : BOTTINO;
+  const totale = pesoDi(tavola);
   const quante = PILE[0] + Math.floor(caso() * (PILE[1] - PILE[0] + 1));
   // Mai due volte la stessa cosa. Non è pulizia: gli attrezzi si impilano a
   // uno, quindi due zappe sono due caselle occupate da due zappe — visto in
@@ -97,8 +127,8 @@ function bottinoDi(tx, ty) {
   // sorteggio, non un posto in cui è vissuto qualcuno.
   const gia = new Set();
   for (let i = 0; i < quante; i += 1) {
-    let voce = pesca(caso);
-    for (let prova = 0; prova < 4 && gia.has(voce.cosa); prova += 1) voce = pesca(caso);
+    let voce = pesca(caso, tavola, totale);
+    for (let prova = 0; prova < 4 && gia.has(voce.cosa); prova += 1) voce = pesca(caso, tavola, totale);
     if (gia.has(voce.cosa)) continue;
     gia.add(voce.cosa);
     const n = voce.da + Math.floor(caso() * (voce.a - voce.da + 1));

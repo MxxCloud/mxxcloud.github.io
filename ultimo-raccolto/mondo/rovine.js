@@ -25,7 +25,7 @@
 // c'è un ciclo fra i due file.
 
 import { impronta } from "../motore/casuale.js";
-import { PIANTE, misuraDi } from "../arte/piante.js";
+import { PIANTE, FATTORIA, misuraDi } from "../arte/piante.js";
 
 export const CELLA = 64;
 
@@ -76,9 +76,68 @@ export function quanteInMemoria() {
   return risolte.size;
 }
 
+// --- la fattoria ----------------------------------------------------------
+
+// La cella dell'origine non tira i dadi: lì c'è la fattoria, e la partita
+// comincia dentro.
+//
+// Sta dentro la sua cella come tutte le altre piante, quindi non sull'origine
+// esatta ma appena dentro: la regola su cui è costruito tutto questo file non
+// si piega per un caso particolare. Vuol dire che si comincia qualche tassello
+// più in là di (0,0), e non lo nota nessuno perché il punto di partenza è
+// definito da dove sta la fattoria, non il contrario.
+//
+// Si cerca a spirale dall'angolo dell'origine e ci si ferma al primo posto che
+// regge: il terreno decide, e una valle che all'origine ha un lago avrà la
+// fattoria un po' più in là invece di non averla.
+//
+// Il tetto copre tutta la cella, e ci è arrivato per misura. Con cinquecento
+// tentativi la valle "inverno" restava senza fattoria — l'origine ha il 32 per
+// cento d'acqua e i posti buoni stanno lontani dall'angolo — mentre di posti
+// buoni ce n'erano duecentonovantatré. Cercare la cella intera costa 28
+// millisecondi nel caso peggiore misurato, UNA VOLTA per partita, e nel caso
+// normale si ferma al primo tentativo: quasi tutte le valli mettono la
+// fattoria in 1,1. Ventotto millisecondi prima del primo fotogramma valgono
+// una fattoria che c'è sempre.
+const TENTATIVI_FATTORIA = 2500;
+
+function cercaLaFattoria(adatto) {
+  const { larghezza, altezza } = misuraDi(FATTORIA);
+  const limite = CELLA - Math.max(larghezza, altezza) - 1;
+  let provati = 0;
+  for (let raggio = 1; raggio <= limite; raggio += 1) {
+    for (let ty0 = 1; ty0 <= raggio; ty0 += 1) {
+      for (let tx0 = 1; tx0 <= raggio; tx0 += 1) {
+        // Solo il bordo della spirale: l'interno l'ha già guardato il giro
+        // prima, e ripassarlo vorrebbe dire provare lo stesso posto ogni volta.
+        if (Math.max(tx0, ty0) !== raggio) continue;
+        if (provati++ > TENTATIVI_FATTORIA) return null;
+        if (reggeIlTerreno(tx0, ty0, larghezza, altezza, adatto)) {
+          return { tx0, ty0, pianta: FATTORIA, larghezza, altezza };
+        }
+      }
+    }
+  }
+  return null;
+}
+
 // --- risolvere una cella --------------------------------------------------
 
+// Il terreno deve reggere sotto TUTTA la pianta, e con un tassello di margine
+// attorno. Controllare solo gli angoli lasciava case con un lago in mezzo alla
+// stanza: il rumore è frastagliato a questa scala, e quattro punti non dicono
+// niente di quello che c'è fra loro.
+function reggeIlTerreno(tx0, ty0, larghezza, altezza, adatto) {
+  for (let dy = -1; dy <= altezza; dy += 1) {
+    for (let dx = -1; dx <= larghezza; dx += 1) {
+      if (!adatto(tx0 + dx, ty0 + dy)) return false;
+    }
+  }
+  return true;
+}
+
 function risolvi(cx, cy, adatto) {
+  if (cx === 0 && cy === 0) return cercaLaFattoria(adatto);
   if (impronta(cx, cy, scarto(semeCorrente, 11)) >= QUOTA) return null;
 
   const quale = Math.floor(impronta(cx, cy, scarto(semeCorrente, 12)) * PIANTE.length);
@@ -95,15 +154,7 @@ function risolvi(cx, cy, adatto) {
   const tx0 = cx * CELLA + MARGINE + Math.floor(impronta(cx, cy, scarto(semeCorrente, 13)) * (spazioX + 1));
   const ty0 = cy * CELLA + MARGINE + Math.floor(impronta(cx, cy, scarto(semeCorrente, 14)) * (spazioY + 1));
 
-  // Il terreno deve reggere sotto TUTTA la pianta, e con un tassello di
-  // margine attorno. Controllare solo gli angoli lasciava case con un lago in
-  // mezzo alla stanza: il rumore è frastagliato a questa scala, e quattro
-  // punti non dicono niente di quello che c'è fra loro.
-  for (let dy = -1; dy <= altezza; dy += 1) {
-    for (let dx = -1; dx <= larghezza; dx += 1) {
-      if (!adatto(tx0 + dx, ty0 + dy)) return null;
-    }
-  }
+  if (!reggeIlTerreno(tx0, ty0, larghezza, altezza, adatto)) return null;
 
   return { tx0, ty0, pianta, larghezza, altezza };
 }
@@ -118,6 +169,22 @@ export function nellaCella(cx, cy, adatto) {
   const rovina = risolvi(cx, cy, adatto);
   risolte.set(chiave, rovina);
   return rovina;
+}
+
+// Dove sta la fattoria, o null se in questa valle non c'è stato posto. Serve a
+// chi decide dove comincia la partita e a chi disegna la mappa: il punto di
+// partenza è la fattoria, non l'origine delle coordinate.
+export function laFattoria(adatto) {
+  const rovina = nellaCella(0, 0, adatto);
+  if (!rovina || rovina.pianta !== FATTORIA) return null;
+  return {
+    tx: rovina.tx0 + (rovina.larghezza >> 1),
+    ty: rovina.ty0 + (rovina.altezza >> 1),
+    tx0: rovina.tx0,
+    ty0: rovina.ty0,
+    larghezza: rovina.larghezza,
+    altezza: rovina.altezza,
+  };
 }
 
 // --- la domanda che conta -------------------------------------------------

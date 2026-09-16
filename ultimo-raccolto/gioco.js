@@ -57,7 +57,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.2";
+const VERSIONE = "M7.3";
 
 // --- elementi -------------------------------------------------------------
 
@@ -183,6 +183,22 @@ function muori(causa) {
   cassaAperta = null;
 }
 
+// Dove comincia un superstite: dentro la fattoria.
+//
+// Fin qui era "il primo tassello calpestabile a spirale attorno all'origine",
+// che è una definizione onesta di un posto che non esiste. Adesso un posto
+// c'è, e il punto di partenza è quello — il cortile, che è terra battuta e
+// libera. La spirale resta perché serve lo stesso: dice di non svegliarsi
+// dentro un muro.
+//
+// Se in questa valle non c'è stato posto per una fattoria — il terreno decide,
+// e un'origine in mezzo a un lago capita — si torna a com'era. Meglio
+// cominciare in un prato che non cominciare.
+function doveSiComincia() {
+  const fattoria = mappa.laFattoria();
+  return giocatore.puntoDiPartenza(fattoria?.tx ?? 0, fattoria?.ty ?? 0);
+}
+
 // Un superstite nuovo nella stessa valle. Non si ricomincia: l'orologio, il
 // calendario, l'orto e tutto quello che hai costruito continuano da dove
 // erano. Quello che riparte è il corpo — pieno, a mani vuote, e al punto di
@@ -200,7 +216,7 @@ function nuovoSuperstite() {
   // addosso a un superstite che non esisteva ancora.
   infetti.svuota();
   entita.svuota();
-  const partenza = giocatore.puntoDiPartenza(0, 0);
+  const partenza = doveSiComincia();
   eroe = entita.aggiungi(giocatore.crea(partenza.px, partenza.py));
   schermo.centraSu(eroe.px, eroe.py);
 
@@ -1340,7 +1356,7 @@ vestiLaValle();
 
 entita.registra(giocatore.TIPO, giocatore.aggiorna);
 entita.registra(infetto.TIPO, infetto.aggiorna);
-const partenza = giocatore.puntoDiPartenza(0, 0);
+const partenza = doveSiComincia();
 eroe = entita.aggiungi(giocatore.crea(partenza.px, partenza.py));
 schermo.centraSu(eroe.px, eroe.py);
 

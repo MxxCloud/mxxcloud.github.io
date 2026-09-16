@@ -33,12 +33,13 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.2**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.3**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
-c'è un posto in cui mettere le cose, e adesso **non è più soltanto natura**:
-in giro ci sono le case di chi ci abitava prima.
+c'è un posto in cui mettere le cose, non è più soltanto natura — e adesso
+**si comincia da una fattoria in rovina**, che era la prima riga di questo
+file dal primo giorno.
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
 con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne
@@ -267,8 +268,9 @@ superstite e non il mondo. La valle non cambia di una virgola — il campo, i
 falò, tutto quello che hai toccato resta dov'era — e il tuo corpo resta dove
 sei caduto con addosso tutto quello che portavi.
 
-Il nuovo superstite comincia al punto di partenza, pieno e a mani vuote, e
-l'orologio e il calendario continuano da dove erano. **Riprendersi la propria
+Il nuovo superstite comincia al punto di partenza — cioè alla fattoria, da
+M7.3 — pieno e a mani vuote, e l'orologio e il calendario continuano da dove
+erano. **Riprendersi la propria
 roba è un viaggio**: si torna al corpo, ci si mette davanti e si preme la
 barra, e quello che non sta nello zaino resta addosso al cadavere per il
 secondo viaggio. Il corpo non si degrada — come i mucchi, e per una ragione
@@ -373,6 +375,47 @@ il pavimento di terra si vede da sé come un rettangolo scuro — ma sulla mappa
 grande sì: lì un settore sta in pochi pixel, e tre pixel di terra battuta in
 mezzo alla sterpaglia sono tre pixel di sterpaglia. Fotografata prima di
 accorgersene.
+
+## La fattoria, e il paese
+
+**La partita comincia dentro una fattoria in rovina.** Fino a qui il punto di
+partenza era «il primo tassello calpestabile a spirale attorno all'origine»,
+che è una definizione onesta di un posto che non esiste: si apriva gli occhi in
+un prato qualunque. Adesso si apre gli occhi nel cortile fra la casa e la
+stalla, con il focolare spento di qualcun altro e tre casse da guardare. Il
+pilastro dice *il posto è tuo, ma il mondo se lo riprende*, e adesso comincia
+con un posto invece che con un'intenzione.
+
+Davanti c'è **il campo**, che è pavimento come il resto della fattoria, cioè
+terra battuta. Non è servito niente per renderlo un campo: `TERRENO.TERRA` è
+zappabile da sempre. Il campo di qualcun altro è ancora un campo.
+
+**Nelle casse della fattoria non ci sono attrezzi**, e non è avarizia. Chi se
+n'è andato di casa propria si è portato via l'ascia e la zappa — quello che
+resta è la roba che non valeva il viaggio — e dall'altra parte l'inizio di
+questo gioco è «raccogli abbastanza da farti un'ascia»: trovarne una posata nel
+primo minuto lo toglierebbe di mezzo per sempre. Ci sono materiali, e ci sono i
+semi: davanti c'è già un campo, e i semi lo rendono tuo prima ancora di aver
+trovato una zappa.
+
+La fattoria sta dentro la cella dell'origine come qualunque altra pianta, non
+a cavallo: la regola su cui è costruita la maglia non si piega per un caso
+particolare. Vuol dire che si comincia qualche tassello più in là di (0,0), e
+non lo nota nessuno perché il punto di partenza è definito da dove sta la
+fattoria, non il contrario. E c'è sempre: se l'origine ha un lago, si cerca
+nella cella finché non si trova posto — misurato, la valle peggiore delle dieci
+provate la mette a trenta tasselli invece che a uno, e costa ventotto
+millisecondi prima del primo fotogramma.
+
+**E da qualche parte c'è un paese.** Sei case attorno a una strada, una rovina
+ogni venti, cioè una dozzina di schermate di cammino: raro abbastanza da valere
+il viaggio. La strada è larga quattro tasselli e non due, e non per bellezza —
+di notte è l'unico posto di un paese in cui si vede arrivare qualcosa prima che
+sia addosso, e un vicolo fra sei case è un posto in cui si muore.
+
+Fra una casa e l'altra la pianta non arriva, quindi lì resta la valle: **gli
+alberi crescono in mezzo al paese.** Non era previsto, è una conseguenza, ed è
+esattamente quello che fa un posto in cui non abita più nessuno.
 
 Con le rovine sono arrivati anche **la cassa e il giaciglio fra i segnaposti**,
 che era una svista di M7.1: si segnava il falò *spento* e non il proprio
@@ -516,7 +559,7 @@ Da qui viene l'ordine, che non è quello immaginato all'inizio:
 | **M6.7** | Il suono | Il colpo si sente, e la notte si ascolta. *Qui il chiasso smette di essere un numero.* |
 | **M7.1** | I contenitori | La cassa, e con essa il cibo che si guasta. *Il terreno smette di essere una dispensa eterna.* |
 | **M7.2** | Le rovine | Le case di chi c'era prima, e dentro quello che non si sono portati via. *Qui la mappa comincia a servire.* |
-| **M7.3** | La fattoria e il paese | Il punto di partenza smette di essere un prato, e da qualche parte c'è un paese. |
+| **M7.3** | La fattoria e il paese | Si comincia da una fattoria in rovina, e da qualche parte c'è un paese. *Qui l'apertura di questo file smette di essere una promessa.* |
 | **M7.4** | Riparo e muri | L'investimento che si difende, e il chiasso che diventa una questione di geometria. |
 | **M7.5** | Il morale | Quanto tieni al tuo posto — che a quel punto esiste. |
 | **M8** | Superstiti, abilità, rifinitura | |

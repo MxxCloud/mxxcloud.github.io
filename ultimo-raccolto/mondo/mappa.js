@@ -213,7 +213,7 @@ export function inizializza(nome) {
 // La rovina di una cella, per chi disegna la mappa grande. Il mondo la sa già
 // — la maglia è in rovine.js — e passare di qui evita che l'interfaccia debba
 // sapere che esiste un seme.
-export { rovinaNellaCella } from "./generazione.js";
+export { rovinaNellaCella, laFattoria } from "./generazione.js";
 export { CELLA as CELLA_ROVINE } from "./rovine.js";
 
 export function semeCorrente() {

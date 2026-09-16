@@ -54,10 +54,67 @@ export const CROLLO = [
   "#.%..%%",
 ];
 
-// L'elenco da cui si pesca. L'ordine conta soltanto perché l'impronta di una
-// cella sceglie un indice: cambiarlo cambia tutte le valli già generate, ed è
-// la stessa avvertenza delle soglie del terreno.
-export const PIANTE = [CASOLARE, CASOLARE, STALLA, CROLLO];
+// La fattoria: una casa e una stalla attorno a un cortile, e davanti il campo.
+//
+// Non sta nell'elenco da cui si pesca, perché non si trova: c'è, ed è dove
+// comincia la partita. È la prima riga del README — «una fattoria in rovina da
+// rimettere in piedi» — e il pilastro reso concreto dal primo minuto: *il
+// posto è tuo* comincia con un posto invece che con un prato.
+//
+// Il campo davanti è pavimento come il resto, cioè terra battuta, e questo
+// basta: TERRENO.TERRA è zappabile da sempre. Chi arriva con dei semi può
+// seminare senza aver prima trovato una zappa — il campo di qualcun altro è
+// ancora un campo.
+export const FATTORIA = [
+  "###%####            ",
+  "#......#.....#######",
+  "#.c..f.#.....#.....#",
+  "%......#.....%..c..#",
+  "#....c.#.....#.....%",
+  "####%###.....##%####",
+  " .................. ",
+  "  ................  ",
+];
+
+// Il paese. Sei case attorno a una strada, ed è l'unica pianta in cui una
+// porta guarda un'altra porta.
+//
+// La strada è larga quattro tasselli e non due, e non per bellezza: di notte
+// è l'unico posto di un paese in cui si vede arrivare qualcosa prima che sia
+// addosso. Un vicolo fra sei case è un posto in cui si muore.
+export const PAESE = [
+  "###%####          ###%####",
+  "#......#  ##%###  #......#",
+  "#.c..f.#  #....#  #.c..f.#",
+  "%......#  %..c.#  %......#",
+  "#....c.#  #....#  #....c.#",
+  "####%###  ###%##  ####%###",
+  "..........................",
+  "..........................",
+  "..........................",
+  "..........................",
+  "  ##%###   ###%######%### ",
+  "  #....#   #......##....# ",
+  "  %..c.#   #.c..f.#%..c.# ",
+  "  #....#   %......##....# ",
+  "  ###%##   #....c.####%## ",
+  "           ####%###       ",
+];
+
+// L'elenco da cui si pesca. Le ripetizioni sono i pesi: il casolare è la casa
+// comune della valle, il paese capita una volta su dieci — cioè una cella su
+// quaranta, cioè poche volte in una partita, che è quanto deve capitare una
+// cosa che vale il viaggio.
+//
+// L'ordine conta, e non solo per i pesi: l'impronta di una cella sceglie un
+// indice, quindi cambiarlo cambia tutte le valli già generate. È la stessa
+// avvertenza delle soglie del terreno.
+export const PIANTE = [
+  CASOLARE, CASOLARE, CASOLARE, CASOLARE,
+  STALLA, STALLA, STALLA,
+  CROLLO, CROLLO,
+  PAESE,
+];
 
 export function misuraDi(pianta) {
   return { larghezza: pianta[0].length, altezza: pianta.length };
