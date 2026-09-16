@@ -13,6 +13,7 @@ import { CATALOGO, ATTREZZI, raccoltaDi, colpiNecessari, dannoDi } from "./ogget
 import * as infetti from "./infetti.js";
 import * as chiasso from "./chiasso.js";
 import * as orto from "./orto.js";
+import * as contenitori from "./contenitori.js";
 import * as stagioni from "./stagioni.js";
 
 const { TASSELLO } = schermo;
@@ -71,6 +72,18 @@ export function azionePossibile(eroe, cosaInMano) {
   // l'unico posto in cui dirlo prima che il giocatore prema il tasto.
   if (b.oggetto === OGGETTO.CADAVERE) {
     return { tipo: "fruga", verbo: "Fruga", bersaglio: b };
+  }
+
+  // La cassa si apre, e si apre sempre — anche vuota, che è l'unico momento in
+  // cui ci si mette dentro la prima cosa. Sta prima del catalogo della
+  // raccolta per la stessa ragione del falò: senza, "Raccogli" vincerebbe e
+  // non ci sarebbe verso di aprirla.
+  //
+  // Smontarla è dentro la schermata e non qui: sono due gesti diversi su due
+  // tasti diversi, e metterli tutti e due sulla barra vorrebbe dire una barra
+  // che a volte apre e a volte si porta via il ripostiglio.
+  if (b.oggetto === OGGETTO.CASSA) {
+    return { tipo: "apri", verbo: "Apri", bersaglio: b };
   }
 
   // Davanti al fuoco, con qualcosa di crudo in mano, si cucina invece di
@@ -198,6 +211,22 @@ export function getta(eroe, indice) {
 
   inventario.svuotaCasella(indice);
   return { tipo: "gettato", cosa: casella.cosa, quante: casella.quantita, tx, ty };
+}
+
+// --- smontare una cassa ---------------------------------------------------
+
+// Solo da vuota, e il motivo non è il realismo: una cassa piena sollevabile
+// sarebbe uno zaino da dodici caselle da portarsi dietro, e il limite dello
+// zaino è una delle poche cose che in un survival costringono a scegliere.
+// Vuota invece si sposta, perché sbagliare dove costruire deve costare la
+// fatica di svuotarla e non la cassa.
+export function smonta(tx, ty) {
+  if (mappa.oggettoDi(tx, ty) !== OGGETTO.CASSA) return null;
+  if (!contenitori.eVuota(tx, ty)) return { tipo: "nonEVuota" };
+  if (inventario.spazioPer("cassa") < 1) return { tipo: "zainoPieno" };
+  inventario.aggiungi("cassa", 1);
+  mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
+  return { tipo: "smontata" };
 }
 
 // --- il cadavere ----------------------------------------------------------
@@ -389,6 +418,13 @@ export function agisci(eroe, cosaInMano) {
     else mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
 
     return { tipo: "frugato", presi, resta: rimasto.length };
+  }
+
+  if (azione.tipo === "apri") {
+    // Non cambia niente nel mondo: chi orchestra apre la schermata, e da lì in
+    // poi è contenitori.js a spostare la roba. Le regole dicono cosa si può
+    // fare, non aprono pannelli.
+    return { tipo: "aperta", tx, ty };
   }
 
   if (azione.tipo === "cucina") {

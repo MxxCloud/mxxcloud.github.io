@@ -5,6 +5,7 @@
 // infinito toglie di mezzo la domanda "cosa vale la pena portarsi".
 
 import { CATALOGO } from "./oggetti.js";
+import * as tempo from "./tempo.js";
 
 export const CASELLE = 8;
 
@@ -22,32 +23,83 @@ export function quante(cosa) {
   return somma;
 }
 
-// Restituisce quante non ci sono entrate, perché chi raccoglie deve poter
-// dire "zaino pieno" invece di far sparire la roba in silenzio.
-export function aggiungi(cosa, quantita) {
+// --- impilare, dovunque ---------------------------------------------------
+
+// Da qui in giù ci sono due funzioni che lavorano su una fila di caselle
+// qualsiasi invece che sullo zaino. Non è astrazione preventiva: la cassa
+// tiene le cose esattamente come le tiene lo zaino — stessa pila, stessa
+// regola del riempire prima le pile cominciate — e ricopiare quelle
+// venticinque righe in contenitori.js avrebbe voluto dire due posti in cui
+// sistemare lo stesso difetto. Lo zaino è la fila che questo modulo possiede.
+
+// Quando due pile della stessa cosa si uniscono, la data diventa la media
+// pesata delle due. Tenere la più vecchia punirebbe chi aggiunge tre bacche
+// fresche a una cesta che sta per andare; tenere la più nuova permetterebbe
+// di ringiovanire un raccolto vecchio buttandoci sopra una bacca. La media è
+// l'unica delle tre che si comporta come una cesta vera, e si dice in una
+// riga.
+//
+// Si arrotonda per difetto, cioè verso il vecchio: fra due torti, quello che
+// fa perdere del cibo è meno grave di quello che lo fa durare per sempre.
+function mescolaDate(dalA, quanteA, dalB, quanteB) {
+  if (dalA === undefined) return dalB;
+  if (dalB === undefined) return dalA;
+  return Math.floor((dalA * quanteA + dalB * quanteB) / (quanteA + quanteB));
+}
+
+// Mette in una fila di caselle e restituisce quante non ci sono entrate. Chi
+// raccoglie deve poter dire "zaino pieno" invece di far sparire la roba in
+// silenzio.
+export function mettiIn(fila, cosa, quantita, dal) {
   const pila = CATALOGO[cosa]?.pila ?? 1;
+  // Solo il cibo porta una data. Darla anche alla legna vorrebbe dire
+  // scrivere nel salvataggio un numero per casella che non serve a nessuno.
+  const deperibile = CATALOGO[cosa]?.dura !== undefined;
+  const quando = deperibile ? (dal ?? tempo.giornoCorrente()) : undefined;
   let resto = quantita;
 
   // Prima si riempiono le pile già cominciate, poi si aprono caselle nuove:
   // il contrario sparpaglierebbe la stessa cosa su più caselle con lo zaino
   // quasi pieno, sprecando l'unica risorsa scarsa che c'è qui.
-  for (const casella of caselle) {
+  for (const casella of fila) {
     if (resto === 0) break;
     if (casella?.cosa !== cosa) continue;
     const spazio = pila - casella.quantita;
     const messe = Math.min(spazio, resto);
+    if (messe === 0) continue;
+    if (deperibile) casella.dal = mescolaDate(casella.dal, casella.quantita, quando, messe);
     casella.quantita += messe;
     resto -= messe;
   }
 
-  for (let i = 0; i < CASELLE && resto > 0; i += 1) {
-    if (caselle[i] !== null) continue;
+  for (let i = 0; i < fila.length && resto > 0; i += 1) {
+    if (fila[i]) continue;
     const messe = Math.min(pila, resto);
-    caselle[i] = { cosa, quantita: messe };
+    fila[i] = deperibile ? { cosa, quantita: messe, dal: quando } : { cosa, quantita: messe };
     resto -= messe;
   }
 
   return resto;
+}
+
+// Quanto ci starebbe in una fila di caselle, se si provasse ad aggiungere.
+export function spazioIn(fila, cosa) {
+  const pila = CATALOGO[cosa]?.pila ?? 1;
+  let posto = 0;
+  for (const casella of fila) {
+    if (!casella) posto += pila;
+    else if (casella.cosa === cosa) posto += pila - casella.quantita;
+  }
+  return posto;
+}
+
+// --- lo zaino -------------------------------------------------------------
+
+// "dal" arriva da fuori per un caso solo ma importante: quello che si tira
+// fuori da una cassa deve conservare la sua età invece di tornare fresco,
+// altrimenti una cassa sarebbe una macchina per ringiovanire il cibo.
+export function aggiungi(cosa, quantita, dal) {
+  return mettiIn(caselle, cosa, quantita, dal);
 }
 
 export function togli(cosa, quantita) {
@@ -78,7 +130,7 @@ export function svuotaCasella(indice) {
   const casella = caselle[indice];
   if (!casella) return null;
   caselle[indice] = null;
-  return { cosa: casella.cosa, quantita: casella.quantita };
+  return { cosa: casella.cosa, quantita: casella.quantita, dal: casella.dal };
 }
 
 export function pieno() {
@@ -88,13 +140,7 @@ export function pieno() {
 // Quanto ci starebbe, se si provasse ad aggiungere. Serve a chi deve decidere
 // prima di agire — le ricette — invece di aggiungere e poi disfare.
 export function spazioPer(cosa) {
-  const pila = CATALOGO[cosa]?.pila ?? 1;
-  let posto = 0;
-  for (const casella of caselle) {
-    if (casella === null) posto += pila;
-    else if (casella.cosa === cosa) posto += pila - casella.quantita;
-  }
-  return posto;
+  return spazioIn(caselle, cosa);
 }
 
 export function svuota() {
@@ -114,5 +160,11 @@ export function ripristina(salvate) {
     // partita.
     if (!c || typeof c.cosa !== "string" || !(c.quantita > 0)) continue;
     caselle[i] = { cosa: c.cosa, quantita: Math.min(c.quantita, CATALOGO[c.cosa]?.pila ?? 1) };
+    // La data manca nei salvataggi scritti prima che il cibo si guastasse, e
+    // in quel caso non si inventa: la riempie il primo cambio di giorno con
+    // "oggi", che è la stessa gentilezza che i fuochi hanno per i salvataggi
+    // senza la data di accensione. Chi aveva messo via delle rape in un gioco
+    // in cui non marcivano non deve ritrovarsele marce.
+    if (typeof c.dal === "number") caselle[i].dal = c.dal;
   }
 }

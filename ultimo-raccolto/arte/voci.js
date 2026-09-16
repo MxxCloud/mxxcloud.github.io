@@ -233,6 +233,17 @@ export const BENDA = {
   volume: 0.22,
 };
 
+// Il coperchio di una cassa. Legno grosso contro legno grosso: più basso e
+// più lungo del posare una cosa per terra, perché quello che si sente è un
+// mobile, non un oggetto.
+export const COPERCHIO = {
+  onda: "rumore",
+  attacco: 0.003,
+  coda: 0.19,
+  filtro: { tipo: "passabasso", taglio: 520, a: 150, risonanza: 1.6 },
+  volume: 0.34,
+};
+
 export const POSA = {
   onda: "rumore",
   attacco: 0.002,

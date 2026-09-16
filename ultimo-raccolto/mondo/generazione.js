@@ -50,6 +50,9 @@ export const OGGETTO = {
   // quello che contiene sta nelle modifiche: qui c'è solo "su questo tassello
   // c'è un corpo".
   CADAVERE: 15,
+  // La cassa. Come il mucchio e il cadavere, quello che contiene non sta qui
+  // ma nelle modifiche: qui c'è solo "su questo tassello c'è una cassa".
+  CASSA: 16,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati

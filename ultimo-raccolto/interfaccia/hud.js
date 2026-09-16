@@ -14,6 +14,8 @@ import * as bisogni from "../regole/bisogni.js";
 import { CATALOGO } from "../regole/oggetti.js";
 import * as inventario from "../regole/inventario.js";
 import { RICETTE, bastano } from "../regole/ricette.js";
+import * as contenitori from "../regole/contenitori.js";
+import * as decadimento from "../regole/decadimento.js";
 import { nomeDi } from "../regole/oggetti.js";
 
 const LATO_CASELLA = 18;
@@ -49,6 +51,43 @@ function larghezzaBarra() {
   return inventario.CASELLE * LATO_CASELLA + (inventario.CASELLE - 1) * DISTANZA_CASELLE;
 }
 
+// Una casella, disegnata da un posto solo. La barra in basso e la cassa la
+// vogliono identica — stessa cornice, stessa icona, stesso conto, stessa
+// freschezza — e tenerne due copie avrebbe voluto dire due posti in cui
+// sistemare la stessa cosa.
+function casellaDisegnata(p, x, y, casella, scelta, inCassa) {
+  riquadro(p, x, y, LATO_CASELLA, LATO_CASELLA, FONDO, scelta ? BORDO_SCELTO : BORDO);
+  if (!casella) return;
+
+  const icona = CATALOGO[casella.cosa]?.icona;
+  if (icona) p.drawImage(cuoci(icona), x + 3, y + 3);
+
+  // La quantità solo se è più di una: "1" accanto a ogni icona è rumore.
+  if (casella.quantita > 1) {
+    const etichetta = String(casella.quantita);
+    testo.disegnaConOmbra(p, etichetta, x + LATO_CASELLA - 2 - testo.larghezza(etichetta), y + LATO_CASELLA - 7, CHIARO);
+  }
+
+  // La freschezza: una riga di un pixel lungo il bordo di sopra, che si
+  // accorcia e cambia colore. Un pixel e non una barra vera perché è
+  // un'informazione di sfondo — serve a far scegliere quale rapa mangiare per
+  // prima, non a essere guardata.
+  //
+  // Si disegna sempre e non solo quando sta per andare, e la ragione è quella
+  // che regge tutto questo gioco: una scadenza che non si vede è una trappola.
+  // Perdere il raccolto d'autunno e scoprire soltanto dopo che esisteva un
+  // orologio sarebbe una regola imparata nel modo peggiore.
+  const andata = decadimento.quantoEAndata(casella, inCassa);
+  if (andata === null) return;
+  const resta = 1 - andata;
+  const piena = LATO_CASELLA - 4;
+  const lunga = Math.max(1, Math.round(piena * resta));
+  p.fillStyle = "#2b2f36";
+  p.fillRect(x + 2, y + 1, piena, 1);
+  p.fillStyle = coloreBisogno(resta);
+  p.fillRect(x + 2, y + 1, lunga, 1);
+}
+
 export function disegnaZaino(p, scelta) {
   const totale = larghezzaBarra();
   const x0 = Math.round((schermo.LARGHEZZA - totale) / 2);
@@ -57,23 +96,67 @@ export function disegnaZaino(p, scelta) {
 
   for (let i = 0; i < caselle.length; i += 1) {
     const x = x0 + i * (LATO_CASELLA + DISTANZA_CASELLE);
-    const eScelta = i === scelta;
-    riquadro(p, x, y, LATO_CASELLA, LATO_CASELLA, FONDO, eScelta ? BORDO_SCELTO : BORDO);
-
-    const casella = caselle[i];
-    if (!casella) continue;
-
-    const icona = CATALOGO[casella.cosa]?.icona;
-    if (icona) p.drawImage(cuoci(icona), x + 3, y + 3);
-
-    // La quantità solo se è più di una: "1" accanto a ogni icona è rumore.
-    if (casella.quantita > 1) {
-      const etichetta = String(casella.quantita);
-      testo.disegnaConOmbra(p, etichetta, x + LATO_CASELLA - 2 - testo.larghezza(etichetta), y + LATO_CASELLA - 7, CHIARO);
-    }
+    casellaDisegnata(p, x, y, caselle[i], i === scelta, false);
   }
 
   return { x0, y, larghezza: totale };
+}
+
+// --- la cassa -------------------------------------------------------------
+
+// Due griglie e un cursore solo.
+//
+// Due cursori — uno per parte, e un tasto per saltare fra le parti — sarebbero
+// tre cose da imparare per un gesto solo. Con un cursore unico che scavalca il
+// confine, le frecce fanno quello che fanno sempre e la barra ha un
+// significato solo: manda dall'altra parte quello che è selezionato. Non c'è
+// "prendi" e non c'è "metti", c'è "sposta", e da che parte si vede.
+const COLONNE = 4;
+const CASSA_RIGHE = contenitori.CASELLE / COLONNE;
+const ZAINO_RIGHE = inventario.CASELLE / COLONNE;
+const PASSO_CASELLA = LATO_CASELLA + DISTANZA_CASELLE;
+
+// Quante caselle in tutto, cassa più zaino: il cursore le percorre come se
+// fossero una griglia sola, perché per chi guarda lo sono.
+export const CASSA_TOTALI = contenitori.CASELLE + inventario.CASELLE;
+
+export function disegnaCassa(p, { contenuto, scelta }) {
+  const griglia = COLONNE * PASSO_CASELLA - DISTANZA_CASELLE;
+  const larghezza = griglia + 16;
+  const altezza = 12 + CASSA_RIGHE * PASSO_CASELLA + 10 + ZAINO_RIGHE * PASSO_CASELLA + 13;
+  const x = Math.round((schermo.LARGHEZZA - larghezza) / 2);
+  const y = Math.round((schermo.ALTEZZA - altezza) / 2);
+
+  p.fillStyle = "rgb(8 9 12 / 0.72)";
+  p.fillRect(0, 0, schermo.LARGHEZZA, schermo.ALTEZZA);
+  riquadro(p, x, y, larghezza, altezza, FONDO_PIENO, BORDO);
+
+  const sinistra = x + 8;
+  testo.disegna(p, "LA CASSA", sinistra, y + 4, CHIARO);
+
+  const primaRiga = y + 12;
+  for (let i = 0; i < contenitori.CASELLE; i += 1) {
+    const cx = sinistra + (i % COLONNE) * PASSO_CASELLA;
+    const cy = primaRiga + Math.floor(i / COLONNE) * PASSO_CASELLA;
+    casellaDisegnata(p, cx, cy, contenuto[i], i === scelta, true);
+  }
+
+  const yZaino = primaRiga + CASSA_RIGHE * PASSO_CASELLA + 2;
+  testo.disegna(p, "ZAINO", sinistra, yZaino, GRIGIO);
+
+  const caselle = inventario.contenuto();
+  const primaZaino = yZaino + 8;
+  for (let i = 0; i < inventario.CASELLE; i += 1) {
+    const cx = sinistra + (i % COLONNE) * PASSO_CASELLA;
+    const cy = primaZaino + Math.floor(i / COLONNE) * PASSO_CASELLA;
+    casellaDisegnata(p, cx, cy, caselle[i], contenitori.CASELLE + i === scelta, false);
+  }
+
+  // Il piede dice i tasti, come nella schermata della partita: una schermata
+  // modale che non dice come si esce è una stanza senza porta.
+  const vuota = contenuto.every((c) => !c);
+  const piede = vuota ? "SPAZIO SPOSTA   X SMONTA   C CHIUDI" : "SPAZIO SPOSTA   C CHIUDI";
+  testo.disegna(p, piede, x + Math.round((larghezza - testo.larghezza(piede)) / 2), y + altezza - 9, GRIGIO);
 }
 
 // --- i bisogni ------------------------------------------------------------

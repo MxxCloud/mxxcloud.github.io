@@ -25,6 +25,7 @@ import * as freddo from "./regole/freddo.js";
 import * as infetti from "./regole/infetti.js";
 import * as chiasso from "./regole/chiasso.js";
 import * as udito from "./regole/udito.js";
+import * as contenitori from "./regole/contenitori.js";
 import * as orto from "./regole/orto.js";
 import * as stagioni from "./regole/stagioni.js";
 import * as decadimento from "./regole/decadimento.js";
@@ -38,7 +39,7 @@ import { FIORI } from "./arte/sprite-fiori.js";
 // nello stesso file sono l'errore che si scopre tardi.
 import {
   colpoDi, MORSO, COLPO_A_SEGNO, CADUTO, ZAPPA, SEMINA, ACQUA, SORSO, MANGIA,
-  BENDA, POSA, SCELTA, FATTO, NEGATO, PRESO, GELO, MORTE,
+  BENDA, POSA, SCELTA, FATTO, NEGATO, PRESO, GELO, MORTE, COPERCHIO,
 } from "./arte/voci.js";
 import * as inventario from "./regole/inventario.js";
 import * as azioni from "./regole/azioni.js";
@@ -56,7 +57,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M6.7";
+const VERSIONE = "M7.1";
 
 // --- elementi -------------------------------------------------------------
 
@@ -82,6 +83,14 @@ let minimappaVisibile = true;
 // mentre la si guarda. Un mondo che tira avanti dietro una schermata a tutto
 // campo sarebbe una notte che ti arriva addosso mentre cerchi la strada.
 let mappaAperta = false;
+// La cassa davanti a cui si sta, o null. Il tassello e non il contenuto: il
+// contenuto vive nelle modifiche, e tenerne qui una copia vorrebbe dire due
+// verità che si allontanano.
+let cassaAperta = null;
+// Un cursore solo per venti caselle, dodici di cassa e otto di zaino. Per chi
+// guarda sono una griglia sola di quattro per cinque, e lo sono anche qui: la
+// riga è l'indice diviso quattro, e la terza riga è il confine.
+let cassaScelta = 0;
 let ultimoGiorno = 1;
 let partitaAperta = false;
 let slotScelto = 0;
@@ -152,7 +161,8 @@ function chiudiLApertura() {
 // invece di restare tre condizioni ricopiate in tre punti: la quarta sarebbe
 // stata la prima a essere dimenticata da qualche parte.
 function mondoFermo() {
-  return ricetteAperte || aperturaVisibile || partitaAperta || mappaAperta || mortoDi !== null;
+  return ricetteAperte || aperturaVisibile || partitaAperta || mappaAperta
+    || cassaAperta !== null || mortoDi !== null;
 }
 
 // Si cade. Il corpo resta dove sei caduto con tutto quello che portavi, e la
@@ -168,6 +178,9 @@ function muori(causa) {
   messaggio = null;
   ricetteAperte = false;
   partitaAperta = false;
+  // La cassa si chiude senza far rumore: il coperchio è un gesto, e morire non
+  // è un gesto.
+  cassaAperta = null;
 }
 
 // Un superstite nuovo nella stessa valle. Non si ricomincia: l'orologio, il
@@ -192,6 +205,8 @@ function nuovoSuperstite() {
   schermo.centraSu(eroe.px, eroe.py);
 
   casellaScelta = 0;
+  cassaAperta = null;
+  cassaScelta = 0;
   colpito = null;
   lumi.length = 0;
   minimappa.dimentica();
@@ -604,6 +619,91 @@ function leggiPartita() {
   else caricaDa(voce);
 }
 
+// --- la cassa -------------------------------------------------------------
+
+function chiudiLaCassa() {
+  suono.suona(COPERCHIO, { tono: 1.15 });
+  cassaAperta = null;
+  cassaScelta = 0;
+}
+
+// Il cursore si muove su una griglia di quattro per cinque, e il confine fra
+// cassa e zaino non è un salto: è la riga dopo. Due griglie separate avrebbero
+// voluto dire un tasto per passare dall'una all'altra, cioè una cosa in più da
+// imparare per un gesto che le frecce già sanno fare.
+//
+// Si ferma ai bordi invece di girare intorno. In un menu di quattro voci
+// girare fa comodo; qui, con due parti che hanno significati opposti, uscire
+// da sopra e ricomparire nello zaino farebbe spostare la roba dalla parte
+// sbagliata.
+const COLONNE_CASSA = 4;
+
+function muoviIlCursore() {
+  const righe = hud.CASSA_TOTALI / COLONNE_CASSA;
+  let riga = Math.floor(cassaScelta / COLONNE_CASSA);
+  let colonna = cassaScelta % COLONNE_CASSA;
+  const prima = cassaScelta;
+
+  if (comandi.appenaPremuto("sinistra")) colonna = Math.max(0, colonna - 1);
+  if (comandi.appenaPremuto("destra")) colonna = Math.min(COLONNE_CASSA - 1, colonna + 1);
+  if (comandi.appenaPremuto("su")) riga = Math.max(0, riga - 1);
+  if (comandi.appenaPremuto("giu")) riga = Math.min(righe - 1, riga + 1);
+
+  cassaScelta = riga * COLONNE_CASSA + colonna;
+  if (cassaScelta !== prima) suono.suona(SCELTA);
+}
+
+function leggiLaCassa() {
+  // Si chiude con lo stesso tasto che apre le costruzioni. Non è un caso
+  // libero: "C" in questo gioco vuol già dire "apri e chiudi il pannello", e
+  // dargli anche questo pannello è una regola in meno invece di un tasto in
+  // più.
+  if (comandi.appenaPremuto("ricette")) {
+    chiudiLaCassa();
+    return;
+  }
+
+  const { tx, ty } = cassaAperta;
+  // La cassa può sparire da sotto i piedi in un modo solo — si muore con la
+  // schermata aperta — ma basta quello per doverlo chiedere.
+  if (!contenitori.esiste(tx, ty)) {
+    cassaAperta = null;
+    return;
+  }
+
+  muoviIlCursore();
+
+  if (comandi.appenaPremuto("spegni")) {
+    const esito = azioni.smonta(tx, ty);
+    if (esito?.tipo === "smontata") {
+      suono.suona(COPERCHIO, { tono: 0.85 });
+      cassaAperta = null;
+      cassaScelta = 0;
+      annuncia("cassa smontata", "#9ec97e");
+    } else if (esito?.tipo === "nonEVuota") {
+      suono.suona(NEGATO);
+      annuncia("prima svuotala", "#c9b189");
+    } else if (esito?.tipo === "zainoPieno") {
+      suono.suona(NEGATO);
+      annuncia("zaino pieno: getta qualcosa con G", "#c0705f");
+    }
+    return;
+  }
+
+  if (!comandi.appenaPremuto("usa")) return;
+
+  const versoLaCassa = cassaScelta >= contenitori.CASELLE;
+  const indice = versoLaCassa ? cassaScelta - contenitori.CASELLE : cassaScelta;
+  const esito = contenitori.sposta(tx, ty, versoLaCassa, indice);
+  if (!esito) return;
+  if (esito.tipo === "pieno") {
+    suono.suona(NEGATO);
+    annuncia(versoLaCassa ? "la cassa è piena" : "zaino pieno", "#c0705f");
+    return;
+  }
+  suono.suona(versoLaCassa ? POSA : PRESO);
+}
+
 // --- comandi --------------------------------------------------------------
 
 function leggiComandi() {
@@ -625,6 +725,14 @@ function leggiComandi() {
     for (let i = 0; i < comandi.CASELLE; i += 1) {
       if (comandi.appenaPremuto(`casella${i + 1}`)) { chiudiLApertura(); return; }
     }
+    return;
+  }
+
+  // La cassa prende tutti i comandi finché è aperta, e sta prima della
+  // partita per questo: modale vuol dire modale, e aprire il salvataggio sopra
+  // una cassa sarebbe due schermate una sull'altra.
+  if (cassaAperta) {
+    leggiLaCassa();
     return;
   }
 
@@ -778,6 +886,12 @@ function leggiComandi() {
 
   if (esito.tipo === "cotto") { suono.suona(FATTO); annuncia(`sul fuoco: ${nomeDi(esito.diventa)}`, "#e0913a"); }
 
+  if (esito.tipo === "aperta") {
+    suono.suona(COPERCHIO);
+    cassaAperta = { tx: esito.tx, ty: esito.ty };
+    cassaScelta = 0;
+  }
+
   if (esito.tipo === "combattuto") {
     // Il sangue esce sempre, e in quantità diversa: un colpo che va a segno e
     // uno che finisce il lavoro non devono sembrare lo stesso gesto. È la
@@ -916,13 +1030,16 @@ function aggiorna(passo) {
   let cresciute = 0;
   let appassite = 0;
   let spenti = 0;
+  let guaste = 0;
   let tornati = 0;
   while (ultimoGiorno < tempo.giornoCorrente()) {
     ultimoGiorno += 1;
     const orti = orto.nuovoGiorno();
     cresciute += orti.cresciute;
     appassite += orti.appassite;
-    spenti += decadimento.nuovoGiorno();
+    const lasciato = decadimento.nuovoGiorno();
+    spenti += lasciato.fuochi;
+    guaste += lasciato.guaste;
     tornati += ricrescita.nuovoGiorno();
   }
 
@@ -935,6 +1052,11 @@ function aggiorna(passo) {
   if (appassite > 0 && arrivata) annuncia(`${arrivata}: l'orto è morto`, "#c0705f");
   else if (appassite > 0) annuncia(`l'orto è marcito: ${appassite}`, "#c0705f");
   else if (arrivata) annuncia(ARRIVO[arrivata], "#c9b189");
+  // Il cibo guasto viene prima del fuoco spento, e non è un ordine a caso: un
+  // fuoco che si spegne si riaccende, del cibo andato non torna niente. Fra
+  // due notizie che si coprono a vicenda vince quella su cui non si può più
+  // fare nulla.
+  else if (guaste > 0) annuncia(`si è guastato del cibo: ${guaste}`, "#c0705f");
   else if (spenti > 0) annuncia("il fuoco si è spento", "#c0705f");
   else if (cresciute > 0) annuncia("l'orto è cresciuto", "#9ec97e");
   // Ultima di tutte, perché è l'unica buona notizia che non riguarda una cosa
@@ -1066,10 +1188,18 @@ function disegnaInterfaccia() {
   });
   hud.disegnaAzione(p, azioneCorrente);
   const barra = hud.disegnaZaino(p, casellaScelta);
-  hud.disegnaPromemoria(p, barra, cosaInMano());
+  // Il promemoria dice "C COSTRUIRE", e con la cassa aperta "C" chiude: un
+  // cartello che indica la porta sbagliata è peggio di nessun cartello.
+  if (!cassaAperta) hud.disegnaPromemoria(p, barra, cosaInMano());
   hud.disegnaMessaggio(p, messaggio);
   if (minimappaVisibile && !aperturaVisibile) minimappa.disegna(p);
   if (ricetteAperte) hud.disegnaRicette(p, ricettaScelta);
+  if (cassaAperta) {
+    hud.disegnaCassa(p, {
+      contenuto: contenitori.contenutoDi(cassaAperta.tx, cassaAperta.ty),
+      scelta: cassaScelta,
+    });
+  }
   if (partitaAperta) {
     hud.disegnaPartita(p, {
       voci: caselleDiSalvataggio(),
@@ -1314,6 +1444,9 @@ if (parametri.has("diagnostica")) {
     chiasso,
     suono,
     udito,
+    contenitori,
+    cassaAperta: () => (cassaAperta ? { ...cassaAperta } : null),
+    cursoreCassa: () => cassaScelta,
     entita,
     eMorto: () => mortoDi,
     nuovoSuperstite,

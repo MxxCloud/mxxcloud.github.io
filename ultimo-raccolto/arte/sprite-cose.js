@@ -384,6 +384,45 @@ export const CADAVERE = [
 //
 // La macchia scura al centro è il rotolo visto di taglio: senza, la fascia
 // era un rettangolo chiaro identico a mezza dozzina di altre cose.
+// La cassa: il primo posto tuo in cui mettere le cose.
+//
+// Il coperchio più chiaro del corpo, e in mezzo una piastra di metallo. Il
+// metallo è l'unico dettaglio che non serve a dire "legno": serve a dire che
+// si apre, perché una cassa chiusa e un blocco di legno hanno la stessa
+// sagoma e la differenza sta tutta lì.
+export const CASSA = [
+  "................",
+  "................",
+  "................",
+  "...wwwwwwwwww...",
+  "..wccccccccccw..",
+  "..wcwwwwwwwwcw..",
+  "..wccccccccccw..",
+  "..wwwwwwwwwwww..",
+  "..whhhhhhhhhhw..",
+  "..whhhhsshhhhw..",
+  "..whhhhsshhhhw..",
+  "..whhhhhhhhhhw..",
+  "..wwwwwwwwwwww..",
+  "...gggggggggg...",
+];
+
+// La stessa cosa in dodici pixel, per la casella dello zaino.
+export const CASSA_ICONA = [
+  "............",
+  "............",
+  "..wwwwwwww..",
+  ".wccccccccw.",
+  ".wcwwwwwwcw.",
+  ".wccccccccw.",
+  ".wwwwwwwwww.",
+  ".whhhhhhhhw.",
+  ".whhhsshhhw.",
+  ".whhhhhhhhw.",
+  ".wwwwwwwwww.",
+  "............",
+];
+
 export const BENDA = [
   "............",
   "............",

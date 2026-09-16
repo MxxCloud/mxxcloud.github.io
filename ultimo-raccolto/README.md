@@ -33,11 +33,11 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M6.7**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.1**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
-anche dopo che sei morto, si rimette a posto da sola se le dai tempo, e adesso
-**si sente**.
+anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
+e adesso c'è **un posto in cui mettere le cose** — e una ragione per averlo.
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
 con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne
@@ -190,13 +190,12 @@ fuochi si consumano: la torcia piantata dura un giorno, il falò due e lascia
 la cenere — che si raccoglie e si ripianta, perché a mancare è il posto
 acceso, non l'oggetto.
 
-Non si degrada quello che sta in un mucchio per terra, e non per dimenticanza:
-finché non ci sono contenitori in cui mettere le cose al sicuro — e sono della
-tappa della costruzione — far marcire anche quello toglierebbe l'unico
-ripostiglio che esiste. Per la stessa ragione non si guasta nemmeno il cibo
-nello zaino: farlo marcire mentre il terreno è una dispensa eterna
-insegnerebbe soltanto a usare il terreno come dispensa. Il guasto va con i
-contenitori.
+Per sei tappe non si è degradato quello che stava in un mucchio per terra, e
+non per dimenticanza: finché non c'erano contenitori in cui mettere le cose al
+sicuro, far marcire anche quello avrebbe tolto l'unico ripostiglio che
+esisteva — e far marcire lo zaino mentre il terreno era una dispensa eterna
+avrebbe insegnato soltanto a usare il terreno come dispensa. Era un debito con
+una condizione scritta, e la condizione era la cassa. **Adesso c'è.**
 
 **I salvataggi** sono quattro caselle: tre da scrivere a mano con `P`, e una
 scritta dall'alba di ogni giorno. L'alba perché è il momento in cui il mondo
@@ -319,6 +318,57 @@ Gli infetti non stanno nel salvataggio e non stanno nel mondo: non si contano,
 si incontrano. L'infezione invece sì che si salva — è uno stato in cui si
 vive, e chiudere la scheda non è una cura.
 
+## La cassa, e il cibo che si guasta
+
+**La cassa è il primo posto tuo che non sia il terreno.** Dodici caselle contro
+le otto dello zaino, otto legne e tre fibre per costruirla — la ricetta più
+cara del gioco, perché è la prima cosa che non serve a fare qualcosa ma a
+tenere qualcosa. Si posa dove si vuole, si apre con la barra, e si smonta solo
+da vuota: una cassa piena sollevabile sarebbe uno zaino da dodici caselle da
+portarsi dietro, cioè un modo di cancellare il limite che in un survival
+costringe a scegliere.
+
+Dentro la schermata ci sono due griglie e **un cursore solo**. Il confine fra
+cassa e zaino non è un salto, è la riga dopo: le frecce fanno quello che fanno
+sempre e la barra ha un significato unico — manda dall'altra parte quello che è
+selezionato. Non c'è "prendi" e non c'è "metti", c'è "sposta", e da che parte
+si vede.
+
+**E da qui il cibo si guasta.** Le bacche durano tre giorni, la rapa sei. Il
+guasto vale ovunque la roba stia — zaino, mucchio per terra, cassa — e **la
+cassa rallenta invece di fermare**: dentro, tre volte tanto. È la decisione che
+regge la tappa. Una cassa che ferma il tempo è una ghiacciaia: metti via il
+raccolto d'autunno e l'inverno smette di essere un problema, cioè si toglie
+esattamente la cosa che le stagioni erano venute a portare. Rallentando, la
+domanda resta quella e cambia solo di scala.
+
+Il cadavere no. Quello che un superstite si è lasciato dietro morendo resta
+come l'ha lasciato, perché un corpo che marcisce prima che tu riesca a
+tornarci non è una regola, è una porta chiusa.
+
+**Arrostire e seccare erano la stessa mossa, e diventano due mosse opposte.**
+Fino a qui il fuoco faceva una cosa sola — metti sopra, vale di più — e con il
+guasto i due cibi cotti dicono finalmente quello che sono. Arrostire raddoppia
+il valore e dimezza la durata: la rapa arrostita sfama il doppio e dura due
+giorni, quindi si cuoce quello che si sta per mangiare. Seccare invece è
+conservare: le bacche secche nutrono meno di una rapa arrostita ma durano
+dieci giorni, trenta in una cassa, e sono l'unica cosa nel gioco che attraversa
+una stagione intera. Non è stato aggiunto nessun oggetto per dirlo: erano già
+lì tutti e due, e mancava la regola che li distinguesse.
+
+**Una scadenza che non si vede è una trappola**, quindi si vede: ogni casella
+di cibo porta lungo il bordo di sopra una riga di un pixel che si accorcia e
+cambia colore. Un pixel e non una barra vera perché è un'informazione di
+sfondo — serve a far scegliere quale rapa mangiare per prima, non a essere
+guardata. E all'alba, quando qualcosa va, il gioco lo dice: prima ancora del
+fuoco spento, perché un fuoco si riaccende e del cibo andato non torna niente.
+
+Mescolando due pile della stessa cosa la data diventa la **media pesata**.
+Tenere la più vecchia punirebbe chi aggiunge tre bacche fresche a una cesta che
+sta per andare; tenere la più nuova permetterebbe di ringiovanire un raccolto
+buttandoci sopra una bacca. La media è l'unica delle tre che si comporta come
+una cesta vera.
+
 ## Il suono, che era il debito più vecchio
 
 Per sei tappe il gioco ha misurato il rumore che fai senza fartene sentire
@@ -404,7 +454,9 @@ Da qui viene l'ordine, che non è quello immaginato all'inizio:
 | **M6.5** | Quello che la valle dà | La raccolta segue le stagioni, quello che prendi ricresce, il fuoco cucina. *Qui l'orto smette di essere facoltativo.* |
 | **M6.6** | La mappa | `TAB` apre quello che hai visto. L'esplorare lascia un segno. |
 | **M6.7** | Il suono | Il colpo si sente, e la notte si ascolta. *Qui il chiasso smette di essere un numero.* |
-| **M7** | Costruzione | Riparo, contenitori, muri: l'investimento che si difende. E il morale, che misura quel posto. Con essi il cibo che si guasta. |
+| **M7.1** | I contenitori | La cassa, e con essa il cibo che si guasta. *Il terreno smette di essere una dispensa eterna.* |
+| **M7.2** | Riparo e muri | L'investimento che si difende, e il chiasso che diventa una questione di geometria. |
+| **M7.3** | Il morale | Quanto tieni al tuo posto — che a quel punto esiste. |
 | **M8** | Superstiti, abilità, rifinitura | |
 
 **Perché la morte così tardi.** Morire conta in proporzione a quanto hai da
@@ -453,17 +505,25 @@ alto a sinistra.
 non fa il suo mestiere è un debito che conviene pagare prima di costruirci
 sopra**, e costruirci sopra era esattamente quello che M7 stava per fare.
 
+**E M7 si è divisa in tre**, per la ragione che ha diviso anche le altre: i
+contenitori non erano un pezzo della costruzione fra gli altri, erano la
+condizione di un debito scritto tre volte nel progetto. Farli da soli li fa
+arrivare con la cosa che sbloccano — il guasto — invece che in mezzo a muri e
+riparo, dove sarebbero stati una cassa in più da costruire. Il morale resta per
+ultimo e non è un rinvio: quello che può misurare è quanto tieni al tuo posto,
+e un posto con dentro una cassa e niente altro è ancora un accampamento.
+
 ## Comandi
 
 | | |
 |---|---|
 | `W A S D` o frecce | camminare |
 | `Maiusc` | correre |
-| `Spazio` | agire su ciò che si ha davanti: colpire, raccogliere, zappare, seminare, innaffiare, bere, dormire, posare, frugare un cadavere, difendersi |
+| `Spazio` | agire su ciò che si ha davanti: colpire, raccogliere, zappare, seminare, innaffiare, bere, dormire, posare, aprire una cassa, frugare un cadavere, difendersi |
 | `1`-`8` | scegliere la casella, cioè cosa si impugna |
 | `E` | mangiare, o fasciarsi con una benda |
 | `G` | posare per terra la casella scelta, davanti ai piedi |
-| `C` | aprire e chiudere le costruzioni |
+| `C` | aprire e chiudere le costruzioni, e chiudere la cassa |
 | `M` | accendere e spegnere la minimappa |
 | `TAB` | la mappa di quello che hai visto |
 | `V` | il volume: muto, piano, forte |
@@ -600,6 +660,12 @@ si preme un tasto. `tempo.js` è l'orologio e la curva della luce; `oggetti.js`
 il catalogo di cosa esiste e cosa rende; `inventario.js` lo zaino;
 `ricette.js` cosa si costruisce; `azioni.js` il gesto che collega il giocatore
 al mondo.
+
+`contenitori.js` non reimplementa l'impilamento: una cassa tiene le cose
+esattamente come le tiene lo zaino, quindi chiama le stesse due funzioni di
+`inventario.js`, che lavorano su una fila di caselle qualsiasi. Quello che il
+modulo aggiunge è soltanto dove sta quella fila — dentro le modifiche del
+tassello, come la roba di un cadavere e il contenuto di un mucchio.
 
 `chiasso.js` e `udito.js` sono gemelli e il nome lo dice: quanto lontano ti si
 sente, e quanto lontano senti. Sentire è una regola e non un dettaglio del

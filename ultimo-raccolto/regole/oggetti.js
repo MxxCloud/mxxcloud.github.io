@@ -8,6 +8,15 @@ import * as ortoArte from "../arte/sprite-orto.js";
 // Gli identificatori sono testo e non numeri di proposito: finiranno nei
 // salvataggi, e un salvataggio che dice "legna" sopravvive a un riordino del
 // catalogo, mentre uno che dice 3 no.
+//
+// "dura" è quanti giorni una cosa resta buona. Ce l'ha solo il cibo: il legno
+// e la pietra non si guastano, e dare loro una scadenza vorrebbe dire che una
+// partita lunga è un lavoro di manutenzione invece di una partita.
+//
+// Per sei tappe non l'ha avuta nessuno, e il README diceva perché: far
+// marcire il cibo mentre il terreno era una dispensa eterna avrebbe insegnato
+// soltanto a usare il terreno come dispensa. Adesso c'è la cassa, quindi il
+// debito si può pagare.
 export const CATALOGO = {
   legna: { nome: "Legna", icona: arte.LEGNA, pila: 40 },
   ramo: { nome: "Ramo", icona: arte.RAMO, pila: 40 },
@@ -22,6 +31,9 @@ export const CATALOGO = {
     pila: 20,
     commestibile: { fame: 0.3 },
     cuoce: "bacche_secche",
+    // Tre giorni, cioè poco meno di una stagione: un cespuglio strappato a
+    // settembre non attraversa l'inverno, ed è tutto il punto.
+    dura: 3,
   },
   // La torcia serve in due modi, entrambi visibili: in mano illumina chi la
   // porta, piantata resta accesa dove l'hai lasciata.
@@ -74,6 +86,10 @@ export const CATALOGO = {
     pila: 20,
     commestibile: { fame: 0.6 },
     cuoce: "rapa_arrostita",
+    // Il doppio delle bacche, ed è giusto: è una radice, e una radice si
+    // tiene. Sei giorni sono una stagione e mezza — un raccolto d'autunno
+    // arriva all'inverno, ma non lo attraversa tutto.
+    dura: 6,
   },
   // I due cibi cotti. Non sono una dispensa — quella vuole i contenitori, che
   // sono della tappa della costruzione — sono lo stesso raccolto che vale
@@ -81,17 +97,31 @@ export const CATALOGO = {
   // il terzo mestiere dopo la luce e il calore, e con esso una ragione per
   // tornare all'accampamento: che è anche il posto in cui di notte non ti
   // trovano.
+  // Arrostire e seccare erano la stessa mossa — metti sul fuoco, vale di più
+  // — e con il guasto diventano due mosse opposte, senza che sia stato
+  // aggiunto niente: è quello che i due cibi già dicevano di essere.
+  //
+  // Arrostire raddoppia il valore e dimezza la durata: si cuoce quello che si
+  // sta per mangiare. Due giorni sono meno di una rapa cruda, e non è una
+  // punizione — è quello che fa una cosa cotta.
   rapa_arrostita: {
     nome: "Rapa arrostita",
     icona: arte.RAPA_ARROSTITA,
     pila: 20,
     commestibile: { fame: 1 },
+    dura: 2,
   },
+  // Seccare invece è conservare, ed è l'unica cosa nel gioco che dura più di
+  // una stagione. Nutre meno di una rapa arrostita e vale il triplo delle
+  // bacche da cui viene: non è il cibo con cui si mangia bene, è il cibo con
+  // cui si arriva a marzo. Il falò guadagna qui il suo quarto mestiere, e non
+  // è stato aggiunto nessun oggetto per dirlo.
   bacche_secche: {
     nome: "Bacche secche",
     icona: arte.BACCHE_SECCHE,
     pila: 20,
     commestibile: { fame: 0.45 },
+    dura: 10,
   },
   giaciglio: {
     nome: "Giaciglio",
@@ -100,6 +130,10 @@ export const CATALOGO = {
     posa: OGGETTO.GIACIGLIO,
   },
   falo: { nome: "Falò", icona: arte.FALO, pila: 5, posa: OGGETTO.FALO_ACCESO },
+  // La cassa è il primo posto tuo che non sia il terreno. Si impila a tre
+  // perché portarsene dietro una scorta non ha senso: quello che conta di una
+  // cassa è dove la metti, e una volta messa non la sposti più.
+  cassa: { nome: "Cassa", icona: arte.CASSA_ICONA, pila: 3, posa: OGGETTO.CASSA },
   // La benda è la risposta al morso, e fa due cose diverse: rimargina un po'
   // e toglie l'infezione. Non è cibo, quindi non sta fra i commestibili — ma
   // si usa con lo stesso tasto, perché "usa quello che hai in mano su di te"
@@ -287,6 +321,19 @@ export const RACCOLTA = {
     colpi: 1,
     voce: "pietra",
     resa: [{ cosa: "falo", quante: 1 }],
+  },
+  // Una cassa si riprende, ma solo vuota, e a dirlo è azioni.js. Il motivo è
+  // che una cassa piena sollevabile sarebbe uno zaino da dodici caselle: il
+  // limite dello zaino è una delle poche cose che in un survival costringono
+  // a scegliere, e un modo di aggirarlo lo cancellerebbe. Vuota invece si
+  // sposta, perché sbagliare dove costruire deve costare fatica e non la
+  // cassa.
+  [OGGETTO.CASSA]: {
+    verbo: "Raccogli",
+    colpi: 1,
+    voce: "legno",
+    scheggie: ["w", "c", "h"],
+    resa: [{ cosa: "cassa", quante: 1 }],
   },
 };
 

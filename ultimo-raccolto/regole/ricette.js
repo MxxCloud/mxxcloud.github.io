@@ -59,6 +59,17 @@ export const RICETTE = [
     produce: { cosa: "benda", quante: 1 },
     costo: [{ cosa: "fibra", quante: 3 }],
   },
+  // La cassa è la ricetta più cara del gioco, e deve esserlo: è la prima cosa
+  // che non serve a fare qualcosa ma a tenere qualcosa, cioè il primo pezzo
+  // di un posto invece che di un corredo. Otto legne sono tre alberi.
+  {
+    id: "cassa",
+    produce: { cosa: "cassa", quante: 1 },
+    costo: [
+      { cosa: "legna", quante: 8 },
+      { cosa: "fibra", quante: 3 },
+    ],
+  },
   {
     id: "falo",
     produce: { cosa: "falo", quante: 1 },

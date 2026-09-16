@@ -85,6 +85,11 @@ const CATALOGO_OGGETTI = {
   // passaggio stretto sarebbe un muro costruito dalla propria sfortuna.
   [OGGETTO.CADAVERE]: { sprite: coseArte.CADAVERE, solido: false },
 
+  // La cassa ferma, e deve: è un mobile. Camminarci dentro toglierebbe
+  // l'unica cosa che la rende un posto invece di un oggetto — che sta lì,
+  // ingombra, e bisogna girarci attorno per arrivare alla porta.
+  [OGGETTO.CASSA]: { sprite: coseArte.CASSA, solido: true },
+
   // Una torcia piantata è luce fissa che costa molto meno di un falò, e non
   // ferma: è un bastone, ci si passa accanto.
   [OGGETTO.TORCIA_PIANTATA]: {
