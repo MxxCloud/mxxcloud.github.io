@@ -170,6 +170,12 @@ export const RACCOLTA = {
     // Sono volutamente più chiare dell'albero: legno vivo e foglia in luce.
     // Con i colori della chioma sparivano dentro la chioma, che è il modo più
     // sicuro di costruire un riscontro che non si vede.
+    // Di che cosa è fatto, cioè come suona quando lo colpisci. Sta qui
+    // accanto alle scheggie perché è la stessa dichiarazione fatta per
+    // l'altro senso: quelle dicono di che colore vola via, questa di che
+    // rumore fa. Un materiale e non una voce già pronta, così aggiungere un
+    // oggetto è scrivere "legno" e non tarare un suono.
+    voce: "legno",
     scheggie: ["w", "w", "k", "h"],
     resa: [
       { cosa: "legna", quante: 3 },
@@ -179,6 +185,7 @@ export const RACCOLTA = {
   [OGGETTO.SASSO]: {
     verbo: "Spacca",
     colpi: 2,
+    voce: "pietra",
     scheggie: ["f", "s", "e"],
     resa: [{ cosa: "pietra", quante: 2 }],
   },
@@ -193,6 +200,7 @@ export const RACCOLTA = {
   [OGGETTO.CESPUGLIO]: {
     verbo: "Strappa",
     colpi: 1,
+    voce: "erba",
     scheggie: ["k", "a", "w"],
     resa: [
       // La fibra non ha finestra, e non per pigrizia: è stelo secco, ce n'è
@@ -226,12 +234,14 @@ export const RACCOLTA = {
   [OGGETTO.FALO_ACCESO]: {
     verbo: "Raccogli",
     colpi: 1,
+    voce: "fuoco",
     scheggie: ["u", "v", "g"],
     resa: [{ cosa: "falo", quante: 1 }],
   },
   [OGGETTO.TORCIA_PIANTATA]: {
     verbo: "Raccogli",
     colpi: 1,
+    voce: "fuoco",
     scheggie: ["u", "v"],
     resa: [{ cosa: "torcia", quante: 1 }],
   },
@@ -241,6 +251,7 @@ export const RACCOLTA = {
   [OGGETTO.GIACIGLIO]: {
     verbo: "Raccogli",
     colpi: 1,
+    voce: "erba",
     scheggie: ["9", "a", "h"],
     resa: [{ cosa: "giaciglio", quante: 1 }],
   },
@@ -250,6 +261,7 @@ export const RACCOLTA = {
   [OGGETTO.MATURA]: {
     verbo: "Raccogli",
     colpi: 1,
+    voce: "erba",
     scheggie: ["y", "x", "5"],
     resa: [
       { cosa: "rapa", quante: 2 },
@@ -266,12 +278,14 @@ export const RACCOLTA = {
   [OGGETTO.APPASSITA]: {
     verbo: "Ripulisci",
     colpi: 1,
+    voce: "erba",
     scheggie: ["9", "a", "g"],
     resa: [{ cosa: "fibra", quante: 1 }],
   },
   [OGGETTO.FALO_SPENTO]: {
     verbo: "Raccogli",
     colpi: 1,
+    voce: "pietra",
     resa: [{ cosa: "falo", quante: 1 }],
   },
 };

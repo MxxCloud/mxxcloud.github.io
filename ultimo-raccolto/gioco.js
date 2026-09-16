@@ -10,6 +10,8 @@ import * as ciclo from "./motore/ciclo.js";
 import * as comandi from "./motore/comandi.js";
 import * as oscurita from "./motore/oscurita.js";
 import * as scheggie from "./motore/scheggie.js";
+import * as suono from "./motore/suono.js";
+import { impronta } from "./motore/casuale.js";
 import * as mappa from "./mondo/mappa.js";
 import * as modifiche from "./mondo/modifiche.js";
 import * as entita from "./entita/entita.js";
@@ -22,6 +24,7 @@ import * as salute from "./regole/salute.js";
 import * as freddo from "./regole/freddo.js";
 import * as infetti from "./regole/infetti.js";
 import * as chiasso from "./regole/chiasso.js";
+import * as udito from "./regole/udito.js";
 import * as orto from "./regole/orto.js";
 import * as stagioni from "./regole/stagioni.js";
 import * as decadimento from "./regole/decadimento.js";
@@ -30,6 +33,13 @@ import * as salvataggio from "./regole/salvataggio.js";
 import * as sincronia from "./regole/sincronia.js";
 import { tavolozzaDi, tavolozzaBagnataDi } from "./arte/tavolozza.js";
 import { FIORI } from "./arte/sprite-fiori.js";
+// Le voci una per una e non tutto il modulo: qui dentro "voci" è già la
+// lista delle caselle di salvataggio, e due significati per la stessa parola
+// nello stesso file sono l'errore che si scopre tardi.
+import {
+  colpoDi, MORSO, COLPO_A_SEGNO, CADUTO, ZAPPA, SEMINA, ACQUA, SORSO, MANGIA,
+  BENDA, POSA, SCELTA, FATTO, NEGATO, PRESO, GELO, MORTE,
+} from "./arte/voci.js";
 import * as inventario from "./regole/inventario.js";
 import * as azioni from "./regole/azioni.js";
 import { RICETTE, fai } from "./regole/ricette.js";
@@ -46,7 +56,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M6.6";
+const VERSIONE = "M6.7";
 
 // --- elementi -------------------------------------------------------------
 
@@ -117,6 +127,18 @@ function annuncia(testo, colore) {
   messaggio = { testo: testo.toUpperCase(), colore, vita: 1 };
 }
 
+// Il primo tasto chiude l'apertura, e chiudendola accende anche il suono.
+//
+// Un browser non fa partire l'audio finché chi guarda non ha toccato niente, e
+// di solito quella regola si paga con un cartello "clicca per attivare
+// l'audio". Qui il gesto c'era già — questa schermata si toglie con un tasto
+// qualsiasi — quindi il tasto che comincia la partita è anche il gesto che
+// accende le casse, e di cartelli non ne serve nessuno.
+function chiudiLApertura() {
+  aperturaVisibile = false;
+  suono.sblocca();
+}
+
 // --- la morte -------------------------------------------------------------
 
 // Il mondo non avanza quando c'è una schermata davanti. La morte è una di
@@ -133,6 +155,7 @@ function mondoFermo() {
 // partita invece della fine di un superstite.
 function muori(causa) {
   mortoDi = causa;
+  suono.suona(MORTE);
   corpo = azioni.lasciaIlCadavere(eroe, tempo.giornoCorrente());
   // Niente messaggio di passaggio: ce n'è una schermata intera che lo dice, e
   // un messaggio che svanisce dietro di essa sarebbe rumore.
@@ -149,6 +172,7 @@ function nuovoSuperstite() {
   salute.reimposta();
   bisogni.reimposta();
   chiasso.reimposta();
+  udito.reimposta();
   gelando = false;
   lampoDanno = 0;
 
@@ -590,10 +614,10 @@ function leggiComandi() {
     // comando, chi preme la barra per toglierla di mezzo darebbe una zappata
     // a caso senza capire perché.
     for (const azione of comandi.AZIONI) {
-      if (comandi.appenaPremuto(azione)) { aperturaVisibile = false; return; }
+      if (comandi.appenaPremuto(azione)) { chiudiLApertura(); return; }
     }
     for (let i = 0; i < comandi.CASELLE; i += 1) {
-      if (comandi.appenaPremuto(`casella${i + 1}`)) { aperturaVisibile = false; return; }
+      if (comandi.appenaPremuto(`casella${i + 1}`)) { chiudiLApertura(); return; }
     }
     return;
   }
@@ -624,12 +648,22 @@ function leggiComandi() {
 
   for (let i = 0; i < comandi.CASELLE; i += 1) {
     if (comandi.appenaPremuto(`casella${i + 1}`)) {
+      suono.suona(SCELTA);
       if (ricetteAperte && i < RICETTE.length) ricettaScelta = i;
       else casellaScelta = i;
     }
   }
 
   if (comandi.appenaPremuto("minimappa")) minimappaVisibile = !minimappaVisibile;
+
+  // Il volume gira fra muto, piano e forte. Si dice a schermo perché muto e
+  // piano, con niente che stia suonando in quel momento, sono indistinguibili
+  // — e un tasto che sembra non fare niente si preme due volte.
+  if (comandi.appenaPremuto("suono")) {
+    const adesso = suono.cambiaLivello();
+    suono.suona(SCELTA);
+    annuncia(`suono: ${adesso}`, "#8fa8d8");
+  }
 
   if (comandi.appenaPremuto("mappa")) {
     mappaAperta = !mappaAperta;
@@ -647,11 +681,14 @@ function leggiComandi() {
       // deciderlo è cosa è stato ristorato invece di un elenco di cose da
       // bere da tenere aggiornato altrove.
       const beve = (esito.ristorato?.sete ?? 0) > 0;
+      suono.suona(beve ? SORSO : MANGIA);
       annuncia(beve ? "bevi" : `mangi: ${nomeDi(esito.cosa)}`, beve ? "#8fb8d8" : "#9ec97e");
     }
     else if (esito?.tipo === "medicato") {
+      suono.suona(BENDA);
       annuncia(esito.curata ? "fasciato: l'infezione è passata" : "ti sei fasciato", "#9ec97e");
     } else if (esito?.tipo === "nonServe") {
+      suono.suona(NEGATO);
       annuncia("non ne hai bisogno adesso", "#c9b189");
     }
   }
@@ -659,8 +696,10 @@ function leggiComandi() {
   if (comandi.appenaPremuto("getta")) {
     const esito = azioni.getta(eroe, casellaScelta);
     if (esito?.tipo === "gettato") {
+      suono.suona(POSA);
       annuncia(`posato per terra: ${esito.quante} ${nomeDi(esito.cosa)}`, "#c9b189");
     } else if (esito?.tipo === "nonCePosto") {
+      suono.suona(NEGATO);
       annuncia("davanti non c'è posto", "#c0705f");
     }
   }
@@ -675,6 +714,7 @@ function leggiComandi() {
   if (ricetteAperte) {
     const ricetta = RICETTE[ricettaScelta];
     const esito = fai(ricetta);
+    suono.suona(esito.fatto ? FATTO : NEGATO);
     if (esito.fatto) annuncia(`fatto: ${nomeDi(ricetta.produce.cosa)}`, "#9ec97e");
     else if (esito.perche === "zaino") annuncia("zaino pieno: getta qualcosa con G", "#c0705f");
     else annuncia("materiali insufficienti", "#c0705f");
@@ -685,19 +725,27 @@ function leggiComandi() {
   if (!esito) return;
 
   if (esito.tipo === "colpo" || esito.tipo === "raccolto") {
-    // DEBITO: qui va il suono del colpo, quando esisterà il comparto audio
-    // (M6). Provando il gioco, tremolio e scheggie sono stati giudicati
-    // sufficienti per ora — ma come ripiego dichiarato, non come soluzione:
-    // il suono resta ciò che manca davvero al gesto. Un tonfo sordo per il
-    // legno, uno schiocco secco per la pietra.
+    const finale = esito.tipo === "raccolto";
+    // Qui c'era il debito più vecchio del gioco: tremolio e scheggie erano un
+    // ripiego dichiarato, e quello che mancava al gesto era il suono. La frase
+    // scritta allora diceva già cosa serviva — un tonfo sordo per il legno,
+    // uno schiocco secco per la pietra — ed è quella che arte/voci.js ha messo
+    // in numeri.
+    //
+    // L'altezza cambia di poco da un tassello all'altro, e non a caso:
+    // l'impronta delle coordinate è la stessa funzione da cui nasce tutta la
+    // valle (vedi motore/casuale.js). Lo stesso albero suona sempre uguale,
+    // due alberi vicini no, e Math.random non compare nemmeno qui.
+    const tono = 0.9 + impronta(esito.tx, esito.ty, 0x5c01f0) * 0.22;
+    suono.suona(colpoDi(esito.voce, finale), { tono });
     colpito = { tx: esito.tx, ty: esito.ty, resta: DURATA_TREMOLIO };
     // Spaccare si sente da mezzo schermo. È il gesto che il giocatore fa più
     // spesso senza pensarci, ed è qui che di notte smette di essere gratis.
     chiasso.colpo();
     if (esito.scheggie) {
       // Il colpo che stacca ne sparge di più e più lontano: è la differenza
-      // fra "l'hai preso" e "è venuto giù".
-      const finale = esito.tipo === "raccolto";
+      // fra "l'hai preso" e "è venuto giù". Adesso la stessa differenza la
+      // dice anche la voce, che per l'ultimo colpo è più grave e più lunga.
       scheggie.sparge(
         esito.tx * TASSELLO + TASSELLO / 2,
         esito.ty * TASSELLO + TASSELLO / 2,
@@ -708,35 +756,49 @@ function leggiComandi() {
     }
   }
 
-  if (esito.tipo === "bevi") annuncia("bevi", "#8fb8d8");
-  if (esito.tipo === "riempi") annuncia(`riempiti ${esito.quanti} secchi`, "#8fb8d8");
-  if (esito.tipo === "zappa") annuncia("terra zappata", "#9ec97e");
-  if (esito.tipo === "semina") annuncia("seminato", "#9ec97e");
-  if (esito.tipo === "innaffia") annuncia("innaffiato", "#8fb8d8");
+  // A ogni gesto la sua voce. Il messaggio dice cosa è successo, il suono dice
+  // che è successo: il primo si legge, il secondo si sente senza guardare — ed
+  // è la differenza fra zappare guardando i piedi e zappare guardando il buio
+  // attorno, che di notte è quello che si vorrebbe fare.
+  if (esito.tipo === "bevi") { suono.suona(SORSO); annuncia("bevi", "#8fb8d8"); }
+  if (esito.tipo === "riempi") { suono.suona(ACQUA); annuncia(`riempiti ${esito.quanti} secchi`, "#8fb8d8"); }
+  if (esito.tipo === "zappa") { suono.suona(ZAPPA); annuncia("terra zappata", "#9ec97e"); }
+  if (esito.tipo === "semina") { suono.suona(SEMINA); annuncia("seminato", "#9ec97e"); }
+  if (esito.tipo === "innaffia") { suono.suona(ACQUA); annuncia("innaffiato", "#8fb8d8"); }
+  // Dormire non ha voce, ed è l'unico gesto che non ne ha: fra il tasto e il
+  // risveglio passano ore di gioco, e un suono attaccato a quel momento
+  // racconterebbe il tasto invece della notte.
   if (esito.tipo === "dormi") annuncia(`hai dormito fino all'alba`, "#9ec97e");
 
-  if (esito.tipo === "cotto") annuncia(`sul fuoco: ${nomeDi(esito.diventa)}`, "#e0913a");
+  if (esito.tipo === "cotto") { suono.suona(FATTO); annuncia(`sul fuoco: ${nomeDi(esito.diventa)}`, "#e0913a"); }
 
   if (esito.tipo === "combattuto") {
     // Il sangue esce sempre, e in quantità diversa: un colpo che va a segno e
     // uno che finisce il lavoro non devono sembrare lo stesso gesto. È la
     // stessa regola delle scheggie sugli alberi.
     scheggie.sparge(esito.px, esito.py - 10, esito.caduto ? 24 : 9, ["A", "A", "n"], esito.caduto ? 1.5 : 0.9);
-    if (esito.caduto) annuncia("è caduto", "#9ec97e");
+    suono.suona(COLPO_A_SEGNO);
+    if (esito.caduto) {
+      suono.suona(CADUTO);
+      annuncia("è caduto", "#9ec97e");
+    }
   }
 
   if (esito.tipo === "frugato") {
     if (esito.presi.length === 0) annuncia("non aveva niente addosso", "#c9b189");
     else {
+      suono.suona(PRESO);
       const elenco = esito.presi.map((v) => `+${v.quante} ${nomeDi(v.cosa)}`).join("  ");
       annuncia(esito.resta > 0 ? `${elenco}, il resto è ancora lì` : elenco, "#9ec97e");
     }
   }
 
   if (esito.tipo === "preso") {
+    suono.suona(PRESO);
     const quanto = `+${esito.quante} ${nomeDi(esito.cosa)}`;
     annuncia(esito.resta > 0 ? `${quanto}, ne restano ${esito.resta}` : quanto, "#9ec97e");
   } else if (esito.tipo === "zainoPieno") {
+    suono.suona(NEGATO);
     annuncia("zaino pieno: getta qualcosa con G", "#c0705f");
   } else if (esito.tipo === "raccolto") {
     const elenco = esito.ottenuto.map((v) => `+${v.quante} ${nomeDi(v.cosa)}`).join("  ");
@@ -744,6 +806,7 @@ function leggiComandi() {
     else if (esito.avanzate.length > 0) annuncia("zaino pieno: il resto è per terra", "#c9b189");
     else if (elenco) annuncia(elenco, "#9ec97e");
   } else if (esito.tipo === "posa") {
+    suono.suona(POSA);
     annuncia(`posato: ${nomeDi(esito.cosa)}`, "#9ec97e");
   }
 }
@@ -775,7 +838,10 @@ function aggiorna(passo) {
     // danno devono raccontare lo stesso momento.
     const primaGelava = gelando;
     gelando = freddo.alFreddo(eroe, cosaInMano());
-    if (gelando && !primaGelava) annuncia("stai gelando: serve una fiamma", "#8fa8d8");
+    if (gelando && !primaGelava) {
+      suono.suona(GELO);
+      annuncia("stai gelando: serve una fiamma", "#8fa8d8");
+    }
 
     salute.avanza(passo, { vuoti: bisogni.vuoti(), alFreddo: gelando });
     // Il chiasso dopo il movimento, perché dipende da come ci si è appena
@@ -788,9 +854,20 @@ function aggiorna(passo) {
     });
     infetti.sgomitano();
     const morsi = infetti.raccogliIMorsi();
-    if (morsi.morsi > 0) lampoDanno = DURATA_LAMPO;
+    if (morsi.morsi > 0) {
+      lampoDanno = DURATA_LAMPO;
+      suono.suona(MORSO);
+    }
     if (morsi.infettato) annuncia("la ferita è sporca", "#9d7fb0");
     else if (visto.appenaVisto && morsi.morsi === 0) annuncia("qualcosa ti ha visto", "#c0705f");
+
+    // L'udito dopo che tutti si sono mossi, perché quello che si sente dipende
+    // da dove sono adesso. È l'altra metà di chiasso.js — quello misura quanto
+    // lontano ti si sente, questo cosa ti arriva — e sta qui, dentro il giro
+    // del mondo fermo, per una ragione che conta: il tempo saltato (una scheda
+    // in secondo piano, una notte dormita) non passa da qui, quindi tornare
+    // dopo mezz'ora non spara mezz'ora di passi in un fotogramma.
+    udito.avanza(passo, eroe);
 
     scheggie.aggiorna(passo);
     // Si tiene aggiornata anche da spenta: scorrerla costa due centesimi di
@@ -1042,6 +1119,7 @@ function aggiornaDiagnostica() {
     `ora      ${tempo.orologio()}  giorno ${tempo.giornoCorrente()}  luce ${tempo.luceAmbiente().toFixed(2)}`,
     `settori  ${mappa.settoriInMemoria()}  in piedi ${inPiedi.length}  lumi ${lumi.length}`,
     `scheggie ${scheggie.vive()}  figure ${giocatore.figureComposte()}`,
+    `suono    ${suono.stato().livello}  contesto ${suono.stato().contesto}  voci ${suono.stato().vive}  emesse ${suono.stato().avviate}`,
     `minimappa ${minimappaVisibile ? "accesa" : "spenta"}  ricostruzioni ${minimappa.ricostruzioni()}`,
     `esplorato ${esplorato.quanti()} settori  atlante ridipinto ${mappaGrande.ridipinte()} volte`,
     `modifiche ${modifiche.quanti()}  colture ${orto.quante()}`,
@@ -1114,8 +1192,15 @@ schermo.centraSu(eroe.px, eroe.py);
 const ASSENZA_MASSIMA = 4 * 60 * 60; // quattro ore vere, cioè quarantotto giorni
 
 // Senza questo si riparte con i tasti ancora premuti: chi cambia applicazione
-// lascia il suo keyup dall'altra parte.
-ciclo.collegaSospensione(() => comandi.rilasciaTutto());
+// lascia il suo keyup dall'altra parte. E senza la seconda metà, una scheda in
+// secondo piano continuerebbe a crepitare in sottofondo mentre si lavora.
+ciclo.collegaSospensione(
+  () => {
+    comandi.rilasciaTutto();
+    suono.sospendi();
+  },
+  () => suono.riprendi()
+);
 
 // Il tempo che il ciclo non ha potuto simulare passo per passo. Arriva in
 // blocco al primo fotogramma dopo un'assenza, e qui diventa mondo: l'orologio
@@ -1186,7 +1271,7 @@ if (parametri.has("diagnostica")) {
     giocatore,
     urti,
     scegliCasella: (i) => { casellaScelta = i; },
-    chiudiApertura: () => { aperturaVisibile = false; },
+    chiudiApertura: () => { chiudiLApertura(); },
     tremolio: () => (colpito ? { ...colpito } : null),
     messaggio: () => (messaggio ? messaggio.testo : null),
     minimappa,
@@ -1200,6 +1285,8 @@ if (parametri.has("diagnostica")) {
     infetti,
     infetto,
     chiasso,
+    suono,
+    udito,
     entita,
     eMorto: () => mortoDi,
     nuovoSuperstite,

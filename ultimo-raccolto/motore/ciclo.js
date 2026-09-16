@@ -109,7 +109,12 @@ export function ferma() {
 // salto enorme nel primo fotogramma al ritorno, ed è lì che viene raccolto
 // (vedi "salto" in avvia). Misurarlo da qui conterebbe due volte tutte le
 // volte che la finestra perde il fuoco senza sparire.
-export function collegaSospensione(allUscita) {
+// Due richiami e non uno. All'inizio ne bastava uno perché l'unica cosa da
+// fare uscendo era rilasciare i tasti, e rientrando non c'era niente da
+// disfare. Il suono invece è simmetrico: una scheda in secondo piano deve
+// tacere, e tornando deve ricominciare, quindi il rientro è diventato un
+// momento a cui qualcuno tiene.
+export function collegaSospensione(allUscita, alRientro) {
   const esci = () => {
     if (fuori) return;
     fuori = true;
@@ -117,7 +122,9 @@ export function collegaSospensione(allUscita) {
   };
 
   const rientra = () => {
+    if (!fuori) return;
     fuori = false;
+    if (alRientro) alRientro();
   };
 
   addEventListener("blur", esci);

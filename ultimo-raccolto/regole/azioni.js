@@ -475,7 +475,14 @@ export function agisci(eroe, cosaInMano) {
     // non va ricotto — e se lo fosse, cancellerebbe il tremolio appena
     // cominciato.
     mappa.annotaTassello(tx, ty, { ...precedente, colpi });
-    return { tipo: "colpo", tx, ty, scheggie: raccolta.scheggie, restano: necessari - colpi };
+    return {
+      tipo: "colpo",
+      tx,
+      ty,
+      scheggie: raccolta.scheggie,
+      voce: raccolta.voce,
+      restano: necessari - colpi,
+    };
   }
 
   const ottenuto = resaDi(raccolta, tx, ty);
@@ -503,5 +510,14 @@ export function agisci(eroe, cosaInMano) {
     if (!deponiVicino(tx, ty, voce.cosa, voce.quante)) perse.push(voce);
   }
 
-  return { tipo: "raccolto", tx, ty, scheggie: raccolta.scheggie, ottenuto, avanzate, perse };
+  return {
+    tipo: "raccolto",
+    tx,
+    ty,
+    scheggie: raccolta.scheggie,
+    voce: raccolta.voce,
+    ottenuto,
+    avanzate,
+    perse,
+  };
 }

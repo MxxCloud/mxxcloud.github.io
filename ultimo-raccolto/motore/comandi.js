@@ -8,6 +8,7 @@
 export const AZIONI = [
   "su", "giu", "sinistra", "destra", "usa", "corri", "ricette", "minimappa",
   "consuma", "getta", "partita", "esporta", "importa", "spegni", "mappa",
+  "suono",
 ];
 
 // Otto caselle, otto tasti: la selezione con la rotellina o con Q/E costringe
@@ -29,6 +30,11 @@ const MAPPA = {
   Tab: "mappa",
   KeyE: "consuma",
   KeyG: "getta",
+  // "V" come volume. Non "S", che è già camminare all'indietro, e non "A",
+  // che è già camminare a sinistra: le lettere delle direzioni non si toccano,
+  // ed è la ragione per cui in questo elenco le cose si chiamano con la loro
+  // seconda lettera più ovvia invece che con la prima.
+  KeyV: "suono",
   // "P" come partita. Non "S", che è già camminare all'indietro.
   KeyP: "partita",
   // Valgono solo dentro la schermata della partita, che è modale e se li

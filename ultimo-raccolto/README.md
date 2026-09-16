@@ -33,11 +33,11 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M6.6**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M6.7**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
-anche dopo che sei morto, e adesso si rimette a posto da sola se le dai
-tempo.
+anche dopo che sei morto, si rimette a posto da sola se le dai tempo, e adesso
+**si sente**.
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
 con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne
@@ -319,6 +319,71 @@ Gli infetti non stanno nel salvataggio e non stanno nel mondo: non si contano,
 si incontrano. L'infezione invece sì che si salva — è uno stato in cui si
 vive, e chiudere la scheda non è una cura.
 
+## Il suono, che era il debito più vecchio
+
+Per sei tappe il gioco ha misurato il rumore che fai senza fartene sentire
+niente. Il colpo aveva un debito scritto nel codice — tremolio e scheggie erano
+un ripiego dichiarato — e con gli infetti il conto era raddoppiato: metà di
+quella tappa era un sistema di rumore che il giocatore non poteva udire.
+
+**Niente file audio.** I suoni sono numeri, come gli sprite sono stringhe: una
+voce dichiara la forma d'onda, l'altezza, l'inviluppo e il filtro, e
+`motore/suono.js` la costruisce quando serve. Il diff di un `.wav` non dice
+niente; il diff di `arte/voci.js` dice che il tonfo è diventato più grave e più
+corto. Tutto il comparto pesa quanto un modulo, non quanto un pacchetto di
+campioni da precaricare per giocare in treno.
+
+Ed è lo stesso conto che rende economiche le stagioni: **una voce è un
+parametro, non una costante.** Un materiale sono tre numeri — quanto è grave,
+quanto è duro, quanto risuona — e dagli stessi tre escono il colpo e il crollo.
+Il legno fa un tonfo sordo, la pietra uno schiocco secco, il cespuglio uno
+strappo che *sale* invece di scendere, perché quello che si sente è la fibra
+che si scuce e non la massa che si sposta. E l'ultimo colpo, quello che stacca,
+è più grave e più lungo: è la stessa differenza che le scheggie raccontavano
+già agli occhi.
+
+L'altezza cambia di poco da un tassello all'altro, e non a caso: l'impronta
+delle coordinate è la stessa funzione da cui nasce tutta la valle. Lo stesso
+albero suona sempre uguale, due alberi vicini no, e `Math.random` non compare
+nemmeno qui.
+
+**I passi sono agganciati alle gambe, non a un cronometro.** L'animazione
+avanza di un fotogramma ogni sette pixel percorsi, e il passo suona quando il
+piede tocca — cioè sui due fotogrammi d'appoggio del ciclo. Correre accelera la
+cadenza da sé, la fame che rallenta la rallenta da sé, e quello che
+`chiasso.js` misurava in silenzio adesso si sente: fermo non ti sentono,
+correre chiama, spaccare legna chiama molto più forte.
+
+**E finalmente si sentono loro.** Questa è la metà che non esisteva affatto.
+Nascono fra 260 e 420 pixel, e la vista arriva a 58 — 150 con una fiamma in
+pugno: per centinaia di pixel uno si avvicinava nel buio senza un solo segnale,
+e l'unico avviso arrivava quando aveva già visto te. Adesso i loro passi
+arrivano da trecento pixel, attenuati dalla distanza e spostati
+nell'orecchio da che parte sono, e chi ti insegue ringhia da trecentottanta.
+L'esclamativo resta e non è sostituito: quello dice «ti ha visto», il verso
+dice anche **da che parte**.
+
+La curva dell'attenuazione è misurata e non scelta, come le soglie del terreno.
+La prima stesura usava un esponente di 1,6 — vicino alla fisica — e contando le
+voci emesse è venuto fuori che a 290 pixel non ne partiva nessuna: il tratto in
+cui nascono era esattamente il tratto silenzioso, e «lo senti arrivare prima di
+vederlo» era falso di un centinaio di pixel. Con 1,1 a 290 si sente appena, a
+260 è un fruscio, a 150 è qualcosa che si sta avvicinando.
+
+Il falò crepita, ed è la controparte sonora del cerchio di luce: al buio
+l'accampamento si ritrova anche a orecchio. Una fiamma grande scoppietta più
+spesso e più forte di una piccola senza che la regola sappia che esistono un
+falò e una torcia — il raggio e l'intensità li dichiara già il catalogo per la
+luce, e servono identici qui.
+
+**Il primo tasto accende il suono.** Un browser non fa partire l'audio finché
+chi guarda non ha toccato niente, e di solito quella regola si paga con un
+cartello «clicca per attivare l'audio». Qui il gesto c'era già — la schermata
+d'apertura si toglie con un tasto qualsiasi — quindi il tasto che comincia la
+partita è anche quello che accende le casse. `V` gira fra muto, piano e forte,
+e il livello si ricorda in questo computer e non nel salvataggio: una partita
+viaggia fra computer, il volume appartiene alle casse.
+
 ## La mappa di strada
 
 Il pilastro ha due metà: **un posto in cui investi** e **un mondo che se lo
@@ -338,8 +403,9 @@ Da qui viene l'ordine, che non è quello immaginato all'inizio:
 | **M6** | Gli infetti | Chiasso, inseguimento, combattimento, ferite e infezione. La notte da scomoda a pericolosa. |
 | **M6.5** | Quello che la valle dà | La raccolta segue le stagioni, quello che prendi ricresce, il fuoco cucina. *Qui l'orto smette di essere facoltativo.* |
 | **M6.6** | La mappa | `TAB` apre quello che hai visto. L'esplorare lascia un segno. |
+| **M6.7** | Il suono | Il colpo si sente, e la notte si ascolta. *Qui il chiasso smette di essere un numero.* |
 | **M7** | Costruzione | Riparo, contenitori, muri: l'investimento che si difende. E il morale, che misura quel posto. Con essi il cibo che si guasta. |
-| **M8** | Superstiti, abilità, audio, rifinitura | |
+| **M8** | Superstiti, abilità, rifinitura | |
 
 **Perché la morte così tardi.** Morire conta in proporzione a quanto hai da
 perdere: prima dell'orto e delle stagioni non avresti perso niente.
@@ -374,14 +440,18 @@ Le tappe restanti sono volutamente abbozzate: l'ordine è già cambiato due
 volte per quello che è emerso costruendo, e cambierà ancora. Si dettagliano
 quando ci si arriva.
 
-**Un debito già riconosciuto, e cresciuto.** Il colpo si sente perché
-l'oggetto trema e sputa scheggie, e provandolo era sembrato abbastanza. È un
-ripiego accettato in attesa dell'audio, e con gli infetti il conto è
-raddoppiato: metà di questa tappa è un sistema di rumore che il giocatore non
-può sentire. Sa di aver fatto chiasso perché ha corso o spaccato legna, non
-perché l'ha udito, e quando ne arriva uno dal buio l'unico avviso è un
-esclamativo in alto a sinistra. Il comparto sonoro non è più rifinitura: è il
-pezzo che manca a due sistemi.
+**Il debito riconosciuto è stato pagato, e non dove era in calendario.**
+L'audio stava in M8 insieme alla rifinitura, ed era il posto sbagliato: non
+mancava una rifinitura, mancava il pezzo di due sistemi già in piedi. Il colpo
+si sentiva perché l'oggetto tremava — un ripiego accettato e scritto come tale
+nel codice — e metà di M6 era un sistema di rumore che il giocatore non poteva
+udire: sapeva di aver fatto chiasso perché aveva corso, non perché l'avesse
+sentito, e quando ne arrivava uno dal buio l'unico avviso era un esclamativo in
+alto a sinistra.
+
+È lo stesso motivo che aveva fatto nascere M6.5 fra due tappe: **un sistema che
+non fa il suo mestiere è un debito che conviene pagare prima di costruirci
+sopra**, e costruirci sopra era esattamente quello che M7 stava per fare.
 
 ## Comandi
 
@@ -396,6 +466,7 @@ pezzo che manca a due sistemi.
 | `C` | aprire e chiudere le costruzioni |
 | `M` | accendere e spegnere la minimappa |
 | `TAB` | la mappa di quello che hai visto |
+| `V` | il volume: muto, piano, forte |
 | `P` | la partita: `1`-`4` la casella, `A` `D` il modo, `F` e `I` il file, `RETE` per la sincronia |
 | `F3` | diagnostica |
 
@@ -470,9 +541,11 @@ interfaccia/            disegna lo stato, non lo cambia
 gioco.js                orchestra, possiede il DOM
 ```
 
-**`arte/`** — La tavolozza e gli sprite. Uno sprite è un array di stringhe, una
-per riga di pixel, un carattere per colore: si legge a occhio, si modifica in un
-editor di testo e in git il diff mostra quali righe di pixel sono cambiate.
+**`arte/`** — La tavolozza, gli sprite e le voci. Uno sprite è un array di
+stringhe, una per riga di pixel, un carattere per colore: si legge a occhio, si
+modifica in un editor di testo e in git il diff mostra quali righe di pixel sono
+cambiate. Una voce (`voci.js`) è la stessa idea per le orecchie — una manciata
+di numeri invece di un file audio — e per la stessa ragione.
 `sprite.js` li cuoce una volta sola in canvas fuori schermo, perché disegnare
 pixel per pixel a ogni fotogramma costerebbe quanto tutto il resto del gioco.
 La tavolozza è un parametro e non una costante: lo stesso sprite cotto con
@@ -484,7 +557,12 @@ di colore, ed è per questo che ne bastano otto per tutte le coppie di terreni
 invece di servirne una per combinazione. A mano ne esistono solo due — il lato
 nord e l'angolo nord-ovest — e le altre sei si ottengono ruotandole.
 
-**`motore/`** — Lo schermo lavora a 384x216 pixel fissi e non sa quanto sia
+**`motore/`** — I dispositivi d'uscita e la casualità. `suono.js` sta qui e non
+in `arte/` per la stessa ragione per cui ci sta `schermo.js`: possiede
+l'`AudioContext` come l'altro possiede il canvas, e non sa niente del gioco —
+gli si passa una voce e la costruisce.
+
+Lo schermo lavora a 384x216 pixel fissi e non sa quanto sia
 grande la finestra; la scala è sempre un numero intero, anche a costo di due
 bande nere, perché una scala frazionaria fa alcune righe di pixel più spesse
 delle altre. Il ciclo aggiorna a passo fisso e disegna quando capita, senza
@@ -522,6 +600,13 @@ si preme un tasto. `tempo.js` è l'orologio e la curva della luce; `oggetti.js`
 il catalogo di cosa esiste e cosa rende; `inventario.js` lo zaino;
 `ricette.js` cosa si costruisce; `azioni.js` il gesto che collega il giocatore
 al mondo.
+
+`chiasso.js` e `udito.js` sono gemelli e il nome lo dice: quanto lontano ti si
+sente, e quanto lontano senti. Sentire è una regola e non un dettaglio del
+motore — un'entità non sa cos'è la paura, il rumore o il danno, e non sa
+nemmeno di fare rumore camminando: alza il piede, e chi guarda dall'alto decide
+cosa se ne sente. È la stessa divisione per cui il superstite non sa cos'è uno
+zaino e si fa dire cosa ha in mano.
 
 **Quello che si impugna** non è disegnato accanto al superstite ma **composto
 con lui** in un'unica figura, cotta una volta e tenuta in cache per direzione,
