@@ -273,9 +273,11 @@ M7.3 — pieno e a mani vuote, e l'orologio e il calendario continuano da dove
 erano. **Riprendersi la propria
 roba è un viaggio**: si torna al corpo, ci si mette davanti e si preme la
 barra, e quello che non sta nello zaino resta addosso al cadavere per il
-secondo viaggio. Il corpo non si degrada — come i mucchi, e per una ragione
-più forte: un cadavere che marcisce prima che tu riesca a tornarci non è una
-regola, è una porta chiusa.
+secondo viaggio. Il corpo resta dov'è e non si disfa da solo, ma il cibo che
+porta addosso non è in pausa: da M7.1 ogni pila si ricorda il giorno in cui è
+stata raccolta, e quel giorno viaggia intatto dentro e fuori dal cadavere. Il
+viaggio di ritorno ha quindi una scadenza — un corpo raggiunto una stagione
+dopo restituisce roba che sparirà alla prima alba.
 
 **Gli infetti** escono col buio. Non c'è un secondo concetto — niente tane,
 niente orde, nessun contatore — perché la frase da consegnare è una: di notte
@@ -502,9 +504,14 @@ raccolto d'autunno e l'inverno smette di essere un problema, cioè si toglie
 esattamente la cosa che le stagioni erano venute a portare. Rallentando, la
 domanda resta quella e cambia solo di scala.
 
-Il cadavere no. Quello che un superstite si è lasciato dietro morendo resta
-come l'ha lasciato, perché un corpo che marcisce prima che tu riesca a
-tornarci non è una regola, è una porta chiusa.
+Il cadavere non è un'eccezione, ed è la correzione più severa di M7.4. Non
+marcisce sul posto — il cambio di giorno non visita i corpi — ma quello che ne
+esce si porta dietro la data in cui l'avevi raccolto, quindi i giorni passati a
+tornare indietro li ha contati l'orologio come dappertutto. La freschezza in
+questo gioco è un dato solo, il giorno in cui hai preso quella roba, e non
+esiste posto che lo riscriva: **né il terreno, né il corpo del superstite di
+prima**. Riprendersi la propria roba resta un viaggio, ma adesso è un viaggio
+con una scadenza.
 
 **Arrostire e seccare erano la stessa mossa, e diventano due mosse opposte.**
 Fino a qui il fuoco faceva una cosa sola — metti sopra, vale di più — e con il

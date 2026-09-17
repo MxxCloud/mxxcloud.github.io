@@ -19,9 +19,15 @@
 // scritta, e la condizione è la cassa.
 //
 // Adesso il cibo si guasta ovunque stia — zaino, mucchio, cassa — e la cassa
-// lo rallenta invece di fermarlo. Il cadavere no: quello che uno si è lasciato
-// dietro morendo resta come l'ha lasciato, perché un corpo che marcisce prima
-// che tu riesca a tornarci non è una regola, è una porta chiusa.
+// lo rallenta invece di fermarlo. Il cadavere non fa eccezione: nuovoGiorno()
+// non lo visita, quindi non marcisce sul posto casella per casella, ma ogni
+// cosa che ne esce si porta dietro la data in cui è stata raccolta, e i giorni
+// passati a cercare il corpo li ha contati l'orologio come dappertutto. Una
+// prima versione di questa regola faceva del cadavere un posto in cui il tempo
+// si ferma; era una gentilezza che non tornava con niente — qui la freschezza
+// è una sola cosa, il giorno in cui hai preso quella roba, e non esiste
+// contenitore che lo riscriva. Recuperare il proprio corpo è un viaggio con
+// una scadenza: quello che c'era dentro può benissimo essere andato.
 
 import { OGGETTO } from "../mondo/generazione.js";
 import * as mappa from "../mondo/mappa.js";
