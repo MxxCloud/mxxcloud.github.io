@@ -485,7 +485,7 @@ export function disegnaRicette(p, { scelta, alBanco }) {
 // versione: chi raccoglieva legna non aveva modo di scoprire che serviva a
 // costruire, perché niente sullo schermo nominava il tasto. Un sistema che
 // non si trova è come se non ci fosse.
-export function disegnaPromemoria(p, barra, cosaInMano) {
+export function disegnaPromemoria(p, barra, cosaInMano, allaPorta = false) {
   const righe = ["C  COSTRUIRE"];
 
   // Il promemoria del mangiare compare solo con qualcosa di commestibile in
@@ -509,6 +509,12 @@ export function disegnaPromemoria(p, barra, cosaInMano) {
   // venti minuti prima.
   if (inventario.pieno()) righe.push("G  GETTA PER TERRA");
 
+  // E stessa regola per la porta: il tasto che la stacca si nomina davanti a
+  // una porta e in nessun altro momento. Senza, sarebbe una riga fissa per un
+  // gesto che si fa due volte in una partita; con, è la risposta alla domanda
+  // che uno si fa proprio lì — e adesso come la tolgo?
+  if (allaPorta) righe.push("X  STACCA LA PORTA");
+
   let y = barra.y + 7 - (righe.length - 1) * 7;
   for (const scritta of righe) {
     testo.disegnaConOmbra(p, scritta, barra.x0 - testo.larghezza(scritta) - 8, y, TENUE);
@@ -526,6 +532,7 @@ const COMANDI = [
   ["C", "COSTRUIRE"],
   ["E", "MANGIARE O FASCIARTI"],
   ["G", "POSARE PER TERRA CIÒ CHE HAI IN MANO"],
+  ["X", "STACCARE LA PORTA CHE HAI DAVANTI"],
   ["M", "MINIMAPPA"],
   ["TAB", "LA MAPPA DI QUELLO CHE HAI VISTO"],
   ["V", "IL VOLUME: MUTO, PIANO, FORTE"],

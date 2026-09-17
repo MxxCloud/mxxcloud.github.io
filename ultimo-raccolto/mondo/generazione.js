@@ -64,6 +64,13 @@ export const OGGETTO = {
   // Il banco da lavoro. Torna a essere una cosa che posa il giocatore, ed è
   // la prima che gli dà un privilegio: certe cose si fanno solo qui.
   BANCO: 19,
+  // La porta, nei suoi due stati. Sono due oggetti e non un oggetto con una
+  // bandierina per la ragione per cui i quattro stadi dell'orto sono quattro
+  // oggetti: quello che sta su un tassello è un identificatore, e la cottura
+  // dei settori guarda quello. Una porta che cambia disegno senza cambiare
+  // identificatore sarebbe una porta che si apre e resta chiusa a vedersi.
+  PORTA: 20,
+  PORTA_APERTA: 21,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati
