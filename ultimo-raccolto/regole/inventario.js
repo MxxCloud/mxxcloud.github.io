@@ -41,7 +41,11 @@ export function quante(cosa) {
 //
 // Si arrotonda per difetto, cioè verso il vecchio: fra due torti, quello che
 // fa perdere del cibo è meno grave di quello che lo fa durare per sempre.
-function mescolaDate(dalA, quanteA, dalB, quanteB) {
+// Esportata perché serve anche ai mucchi per terra: due pile che si uniscono
+// sul terreno devono comportarsi come due pile che si uniscono nello zaino o
+// in una cassa. Tre regole diverse per la stessa cosa sarebbero tre posti in
+// cui sistemare lo stesso difetto.
+export function mescolaDate(dalA, quanteA, dalB, quanteB) {
   if (dalA === undefined) return dalB;
   if (dalB === undefined) return dalA;
   return Math.floor((dalA * quanteA + dalB * quanteB) / (quanteA + quanteB));

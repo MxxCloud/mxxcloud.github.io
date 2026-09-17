@@ -171,16 +171,38 @@ function posabile(b) {
 // Mettere qualcosa per terra. Un tassello regge un mucchio solo, quindi o è
 // libero, o contiene già la stessa cosa e allora si sommano: due mucchi di
 // legna affiancati sarebbero soltanto due tasselli occupati.
-function deponi(tx, ty, cosa, quante) {
+//
+// "dal" viaggia con la roba, e senza di esso il terreno era una macchina per
+// ringiovanire il cibo: si gettava una rapa vecchia di cinque giorni e la si
+// riprendeva appena colta. Peggio ancora il ramo che somma — rifacendo il
+// tassello senza data buttava via anche l'età del mucchio che c'era, quindi
+// bastava una bacca fresca per rimettere a nuovo una pila intera.
+//
+// Quando due pile si uniscono la data si mescola con la stessa regola dello
+// zaino e della cassa (media pesata, arrotondata verso il vecchio): è la
+// ragione per cui mescolaDate sta in inventario.js ed è esportata invece di
+// essere riscritta qui.
+function deponi(tx, ty, cosa, quante, dal) {
   const oggetto = mappa.oggettoDi(tx, ty);
+  // Solo il cibo porta una data, come in mettiIn(): darla anche alla legna
+  // vorrebbe dire un campo per mucchio che non serve a nessuno.
+  const deperibile = CATALOGO[cosa]?.dura !== undefined;
+  const quando = deperibile ? (dal ?? tempo.giornoCorrente()) : undefined;
+
   if (oggetto === OGGETTO.MUCCHIO) {
     const dati = modifiche.di(tx, ty);
     if (dati?.cosa !== cosa) return false;
-    mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.MUCCHIO, cosa, quante: dati.quante + quante });
+    const cambio = { oggetto: OGGETTO.MUCCHIO, cosa, quante: dati.quante + quante };
+    if (deperibile) {
+      cambio.dal = inventario.mescolaDate(dati.dal, dati.quante, quando, quante);
+    }
+    mappa.cambiaTassello(tx, ty, cambio);
     return true;
   }
   if (oggetto !== OGGETTO.NESSUNO || mappa.solidoIn(tx, ty)) return false;
-  mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.MUCCHIO, cosa, quante });
+  const cambio = { oggetto: OGGETTO.MUCCHIO, cosa, quante };
+  if (deperibile) cambio.dal = quando;
+  mappa.cambiaTassello(tx, ty, cambio);
   return true;
 }
 
@@ -192,9 +214,9 @@ const INTORNO = [
   [-1, -1], [1, -1], [1, 1], [-1, 1],
 ];
 
-function deponiVicino(tx, ty, cosa, quante) {
+function deponiVicino(tx, ty, cosa, quante, dal) {
   for (const [dx, dy] of INTORNO) {
-    if (deponi(tx + dx, ty + dy, cosa, quante)) return { tx: tx + dx, ty: ty + dy };
+    if (deponi(tx + dx, ty + dy, cosa, quante, dal)) return { tx: tx + dx, ty: ty + dy };
   }
   return null;
 }
@@ -208,7 +230,7 @@ export function getta(eroe, indice) {
   if (!casella) return null;
 
   const { tx, ty } = bersaglio(eroe);
-  if (!deponi(tx, ty, casella.cosa, casella.quantita)) return { tipo: "nonCePosto" };
+  if (!deponi(tx, ty, casella.cosa, casella.quantita, casella.dal)) return { tipo: "nonCePosto" };
 
   inventario.svuotaCasella(indice);
   return { tipo: "gettato", cosa: casella.cosa, quante: casella.quantita, tx, ty };
@@ -260,16 +282,22 @@ function postoPerIlCorpo(tx0, ty0) {
 // in due posti diversi, e svuotarlo in un altro file vorrebbe dire poterlo
 // dimenticare.
 //
-// Il cadavere non si degrada, come non si degradano i mucchi, e per la stessa
-// ragione scritta nel README: finché non esistono i contenitori, farlo marcire
-// toglierebbe l'unico ripostiglio che c'è. Qui però la ragione è più forte —
-// un cadavere che marcisce prima che tu riesca a tornarci non è una regola,
-// è una porta chiusa.
+// Il corpo resta dov'è e non si disfa da solo — il cambio di giorno non
+// visita i cadaveri — ma quello che porta addosso non è in pausa: ogni pila
+// parte con la sua data e quella data non viene riscritta da nessuno. Questo
+// commento diceva il contrario fino a M7.4, ed era vero finché il cibo non si
+// guastava da nessuna parte; adesso la freschezza è un dato solo e il corpo
+// non è il posto in cui si azzera.
 export function lasciaIlCadavere(eroe, giorno) {
   const roba = inventario
     .contenuto()
     .filter(Boolean)
-    .map((casella) => ({ cosa: casella.cosa, quantita: casella.quantita }));
+    // La data parte con la roba. Il tempo in cui il corpo è rimasto lì conta
+    // come conta dappertutto: un corpo lasciato una stagione restituisce roba
+    // spesa, che sparisce alla prima alba. È più severo di com'era scritto
+    // prima — vedi decadimento.js — ed è una regola sola invece di
+    // un'eccezione.
+    .map((casella) => ({ cosa: casella.cosa, quantita: casella.quantita, dal: casella.dal }));
   inventario.svuota();
 
   const tx0 = Math.floor(eroe.px / TASSELLO);
@@ -384,10 +412,12 @@ export function agisci(eroe, cosaInMano) {
     // Si prende quello che ci sta, e il resto resta lì. Far sparire un mucchio
     // perché lo zaino era pieno sarebbe lo stesso difetto da cui nascono i
     // mucchi.
-    const resto = inventario.aggiungi(dati.cosa, dati.quante);
+    const resto = inventario.aggiungi(dati.cosa, dati.quante, dati.dal);
     if (resto === dati.quante) return { tipo: "zainoPieno" };
     if (resto > 0) {
-      mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.MUCCHIO, cosa: dati.cosa, quante: resto });
+      // Quello che resta per terra tiene l'età che aveva: prenderne metà non
+      // è un modo di rinfrescare l'altra metà.
+      mappa.cambiaTassello(tx, ty, { ...dati, oggetto: OGGETTO.MUCCHIO, cosa: dati.cosa, quante: resto });
     } else {
       mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
     }
@@ -405,9 +435,9 @@ export function agisci(eroe, cosaInMano) {
     const rimasto = [];
     const presi = [];
     for (const voce of roba) {
-      const resto = inventario.aggiungi(voce.cosa, voce.quantita);
+      const resto = inventario.aggiungi(voce.cosa, voce.quantita, voce.dal);
       if (resto < voce.quantita) presi.push({ cosa: voce.cosa, quante: voce.quantita - resto });
-      if (resto > 0) rimasto.push({ cosa: voce.cosa, quantita: resto });
+      if (resto > 0) rimasto.push({ cosa: voce.cosa, quantita: resto, dal: voce.dal });
     }
 
     if (presi.length === 0 && rimasto.length > 0) return { tipo: "zainoPieno" };
