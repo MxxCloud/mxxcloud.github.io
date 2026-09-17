@@ -549,3 +549,95 @@ export const BACCHE_SECCHE = [
   "............",
   "............",
 ];
+
+// --- il muro e la porta ---------------------------------------------------
+
+// Il muro non ha un disegno nuovo: quello per terra è MURO, che sta in
+// sprite-oggetti.js da quando esistono le rovine. Qui c'è solo l'icona, cioè
+// la faccia che fa nello zaino: tre corsi di pietra visti di fronte, perché
+// una casella dello zaino non ha il posto per far capire altro.
+export const MURO_ICONA = [
+  "............",
+  "............",
+  ".ffffffffff.",
+  ".dddddddddd.",
+  ".eeddeeeedd.",
+  ".dddddddddd.",
+  ".ddeeeeddee.",
+  ".dddddddddd.",
+  ".eeddeeeedd.",
+  ".dddddddddd.",
+  "............",
+  "............",
+];
+
+// La porta chiusa. Alta venti come il muro, perché sta dentro un muro e i due
+// disegni si appoggiano allo stesso pavimento: uno più basso avrebbe fatto un
+// gradino in mezzo alla parete. Gli stipiti sono di pietra e le assi di legno,
+// che è anche quello che costa — pietra il muro, legna la porta.
+export const PORTA = [
+  "ffffffffffffffff",
+  "ffffffffffffffff",
+  "eeeeeeeeeeeeeeee",
+  "dddddddddddddddd",
+  "edwwwwwwwwwwwwde",
+  "edhhghhghhghhgde",
+  "edhhghhghhghhgde",
+  "edhhghhghhghhgde",
+  "edssssssssssssde",
+  "edhhghhghhghhgde",
+  "edhhghhghhghhgde",
+  "edhhghhghhgshgde",
+  "edhhghhghhghhgde",
+  "edhhghhghhghhgde",
+  "edhhghhghhghhgde",
+  "edssssssssssssde",
+  "edhhghhghhghhgde",
+  "edhhghhghhghhgde",
+  "edhhghhghhghhgde",
+  "edggggggggggggde",
+];
+
+// La stessa porta aperta: gli stipiti restano, il battente è accostato contro
+// quello di sinistra e in mezzo si vede il terreno. Il vuoto è trasparente e
+// non nero: un rettangolo scuro in mezzo a un muro si legge come una stanza
+// buia, e questa è un'uscita.
+export const PORTA_APERTA = [
+  "ffffffffffffffff",
+  "ffffffffffffffff",
+  "eeeeeeeeeeeeeeee",
+  "dddddddddddddddd",
+  "edwww.........de",
+  "edhhg.........de",
+  "edhhg.........de",
+  "edhhg.........de",
+  "edsss.........de",
+  "edhhg.........de",
+  "edhhg.........de",
+  "edhsg.........de",
+  "edhhg.........de",
+  "edhhg.........de",
+  "edhhg.........de",
+  "edsss.........de",
+  "edhhg.........de",
+  "edhhg.........de",
+  "edhhg.........de",
+  "edggg.........de",
+];
+
+// L'icona: una porta chiusa nel suo stipite, che è l'unico modo di far capire
+// in dodici pixel che non è una cassa in piedi.
+export const PORTA_ICONA = [
+  "............",
+  "..dddddddd..",
+  "..dwwwwwwd..",
+  "..dhhghhgd..",
+  "..dssssssd..",
+  "..dhhghhgd..",
+  "..dhhghhgd..",
+  "..dhhgshgd..",
+  "..dhhghhgd..",
+  "..dssssssd..",
+  "..dhhghhgd..",
+  "..dggggggd..",
+];

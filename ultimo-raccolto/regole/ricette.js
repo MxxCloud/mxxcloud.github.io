@@ -133,6 +133,32 @@ export const RICETTE = [
       { cosa: "fibra", quante: 3 },
     ],
   },
+  // Il muro e la porta rispondono alla notte, che da M6 è pericolosa ovunque
+  // allo stesso modo: in mezzo a un prato e in mezzo al proprio orto. Fino a
+  // qui niente di quello che si costruiva cambiava quello che ti capitava.
+  //
+  // Tre pietre l'uno, e la pietra è l'unica cosa che non ricresce: un recinto
+  // non si paga con una passeggiata, si paga smontando il paese. È il motivo
+  // per cui le rovine sono piene di muri, e adesso quella pietra ha una
+  // destinazione — la casa di chi non c'è più diventa la propria.
+  {
+    id: "muro",
+    banco: true,
+    produce: { cosa: "muro", quante: 1 },
+    costo: [{ cosa: "pietra", quante: 3 }],
+  },
+  // La porta è di legna perché deve essere la parte che si rifà: quando gli
+  // infetti sfondano qualcosa, sfondano quello che sta sul passaggio, e una
+  // cosa che si rompe spesso non può costare la risorsa che non torna.
+  {
+    id: "porta",
+    banco: true,
+    produce: { cosa: "porta", quante: 1 },
+    costo: [
+      { cosa: "legna", quante: 6 },
+      { cosa: "fibra", quante: 2 },
+    ],
+  },
   // La conserva risponde all'inverno, che da M7.1 ha un orologio addosso.
   // Seccare al fuoco dà il cibo che nutre, questa dà il cibo che aspetta: sei
   // bacche diventano due vasi che valgono meno di quelle sei e durano un anno

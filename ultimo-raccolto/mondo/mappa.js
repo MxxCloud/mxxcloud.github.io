@@ -100,6 +100,13 @@ const CATALOGO_OGGETTI = {
   // ingombra, e bisogna girarci attorno per arrivare alla porta.
   [OGGETTO.CASSA]: { sprite: coseArte.CASSA, solido: true },
 
+  // La porta: lo stesso tassello in due stati, e la differenza fra i due è
+  // tutta qui. Chiusa ferma come un muro, aperta non ferma niente — e non ha
+  // una via di mezzo, perché a sedici pixel una porta socchiusa sarebbe un
+  // disegno diverso che si comporta uguale.
+  [OGGETTO.PORTA]: { sprite: coseArte.PORTA, solido: true },
+  [OGGETTO.PORTA_APERTA]: { sprite: coseArte.PORTA_APERTA, solido: false },
+
   // Una torcia piantata è luce fissa che costa molto meno di un falò, e non
   // ferma: è un bastone, ci si passa accanto.
   [OGGETTO.TORCIA_PIANTATA]: {
@@ -307,6 +314,58 @@ export function bancoVicino(tx, ty, raggio = 3) {
     }
   }
   return false;
+}
+
+// C'è qualcosa che ferma i piedi su questo tassello — un muro, una porta
+// chiusa, un albero, un sasso, una cassa — senza contare il terreno?
+//
+// Esiste separata da solidoIn() perché il riparo ha bisogno di distinguere le
+// due cose. L'acqua ferma i piedi ed è solida, ma non è una parete: un isolotto
+// in mezzo al lago non è una stanza, e un accampamento sulla riva non è al
+// chiuso perché di là c'è il lago. Le pareti sono roba che sta in piedi.
+export function chiudeIn(tx, ty) {
+  const oggetto = oggettoDi(tx, ty);
+  return oggetto !== OGGETTO.NESSUNO && CATALOGO_OGGETTI[oggetto].solido === true;
+}
+
+// Che cosa toglie la vista. Non è la solidità, e non è nemmeno chiudeIn():
+// l'acqua ferma i piedi e non gli occhi, e gli alberi fermano i piedi ma
+// rendere cieco il bosco cambierebbe tutto il combattimento di M6 — quanti
+// te ne accorgono, da quanto lontano, quante volte si scappa fra gli alberi —
+// e quello va misurato per conto suo, non di sbieco mentre si aggiungono i
+// muri. Qui ci sono le due cose che si costruiscono apposta perché non ti
+// vedano.
+const CIECHI = new Set([OGGETTO.MURO, OGGETTO.PORTA]);
+
+// Da questo tassello si vede quell'altro? Una camminata alla Bresenham lungo
+// la linea, saltando i due capi: il tassello su cui si sta e quello su cui sta
+// l'altro non possono accecare se stessi.
+//
+// Venti passi al massimo e nessuna allocazione: si fa per ogni infetto che
+// potrebbe vederti, cioè qualche volta per fotogramma.
+export function vedeDa(tx0, ty0, tx1, ty1) {
+  let x = tx0;
+  let y = ty0;
+  const dx = Math.abs(tx1 - x);
+  const dy = -Math.abs(ty1 - y);
+  const passoX = x < tx1 ? 1 : -1;
+  const passoY = y < ty1 ? 1 : -1;
+  let errore = dx + dy;
+
+  for (;;) {
+    if (x === tx1 && y === ty1) return true;
+    const doppio = 2 * errore;
+    if (doppio >= dy) {
+      errore += dy;
+      x += passoX;
+    }
+    if (doppio <= dx) {
+      errore += dx;
+      y += passoY;
+    }
+    if (x === tx1 && y === ty1) return true;
+    if (CIECHI.has(oggettoDi(x, y))) return false;
+  }
 }
 
 export function solidoIn(tx, ty) {

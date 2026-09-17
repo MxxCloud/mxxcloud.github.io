@@ -33,13 +33,14 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.4**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.5**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
 c'è un posto in cui mettere le cose, non è più soltanto natura, si comincia da
 una fattoria in rovina — e adesso **quel posto serve a qualcosa**: certe cose
-si fanno solo al banco da lavoro.
+si fanno solo al banco da lavoro, e **quel posto si può chiudere**: muri,
+una porta, e di notte qualcuno che li prende a colpi.
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
 con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne
@@ -601,6 +602,79 @@ partita è anche quello che accende le casse. `V` gira fra muto, piano e forte,
 e il livello si ricorda in questo computer e non nel salvataggio: una partita
 viaggia fra computer, il volume appartiene alle casse.
 
+## Il muro, la porta, e l'essere dentro
+
+Fino a M7.4 il gioco ti dava un banco, delle casse, una fattoria e una valle da
+saccheggiare, e poi **non faceva succedere niente di diverso a chi si era
+costruito un posto**. Di notte gli infetti arrivavano identici che tu fossi in
+mezzo a un prato o in mezzo al tuo orto — perché il recinto non si poteva
+costruire. Metà del pilastro esisteva solo come inventario: nessuna delle cose
+che si posavano cambiava quello che ti capitava.
+
+**Il muro non è un disegno nuovo: è quello delle rovine.** `MURO` esiste dal
+M7.2 con la sua solidità, i suoi cinque colpi e le sue due pietre di resa;
+finora lo posava soltanto la generazione, e adesso lo posa anche il superstite.
+Costa **tre pietre**, e la pietra è l'unica risorsa che non ricresce: un
+recinto non si paga con una passeggiata, si paga smontando il paese. La catena
+si chiude da sé — **si porta via la casa di chi non c'è più per tirare su la
+propria** — ed è il motivo per cui le rovine erano piene di muri.
+
+**La porta è di legna**, sei e due fibre, ed è la parte che si rifà: quando
+sfondano qualcosa sfondano quello che sta sul passaggio, e una cosa che si
+rompe spesso non può costare la risorsa che non torna. Si apre e si chiude con
+la barra; si stacca con `X`, lo stesso tasto con cui si smonta una cassa. Sono
+due tasti diversi apposta: quello che si preme di notte con qualcuno alle
+calcagna non deve poter portare via la porta.
+
+### Gli infetti sfondano
+
+Un muro che ferma e basta sarebbe la fine della notte: si alzano quattro pareti
+e il gioco è risolto per sempre. Quindi un infetto che insegue e non passa
+**mena lì**, con lo stesso braccio e lo stesso ritmo con cui morderebbe. Otto
+colpi per un muro, cinque per una porta: uno solo ci mette nove secondi a
+passare, quattro insieme poco più di due — misurato dai tasti veri.
+
+E il muro non sparisce: **diventa macerie**, che non fermano nessuno. Quello che
+resta dopo una notte storta è un varco nella propria recinzione, non un buco nel
+nulla. Le macerie si spalano in un colpo e rendono una pietra, quindi rimettere
+a posto un muro sfondato costa una pietra delle tre. È la tassa della notte, e
+si paga in pietra, cioè tornando al paese.
+
+### Essere dentro
+
+Il gioco non sapeva rispondere alla domanda più semplice che si possa fare a una
+casa: *ci sono dentro?* Adesso sì, e la risposta è una sola operazione — si
+allaga a partire da dove sei, e si guarda se l'acqua esce. Se non esce entro
+**duecento tasselli**, sei dentro, e quello che l'allagamento ha toccato è la
+stanza. Il limite non è una rinuncia: una stanza più larga di duecento tasselli
+è un recinto, non una casa, e un recinto non deve scaldare.
+
+Le pareti sono le cose che stanno in piedi — muri, porte chiuse, casse, banchi,
+e anche alberi e sassi: chi si accampa in un buco di roccia ha fatto lo stesso
+lavoro di chi ha alzato quattro muri, solo che l'ha trovato già fatto. L'acqua
+no: ferma i piedi ma non è una parete, quindi un isolotto non è una stanza.
+
+Da questo discendono due cose, e sono il premio della tappa.
+
+**Al chiuso il calore resta dentro.** La regola del freddo era *d'inverno, di
+notte, lontano da una fiamma, si gela*, e il «lontano» erano tre tasselli.
+Adesso, dentro una stanza, un fuoco acceso in un punto qualsiasi la scalda
+tutta. Non è «al chiuso non si gela»: una capanna senza fuoco è una capanna
+fredda, e regalare il tepore toglierebbe al falò il mestiere che ha da M1.
+Quello che cambia è la portata — ed è esattamente la differenza fra stare
+vicino a un fuoco e avere una stanza con un fuoco dentro.
+
+**Non ti vedono attraverso i muri.** Fino a qui la percezione guardava solo la
+distanza, e nessuno se ne accorgeva perché gli unici muri stavano lontano da
+dove si vive. Con i muri che si costruiscono sarebbe stata la prima cosa a
+saltare all'occhio.
+
+**Il chiasso invece passa**, ed è una decisione. Dietro un muro non sei
+invisibile: sei irraggiungibile. Spaccare legna di notte dentro casa chiama
+comunque qualcuno alla porta. Prima il chiasso decideva *se* ti trovavano,
+adesso decide *dove* — ed è tutto quello che serviva perché una parete sia una
+questione di geometria e non un numero in più.
+
 ## La mappa di strada
 
 Il pilastro ha due metà: **un posto in cui investi** e **un mondo che se lo
@@ -625,7 +699,7 @@ Da qui viene l'ordine, che non è quello immaginato all'inizio:
 | **M7.2** | Le rovine | Le case di chi c'era prima, e dentro quello che non si sono portati via. *Qui la mappa comincia a servire.* |
 | **M7.3** | La fattoria e il paese | Si comincia da una fattoria in rovina, e da qualche parte c'è un paese. *Qui l'apertura di questo file smette di essere una promessa.* |
 | **M7.4** | Il banco da lavoro | Le ricette diventano due elenchi, e l'accampamento comincia a valere qualcosa. *Qui il menu smette di avere un tetto.* |
-| **M7.5** | Riparo e muri | L'investimento che si difende, e il chiasso che diventa una questione di geometria. |
+| **M7.5** | Riparo e muri | Muri e porte che si costruiscono, infetti che li sfondano, e il calore che al chiuso resta dentro. *Qui quello che costruisci comincia a difenderti.* |
 | **M7.6** | Il morale | Quanto tieni al tuo posto — che a quel punto esiste. |
 | **M8** | Superstiti, abilità, rifinitura | |
 
@@ -696,11 +770,12 @@ e un posto con dentro una cassa e niente altro è ancora un accampamento.
 |---|---|
 | `W A S D` o frecce | camminare |
 | `Maiusc` | correre |
-| `Spazio` | agire su ciò che si ha davanti: colpire, raccogliere, zappare, seminare, innaffiare, bere, dormire, posare, aprire una cassa, frugare un cadavere, difendersi |
+| `Spazio` | agire su ciò che si ha davanti: colpire, raccogliere, zappare, seminare, innaffiare, bere, dormire, posare, aprire una cassa o una porta, frugare un cadavere, difendersi |
 | `1`-`8` | scegliere la casella, cioè cosa si impugna |
 | `E` | mangiare, o fasciarsi con una benda |
 | `G` | posare per terra la casella scelta, davanti ai piedi |
 | `C` | aprire e chiudere le costruzioni, e chiudere la cassa |
+| `X` | staccare la porta che si ha davanti, e smontare la cassa aperta |
 | `frecce` | dentro le costruzioni e la cassa: scegliere |
 | `M` | accendere e spegnere la minimappa |
 | `TAB` | la mappa di quello che hai visto |

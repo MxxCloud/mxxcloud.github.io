@@ -87,6 +87,18 @@ export function azionePossibile(eroe, cosaInMano) {
     return { tipo: "apri", verbo: "Apri", bersaglio: b };
   }
 
+  // La porta si apre e si chiude, e sta qui sopra per la stessa ragione della
+  // cassa: è l'unica cosa da fare a una porta che si ha davanti. Staccarla sta
+  // su X, come smontare una cassa — due gesti diversi su due tasti diversi, e
+  // soprattutto: il tasto che si preme di notte con qualcuno alle calcagna non
+  // deve poter portare via la porta.
+  if (b.oggetto === OGGETTO.PORTA) {
+    return { tipo: "porta", verbo: "Apri", bersaglio: b };
+  }
+  if (b.oggetto === OGGETTO.PORTA_APERTA) {
+    return { tipo: "porta", verbo: "Chiudi", bersaglio: b };
+  }
+
   // Davanti al fuoco, con qualcosa di crudo in mano, si cucina invece di
   // raccogliere il falò. Decide quello che si ha in mano, come decide il
   // secchio alla riva: è la stessa regola scritta due volte in due punti, e
@@ -243,6 +255,27 @@ export function getta(eroe, indice) {
 // zaino è una delle poche cose che in un survival costringono a scegliere.
 // Vuota invece si sposta, perché sbagliare dove costruire deve costare la
 // fatica di svuotarla e non la cassa.
+// La porta si stacca intera, come si smonta una cassa: è un infisso, si toglie
+// dai cardini e te la porti via. Il muro no — quello si abbatte a colpi e rende
+// due pietre delle tre che è costato, perché è muratura e spostarla si paga.
+// Sono due gesti diversi perché sono due cose diverse, e il gioco lo dice con
+// quello che torna in mano.
+//
+// Sta sullo stesso tasto con cui si smonta una cassa, e non sulla barra: la
+// barra apre e chiude, ed è il tasto che si preme di notte con qualcuno alle
+// calcagna. Non deve poter portare via la porta.
+//
+// Prende l'eroe e non due coordinate perché è un gesto su quello che si ha
+// davanti, come getta(): chi chiama non deve sapere cos'è un tassello.
+export function staccaLaPorta(eroe) {
+  const { tx, ty, oggetto } = bersaglio(eroe);
+  if (oggetto !== OGGETTO.PORTA && oggetto !== OGGETTO.PORTA_APERTA) return null;
+  if (inventario.spazioPer("porta") < 1) return { tipo: "zainoPieno" };
+  inventario.aggiungi("porta", 1);
+  mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
+  return { tipo: "staccata", tx, ty };
+}
+
 export function smonta(tx, ty) {
   if (mappa.oggettoDi(tx, ty) !== OGGETTO.CASSA) return null;
   if (!contenitori.eVuota(tx, ty)) return { tipo: "nonEVuota" };
@@ -518,6 +551,27 @@ export function agisci(eroe, cosaInMano) {
     salute.passanoSecondi(secondi, { vuoti: bisogni.vuoti() });
     bisogni.ristora("stanchezza", 1);
     return { tipo: "dormi", secondi };
+  }
+
+  if (azione.tipo === "porta") {
+    const apre = azione.bersaglio.oggetto === OGGETTO.PORTA;
+    // Si tiene quello che c'era scritto sul tassello, e non è pignoleria: lì
+    // dentro ci sono i colpi che la porta ha già preso. Una porta mezza
+    // sfondata che si rimette a nuovo aprendola e richiudendola sarebbe il
+    // modo più corto per annullare una notte intera.
+    const dati = modifiche.di(tx, ty) ?? {};
+    mappa.cambiaTassello(tx, ty, {
+      ...dati,
+      oggetto: apre ? OGGETTO.PORTA_APERTA : OGGETTO.PORTA,
+    });
+    // Chiudendola ci si fa da parte, come dopo aver posato una cassa: si sta
+    // sul tassello davanti mentre il riquadro d'urto sborda, e senza questa
+    // riga ci si chiuderebbe dentro la propria porta.
+    if (!apre) {
+      const [dx, dy] = SCARTI[eroe.guarda] ?? SCARTI.giu;
+      urti.spingiFuori(eroe, dx, dy);
+    }
+    return { tipo: "porta", aperta: apre, tx, ty };
   }
 
   if (azione.tipo === "posa") {

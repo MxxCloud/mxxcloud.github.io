@@ -148,6 +148,10 @@ function insegue(e, passo, bx, by, fermatiA = 0) {
     (dy / distanza) * VELOCITA_INSEGUE * passo
   );
   e.passo += percorso / 7;
+  // Ha spinto e non si è mosso: davanti c'è qualcosa. Chi vaga, in questo
+  // caso, cambia idea (vedi vagabonda); chi insegue no — ed è tutta la
+  // differenza fra un muro e un albero in mezzo a un prato.
+  e.bloccato = percorso < 0.1;
   return distanza;
 }
 
@@ -156,6 +160,8 @@ export function aggiorna(e, passo) {
   // La bandierina vale un passo solo: chi la raccoglie gira una volta per
   // fotogramma, e lasciarla alzata vorrebbe dire un morso che conta due volte.
   e.colpo = false;
+  e.sfonda = false;
+  e.bloccato = false;
   if (e.sussulto > 0) e.sussulto -= passo;
 
   if (e.preda) {
@@ -163,6 +169,12 @@ export function aggiorna(e, passo) {
     if (distanza <= PORTATA && e.ricarica <= 0) {
       e.ricarica = RICARICA;
       e.colpo = true;
+    } else if (e.bloccato && e.ricarica <= 0) {
+      // Fermo contro qualcosa mentre insegue: mena lì, con lo stesso ritmo con
+      // cui morderebbe. Non è un'idea nuova — è lo stesso braccio — ed è la
+      // ragione per cui un muro è una spesa e non una soluzione.
+      e.ricarica = RICARICA;
+      e.sfonda = true;
     }
   } else if (e.richiamo) {
     const distanza = insegue(e, passo, e.richiamo.x, e.richiamo.y);
@@ -196,6 +208,12 @@ export function crea(px, py) {
     richiamo: null,
     // Letto dall'alto: il colpo è andato a segno, decidete voi quanto costa.
     colpo: false,
+    // L'altra bandierina, uguale alla prima: sta spingendo contro qualcosa
+    // che non cede, e mena lì. Cosa ci sia davvero su quel tassello lo sa la
+    // regola, non lui — un infetto non sa cos'è un muro, sa solo che non
+    // passa.
+    sfonda: false,
+    bloccato: false,
     ricarica: 0,
     // Quanto gli resta da tremare dopo averle prese. Serve al disegno, che è
     // l'unico modo che ha il giocatore di sapere di averlo colpito davvero.

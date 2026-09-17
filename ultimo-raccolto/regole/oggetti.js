@@ -138,6 +138,17 @@ export const CATALOGO = {
   // usata, ma a stare lì. È quello che trasforma un accampamento in un posto
   // in cui si può fare qualcosa che altrove non si può.
   banco: { nome: "Banco", icona: arte.BANCO_ICONA, pila: 2, posa: OGGETTO.BANCO },
+  // Il muro. Si impila a venti perché è l'unica cosa che si posa a decine: un
+  // recinto attorno a un orto sono venti tasselli, e doverne fare quattro
+  // viaggi renderebbe il costruire una faccenda di gestione dello zaino.
+  //
+  // È il muro delle rovine, lo stesso identico tassello: il disegno, la
+  // solidità e i cinque colpi per abbatterlo esistono dal M7.2. Qui si dice
+  // soltanto che adesso può posarlo anche il superstite.
+  muro: { nome: "Muro", icona: arte.MURO_ICONA, pila: 20, posa: OGGETTO.MURO },
+  // La porta si impila a tre come la cassa, e per la stessa ragione: quello
+  // che conta è dove la metti. Un recinto ha un ingresso, non cinque.
+  porta: { nome: "Porta", icona: arte.PORTA_ICONA, pila: 3, posa: OGGETTO.PORTA },
   // La lancia. Colpisce meno di un'ascia e arriva molto più lontano, ed è
   // tutta qui la scelta: tre colpi tenendolo a distanza, o due lasciandogli
   // dare il suo.

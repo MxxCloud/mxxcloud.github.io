@@ -23,6 +23,7 @@ import * as bisogni from "./regole/bisogni.js";
 import * as salute from "./regole/salute.js";
 import * as freddo from "./regole/freddo.js";
 import * as infetti from "./regole/infetti.js";
+import * as riparo from "./regole/riparo.js";
 import * as chiasso from "./regole/chiasso.js";
 import * as udito from "./regole/udito.js";
 import * as contenitori from "./regole/contenitori.js";
@@ -57,7 +58,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.4";
+const VERSIONE = "M7.5";
 
 // --- elementi -------------------------------------------------------------
 
@@ -221,6 +222,10 @@ function nuovoSuperstite() {
   // insieme a loro: senza, l'esclamativo resterebbe acceso per un fotogramma
   // addosso a un superstite che non esisteva ancora.
   infetti.svuota();
+  // Anche il riparo: la stanza in cui si stava non è la stanza in cui ci si
+  // risveglia, e tenersela vorrebbe dire un superstite nuovo che non gela in
+  // mezzo a un prato.
+  riparo.reimposta();
   entita.svuota();
   const partenza = doveSiComincia();
   eroe = entita.aggiungi(giocatore.crea(partenza.px, partenza.py));
@@ -494,6 +499,10 @@ function riprendi(ripreso) {
   // allo stato che avrebbe appena creata — niente passo a metà, niente
   // direzione ereditata dalla partita di prima.
   infetti.svuota();
+  // E il riparo, per la stessa ragione: la stanza in cui si stava non è quella
+  // della partita che si sta aprendo, e tenersela vorrebbe dire un caricamento
+  // che per mezzo secondo non gela in mezzo alla neve.
+  riparo.reimposta();
   entita.svuota();
   eroe = entita.aggiungi(giocatore.crea(ripreso.eroe.px, ripreso.eroe.py));
   eroe.guarda = ripreso.eroe.guarda ?? "giu";
@@ -884,6 +893,21 @@ function leggiComandi() {
     }
   }
 
+  // Lo stesso tasto con cui si smonta una cassa, e vuol dire la stessa cosa:
+  // togli di mezzo quello che hai davanti. Risponde soltanto alle porte —
+  // chiederlo a qualunque cosa vorrebbe dire smontare una cassa passandoci
+  // accanto, cioè il contrario di quello che la cassa ha deciso a M7.1.
+  if (comandi.appenaPremuto("spegni")) {
+    const esito = azioni.staccaLaPorta(eroe);
+    if (esito?.tipo === "staccata") {
+      suono.suona(POSA, { tono: 0.85 });
+      annuncia("porta staccata", "#9ec97e");
+    } else if (esito?.tipo === "zainoPieno") {
+      suono.suona(NEGATO);
+      annuncia("zaino pieno: getta qualcosa con G", "#c0705f");
+    }
+  }
+
   if (!comandi.appenaPremuto("usa")) return;
 
   const esito = azioni.agisci(eroe, cosaInMano());
@@ -936,6 +960,13 @@ function leggiComandi() {
   if (esito.tipo === "dormi") annuncia(`hai dormito fino all'alba`, "#9ec97e");
 
   if (esito.tipo === "cotto") { suono.suona(FATTO); annuncia(`sul fuoco: ${nomeDi(esito.diventa)}`, "#e0913a"); }
+
+  if (esito.tipo === "porta") {
+    // La stessa voce del coperchio, più grave: è un'anta di legno che gira,
+    // ed è parente di una cassa che si apre più di quanto sia parente di
+    // qualunque altro rumore che il gioco sappia già fare.
+    suono.suona(COPERCHIO, { tono: esito.aperta ? 0.7 : 0.6 });
+  }
 
   if (esito.tipo === "aperta") {
     suono.suona(COPERCHIO);
@@ -1002,6 +1033,19 @@ function aggiorna(passo) {
       annuncia(AVVISI_BISOGNI[vuoto], "#c0705f");
     }
 
+    // Il riparo prima del freddo, perché il freddo lo interroga: al chiuso il
+    // calore resta dentro. Chiudere l'ultimo varco non si vede, quindi lo dice
+    // il gioco — è la stessa ragione per cui dice "stai gelando" invece di
+    // lasciarlo scoprire dalla barra della salute.
+    const riparoCambiato = riparo.aggiorna(
+      passo,
+      Math.floor(eroe.px / TASSELLO),
+      Math.floor(eroe.py / TASSELLO)
+    );
+    if (riparoCambiato.cambiato) {
+      annuncia(riparo.alChiuso() ? "sei al chiuso" : "sei allo scoperto", "#c9b189");
+    }
+
     // La salute viene dopo i bisogni, e non è un caso: raccoglie le
     // conseguenze di quello che è appena successo sopra di lei. Il freddo si
     // chiede una volta per passo e la risposta la riusa anche il disegno: non
@@ -1029,6 +1073,23 @@ function aggiorna(passo) {
       lampoDanno = DURATA_LAMPO;
       suono.suona(MORSO);
     }
+    // Quello che non arriva addosso a te arriva addosso a quello che hai messo
+    // in mezzo. Si raccoglie qui, accanto ai morsi, perché è la stessa cosa:
+    // un braccio che ha trovato qualcosa.
+    for (const colpo of infetti.raccogliGliSfondamenti()) {
+      const tono = 0.9 + impronta(colpo.tx, colpo.ty, 0x5c01f0) * 0.22;
+      suono.suona(colpoDi("pietra", colpo.ceduto), { tono });
+      colpito = { tx: colpo.tx, ty: colpo.ty, resta: DURATA_TREMOLIO };
+      scheggie.sparge(
+        colpo.tx * TASSELLO + TASSELLO / 2,
+        colpo.ty * TASSELLO + TASSELLO / 2,
+        colpo.ceduto ? 26 : 12,
+        colpo.scheggie,
+        colpo.ceduto ? 1.5 : 1
+      );
+      if (colpo.ceduto) annuncia("hanno sfondato", "#c0705f");
+    }
+
     if (morsi.infettato) annuncia("la ferita è sporca", "#9d7fb0");
     else if (visto.appenaVisto && morsi.morsi === 0) annuncia("qualcosa ti ha visto", "#c0705f");
 
@@ -1249,7 +1310,9 @@ function disegnaInterfaccia() {
   const barra = hud.disegnaZaino(p, casellaScelta);
   // Il promemoria dice "C COSTRUIRE", e con la cassa aperta "C" chiude: un
   // cartello che indica la porta sbagliata è peggio di nessun cartello.
-  if (!cassaAperta) hud.disegnaPromemoria(p, barra, cosaInMano());
+  if (!cassaAperta) {
+    hud.disegnaPromemoria(p, barra, cosaInMano(), azioneCorrente?.tipo === "porta");
+  }
   hud.disegnaMessaggio(p, messaggio);
   if (minimappaVisibile && !aperturaVisibile) minimappa.disegna(p);
   if (ricetteAperte) hud.disegnaRicette(p, { scelta: ricettaScelta, alBanco });
@@ -1504,6 +1567,7 @@ if (parametri.has("diagnostica")) {
     suono,
     udito,
     contenitori,
+    riparo,
     cassaAperta: () => (cassaAperta ? { ...cassaAperta } : null),
     ricetteAperte: () => ricetteAperte,
     ricettaScelta: () => ricettaScelta,

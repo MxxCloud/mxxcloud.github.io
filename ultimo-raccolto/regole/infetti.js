@@ -12,6 +12,10 @@
 // all'inverno. È una scelta, e ha un prezzo: combattere non è una strategia
 // per ripulire la valle, è quello che si fa quando non si può più scappare.
 
+import * as mappa from "../mondo/mappa.js";
+import * as modifiche from "../mondo/modifiche.js";
+import { OGGETTO } from "../mondo/generazione.js";
+import * as schermo from "../motore/schermo.js";
 import * as entita from "../entita/entita.js";
 import * as infetto from "../entita/infetto.js";
 import * as urti from "../entita/urti.js";
@@ -128,11 +132,33 @@ function faiSparire(eroe, troppi) {
 
 // --- percezione -----------------------------------------------------------
 
+// Ti vede da lì? Vicino abbastanza, e con la linea libera.
+//
+// Fino a M7.5 bastava la distanza, e nessuno se ne accorgeva perché gli unici
+// muri della valle stavano nelle rovine, lontano da dove si vive. Con i muri
+// che si costruiscono sarebbe stata la prima cosa a saltare all'occhio: uno
+// che ti insegue attraverso la parete di casa tua.
+//
+// Il chiasso invece passa, ed è una decisione e non una dimenticanza. Dietro
+// un muro non sei invisibile: sei irraggiungibile. Spaccare legna di notte
+// dentro casa chiama comunque qualcuno alla porta, e il muro cambia dove ti
+// trovano, non se ti trovano.
+function tiVede(e, eroe, vista, distanza) {
+  if (distanza > vista) return false;
+  const { TASSELLO } = schermo;
+  return mappa.vedeDa(
+    Math.floor(e.px / TASSELLO),
+    Math.floor(e.py / TASSELLO),
+    Math.floor(eroe.px / TASSELLO),
+    Math.floor(eroe.py / TASSELLO)
+  );
+}
+
 function percepisci(e, passo, eroe, raggioChiasso, conLuce) {
   const distanza = Math.hypot(e.px - eroe.px, e.py - eroe.py);
   const vista = conLuce ? VISTA_CON_LUCE : VISTA;
 
-  if (distanza <= vista || distanza <= raggioChiasso) {
+  if (tiVede(e, eroe, vista, distanza) || distanza <= raggioChiasso) {
     const prima = e.preda !== null;
     e.preda = eroe;
     e.memoria = MEMORIA;
@@ -241,6 +267,90 @@ export function raccogliIMorsi() {
     }
   }
   return { morsi, infettato };
+}
+
+// --- quello che sfondano ---------------------------------------------------
+
+// Quanti colpi regge quello che hai messo in mezzo, e cosa ne resta.
+//
+// Il muro non sparisce: diventa macerie, che non fermano nessuno. Quello che
+// resta dopo una notte storta è un varco nella propria recinzione, non un buco
+// nel nulla — e le macerie si spalano in un colpo e rendono una pietra, quindi
+// rimettere a posto un muro sfondato costa una pietra delle tre. È la tassa
+// della notte, e la pietra è l'unica cosa che non ricresce: per questo si
+// torna al paese.
+//
+// Otto colpi e cinque, con la ricarica a 1,1 secondi: uno solo ci mette nove
+// secondi a passare un muro, quattro insieme poco più di due. Una notte al
+// chiuso costa qualche pietra, non l'accampamento — e restare svegli a
+// rispondere costa meno che rifare la parete, il che è esattamente la scelta
+// che questa tappa vuole mettere lì.
+//
+// Muro e porta e nient'altro: sono le due cose costruite apposta per essere
+// prese a colpi. Una cassa o un banco messi di traverso fermano e non si
+// rompono, ed è giusto così — costano tre volte tanto, e chi ha fatto quel
+// conto sa già quello che sta facendo.
+const SFONDABILI = {
+  [OGGETTO.MURO]: { colpi: 8, diventa: OGGETTO.MURO_ROTTO, scheggie: ["e", "f", "d"] },
+  [OGGETTO.PORTA]: { colpi: 5, diventa: OGGETTO.NESSUNO, scheggie: ["w", "h", "g"] },
+};
+
+// Contro cosa sta spingendo. Non lo sa lui — un infetto non sa cos'è un muro —
+// e non lo sa nemmeno urti.muovi(), che restituisce quanto si è mosso e non
+// contro cosa. Si riprova la direzione in cui stava andando e poi i due assi
+// separati, perché spingendo in diagonale contro una parete si è fermi su un
+// asse e liberi sull'altro.
+const AVANTI = 10;
+
+function controCosaSpinge(e) {
+  const { TASSELLO } = schermo;
+  const dx = e.preda.px - e.px;
+  const dy = e.preda.py - e.py;
+  const n = Math.hypot(dx, dy) || 1;
+  const ux = dx / n;
+  const uy = dy / n;
+  // All'altezza del petto e non dei piedi: il riquadro d'urto è alto, e un
+  // punto preso a terra cade nel tassello sbagliato quando si spinge da sotto.
+  const alto = e.py - urti.ALTEZZA / 2;
+
+  for (const [vx, vy] of [[ux, uy], [ux, 0], [0, uy]]) {
+    if (vx === 0 && vy === 0) continue;
+    const tx = Math.floor((e.px + vx * AVANTI) / TASSELLO);
+    const ty = Math.floor((alto + vy * AVANTI) / TASSELLO);
+    if (SFONDABILI[mappa.oggettoDi(tx, ty)]) return { tx, ty };
+  }
+  return null;
+}
+
+// Da chiamare dopo entita.aggiorna(), insieme ai morsi: i colpi andati sul
+// muro diventano crepe. Restituisce dove sono arrivati e cosa è venuto giù,
+// perché il gioco deve poterlo far vedere e sentire — un muro che si sfonda
+// senza rumore è un muro che si scopre la mattina dopo.
+export function raccogliGliSfondamenti() {
+  const colpi = [];
+  for (const e of entita.tutte()) {
+    if (e.tipo !== infetto.TIPO || !e.sfonda || !e.preda) continue;
+    const dove = controCosaSpinge(e);
+    if (!dove) continue;
+
+    const voce = SFONDABILI[mappa.oggettoDi(dove.tx, dove.ty)];
+    const dati = modifiche.di(dove.tx, dove.ty) ?? {};
+    // Lo stesso campo che conta le accettate sugli alberi: una cosa che regge
+    // un tot di colpi è una cosa che regge un tot di colpi, e due contatori
+    // per la stessa idea sarebbero due posti in cui sbagliarla.
+    const quanti = (dati.colpi ?? 0) + 1;
+
+    if (quanti < voce.colpi) {
+      // Si annota e non si cambia il tassello: il muro è ancora un muro,
+      // quindi il settore non va ricotto.
+      mappa.annotaTassello(dove.tx, dove.ty, { ...dati, colpi: quanti });
+      colpi.push({ ...dove, ceduto: false, scheggie: voce.scheggie });
+    } else {
+      mappa.cambiaTassello(dove.tx, dove.ty, { oggetto: voce.diventa });
+      colpi.push({ ...dove, ceduto: true, scheggie: voce.scheggie });
+    }
+  }
+  return colpi;
 }
 
 // Quanti ti stanno addosso adesso. Serve all'interfaccia: sapere di essere

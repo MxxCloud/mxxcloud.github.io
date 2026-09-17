@@ -10,11 +10,16 @@
 // continua vorrebbe un indicatore in più da guardare e direbbe al giocatore
 // la stessa identica cosa che gli dicono già l'orologio e il calendario.
 //
+// Da M7.5 la frase ha una coda, e arriva dai muri: al chiuso il calore resta
+// dentro. La regola non cambia — serve sempre una fiamma — cambia quanto
+// lontano arriva, e quella è la differenza fra un fuoco e una casa.
+//
 // Quello che ne esce è che falò e torcia smettono di servire solo a vedere.
 // Una notte d'inverno diventa una domanda: accendo, dormo, o ci passo in
 // mezzo e pago. E il giaciglio guadagna un secondo mestiere senza una riga
 // nuova — chi dorme salta la notte, e saltando la notte salta il gelo.
 
+import * as riparo from "./riparo.js";
 import * as tempo from "./tempo.js";
 import * as stagioni from "./stagioni.js";
 import * as mappa from "../mondo/mappa.js";
@@ -47,5 +52,19 @@ export function alFreddo(eroe, cosaInMano) {
 
   const tx = Math.floor(eroe.px / TASSELLO);
   const ty = Math.floor(eroe.py / TASSELLO);
-  return !mappa.luceVicina(tx, ty, RAGGIO_FUOCO);
+  if (mappa.luceVicina(tx, ty, RAGGIO_FUOCO)) return false;
+
+  // Al chiuso il calore resta dentro: un fuoco acceso in un punto qualsiasi
+  // della stanza la scalda tutta, invece di fermarsi a tre tasselli.
+  //
+  // Non è "al chiuso non si gela": una capanna senza fuoco è una capanna
+  // fredda, e regalare il tepore a chi ha alzato quattro muri toglierebbe al
+  // falò il mestiere che ha da M1. Quello che cambia è la portata, ed è
+  // esattamente la differenza fra stare vicino a un fuoco e stare in una
+  // stanza con un fuoco dentro — cioè il motivo per cui si costruiscono le
+  // stanze.
+  const stanza = riparo.stanza();
+  if (stanza && riparo.caldaDentro(stanza)) return false;
+
+  return true;
 }
