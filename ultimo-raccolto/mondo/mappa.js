@@ -27,6 +27,7 @@ const LATO_SETTORE = SETTORE * TASSELLO;
 // L'acqua è l'unico terreno che ferma: la roccia è terreno sassoso, non parete.
 // Quando arriveranno le pareti saranno oggetti, non tasselli di terreno.
 const CATALOGO = {
+  [TERRENO.GHIACCIO]: { varianti: terrenoArte.GHIACCIO, solido: false },
   [TERRENO.ACQUA]: { varianti: terrenoArte.ACQUA, solido: true },
   [TERRENO.ACQUA_BASSA]: { varianti: terrenoArte.ACQUA_BASSA, solido: true },
   [TERRENO.SABBIA]: { varianti: terrenoArte.SABBIA, solido: false },
@@ -176,6 +177,7 @@ export function impostaTavolozze(asciutta, bagnata) {
 // l'erba sta in cima; la riva sfuma nell'acqua bassa e l'acqua bassa in quella
 // profonda, quindi l'acqua sta in fondo.
 const PRIORITA = {
+  [TERRENO.GHIACCIO]: 1,
   [TERRENO.ACQUA]: 0,
   [TERRENO.ACQUA_BASSA]: 1,
   [TERRENO.SABBIA]: 2,
@@ -233,8 +235,15 @@ export function semeCorrente() {
 
 // --- interrogazione del mondo ---------------------------------------------
 
+let gelo = false;
+export function impostaGelo(attivo) {
+  if (gelo === attivo) return false;
+  gelo = attivo; settori.clear(); return true;
+}
+export function terrenoNaturaleDi(tx, ty) { return terrenoIn(tx, ty, seme); }
 export function terrenoDi(tx, ty) {
-  return terrenoIn(tx, ty, seme);
+  const t = terrenoNaturaleDi(tx, ty);
+  return gelo && t === TERRENO.ACQUA_BASSA ? TERRENO.GHIACCIO : t;
 }
 
 // Le modifiche hanno sempre l'ultima parola sulla generazione: è il punto in
@@ -369,7 +378,7 @@ export function vedeDa(tx0, ty0, tx1, ty1) {
 }
 
 export function solidoIn(tx, ty) {
-  const terreno = terrenoIn(tx, ty, seme);
+  const terreno = terrenoDi(tx, ty);
   if (CATALOGO[terreno].solido) return true;
   const oggetto = oggettoDi(tx, ty);
   return oggetto !== OGGETTO.NESSUNO && CATALOGO_OGGETTI[oggetto].solido;
@@ -394,7 +403,7 @@ function grigliaTerreni(sx, sy) {
     for (let x = 0; x < LATO_GRIGLIA; x += 1) {
       const tx = sx * SETTORE + x - BORDO;
       const ty = sy * SETTORE + y - BORDO;
-      griglia[y * LATO_GRIGLIA + x] = terrenoIn(tx, ty, seme);
+      griglia[y * LATO_GRIGLIA + x] = terrenoDi(tx, ty);
     }
   }
   return griglia;
@@ -695,3 +704,4 @@ export function precuociVicini() {
 export function settoriInMemoria() {
   return settori.size;
 }
+

@@ -18,6 +18,12 @@ import * as ortoArte from "../arte/sprite-orto.js";
 // soltanto a usare il terreno come dispensa. Adesso c'è la cassa, quindi il
 // debito si può pagare.
 export const CATALOGO = {
+  canna: { nome: "Canna da pesca", icona: arte.CANNA, pila: 1,
+    impugnato: { nome: "canna", righe: impugnati.CANNA, scartoY: 3 } },
+  pesce_crudo: { nome: "Pesce crudo", icona: arte.PESCE_CRUDO, pila: 10,
+    commestibile: { fame: 0.18 }, cuoce: "pesce_arrostito", dura: 2 },
+  pesce_arrostito: { nome: "Pesce arrostito", icona: arte.PESCE_ARROSTITO, pila: 10,
+    commestibile: { fame: 0.4 }, dura: 4 },
   legna: { nome: "Legna", icona: arte.LEGNA, pila: 40 },
   ramo: { nome: "Ramo", icona: arte.RAMO, pila: 40 },
   pietra: { nome: "Pietra", icona: arte.PIETRA, pila: 40 },
@@ -435,3 +441,4 @@ export const RACCOLTA = {
 export function raccoltaDi(oggetto) {
   return RACCOLTA[oggetto];
 }
+

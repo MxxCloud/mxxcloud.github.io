@@ -15,7 +15,7 @@
 import * as schermo from "../motore/schermo.js";
 import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
-import { OGGETTO } from "../mondo/generazione.js";
+import { OGGETTO, TERRENO } from "../mondo/generazione.js";
 import * as tinte from "./tinte.js";
 import { telaio } from "../arte/sprite.js";
 
@@ -191,10 +191,17 @@ export function dimentica() {
 // di stagione. La griglia non si tocca: i terreni sono dove erano, è cambiato
 // il mese — quindi una stagione nuova ridipinge 4096 pixel invece di
 // ricalcolare 4096 tasselli di rumore.
-export function ridipingiSeServe() {
+export function ridipingiSeServe(gelo) {
+  if (griglia && typeof gelo === "boolean") {
+    for (let i = 0; i < griglia.length; i++) {
+      if (gelo && griglia[i] === TERRENO.ACQUA_BASSA) griglia[i] = TERRENO.GHIACCIO;
+      else if (!gelo && griglia[i] === TERRENO.GHIACCIO) griglia[i] = TERRENO.ACQUA_BASSA;
+    }
+  }
   if (centro) ridipingi();
 }
 
 export function ricostruzioni() {
   return ricostruite;
 }
+

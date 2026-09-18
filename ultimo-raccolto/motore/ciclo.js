@@ -72,7 +72,7 @@ export function avvia({ aggiorna, disegna, salto }) {
     // conto giusto e un conto doppio: una finestra visibile ma senza fuoco
     // continua a ricevere fotogrammi, quindi quel tempo è già stato simulato
     // e sommarlo di nuovo farebbe correre l'orologio al doppio.
-    if (passi === PASSI_MASSIMI && accumulo > 0) {
+    if (passi === PASSI_MASSIMI && accumulo >= PASSO) {
       const saltato = accumulo;
       accumulo = 0;
       if (salto) salto(saltato);
@@ -134,3 +134,4 @@ export function collegaSospensione(allUscita, alRientro) {
     else rientra();
   });
 }
+

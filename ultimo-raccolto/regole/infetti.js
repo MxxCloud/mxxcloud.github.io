@@ -16,6 +16,7 @@ import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
 import { OGGETTO } from "../mondo/generazione.js";
 import * as schermo from "../motore/schermo.js";
+import { vistaLibera, fattoreSuono } from "../mondo/ostacoli.js";
 import * as entita from "../entita/entita.js";
 import * as infetto from "../entita/infetto.js";
 import * as urti from "../entita/urti.js";
@@ -132,50 +133,32 @@ function faiSparire(eroe, troppi) {
 
 // --- percezione -----------------------------------------------------------
 
-// Ti vede da lì? Vicino abbastanza, e con la linea libera.
-//
-// Fino a M7.5 bastava la distanza, e nessuno se ne accorgeva perché gli unici
-// muri della valle stavano nelle rovine, lontano da dove si vive. Con i muri
-// che si costruiscono sarebbe stata la prima cosa a saltare all'occhio: uno
-// che ti insegue attraverso la parete di casa tua.
-//
-// Il chiasso invece passa, ed è una decisione e non una dimenticanza. Dietro
-// un muro non sei invisibile: sei irraggiungibile. Spaccare legna di notte
-// dentro casa chiama comunque qualcuno alla porta, e il muro cambia dove ti
-// trovano, non se ti trovano.
-function tiVede(e, eroe, vista, distanza) {
-  if (distanza > vista) return false;
-  const { TASSELLO } = schermo;
-  return mappa.vedeDa(
-    Math.floor(e.px / TASSELLO),
-    Math.floor(e.py / TASSELLO),
-    Math.floor(eroe.px / TASSELLO),
-    Math.floor(eroe.py / TASSELLO)
-  );
-}
-
-function percepisci(e, passo, eroe, raggioChiasso, conLuce) {
+export function percepisci(e, passo, eroe, raggioChiasso, conLuce) {
   const distanza = Math.hypot(e.px - eroe.px, e.py - eroe.py);
   const vista = conLuce ? VISTA_CON_LUCE : VISTA;
-
-  if (tiVede(e, eroe, vista, distanza) || distanza <= raggioChiasso) {
-    const prima = e.preda !== null;
+  const vede = distanza <= vista && vistaLibera(e, eroe);
+  const sente = raggioChiasso > 0 && distanza <= raggioChiasso && distanza <= raggioChiasso * fattoreSuono(e, eroe);
+  if (vede) {
+    if (!e.preda) appenaVisto = true;
     e.preda = eroe;
+    e.ultimoVisto = { x: eroe.px, y: eroe.py };
     e.memoria = MEMORIA;
     e.richiamo = null;
-    if (!prima) appenaVisto = true;
     return;
   }
-
-  if (e.preda) {
-    e.memoria -= passo;
-    if (e.memoria > 0) return;
-    // Perde di vista ma non dimentica il posto: va a controllare lì. È la
-    // differenza fra scrollarseli di dosso girando un angolo e scrollarseli
-    // di dosso andandosene davvero.
+  // Un suono indica un posto, non concede di vedere attraverso una parete.
+  if (sente) {
     e.preda = null;
     e.richiamo = { x: eroe.px, y: eroe.py };
+    e.memoria = MEMORIA;
+    return;
   }
+  if (e.preda) {
+    e.preda = null;
+    e.richiamo = e.ultimoVisto ? { ...e.ultimoVisto } : null;
+  }
+  e.memoria = Math.max(0, (e.memoria ?? 0) - passo);
+  if (e.memoria === 0) e.richiamo = null;
 }
 
 // --- il giro --------------------------------------------------------------
@@ -252,11 +235,12 @@ export function sgomitano() {
 // Da chiamare dopo entita.aggiorna(): i morsi andati a segno diventano
 // ferite. Restituisce quanti ne sono arrivati, perché l'interfaccia deve
 // poter far lampeggiare lo schermo una volta per morso e non per fotogramma.
-export function raccogliIMorsi() {
+export function raccogliIMorsi(eroe) {
   let morsi = 0;
   let infettato = false;
   for (const e of entita.tutte()) {
     if (e.tipo !== infetto.TIPO || !e.colpo) continue;
+    if (!eroe || Math.hypot(e.px - eroe.px, e.py - eroe.py) > 13 || !vistaLibera(e, eroe)) continue;
     morsi += 1;
     salute.ferita(MORSO, "infetti");
     // Il tiro si fa a morso avvenuto e non a incontro avvenuto: è il morso a
@@ -304,8 +288,10 @@ const AVANTI = 10;
 
 function controCosaSpinge(e) {
   const { TASSELLO } = schermo;
-  const dx = e.preda.px - e.px;
-  const dy = e.preda.py - e.py;
+  const bersaglio = e.preda ?? (e.richiamo && { px: e.richiamo.x, py: e.richiamo.y });
+  if (!bersaglio) return null;
+  const dx = bersaglio.px - e.px;
+  const dy = bersaglio.py - e.py;
   const n = Math.hypot(dx, dy) || 1;
   const ux = dx / n;
   const uy = dy / n;
@@ -329,7 +315,7 @@ function controCosaSpinge(e) {
 export function raccogliGliSfondamenti() {
   const colpi = [];
   for (const e of entita.tutte()) {
-    if (e.tipo !== infetto.TIPO || !e.sfonda || !e.preda) continue;
+    if (e.tipo !== infetto.TIPO || !e.sfonda || (!e.preda && !e.richiamo)) continue;
     const dove = controCosaSpinge(e);
     if (!dove) continue;
 
@@ -391,7 +377,7 @@ export function quelloDavanti(eroe, portata = PORTATA_NOSTRA) {
     const vx = e.px - eroe.px;
     const vy = e.py - eroe.py;
     const distanza = Math.hypot(vx, vy);
-    if (distanza > portata || distanza >= minima) continue;
+    if (distanza > portata || distanza >= minima || !vistaLibera(eroe, e)) continue;
     // Deve stare dalla parte in cui si guarda. Il prodotto scalare con la
     // direzione dello sguardo è positivo solo in quel mezzo piano — e per chi
     // è praticamente addosso si lascia perdere il controllo, perché a due
@@ -427,3 +413,4 @@ export function svuota() {
   }
   noti = 0;
 }
+

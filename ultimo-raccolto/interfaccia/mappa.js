@@ -22,7 +22,7 @@ import * as schermo from "../motore/schermo.js";
 import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
 import * as esplorato from "../regole/esplorato.js";
-import { OGGETTO } from "../mondo/generazione.js";
+import { OGGETTO, TERRENO } from "../mondo/generazione.js";
 import * as tinte from "./tinte.js";
 import * as testo from "../arte/testo.js";
 import { telaio } from "../arte/sprite.js";
@@ -188,7 +188,13 @@ function ridipingi() {
   ridipinture += 1;
 }
 
-export function ridipingiSeServe() {
+export function ridipingiSeServe(gelo) {
+  if (terreni && typeof gelo === "boolean") {
+    for (let i = 0; i < terreni.length; i++) {
+      if (gelo && terreni[i] === TERRENO.ACQUA_BASSA) terreni[i] = TERRENO.GHIACCIO;
+      else if (!gelo && terreni[i] === TERRENO.GHIACCIO) terreni[i] = TERRENO.ACQUA_BASSA;
+    }
+  }
   ridipingi();
 }
 
@@ -378,3 +384,4 @@ export function disegna(p, eroe) {
   const piede = "TAB CHIUDI";
   testo.disegna(p, piede, Math.round((schermo.LARGHEZZA - testo.larghezza(piede)) / 2), schermo.ALTEZZA - 9, GRIGIO);
 }
+

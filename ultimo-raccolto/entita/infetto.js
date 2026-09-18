@@ -180,6 +180,7 @@ export function aggiorna(e, passo) {
     const distanza = insegue(e, passo, e.richiamo.x, e.richiamo.y);
     // Arrivato dove aveva sentito, non trova niente e riprende a girare.
     if (distanza < 10) e.richiamo = null;
+    else if (e.bloccato && e.ricarica <= 0) { e.ricarica = RICARICA; e.sfonda = true; }
   } else {
     vagabonda(e, passo);
   }
@@ -224,3 +225,4 @@ export function crea(px, py) {
   aggiornaAspetto(e);
   return e;
 }
+

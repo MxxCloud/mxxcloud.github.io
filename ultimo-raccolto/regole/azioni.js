@@ -16,6 +16,9 @@ import * as chiasso from "./chiasso.js";
 import * as orto from "./orto.js";
 import * as contenitori from "./contenitori.js";
 import * as stagioni from "./stagioni.js";
+import * as simulazione from "./simulazione.js";
+import * as entita from "../entita/entita.js";
+import * as pesca from "./pesca.js";
 
 const { TASSELLO } = schermo;
 
@@ -96,7 +99,8 @@ export function azionePossibile(eroe, cosaInMano) {
     return { tipo: "porta", verbo: "Apri", bersaglio: b };
   }
   if (b.oggetto === OGGETTO.PORTA_APERTA) {
-    return { tipo: "porta", verbo: "Chiudi", bersaglio: b };
+    return { tipo: "porta", verbo: "Chiudi", bersaglio: b,
+      impedito: occupato(b.tx, b.ty, eroe) ? "passaggio occupato" : null };
   }
 
   // Davanti al fuoco, con qualcosa di crudo in mano, si cucina invece di
@@ -120,6 +124,15 @@ export function azionePossibile(eroe, cosaInMano) {
   }
   const terreno = mappa.terrenoDi(b.tx, b.ty);
   const acqua = terreno === TERRENO.ACQUA || terreno === TERRENO.ACQUA_BASSA;
+
+  if (cosaInMano === "canna" && (acqua || terreno === TERRENO.GHIACCIO)) {
+    const inCorso = pesca.stato();
+    return { tipo: "pesca", verbo: inCorso ? "Ritira la lenza" : "Pesca", bersaglio: b,
+      impedito: inCorso ? null : pesca.impedimento(b.tx, b.ty) };
+  }
+  if (terreno === TERRENO.GHIACCIO && (cosaInMano === "secchio" || bisogni.livello("sete") < 1)) {
+    return { tipo: "ghiaccio", impedito: "ghiaccio: cerca acqua aperta", bersaglio: b };
+  }
 
   // Alla riva: con un secchio vuoto in mano si riempie, altrimenti si beve.
   // Decide quello che si ha in mano, come per tutto il resto — non il
@@ -159,7 +172,8 @@ export function azionePossibile(eroe, cosaInMano) {
 
   const posa = cosaInMano && CATALOGO[cosaInMano]?.posa;
   if (posa !== undefined && posa !== null && posabile(b)) {
-    return { tipo: "posa", verbo: "Posa", cosa: cosaInMano, bersaglio: b };
+    return { tipo: "posa", verbo: "Posa", cosa: cosaInMano, bersaglio: b,
+      impedito: (cosaInMano === "muro" || cosaInMano === "porta") && occupato(b.tx, b.ty, eroe) ? "passaggio occupato" : null };
   }
   return null;
 }
@@ -171,11 +185,19 @@ function zappabile(terreno) {
   return terreno === TERRENO.ERBA || terreno === TERRENO.STERPAGLIA || terreno === TERRENO.TERRA;
 }
 
+function occupato(tx, ty, eroe) {
+  // Comprende l'eroe anche nei collaudi senza registro delle entità.
+  return [eroe, ...entita.tutte()].some(e => e &&
+    e.px + urti.LARGHEZZA / 2 > tx * TASSELLO && e.px - urti.LARGHEZZA / 2 < (tx + 1) * TASSELLO &&
+    e.py > ty * TASSELLO && e.py - urti.ALTEZZA < (ty + 1) * TASSELLO);
+}
+
 function posabile(b) {
   if (b.oggetto !== OGGETTO.NESSUNO) return false;
   // Non si costruisce nell'acqua. Il resto del terreno va bene: la roccia è
   // sassosa, non è una parete.
-  return !mappa.solidoIn(b.tx, b.ty);
+  const t = mappa.terrenoNaturaleDi(b.tx, b.ty);
+  return t !== TERRENO.ACQUA && t !== TERRENO.ACQUA_BASSA && !mappa.solidoIn(b.tx, b.ty);
 }
 
 // --- mucchi per terra -----------------------------------------------------
@@ -195,6 +217,8 @@ function posabile(b) {
 // ragione per cui mescolaDate sta in inventario.js ed è esportata invece di
 // essere riscritta qui.
 function deponi(tx, ty, cosa, quante, dal) {
+  const fondo = mappa.terrenoNaturaleDi(tx, ty);
+  if (fondo === TERRENO.ACQUA || fondo === TERRENO.ACQUA_BASSA) return false;
   const oggetto = mappa.oggettoDi(tx, ty);
   // Solo il cibo porta una data, come in mettiIn(): darla anche alla legna
   // vorrebbe dire un campo per mucchio che non serve a nessuno.
@@ -415,8 +439,10 @@ function medicati(cosa, effetto) {
 // poterlo dire al giocatore: un colpo che non ottiene niente e un colpo che
 // abbatte un albero non possono sembrare lo stesso gesto.
 export function agisci(eroe, cosaInMano) {
+  if (pesca.stato()) { pesca.interrompi(); return { tipo: "pescaInterrotta" }; }
   const azione = azionePossibile(eroe, cosaInMano);
   if (!azione || azione.impedito) return null;
+  if (azione.tipo === "pesca") return pesca.inizia(eroe, azione.bersaglio.tx, azione.bersaglio.ty);
 
   if (azione.tipo === "combatti") {
     const esito = infetti.colpisci(azione.nemico, dannoDi(cosaInMano));
@@ -494,12 +520,7 @@ export function agisci(eroe, cosaInMano) {
   if (azione.tipo === "cucina") {
     // Una per volta, e di proposito: cuocere l'intera pila con un tasto
     // toglierebbe l'unica cosa che il fuoco chiede, cioè di restarci accanto.
-    if (!inventario.togli(azione.cosa, 1)) return null;
-    const resto = inventario.aggiungi(azione.diventa, 1);
-    if (resto > 0) {
-      // Non ci sta: si rimette com'era invece di far sparire la rapa. Lo
-      // stesso riguardo che ricette.js ha per i materiali.
-      inventario.aggiungi(azione.cosa, 1);
+    if (!inventario.trasforma([{ cosa: azione.cosa, quante: 1 }], { cosa: azione.diventa, quante: 1 })) {
       return { tipo: "zainoPieno" };
     }
     return { tipo: "cotto", cosa: azione.cosa, diventa: azione.diventa };
@@ -534,22 +555,8 @@ export function agisci(eroe, cosaInMano) {
   }
 
   if (azione.tipo === "dormi") {
-    // Il tempo saltato si paga: si salta la notte, non il proprio
-    // metabolismo. Senza questo, dormire sarebbe un tasto per far sparire i
-    // problemi invece di una scelta fra riposare e restare svegli.
-    const secondi = tempo.secondiFinoAlle(tempo.ALBA_PIENA);
-    tempo.avanza(secondi);
-    bisogni.passanoSecondi(secondi);
-    // Anche la salute paga la notte saltata: chi si corica con la fame a zero
-    // non deve poterla dormire senza conseguenze, che sarebbe il modo più
-    // comodo di rendere innocua l'unica cosa che uccide.
-    //
-    // Il freddo invece la notte non la fa: dormire la salta, e saltarla
-    // significa saltare il gelo. È un secondo mestiere per il giaciglio che
-    // non costa una riga — d'inverno si sceglie fra accendere un fuoco e
-    // andare a letto, ed entrambe sono cose che bisogna essersi costruiti.
-    salute.passanoSecondi(secondi, { vuoti: bisogni.vuoti() });
-    bisogni.ristora("stanchezza", 1);
+    const secondi = simulazione.avanza(tempo.secondiFinoAlle(tempo.ALBA_PIENA), { dorme: true });
+    if (!salute.eMorto()) bisogni.ristora("stanchezza", 1);
     return { tipo: "dormi", secondi };
   }
 

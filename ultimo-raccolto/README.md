@@ -12,6 +12,74 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.6 — l'acqua e la pesca
+
+La canna si costruisce ovunque con **3 rami e 4 fibre**. Impugnala davanti
+all'acqua e premi **Spazio**: il galleggiante e una barra mostrano l'attesa di
+**12 secondi**. Il tempo, i bisogni e gli infetti continuano a muoversi.
+Muoversi, voltarsi, cambiare attrezzo, subire danno o premere di nuovo Spazio
+ritira la lenza. Aprire un menu o lasciare la scheda interrompe la pesca;
+non si raccolgono pesci durante un'assenza.
+
+Ogni tassello d'acqua offre **2 pesci al giorno**, poi occorre spostarsi o
+tornare domani. La scorta resta nei salvataggi. Serve posto nello zaino e
+una cattura aggiunge un solo pesce: per continuare bisogna rilanciare.
+
+Il **pesce crudo** ristora il 18% della fame e dura 2 giorni nello zaino.
+Davanti a un falò acceso, Spazio lo trasforma in **pesce arrostito**: ristora
+il 40% e dura 4 giorni. Entrambi si impilano fino a 10, si mangiano con il
+comando abituale e seguono le regole delle casse e del decadimento.
+
+Nei quattro giorni d'inverno il **bassofondo ghiaccia**: lastre chiare e
+venature lo distinguono dall'acqua profonda, e anche le mappe cambiano.
+Superstite e infetti possono attraversarlo; l'acqua profonda resta un ostacolo.
+D'inverno i pesci non abboccano, neppure nell'acqua aperta. Sul ghiaccio non
+si costruisce, non si lascia roba e non si riempiono secchi: per bere serve
+acqua aperta oppure quella messa da parte.
+
+In primavera il bassofondo torna acqua. Chi è ancora sul ghiaccio viene
+riportato sulla terra libera più vicina, senza una morte improvvisa o una
+partita bloccata. La generazione della valle e i salvataggi precedenti restano
+compatibili: il ghiaccio è uno stato stagionale, non una modifica permanente.
+
+Prima del rilascio verificare nel browser lenza, barra d'attesa, cattura,
+cambio attrezzo, cottura, colori delle mappe, attraversamento e disgelo.
+
+## M7.5.1 — affidabilità e percezione
+
+Il tempo di gioco, il sonno e il recupero dopo un'assenza condividono la stessa
+simulazione: i bisogni causano danno soltanto dopo essersi esauriti e ogni
+mezzanotte applica la stagione di quel giorno a colture e decadimento. Durante
+le assenze si considera anche il freddo, rivalutato al massimo ogni secondo;
+il recupero si interrompe alla morte. Gli infetti non vengono simulati durante
+l'assenza.
+
+I salvataggi vengono controllati prima di modificare la partita. Una ricetta
+o cottura fallita lascia invariati ordine, quantità e date dello zaino. Il
+service worker cancella soltanto le vecchie cache di Ultimo raccolto.
+
+Muri e porte chiuse interrompono la vista e attenuano il rumore: ogni parete
+lascia il 35% della portata sonora. Perso il contatto, gli infetti cercano
+l'ultima posizione vista o sentita per quattro secondi, senza conoscere gli
+spostamenti successivi. Possono ancora sfondare muri e porte verso quel punto.
+Morsi e colpi del giocatore rispettano le pareti, anche agli angoli.
+
+Le costruzioni di M7.5 restano compatibili: una stanza chiusa richiede una
+fiamma per scaldarsi. Aprire una porta o sfondare un muro aggiorna subito il
+riparo. Non si possono chiudere porte o posare muri e porte sopra una persona.
+
+Test automatici senza dipendenze, con Node.js 22 o successivo:
+
+```sh
+cd ultimo-raccolto
+npm test
+```
+
+La suite copre anche le date degli alimenti lasciati a terra, la compatibilità
+dei salvataggi precedenti e la completezza dei moduli nella cache offline.
+Prima del rilascio verificare nel browser apertura/chiusura porte, messaggi del
+riparo, inseguimento dietro una parete e aggiornamento offline del service worker.
+
 ## L'idea
 
 Il gioco sta a metà strada fra tre cose che tirano in direzioni opposte. *Stardew

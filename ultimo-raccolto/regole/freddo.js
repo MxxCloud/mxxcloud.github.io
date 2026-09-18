@@ -63,8 +63,10 @@ export function alFreddo(eroe, cosaInMano) {
   // esattamente la differenza fra stare vicino a un fuoco e stare in una
   // stanza con un fuoco dentro — cioè il motivo per cui si costruiscono le
   // stanze.
+  riparo.aggiorna(0, tx, ty);
   const stanza = riparo.stanza();
   if (stanza && riparo.caldaDentro(stanza)) return false;
 
   return true;
 }
+

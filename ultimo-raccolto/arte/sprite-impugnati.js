@@ -66,3 +66,9 @@ export const ZAPPA = [
   ".hg..",
   ".hg..",
 ];
+
+
+export const CANNA = [
+ "...hB","..h.B",".h..B",".h..B",".h..B",".h..B",
+ ".h..B",".h..B",".h..v",".h...",".h...",".g...",
+];

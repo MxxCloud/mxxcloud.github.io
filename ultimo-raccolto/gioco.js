@@ -29,9 +29,10 @@ import * as udito from "./regole/udito.js";
 import * as contenitori from "./regole/contenitori.js";
 import * as orto from "./regole/orto.js";
 import * as stagioni from "./regole/stagioni.js";
-import * as decadimento from "./regole/decadimento.js";
-import * as ricrescita from "./regole/ricrescita.js";
 import * as salvataggio from "./regole/salvataggio.js";
+import * as simulazione from "./regole/simulazione.js";
+import * as pesca from "./regole/pesca.js";
+import * as acqua from "./regole/acqua.js";
 import * as sincronia from "./regole/sincronia.js";
 import { tavolozzaDi, tavolozzaBagnataDi } from "./arte/tavolozza.js";
 import { FIORI } from "./arte/sprite-fiori.js";
@@ -58,7 +59,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.5";
+const VERSIONE = "M7.6";
 
 // --- elementi -------------------------------------------------------------
 
@@ -98,7 +99,7 @@ let cassaAperta = null;
 // guarda sono una griglia sola di quattro per cinque, e lo sono anche qui: la
 // riga è l'indice diviso quattro, e la terza riga è il confine.
 let cassaScelta = 0;
-let ultimoGiorno = 1;
+
 let partitaAperta = false;
 let slotScelto = 0;
 const MODI_PARTITA = ["carica", "salva", "rete"];
@@ -275,6 +276,11 @@ const ARRIVO = {
 // chi chiama deve poter dire "l'inverno ha preso l'orto" invece di due
 // messaggi che si coprono a vicenda.
 function vestiLaValle() {
+  const acquaCambiata = acqua.aggiorna(entita.tutte());
+  if (acquaCambiata.riportati.includes(eroe)) {
+    pesca.interrompi();
+    annuncia("il disgelo ti riporta a riva", "#8fb8d8");
+  }
   const stagione = stagioni.stagioneCorrente();
   if (stagione === stagioneVestita) return null;
   const prima = stagioneVestita;
@@ -285,8 +291,8 @@ function vestiLaValle() {
   // destra si legge come un riquadro dimenticato acceso. Le tinte stanno in
   // un posto solo e le due finestre si ridipingono da sé.
   if (tinte.impostaTavolozza(tavolozzaDi(stagione))) {
-    minimappa.ridipingiSeServe();
-    mappaGrande.ridipingiSeServe();
+    minimappa.ridipingiSeServe(stagione === "inverno");
+    mappaGrande.ridipingiSeServe(stagione === "inverno");
   }
   // I fiori sono l'altra metà della primavera: due verdi leggermente diversi
   // non bastavano a distinguerla dall'estate.
@@ -495,6 +501,7 @@ function caricaDa(voce) {
 // camera, la minimappa, i conti del ciclo. Lo stesso pezzo serve a una casella
 // e a un file, e scritto due volte sarebbe la seconda a restare indietro.
 function riprendi(ripreso) {
+  pesca.interrompi();
   // L'eroe si rifà invece di essere spostato: un'entità caricata deve tornare
   // allo stato che avrebbe appena creata — niente passo a metà, niente
   // direzione ereditata dalla partita di prima.
@@ -509,7 +516,7 @@ function riprendi(ripreso) {
   schermo.centraSu(eroe.px, eroe.py);
 
   casellaScelta = ripreso.casella;
-  ultimoGiorno = ripreso.giorno;
+  simulazione.resoconto();
   // L'alba di oggi conta come già scritta se è già passata: riprendere non
   // deve sovrascrivere la casella automatica con la partita appena ripresa.
   albaScritta = tempo.oraCorrente() >= tempo.ALBA_PIENA ? ripreso.giorno : ripreso.giorno - 1;
@@ -949,6 +956,8 @@ function leggiComandi() {
   // che è successo: il primo si legge, il secondo si sente senza guardare — ed
   // è la differenza fra zappare guardando i piedi e zappare guardando il buio
   // attorno, che di notte è quello che si vorrebbe fare.
+  if (esito.tipo === "pesca") { suono.suona(ACQUA); annuncia("lenza in acqua: resta fermo", "#8fb8d8"); }
+  if (esito.tipo === "pescaInterrotta") annuncia("lenza ritirata", "#c9b189");
   if (esito.tipo === "bevi") { suono.suona(SORSO); annuncia("bevi", "#8fb8d8"); }
   if (esito.tipo === "riempi") { suono.suona(ACQUA); annuncia(`riempiti ${esito.quanti} secchi`, "#8fb8d8"); }
   if (esito.tipo === "zappa") { suono.suona(ZAPPA); annuncia("terra zappata", "#9ec97e"); }
@@ -1016,10 +1025,11 @@ function leggiComandi() {
 // --- ciclo ----------------------------------------------------------------
 
 function aggiorna(passo) {
+  if (mondoFermo()) pesca.interrompi();
   // Il tempo non scorre mentre si sceglie cosa costruire: un menu che ti fa
   // arrivare la notte addosso mentre lo leggi è una punizione, non una sfida.
   if (!mondoFermo()) {
-    tempo.avanza(passo);
+
     // Quello che si ha in mano lo decide lo zaino, non l'entità: le entità
     // stanno sotto le regole e non devono sapere cos'è un inventario. Lo
     // stesso vale per la forma fisica: quanto si è in forze è una regola.
@@ -1027,11 +1037,6 @@ function aggiorna(passo) {
     eroe.fattoreVelocita = bisogni.fattoreVelocita();
     eroe.puoCorrere = bisogni.puoCorrere();
     entita.aggiorna(passo);
-
-    // Dopo il movimento, perché il consumo dipende da cosa si è appena fatto.
-    for (const vuoto of bisogni.avanza(passo, { corre: eroe.correndo, siMuove: eroe.inMovimento })) {
-      annuncia(AVVISI_BISOGNI[vuoto], "#c0705f");
-    }
 
     // Il riparo prima del freddo, perché il freddo lo interroga: al chiuso il
     // calore resta dentro. Chiudere l'ultimo varco non si vede, quindi lo dice
@@ -1046,19 +1051,21 @@ function aggiorna(passo) {
       annuncia(riparo.alChiuso() ? "sei al chiuso" : "sei allo scoperto", "#c9b189");
     }
 
-    // La salute viene dopo i bisogni, e non è un caso: raccoglie le
-    // conseguenze di quello che è appena successo sopra di lei. Il freddo si
-    // chiede una volta per passo e la risposta la riusa anche il disegno: non
-    // per costo — è un ottocentesimo di fotogramma — ma perché la barra e il
-    // danno devono raccontare lo stesso momento.
     const primaGelava = gelando;
+    const primaVuoti = new Set(bisogni.vuoti());
+    simulazione.avanza(passo, {
+      corre: eroe.correndo, siMuove: eroe.inMovimento,
+      alFreddo: () => freddo.alFreddo(eroe, cosaInMano()),
+    });
+    for (const vuoto of bisogni.vuoti()) {
+      if (!primaVuoti.has(vuoto)) annuncia(AVVISI_BISOGNI[vuoto], "#c0705f");
+    }
     gelando = freddo.alFreddo(eroe, cosaInMano());
     if (gelando && !primaGelava) {
       suono.suona(GELO);
       annuncia("stai gelando: serve una fiamma", "#8fa8d8");
     }
 
-    salute.avanza(passo, { vuoti: bisogni.vuoti(), alFreddo: gelando });
     // Il chiasso dopo il movimento, perché dipende da come ci si è appena
     // mossi; le decisioni degli infetti dopo il chiasso, perché lo ascoltano.
     // Il morso invece si raccoglie dopo che si sono mossi loro: è l'unico
@@ -1068,7 +1075,7 @@ function aggiorna(passo) {
       luceInMano: Boolean(CATALOGO[cosaInMano()]?.luce),
     });
     infetti.sgomitano();
-    const morsi = infetti.raccogliIMorsi();
+    const morsi = infetti.raccogliIMorsi(eroe);
     if (morsi.morsi > 0) {
       lampoDanno = DURATA_LAMPO;
       suono.suona(MORSO);
@@ -1099,6 +1106,9 @@ function aggiorna(passo) {
     // del mondo fermo, per una ragione che conta: il tempo saltato (una scheda
     // in secondo piano, una notte dormita) non passa da qui, quindi tornare
     // dopo mezz'ora non spara mezz'ora di passi in un fotogramma.
+    const pescato = pesca.aggiorna(passo, eroe, cosaInMano());
+    if (pescato?.tipo === "pescato") { suono.suona(FATTO); annuncia("preso un pesce: arrostiscilo al fuoco", "#9ec97e"); }
+    if (pescato?.tipo === "pescaInterrotta") annuncia(pescato.motivo, "#c9b189");
     udito.avanza(passo, eroe);
 
     scheggie.aggiorna(passo);
@@ -1135,29 +1145,7 @@ function aggiorna(passo) {
     if (messaggio.vita <= 0) messaggio = null;
   }
 
-  // L'orto cresce al cambio di giorno, non a ogni fotogramma: una coltura
-  // matura in giorni, e contarli è l'unico modo perché aspettare significhi
-  // qualcosa. È un ciclo e non un confronto perché una notte dormita può far
-  // passare un giorno intero in un colpo solo.
-  let cresciute = 0;
-  let appassite = 0;
-  let spenti = 0;
-  let guaste = 0;
-  let inScadenza = 0;
-  let tornati = 0;
-  while (ultimoGiorno < tempo.giornoCorrente()) {
-    ultimoGiorno += 1;
-    const orti = orto.nuovoGiorno();
-    cresciute += orti.cresciute;
-    appassite += orti.appassite;
-    const lasciato = decadimento.nuovoGiorno();
-    spenti += lasciato.fuochi;
-    guaste += lasciato.guaste;
-    // Non si somma: è una fotografia di com'è messa la dispensa adesso, e
-    // sommandola su tre giorni recuperati direbbe il triplo del vero.
-    inScadenza = lasciato.inScadenza;
-    tornati += ricrescita.nuovoGiorno();
-  }
+  const { cresciute, appassite, spenti, guaste, inScadenza, tornati } = simulazione.resoconto();
 
   const arrivata = vestiLaValle();
 
@@ -1186,7 +1174,7 @@ function aggiorna(passo) {
   // Il salvataggio dell'alba, e proprio qui: dopo che il giorno ha fatto i
   // suoi conti — l'orto cresciuto, i fuochi spenti, la stagione girata — così
   // una partita ripresa non li rifà e non li salta.
-  if (tempo.giornoCorrente() > albaScritta && tempo.oraCorrente() >= tempo.ALBA_PIENA) {
+  if (!salute.eMorto() && tempo.giornoCorrente() > albaScritta && tempo.oraCorrente() >= tempo.ALBA_PIENA) {
     albaScritta = tempo.giornoCorrente();
     const istantanea = salvataggio.istantanea(eroe, casellaScelta);
     const esito = salvataggio.scrivi(salvataggio.ALBA, istantanea);
@@ -1235,6 +1223,18 @@ function disegna() {
   inPiedi.sort((a, b) => a.base - b.base);
 
   for (const cosa of inPiedi) schermo.disegna(cosa.sprite, cosa.x + tremolioDi(cosa), cosa.y);
+
+  const lenza = pesca.stato();
+  if (lenza) {
+    const p = schermo.pennello(), q = schermo.inquadratura();
+    const x = Math.round((lenza.tx + 0.5) * TASSELLO - q.sinistra);
+    const y = Math.round((lenza.ty + 0.5) * TASSELLO - q.sopra + Math.sin(lenza.trascorsi * 3));
+    p.save(); p.lineWidth = 1; p.strokeStyle = "#d9e8e8";
+    p.beginPath(); p.moveTo(Math.round(eroe.px-q.sinistra),Math.round(eroe.py-q.sopra-12));
+    p.lineTo(x,y); p.stroke();
+    p.fillStyle = "#e0913a"; p.fillRect(x-1,y-2,2,3);
+    p.fillStyle = "#d9e8e8"; p.fillRect(x-1,y+1,2,1); p.restore();
+  }
 
   // Prima del buio, così di notte anche le scheggie si spengono con tutto il
   // resto invece di brillare sopra l'oscurità come scintille.
@@ -1307,6 +1307,13 @@ function disegnaInterfaccia() {
     giorniPerStagione: stagioni.GIORNI_PER_STAGIONE,
   });
   hud.disegnaAzione(p, azioneCorrente);
+  const lenza = pesca.stato();
+  if (lenza) {
+    // Una barra sopra lo zaino mostra l'attesa senza aggiungere comandi.
+    const x = Math.floor(schermo.LARGHEZZA/2)-36, y = schermo.ALTEZZA-60;
+    p.fillStyle = "#1d3a4a"; p.fillRect(x,y,72,4);
+    p.fillStyle = "#abcdd7"; p.fillRect(x,y,Math.floor(72*lenza.trascorsi/pesca.ATTESA),4);
+  }
   const barra = hud.disegnaZaino(p, casellaScelta);
   // Il promemoria dice "C COSTRUIRE", e con la cassa aperta "C" chiude: un
   // cartello che indica la porta sbagliata è peggio di nessun cartello.
@@ -1436,10 +1443,6 @@ mappa.registraIconeMucchio(
 // valle nello stesso momento dell'anno, ogni volta.
 if (parametri.has("ora")) tempo.impostaOra(Number(parametri.get("ora")));
 if (parametri.has("giorno")) tempo.impostaGiorno(Number(parametri.get("giorno")));
-// Il conto dei giorni parte da dove parte la partita, altrimenti cominciando
-// dal giorno venti il ciclo del cambio giorno girerebbe diciannove volte
-// facendo appassire un orto che non è mai esistito.
-ultimoGiorno = tempo.giornoCorrente();
 // L'alba di oggi conta come già passata se lo è: cominciando alle sette in
 // punto non si deve scrivere un salvataggio automatico prima ancora di aver
 // mosso un passo.
@@ -1462,7 +1465,7 @@ schermo.centraSu(eroe.px, eroe.py);
 // chiamare il gioco — quello non si può impedire — ma il tempo passato si
 // recupera al ritorno, ed è lo stesso meccanismo del dormire: l'orologio
 // avanza, i bisogni calano, e il ciclo del cambio giorno fa crescere l'orto,
-// spegnere i fuochi e girare le stagioni al fotogramma dopo.
+// spegnere i fuochi e girare le stagioni a ogni mezzanotte attraversata.
 //
 // Oltre il tetto il conto si ferma. Non è una gentilezza: recuperare mille
 // giorni vorrebbe dire mille giri del ciclo del giorno, cioè una pagina
@@ -1475,6 +1478,7 @@ const ASSENZA_MASSIMA = 4 * 60 * 60; // quattro ore vere, cioè quarantotto gior
 // secondo piano continuerebbe a crepitare in sottofondo mentre si lavora.
 ciclo.collegaSospensione(
   () => {
+    pesca.interrompi();
     comandi.rilasciaTutto();
     suono.sospendi();
   },
@@ -1484,19 +1488,13 @@ ciclo.collegaSospensione(
 // Il tempo che il ciclo non ha potuto simulare passo per passo. Arriva in
 // blocco al primo fotogramma dopo un'assenza, e qui diventa mondo: l'orologio
 // avanza, i bisogni calano, e il ciclo del cambio giorno fa crescere l'orto,
-// spegnere i fuochi e girare le stagioni al fotogramma dopo.
+// spegnere i fuochi e girare le stagioni a ogni mezzanotte attraversata.
 function recuperaIlTempoPerso(secondiSaltati) {
+  pesca.interrompi();
   if (mondoFermo()) return;
-  const secondi = Math.min(secondiSaltati, ASSENZA_MASSIMA);
-  if (secondi < 1) return;
-
-  tempo.avanza(secondi);
-  bisogni.passanoSecondi(secondi, { stanca: true });
-  // Si può tornare e trovarsi morti, ed è giusto così: "il mondo non aspetta"
-  // è una frase che vale anche per il corpo. Il freddo no — di quelle ore
-  // nessuno sa quante fossero d'inverno e di notte, e inventarlo sarebbe
-  // peggio che lasciarlo fuori.
-  salute.passanoSecondi(secondi, { vuoti: bisogni.vuoti() });
+  const secondi = simulazione.avanza(Math.min(secondiSaltati, ASSENZA_MASSIMA), {
+    alFreddo: () => freddo.alFreddo(eroe, cosaInMano()),
+  });
 
   // Si dice quanto è passato, perché tornare e trovare l'orto morto senza
   // sapere perché è la differenza fra una regola e un guasto. In giorni se

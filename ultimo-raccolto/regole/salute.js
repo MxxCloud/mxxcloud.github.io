@@ -174,20 +174,6 @@ export function avanza(passo, { vuoti = [], alFreddo = false } = {}) {
   return controllaLaMorte();
 }
 
-// Il tempo saltato fa danno come se fosse passato davvero, per la stessa
-// ragione per cui lo fa ai bisogni: dormire salta la notte e non il proprio
-// metabolismo, ed essere stati via non mette il mondo in pausa.
-//
-// I bisogni vuoti sono quelli di adesso, cioè di quando si torna, e non
-// quelli dell'intero intervallo: durante l'assenza nessuno li ha misurati.
-// È un'approssimazione, e sbaglia dalla parte giusta — un bisogno svuotatosi
-// a metà dell'assenza fa danno per tutta l'assenza solo se è ancora vuoto al
-// ritorno, cioè solo se nel frattempo non è stato risolto, cosa che da
-// assenti non può essere successa.
-export function passanoSecondi(secondi, { vuoti = [] } = {}) {
-  return avanza(secondi, { vuoti, alFreddo: false });
-}
-
 export function ristora(quanto) {
   if (morto) return 0;
   const prima = livello;
@@ -220,3 +206,4 @@ export function ripristina(salvata, infetta = false) {
   // sarebbe il modo più comodo di curarsi che esista.
   infezione = infetta === true;
 }
+

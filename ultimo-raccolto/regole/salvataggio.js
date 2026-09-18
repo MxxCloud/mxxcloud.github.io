@@ -23,6 +23,8 @@ import * as stagioni from "./stagioni.js";
 import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
 import * as esplorato from "./esplorato.js";
+import { CATALOGO } from "./oggetti.js";
+import { OGGETTO } from "../mondo/generazione.js";
 
 // Cambiando la forma di quello che si scrive, questo numero sale e i
 // salvataggi vecchi vengono rifiutati dicendolo, invece di essere caricati a
@@ -90,7 +92,7 @@ export function istantanea(eroe, casellaScelta) {
     // Copie e non riferimenti: l'array dello zaino continua a vivere e a
     // cambiare mentre il salvataggio aspetta di essere scritto.
     inventario: inventario.contenuto().map((c) => (c ? { ...c } : null)),
-    modifiche: modifiche.tutti(),
+    modifiche: structuredClone(modifiche.tutti()),
     // I settori visti, non il terreno che contengono: il terreno è una
     // funzione delle coordinate e si ricalcola uguale. È la stessa ragione per
     // cui qui sopra ci sono le modifiche e non il mondo.
@@ -125,7 +127,7 @@ export function leggi(slot) {
     const testo = d.getItem(chiaveDi(slot));
     if (!testo) return null;
     const stato = JSON.parse(testo);
-    if (stato?.formato !== FORMATO) return null;
+    if (!valido(stato)) return null;
     return stato;
   } catch {
     // Un salvataggio illeggibile vale come assente. Non si cancella da solo:
@@ -162,17 +164,53 @@ export function elenco() {
 // Non compresso, al contrario di quello che andrà in rete: un file che si
 // apre e si legge vale più dei centoventi kilobyte risparmiati, ed è la
 // stessa scelta del backup di Budget futuro.
+const oggetto = v => v !== null && typeof v === "object" && !Array.isArray(v);
+const intero = v => Number.isSafeInteger(v);
+const positivo = v => intero(v) && v >= 1;
+const livelloValido = v => Number.isFinite(v) && v >= 0 && v <= 1;
+const tipi = new Set(Object.values(OGGETTO));
+const presente = (v, k, verifica) => v[k] === undefined || verifica(v[k]);
+function casellaValida(c) {
+  return c === null || (oggetto(c) && Object.hasOwn(CATALOGO, c.cosa) && positivo(c.quantita)
+    && c.quantita <= CATALOGO[c.cosa].pila && presente(c, "dal", positivo));
+}
+function filaValida(fila, massimo) {
+  return Array.isArray(fila) && fila.length <= massimo && fila.every(casellaValida);
+}
+function modificaValida(v) {
+  if (!oggetto(v) || !intero(v.tx) || !intero(v.ty)) return false;
+  if (!presente(v, "oggetto", n => tipi.has(n))) return false;
+  if (!presente(v, "giornoPesca", positivo) || !presente(v, "pescati", n => intero(n) && n >= 0 && n <= 2)) return false;
+  if (!presente(v, "colpi", n => intero(n) && n >= 0)) return false;
+  for (const k of ["posata", "maturata", "svuotata", "dal", "giorno"]) {
+    if (!presente(v, k, positivo)) return false;
+  }
+  if (!presente(v, "bagnato", b => typeof b === "boolean")) return false;
+  if (v.oggetto === OGGETTO.MUCCHIO && (!Object.hasOwn(CATALOGO, v.cosa) || !positivo(v.quante))) return false;
+  if (!presente(v, "contenuto", a => filaValida(a, 12))) return false;
+  if (!presente(v, "roba", a => filaValida(a, inventario.CASELLE))) return false;
+  return true;
+}
+
+// Tutto il controllo precede qualsiasi mutazione. I campi opzionali delle
+// versioni precedenti restano opzionali, ma quelli presenti devono essere sani.
 export function valido(stato) {
-  return Boolean(
-    stato &&
-      stato.formato === FORMATO &&
-      typeof stato.seme === "string" &&
-      Number.isFinite(stato.giorno) &&
-      Number.isFinite(stato.ore) &&
-      stato.eroe &&
-      Number.isFinite(stato.eroe.px) &&
-      Number.isFinite(stato.eroe.py)
-  );
+  if (!oggetto(stato) || stato.formato !== FORMATO || typeof stato.seme !== "string") return false;
+  if (stato.seme.length > 1024 || !positivo(stato.giorno)) return false;
+  if (!Number.isFinite(stato.ore) || stato.ore < 0 || stato.ore >= 24) return false;
+  if (!oggetto(stato.eroe) || !Number.isFinite(stato.eroe.px) || !Number.isFinite(stato.eroe.py)) return false;
+  if (Math.abs(stato.eroe.px) > Number.MAX_SAFE_INTEGER / 16 || Math.abs(stato.eroe.py) > Number.MAX_SAFE_INTEGER / 16) return false;
+  if (!presente(stato.eroe, "guarda", v => ["su", "giu", "destra", "sinistra"].includes(v))) return false;
+  if (!presente(stato, "casella", n => intero(n) && n >= 0 && n < inventario.CASELLE)) return false;
+  if (!presente(stato, "salute", livelloValido) || !presente(stato, "infezione", v => typeof v === "boolean")) return false;
+  if (!presente(stato, "bisogni", v => oggetto(v) && bisogni.ELENCO.every(k => presente(v, k, livelloValido)))) return false;
+  if (!presente(stato, "inventario", v => filaValida(v, inventario.CASELLE))) return false;
+  if (!presente(stato, "modifiche", v => Array.isArray(v) && v.length <= 100000 && v.every(modificaValida))) return false;
+  if (!presente(stato, "esplorato", v => Array.isArray(v) && v.length <= 100000 && v.every(k => {
+    if (typeof k !== "string" || !/^-?\d+,-?\d+$/.test(k)) return false;
+    return k.split(",").every(n => intero(Number(n)));
+  }))) return false;
+  return true;
 }
 
 // Il nome dice a colpo d'occhio qual è il più avanti, che è la domanda vera
@@ -203,7 +241,9 @@ export function cancella(slot) {
 // rigenera il terreno; poi le modifiche, che sono le eccezioni a quel
 // terreno; poi il resto, che non dipende da nessuno dei due.
 export function applica(stato) {
-  if (!stato || stato.formato !== FORMATO) return null;
+  if (!valido(stato)) return null;
+  // Preparata prima di toccare la partita, e senza riferimenti al file importato.
+  try { stato = structuredClone(stato); } catch { return null; }
 
   if (stato.seme !== mappa.semeCorrente().nome) mappa.inizializza(stato.seme);
 
@@ -229,3 +269,4 @@ export function applica(stato) {
     giorno: tempo.giornoCorrente(),
   };
 }
+

@@ -11,7 +11,7 @@
 // dimenticato non darebbe errore online, e si scoprirebbe solo la prima volta
 // che qualcuno prova a giocare in treno.
 
-const VERSIONE = "ultimo-raccolto-v30";
+const VERSIONE = "ultimo-raccolto-v31";
 
 const RISORSE = [
   "./",
@@ -46,6 +46,7 @@ const RISORSE = [
   "./mondo/generazione.js",
   "./mondo/mappa.js",
   "./mondo/modifiche.js",
+  "./mondo/ostacoli.js",
   "./mondo/rovine.js",
   "./motore/casuale.js",
   "./motore/ciclo.js",
@@ -69,6 +70,9 @@ const RISORSE = [
   "./regole/ricrescita.js",
   "./regole/riparo.js",
   "./regole/salute.js",
+  "./regole/simulazione.js",
+  "./regole/acqua.js",
+  "./regole/pesca.js",
   "./regole/salvataggio.js",
   "./regole/sincronia.js",
   "./regole/stagioni.js",
@@ -94,7 +98,7 @@ self.addEventListener("activate", (evento) => {
     caches
       .keys()
       .then((nomi) =>
-        Promise.all(nomi.filter((nome) => nome !== VERSIONE).map((nome) => caches.delete(nome)))
+        Promise.all(nomi.filter((nome) => nome.startsWith("ultimo-raccolto-") && nome !== VERSIONE).map((nome) => caches.delete(nome)))
       )
       .then(() => self.clients.claim())
   );
@@ -129,3 +133,4 @@ self.addEventListener("fetch", (evento) => {
       })
   );
 });
+
