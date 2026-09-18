@@ -31,6 +31,8 @@ import * as orto from "./regole/orto.js";
 import * as stagioni from "./regole/stagioni.js";
 import * as salvataggio from "./regole/salvataggio.js";
 import * as simulazione from "./regole/simulazione.js";
+import * as pesca from "./regole/pesca.js";
+import * as acqua from "./regole/acqua.js";
 import * as sincronia from "./regole/sincronia.js";
 import { tavolozzaDi, tavolozzaBagnataDi } from "./arte/tavolozza.js";
 import { FIORI } from "./arte/sprite-fiori.js";
@@ -57,7 +59,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.5.1";
+const VERSIONE = "M7.6";
 
 // --- elementi -------------------------------------------------------------
 
@@ -274,6 +276,11 @@ const ARRIVO = {
 // chi chiama deve poter dire "l'inverno ha preso l'orto" invece di due
 // messaggi che si coprono a vicenda.
 function vestiLaValle() {
+  const acquaCambiata = acqua.aggiorna(entita.tutte());
+  if (acquaCambiata.riportati.includes(eroe)) {
+    pesca.interrompi();
+    annuncia("il disgelo ti riporta a riva", "#8fb8d8");
+  }
   const stagione = stagioni.stagioneCorrente();
   if (stagione === stagioneVestita) return null;
   const prima = stagioneVestita;
@@ -284,8 +291,8 @@ function vestiLaValle() {
   // destra si legge come un riquadro dimenticato acceso. Le tinte stanno in
   // un posto solo e le due finestre si ridipingono da sé.
   if (tinte.impostaTavolozza(tavolozzaDi(stagione))) {
-    minimappa.ridipingiSeServe();
-    mappaGrande.ridipingiSeServe();
+    minimappa.ridipingiSeServe(stagione === "inverno");
+    mappaGrande.ridipingiSeServe(stagione === "inverno");
   }
   // I fiori sono l'altra metà della primavera: due verdi leggermente diversi
   // non bastavano a distinguerla dall'estate.
@@ -494,6 +501,7 @@ function caricaDa(voce) {
 // camera, la minimappa, i conti del ciclo. Lo stesso pezzo serve a una casella
 // e a un file, e scritto due volte sarebbe la seconda a restare indietro.
 function riprendi(ripreso) {
+  pesca.interrompi();
   // L'eroe si rifà invece di essere spostato: un'entità caricata deve tornare
   // allo stato che avrebbe appena creata — niente passo a metà, niente
   // direzione ereditata dalla partita di prima.
@@ -948,6 +956,8 @@ function leggiComandi() {
   // che è successo: il primo si legge, il secondo si sente senza guardare — ed
   // è la differenza fra zappare guardando i piedi e zappare guardando il buio
   // attorno, che di notte è quello che si vorrebbe fare.
+  if (esito.tipo === "pesca") { suono.suona(ACQUA); annuncia("lenza in acqua: resta fermo", "#8fb8d8"); }
+  if (esito.tipo === "pescaInterrotta") annuncia("lenza ritirata", "#c9b189");
   if (esito.tipo === "bevi") { suono.suona(SORSO); annuncia("bevi", "#8fb8d8"); }
   if (esito.tipo === "riempi") { suono.suona(ACQUA); annuncia(`riempiti ${esito.quanti} secchi`, "#8fb8d8"); }
   if (esito.tipo === "zappa") { suono.suona(ZAPPA); annuncia("terra zappata", "#9ec97e"); }
@@ -1015,6 +1025,7 @@ function leggiComandi() {
 // --- ciclo ----------------------------------------------------------------
 
 function aggiorna(passo) {
+  if (mondoFermo()) pesca.interrompi();
   // Il tempo non scorre mentre si sceglie cosa costruire: un menu che ti fa
   // arrivare la notte addosso mentre lo leggi è una punizione, non una sfida.
   if (!mondoFermo()) {
@@ -1095,6 +1106,9 @@ function aggiorna(passo) {
     // del mondo fermo, per una ragione che conta: il tempo saltato (una scheda
     // in secondo piano, una notte dormita) non passa da qui, quindi tornare
     // dopo mezz'ora non spara mezz'ora di passi in un fotogramma.
+    const pescato = pesca.aggiorna(passo, eroe, cosaInMano());
+    if (pescato?.tipo === "pescato") { suono.suona(FATTO); annuncia("preso un pesce: arrostiscilo al fuoco", "#9ec97e"); }
+    if (pescato?.tipo === "pescaInterrotta") annuncia(pescato.motivo, "#c9b189");
     udito.avanza(passo, eroe);
 
     scheggie.aggiorna(passo);
@@ -1210,6 +1224,18 @@ function disegna() {
 
   for (const cosa of inPiedi) schermo.disegna(cosa.sprite, cosa.x + tremolioDi(cosa), cosa.y);
 
+  const lenza = pesca.stato();
+  if (lenza) {
+    const p = schermo.pennello(), q = schermo.inquadratura();
+    const x = Math.round((lenza.tx + 0.5) * TASSELLO - q.sinistra);
+    const y = Math.round((lenza.ty + 0.5) * TASSELLO - q.sopra + Math.sin(lenza.trascorsi * 3));
+    p.save(); p.lineWidth = 1; p.strokeStyle = "#d9e8e8";
+    p.beginPath(); p.moveTo(Math.round(eroe.px-q.sinistra),Math.round(eroe.py-q.sopra-12));
+    p.lineTo(x,y); p.stroke();
+    p.fillStyle = "#e0913a"; p.fillRect(x-1,y-2,2,3);
+    p.fillStyle = "#d9e8e8"; p.fillRect(x-1,y+1,2,1); p.restore();
+  }
+
   // Prima del buio, così di notte anche le scheggie si spengono con tutto il
   // resto invece di brillare sopra l'oscurità come scintille.
   scheggie.disegna();
@@ -1281,6 +1307,13 @@ function disegnaInterfaccia() {
     giorniPerStagione: stagioni.GIORNI_PER_STAGIONE,
   });
   hud.disegnaAzione(p, azioneCorrente);
+  const lenza = pesca.stato();
+  if (lenza) {
+    // Una barra sopra lo zaino mostra l'attesa senza aggiungere comandi.
+    const x = Math.floor(schermo.LARGHEZZA/2)-36, y = schermo.ALTEZZA-60;
+    p.fillStyle = "#1d3a4a"; p.fillRect(x,y,72,4);
+    p.fillStyle = "#abcdd7"; p.fillRect(x,y,Math.floor(72*lenza.trascorsi/pesca.ATTESA),4);
+  }
   const barra = hud.disegnaZaino(p, casellaScelta);
   // Il promemoria dice "C COSTRUIRE", e con la cassa aperta "C" chiude: un
   // cartello che indica la porta sbagliata è peggio di nessun cartello.
@@ -1445,6 +1478,7 @@ const ASSENZA_MASSIMA = 4 * 60 * 60; // quattro ore vere, cioè quarantotto gior
 // secondo piano continuerebbe a crepitare in sottofondo mentre si lavora.
 ciclo.collegaSospensione(
   () => {
+    pesca.interrompi();
     comandi.rilasciaTutto();
     suono.sospendi();
   },
@@ -1456,6 +1490,7 @@ ciclo.collegaSospensione(
 // avanza, i bisogni calano, e il ciclo del cambio giorno fa crescere l'orto,
 // spegnere i fuochi e girare le stagioni a ogni mezzanotte attraversata.
 function recuperaIlTempoPerso(secondiSaltati) {
+  pesca.interrompi();
   if (mondoFermo()) return;
   const secondi = simulazione.avanza(Math.min(secondiSaltati, ASSENZA_MASSIMA), {
     alFreddo: () => freddo.alFreddo(eroe, cosaInMano()),

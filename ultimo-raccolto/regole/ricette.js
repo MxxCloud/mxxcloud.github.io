@@ -68,6 +68,11 @@ export const RICETTE = [
     ],
   },
   {
+    id: "canna",
+    produce: { cosa: "canna", quante: 1 },
+    costo: [{ cosa: "ramo", quante: 3 }, { cosa: "fibra", quante: 4 }],
+  },
+  {
     id: "secchio",
     produce: { cosa: "secchio", quante: 1 },
     costo: [

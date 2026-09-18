@@ -2,6 +2,13 @@ import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
+import * as pesca from '../regole/pesca.js';
+import * as acqua from '../regole/acqua.js';
+import * as urti from '../entita/urti.js';
+import { GHIACCIO } from '../arte/sprite-terreno.js';
+import { CANNA } from '../arte/sprite-impugnati.js';
+import { decodifica } from '../arte/sprite.js';
+import { tavolozzaDi } from '../arte/tavolozza.js';
 import * as tempo from '../regole/tempo.js';
 import * as bisogni from '../regole/bisogni.js';
 import * as salute from '../regole/salute.js';
@@ -17,13 +24,14 @@ import * as freddo from '../regole/freddo.js';
 import * as infetti from '../regole/infetti.js';
 import * as entita from '../entita/entita.js';
 import * as decadimento from '../regole/decadimento.js';
-import { OGGETTO } from '../mondo/generazione.js';
+import { OGGETTO, TERRENO } from '../mondo/generazione.js';
 import { vistaLibera, fattoreSuono } from '../mondo/ostacoli.js';
 import * as sprite from '../arte/sprite-cose.js';
 import { TAVOLOZZA } from '../arte/tavolozza.js';
 
 let tx, ty, eroe;
 function reset() {
+  pesca.interrompi(); mappa.impostaGelo(false);
   riparo.reimposta(); tempo.reimposta(); bisogni.reimposta(); salute.reimposta();
   inventario.svuota(); modifiche.svuota(); entita.svuota(); simulazione.resoconto();
   mappa.inizializza('review');
@@ -260,4 +268,147 @@ test('tutti i moduli di produzione sono precaricati offline',()=>{
   for(const dir of ['arte','mondo','motore','regole','entita','interfaccia']) {
     for(const p of readdirSync(new URL(dir+'/',root)))if(p.endsWith('.js'))assert.ok(sw.includes(`"./${dir}/${p}"`),p);
   }
+});
+
+let rivaNota;
+function allaRiva() {
+  if (!rivaNota) {
+    ricerca: for(let y=-128;y<=128;y++)for(let x=-128;x<=128;x++) {
+      const a=tx+x,b=ty+y,t=mappa.terrenoNaturaleDi(a,b),prima=mappa.terrenoNaturaleDi(a-1,b);
+      if(t===TERRENO.ACQUA_BASSA && prima!==TERRENO.ACQUA && prima!==TERRENO.ACQUA_BASSA) {
+        rivaNota={tx:a,ty:b};break ricerca;
+      }
+    }
+  }
+  assert.ok(rivaNota,'riva generata');
+  const b=rivaNota;
+  modifiche.imposta(b.tx-1,b.ty,{oggetto:OGGETTO.NESSUNO});
+  modifiche.imposta(b.tx,b.ty,{oggetto:OGGETTO.NESSUNO});
+  eroe={...pos(b.tx-1,b.ty),guarda:'destra'};
+  inventario.aggiungi('canna',1);
+  return b;
+}
+test('canna costruibile senza banco con rami e fibra',()=>{
+  inventario.aggiungi('ramo',3);inventario.aggiungi('fibra',4);
+  assert.equal(ricette.fai(ricette.RICETTE.find(r=>r.id==='canna')).fatto,true);
+  assert.equal(inventario.quante('canna'),1);assert.equal(inventario.quante('fibra'),0);
+});
+test('pesca: attesa completa, tempo e bisogni continuano, una cattura sola',()=>{
+  allaRiva();assert.equal(azioni.agisci(eroe,'canna').tipo,'pesca');
+  const ora=tempo.oraCorrente(),fame=bisogni.livello('fame');
+  for(let i=0;i<pesca.ATTESA-1;i++){simulazione.avanza(1);assert.equal(pesca.aggiorna(1,eroe,'canna'),null);}
+  assert.equal(inventario.quante('pesce_crudo'),0);
+  simulazione.avanza(1);assert.equal(pesca.aggiorna(1,eroe,'canna').tipo,'pescato');
+  assert.ok(tempo.oraCorrente()>ora);assert.ok(bisogni.livello('fame')<fame);
+  assert.equal(pesca.aggiorna(100,eroe,'canna'),null);assert.equal(inventario.quante('pesce_crudo'),1);
+  assert.equal(inventario.contenuto().find(c=>c?.cosa==='pesce_crudo').dal,tempo.giornoCorrente());
+});
+test('muoversi, girarsi, cambiare attrezzo o ferirsi interrompe la pesca',()=>{
+  for(const motivo of ['muovi','gira','attrezzo','ferita']) {
+    reset();allaRiva();azioni.agisci(eroe,'canna');
+    if(motivo==='muovi')eroe.px+=1;if(motivo==='gira')eroe.guarda='su';
+    if(motivo==='ferita')salute.ferita(0.1,'infetti');
+    assert.equal(pesca.aggiorna(pesca.ATTESA,eroe,motivo==='attrezzo'?'ascia':'canna').tipo,'pescaInterrotta');
+    assert.equal(inventario.quante('pesce_crudo'),0);
+  }
+});
+test('spazio ritira la lenza e non consuma il punto di pesca',()=>{
+  const b=allaRiva();azioni.agisci(eroe,'canna');
+  assert.equal(azioni.agisci(eroe,'canna').tipo,'pescaInterrotta');assert.equal(pesca.stato(),null);
+  assert.equal(modifiche.di(b.tx,b.ty).pescati,undefined);
+});
+test('due pesci per punto e giorno: salvare e ricaricare non rigenera la scorta',()=>{
+  const b=allaRiva();
+  for(let i=0;i<2;i++){azioni.agisci(eroe,'canna');assert.equal(pesca.aggiorna(pesca.ATTESA,eroe,'canna').tipo,'pescato');}
+  const stato=salvataggio.istantanea(eroe,0);assert.ok(salvataggio.valido(stato));assert.ok(salvataggio.applica(stato));
+  assert.match(pesca.impedimento(b.tx,b.ty),/domani/);assert.equal(azioni.agisci(eroe,'canna'),null);
+  tempo.impostaGiorno(2);assert.equal(pesca.impedimento(b.tx,b.ty),null);
+});
+test('zaino pieno alla partenza e alla cattura non perde pesci né oggetti',()=>{
+  const b=allaRiva();for(let i=0;i<7;i++)inventario.aggiungi('ascia',1);
+  assert.equal(azioni.azionePossibile(eroe,'canna').impedito,'zaino pieno');
+  inventario.togli('ascia',1);azioni.agisci(eroe,'canna');inventario.aggiungi('ascia',1);
+  const prima=structuredClone(inventario.contenuto());
+  assert.equal(pesca.aggiorna(pesca.ATTESA,eroe,'canna').motivo,'zaino pieno');
+  assert.deepEqual(inventario.contenuto(),prima);assert.equal(modifiche.di(b.tx,b.ty).pescati,undefined);
+});
+test('inverno: ghiaccia solo il bassofondo e la pesca si ferma',()=>{
+  const b=allaRiva();azioni.agisci(eroe,'canna');tempo.impostaGiorno(9);acqua.aggiorna();
+  assert.equal(mappa.terrenoDi(b.tx,b.ty),TERRENO.GHIACCIO);assert.equal(mappa.solidoIn(b.tx,b.ty),false);
+  assert.equal(mappa.terrenoNaturaleDi(b.tx,b.ty),TERRENO.ACQUA_BASSA);
+  assert.equal(pesca.aggiorna(pesca.ATTESA,eroe,'canna').tipo,'pescaInterrotta');
+  assert.match(azioni.azionePossibile(eroe,'canna').impedito,/inverno/);
+  let profonda;for(let y=b.ty-30;y<=b.ty+30&&!profonda;y++)for(let x=b.tx-30;x<=b.tx+30;x++)if(mappa.terrenoDi(x,y)===TERRENO.ACQUA){profonda={x,y};break;}
+  assert.ok(profonda);assert.equal(mappa.solidoIn(profonda.x,profonda.y),true);
+  assert.match(pesca.impedimento(profonda.x,profonda.y),/inverno/);
+});
+test('ghiaccio percorribile anche dagli infetti; disgelo riporta entrambi a terra',()=>{
+  const b=allaRiva();tempo.impostaGiorno(9);acqua.aggiorna();
+  eroe={...eroe,...pos(b.tx,b.ty)};const nemico={...eroe,tipo:'infetto'};
+  assert.ok(urti.liberoIn(eroe.px,eroe.py));
+  const stato=salvataggio.istantanea(eroe,0);assert.ok(salvataggio.applica(stato));
+  tempo.impostaGiorno(13);const esito=acqua.aggiorna([eroe,nemico]);
+  assert.equal(esito.riportati.length,2);assert.ok(urti.liberoIn(eroe.px,eroe.py));assert.ok(urti.liberoIn(nemico.px,nemico.py));
+  assert.equal(mappa.terrenoDi(b.tx,b.ty),TERRENO.ACQUA_BASSA);
+  assert.equal(pesca.impedimento(b.tx,b.ty),null);
+});
+test('sul ghiaccio non si costruisce, getta, beve o riempie il secchio',()=>{
+  allaRiva();tempo.impostaGiorno(9);acqua.aggiorna();
+  assert.equal(azioni.azionePossibile(eroe,'muro'),null);
+  assert.equal(azioni.getta(eroe,0).tipo,'nonCePosto');
+  inventario.aggiungi('secchio',1);assert.match(azioni.azionePossibile(eroe,'secchio').impedito,/ghiaccio/);
+  bisogni.ripristina({fame:1,sete:0.3,stanchezza:1});assert.equal(azioni.agisci(eroe,null),null);
+});
+test('pesce crudo cuoce al falò, ristora e deperisce come gli altri cibi',()=>{
+  inventario.aggiungi('pesce_crudo',2,1);modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FALO_ACCESO});
+  assert.equal(azioni.agisci(eroe,'pesce_crudo').diventa,'pesce_arrostito');
+  tempo.impostaGiorno(3);decadimento.nuovoGiorno();
+  assert.equal(inventario.quante('pesce_crudo'),0);assert.equal(inventario.quante('pesce_arrostito'),1);
+  tempo.impostaGiorno(5);decadimento.nuovoGiorno();assert.equal(inventario.quante('pesce_arrostito'),0);
+});
+test('nuovi sprite e ghiaccio si decodificano in tutte le stagioni',()=>{
+  for(const stagione of ['estate','autunno','inverno','primavera'])for(const righe of [sprite.CANNA,sprite.PESCE_CRUDO,sprite.PESCE_ARROSTITO,CANNA,...GHIACCIO]) {
+    const d=decodifica(righe,tavolozzaDi(stagione));assert.ok(d.pixel.some(v=>v>0));
+  }
+});
+test('salvataggi con conteggi di pesca corrotti sono rifiutati senza mutazioni',()=>{
+  const b=allaRiva(),stato=salvataggio.istantanea(eroe,0);
+  stato.modifiche.push({...b,pescati:-1,giornoPesca:1});
+  assert.equal(salvataggio.applica(stato),null);assert.equal(inventario.quante('canna'),1);
+});
+test('entrambi i pesci si mangiano; cuocere aumenta il nutrimento',()=>{
+  bisogni.ripristina({fame:0,sete:1,stanchezza:1});
+  inventario.aggiungi('pesce_crudo',1);inventario.aggiungi('pesce_arrostito',1);
+  assert.equal(azioni.consuma('pesce_crudo').tipo,'consumato');vicino(bisogni.livello('fame'),0.18);
+  azioni.consuma('pesce_arrostito');vicino(bisogni.livello('fame'),0.58);
+});
+test('cattura interrotta al cambio inverno e riavviabile in primavera',()=>{
+  allaRiva();tempo.impostaGiorno(8);tempo.impostaOra(23.99);
+  azioni.agisci(eroe,'canna');simulazione.avanza(1);
+  assert.equal(pesca.aggiorna(1,eroe,'canna').tipo,'pescaInterrotta');
+  tempo.impostaGiorno(13);acqua.aggiorna();assert.equal(azioni.agisci(eroe,'canna').tipo,'pesca');
+});
+test('interrompere prima del recupero non cattura pesci in assenza',()=>{
+  allaRiva();azioni.agisci(eroe,'canna');pesca.aggiorna(5,eroe,'canna');
+  pesca.interrompi();simulazione.avanza(40);
+  assert.equal(pesca.aggiorna(40,eroe,'canna'),null);assert.equal(inventario.quante('pesce_crudo'),0);
+});
+test('minimappa già in cache distingue gelo e disgelo senza spostamenti',async()=>{
+  allaRiva();
+  const minimappa=await import('../interfaccia/minimappa.js');
+  const tinte=await import('../interfaccia/tinte.js');
+  const prima=globalThis.document;let pixel;
+  globalThis.document={createElement:()=>({getContext:()=>({
+    createImageData:(w,h)=>({data:new Uint8ClampedArray(w*h*4)}),
+    putImageData:d=>{pixel=Uint8ClampedArray.from(d.data);},
+  })})};
+  try {
+    minimappa.dimentica();tinte.impostaTavolozza(tavolozzaDi('estate'));minimappa.aggiorna(eroe);
+    const indice=(32*64+33)*4;
+    assert.deepEqual([...pixel.slice(indice,indice+3)],tinte.coloreDi(TERRENO.ACQUA_BASSA));
+    tempo.impostaGiorno(9);acqua.aggiorna();tinte.impostaTavolozza(tavolozzaDi('inverno'));minimappa.ridipingiSeServe(true);
+    assert.deepEqual([...pixel.slice(indice,indice+3)],tinte.coloreDi(TERRENO.GHIACCIO));
+    tempo.impostaGiorno(13);acqua.aggiorna();tinte.impostaTavolozza(tavolozzaDi('primavera'));minimappa.ridipingiSeServe(false);
+    assert.deepEqual([...pixel.slice(indice,indice+3)],tinte.coloreDi(TERRENO.ACQUA_BASSA));
+  } finally { globalThis.document=prima; }
 });

@@ -18,6 +18,7 @@ import * as contenitori from "./contenitori.js";
 import * as stagioni from "./stagioni.js";
 import * as simulazione from "./simulazione.js";
 import * as entita from "../entita/entita.js";
+import * as pesca from "./pesca.js";
 
 const { TASSELLO } = schermo;
 
@@ -124,6 +125,15 @@ export function azionePossibile(eroe, cosaInMano) {
   const terreno = mappa.terrenoDi(b.tx, b.ty);
   const acqua = terreno === TERRENO.ACQUA || terreno === TERRENO.ACQUA_BASSA;
 
+  if (cosaInMano === "canna" && (acqua || terreno === TERRENO.GHIACCIO)) {
+    const inCorso = pesca.stato();
+    return { tipo: "pesca", verbo: inCorso ? "Ritira la lenza" : "Pesca", bersaglio: b,
+      impedito: inCorso ? null : pesca.impedimento(b.tx, b.ty) };
+  }
+  if (terreno === TERRENO.GHIACCIO && (cosaInMano === "secchio" || bisogni.livello("sete") < 1)) {
+    return { tipo: "ghiaccio", impedito: "ghiaccio: cerca acqua aperta", bersaglio: b };
+  }
+
   // Alla riva: con un secchio vuoto in mano si riempie, altrimenti si beve.
   // Decide quello che si ha in mano, come per tutto il resto — non il
   // contesto, che costringerebbe a indovinare.
@@ -186,7 +196,8 @@ function posabile(b) {
   if (b.oggetto !== OGGETTO.NESSUNO) return false;
   // Non si costruisce nell'acqua. Il resto del terreno va bene: la roccia è
   // sassosa, non è una parete.
-  return !mappa.solidoIn(b.tx, b.ty);
+  const t = mappa.terrenoNaturaleDi(b.tx, b.ty);
+  return t !== TERRENO.ACQUA && t !== TERRENO.ACQUA_BASSA && !mappa.solidoIn(b.tx, b.ty);
 }
 
 // --- mucchi per terra -----------------------------------------------------
@@ -206,6 +217,8 @@ function posabile(b) {
 // ragione per cui mescolaDate sta in inventario.js ed è esportata invece di
 // essere riscritta qui.
 function deponi(tx, ty, cosa, quante, dal) {
+  const fondo = mappa.terrenoNaturaleDi(tx, ty);
+  if (fondo === TERRENO.ACQUA || fondo === TERRENO.ACQUA_BASSA) return false;
   const oggetto = mappa.oggettoDi(tx, ty);
   // Solo il cibo porta una data, come in mettiIn(): darla anche alla legna
   // vorrebbe dire un campo per mucchio che non serve a nessuno.
@@ -426,8 +439,10 @@ function medicati(cosa, effetto) {
 // poterlo dire al giocatore: un colpo che non ottiene niente e un colpo che
 // abbatte un albero non possono sembrare lo stesso gesto.
 export function agisci(eroe, cosaInMano) {
+  if (pesca.stato()) { pesca.interrompi(); return { tipo: "pescaInterrotta" }; }
   const azione = azionePossibile(eroe, cosaInMano);
   if (!azione || azione.impedito) return null;
+  if (azione.tipo === "pesca") return pesca.inizia(eroe, azione.bersaglio.tx, azione.bersaglio.ty);
 
   if (azione.tipo === "combatti") {
     const esito = infetti.colpisci(azione.nemico, dannoDi(cosaInMano));
@@ -642,4 +657,3 @@ export function agisci(eroe, cosaInMano) {
     perse,
   };
 }
-

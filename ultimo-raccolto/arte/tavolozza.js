@@ -18,6 +18,11 @@ export const TAVOLOZZA = {
   "2": "#27556a",
   "3": "#4a8090",
 
+  // Ghiaccio distinto dall'acqua profonda anche nella tavolozza invernale.
+  A: "#abcdd7",
+  B: "#d9e8e8",
+  C: "#7498ab",
+
   // Sabbia e ghiaia della riva.
   "4": "#a8905f",
   "5": "#c9b189",
@@ -237,3 +242,4 @@ export function tavolozzaDi(stagione) {
 export function tavolozzaBagnataDi(stagione) {
   return PER_STAGIONE_BAGNATA[stagione] ?? TAVOLOZZA_BAGNATA;
 }
+

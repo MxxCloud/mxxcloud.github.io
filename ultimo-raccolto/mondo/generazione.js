@@ -20,6 +20,7 @@ export const TERRENO = {
   STERPAGLIA: 4,
   ROCCIA: 5,
   TERRA: 6,
+  GHIACCIO: 7, // stato stagionale del bassofondo, mai generato
 };
 
 // Gli ultimi due non li genera nessuno: li posa il giocatore, e vivono nelle
@@ -218,3 +219,4 @@ export function oggettoIn(x, y, seme, terreno) {
 
   return OGGETTO.NESSUNO;
 }
+

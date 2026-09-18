@@ -180,6 +180,7 @@ function filaValida(fila, massimo) {
 function modificaValida(v) {
   if (!oggetto(v) || !intero(v.tx) || !intero(v.ty)) return false;
   if (!presente(v, "oggetto", n => tipi.has(n))) return false;
+  if (!presente(v, "giornoPesca", positivo) || !presente(v, "pescati", n => intero(n) && n >= 0 && n <= 2)) return false;
   if (!presente(v, "colpi", n => intero(n) && n >= 0)) return false;
   for (const k of ["posata", "maturata", "svuotata", "dal", "giorno"]) {
     if (!presente(v, k, positivo)) return false;
