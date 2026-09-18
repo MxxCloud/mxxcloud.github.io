@@ -67,7 +67,7 @@ export function tutti() {
 }
 
 function limita(valore) {
-  return Math.min(1, Math.max(0, valore));
+  return valore < 1e-12 ? 0 : Math.min(1, valore);
 }
 
 // Restituisce quali bisogni si sono svuotati proprio adesso, perché
@@ -158,4 +158,17 @@ export function ripristina(salvati) {
     const v = salvati?.[quale];
     livelli[quale] = Number.isFinite(v) ? limita(v) : 1;
   }
+}
+
+
+// Confine successivo: il danno comincia quando un bisogno si esaurisce.
+export function secondiAlVuoto({ dorme = false, corre = false, siMuove = false } = {}) {
+  let minimo = Infinity;
+  for (const quale of ELENCO) {
+    if (livelli[quale] <= 1e-12 || (dorme && quale === "stanchezza")) continue;
+    let calo = CALO[quale] * (quale === "fame" ? stagioni.fattoreFame() : 1);
+    if (quale === "stanchezza") calo += corre ? STANCHEZZA_CORSA : siMuove ? STANCHEZZA_CAMMINO : 0;
+    minimo = Math.min(minimo, livelli[quale] / calo);
+  }
+  return minimo;
 }

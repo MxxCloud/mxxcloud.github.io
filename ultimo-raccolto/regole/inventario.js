@@ -107,11 +107,15 @@ export function aggiungi(cosa, quantita, dal) {
 }
 
 export function togli(cosa, quantita) {
-  if (quante(cosa) < quantita) return false;
+  return togliDa(caselle, cosa, quantita);
+}
+
+export function togliDa(fila, cosa, quantita) {
+  if (fila.reduce((n, c) => n + (c?.cosa === cosa ? c.quantita : 0), 0) < quantita) return false;
   let resto = quantita;
   // Si svuotano prima le pile più piccole, così le caselle si liberano invece
   // di restare tutte a metà.
-  const ordine = caselle
+  const ordine = fila
     .map((casella, i) => ({ casella, i }))
     .filter(({ casella }) => casella?.cosa === cosa)
     .sort((a, b) => a.casella.quantita - b.casella.quantita);
@@ -121,7 +125,7 @@ export function togli(cosa, quantita) {
     const tolte = Math.min(casella.quantita, resto);
     casella.quantita -= tolte;
     resto -= tolte;
-    if (casella.quantita === 0) caselle[i] = null;
+    if (casella.quantita === 0) fila[i] = null;
   }
   return true;
 }
@@ -171,4 +175,15 @@ export function ripristina(salvate) {
     // in cui non marcivano non deve ritrovarsele marce.
     if (typeof c.dal === "number") caselle[i].dal = c.dal;
   }
+}
+
+
+// Valuta una trasformazione senza alterare le pile originali se fallisce.
+export function trasforma(costi, prodotto) {
+  const copia = caselle.map(c => c ? { ...c } : null);
+  for (const voce of costi) if (!togliDa(copia, voce.cosa, voce.quante)) return false;
+  if (spazioIn(copia, prodotto.cosa) < prodotto.quante) return false;
+  mettiIn(copia, prodotto.cosa, prodotto.quante);
+  for (let i = 0; i < CASELLE; i++) caselle[i] = copia[i];
+  return true;
 }

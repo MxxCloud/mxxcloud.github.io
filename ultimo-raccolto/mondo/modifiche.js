@@ -11,6 +11,8 @@
 // piccolo il salvataggio a M2 — si scrive questa mappa, non il mondo.
 
 const cambi = new Map();
+let versione = 0;
+export function revisione() { return versione; }
 
 const chiave = (tx, ty) => `${tx},${ty}`;
 
@@ -19,10 +21,12 @@ export function di(tx, ty) {
 }
 
 export function imposta(tx, ty, cambio) {
+  versione += 1;
   cambi.set(chiave(tx, ty), cambio);
 }
 
 export function rimuovi(tx, ty) {
+  versione += 1;
   cambi.delete(chiave(tx, ty));
 }
 
@@ -50,5 +54,7 @@ export function perOgnuno(funzione) {
 }
 
 export function svuota() {
+  versione += 1;
   cambi.clear();
 }
+

@@ -1,0 +1,8 @@
+{
+  "name": "ultimo-raccolto",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/regressioni.test.mjs"
+  }
+}

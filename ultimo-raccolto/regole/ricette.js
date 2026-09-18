@@ -188,16 +188,8 @@ export function fai(ricetta, alBanco = false) {
   if (ricetta.banco && !alBanco) return { fatto: false, perche: "banco" };
   if (!bastano(ricetta)) return { fatto: false, perche: "materiali" };
 
-  // Lo spazio si guarda prima di toccare niente. I materiali che escono
-  // possono liberare la casella che serve al risultato — è il caso di una
-  // pila che si svuota del tutto — quindi non basta chiedere se lo zaino è
-  // pieno adesso: bisogna chiederlo al netto di quello che sta per uscire.
-  for (const voce of ricetta.costo) inventario.togli(voce.cosa, voce.quante);
-  if (inventario.spazioPer(ricetta.produce.cosa) < ricetta.produce.quante) {
-    for (const voce of ricetta.costo) inventario.aggiungi(voce.cosa, voce.quante);
+  if (!inventario.trasforma(ricetta.costo, ricetta.produce)) {
     return { fatto: false, perche: "zaino" };
   }
-
-  inventario.aggiungi(ricetta.produce.cosa, ricetta.produce.quante);
   return { fatto: true };
 }

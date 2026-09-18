@@ -24,6 +24,7 @@
 // sassi: chi si accampa in un buco di roccia ha fatto lo stesso lavoro di chi
 // ha alzato quattro muri, solo che l'ha trovato già fatto.
 
+import * as modifiche from "../mondo/modifiche.js";
 import * as mappa from "../mondo/mappa.js";
 
 export const LIMITE = 200;
@@ -94,21 +95,19 @@ export function caldaDentro(stanza) {
 
 // La stanza in cui si sta, tenuta da parte fra un fotogramma e l'altro.
 //
-// Non si ricalcola sessanta volte al secondo, e nemmeno si spegne la cache a
-// mano quando il mondo cambia. Si rifà quando si cambia tassello — l'unico
-// modo di entrare o uscire da una stanza è camminare — e ogni mezzo secondo
-// per sicurezza, che è il tempo che ci mette un muro sfondato a contare. Il
-// mezzo secondo esiste al posto di una chiamata da sparpagliare in sei punti
-// (posare, staccare, abbattere, sfondare, caricare una partita, morire): sei
-// punti sono sei occasioni di dimenticarne uno, e chi se ne dimentica non lo
-// scopre — vede solo qualcuno che non gela dentro una casa senza più pareti.
+// La cache segue posizione, seme e revisione delle modifiche: porte e muri
+// cambiano il riparo subito. Il controllo periodico resta una salvaguardia.
 const RINFRESCO = 0.5;
 
+let revisione = -1;
+let seme = null;
 let stanzaOra = null;
 let doveEravamo = null;
 let dallUltimoGiro = RINFRESCO;
 
 export function reimposta() {
+  revisione = -1;
+  seme = null;
   stanzaOra = null;
   doveEravamo = null;
   dallUltimoGiro = RINFRESCO;
@@ -120,8 +119,12 @@ export function reimposta() {
 export function aggiorna(passo, tx, ty) {
   dallUltimoGiro += passo;
   const spostato = doveEravamo === null || doveEravamo.tx !== tx || doveEravamo.ty !== ty;
-  if (!spostato && dallUltimoGiro < RINFRESCO) return { cambiato: false };
+  const nuovaRevisione = modifiche.revisione();
+  const nuovoSeme = mappa.semeCorrente().nome;
+  if (!spostato && revisione === nuovaRevisione && seme === nuovoSeme && dallUltimoGiro < RINFRESCO) return { cambiato: false };
 
+  revisione = nuovaRevisione;
+  seme = nuovoSeme;
   const prima = stanzaOra !== null;
   doveEravamo = { tx, ty };
   dallUltimoGiro = 0;
@@ -136,3 +139,4 @@ export function alChiuso() {
 export function stanza() {
   return stanzaOra;
 }
+
