@@ -12,6 +12,46 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.7 — pioggia, neve e aridità
+
+Ogni stagione dura quattro giorni. In autunno e primavera **piove un giorno
+solo**; in inverno **nevica un giorno solo**. L'evento occupa il secondo o
+terzo giorno, scelto in modo stabile dal seme della valle e dall'anno:
+ricaricare non cambia il meteo. Il resto della stagione è sereno. Il riquadro
+sotto l'orologio indica il tempo attuale e anticipa il maltempo del giorno dopo.
+
+**L'estate è sempre arida:** non piove e la sete si consuma a velocità **3x**
+per tutta la stagione, anche dormendo o lasciando la scheda. Da piena a vuota
+sono cento secondi reali, anziché trecento: preparare acqua e secchi conta.
+
+La **pioggia innaffia automaticamente i campi scoperti**, compresi quelli
+seminati mentre piove. La crescita resta giornaliera: non accelera premendo
+tasti o ricaricando. Gli orti nelle stanze chiuse richiedono ancora il secchio.
+I **falò scoperti si spengono**, quelli in una stanza chiusa restano accesi.
+La posa di un falò sotto la pioggia è impedita prima di consumare materiali.
+Una porta aperta o un muro sfondato espongono subito la stanza al maltempo.
+
+All'aperto la pioggia bagna progressivamente: dopo **10 secondi** si è zuppi
+e si soffre il freddo anche di giorno, dopo **20 secondi** completamente
+inzuppati. Entrare in una stanza ferma la pioggia ma non asciuga istantaneamente:
+da completamente bagnati servono **40 secondi al coperto**, **10 vicino a una
+fiamma o in una stanza riscaldata**, **80 all'aperto dopo la pioggia**. La torcia
+in mano protegge dal freddo ma non accelera l'asciugatura. Il bagnato resta
+nei salvataggi; le partite precedenti iniziano asciutte.
+
+La **nevicata rallenta del 28%** il superstite e gli infetti allo scoperto,
+e causa freddo anche di giorno. Dentro una stanza si cammina normalmente.
+La neve non innaffia né spegne i falò. Finita la nevicata cessa il rallentamento;
+il ghiaccio dei bassofondi dura invece tutto l'inverno, come in M7.6.
+
+Pioggia e neve sono visibili con particelle leggere, escluse dalla stanza
+del giocatore. Il meteo segue l'orologio del mondo anche durante sonno e
+recupero delle assenze. **Dormire all'aperto non protegge da pioggia e freddo.**
+
+Collaudo manuale prima del rilascio: leggibilità del meteo e delle previsioni,
+pioggia sul campo, falò dentro/fuori, porta aperta durante la pioggia, asciugatura,
+neve e movimento, ripresa di una partita bagnata e aggiornamento offline.
+
 ## M7.6 — l'acqua e la pesca
 
 La canna si costruisce ovunque con **3 rami e 4 fibre**. Impugnala davanti

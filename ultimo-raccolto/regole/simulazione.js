@@ -1,5 +1,6 @@
 // Un'unica cronologia per fotogrammi, sonno e assenze. Le soglie dei bisogni
 // e la mezzanotte sono confini: il passato non usa le condizioni del futuro.
+import * as meteo from "./meteo.js";
 import * as tempo from "./tempo.js";
 import * as bisogni from "./bisogni.js";
 import * as salute from "./salute.js";
@@ -16,21 +17,23 @@ export function resoconto() {
   return risultato;
 }
 
-export function avanza(secondi, { dorme = false, corre = false, siMuove = false, alFreddo = () => false } = {}) {
+export function avanza(secondi, { eroe = null, dorme = false, corre = false, siMuove = false, alFreddo = () => false } = {}) {
   if (!Number.isFinite(secondi) || secondi <= 0) return 0;
   const opzioni = { dorme, corre, siMuove };
   let trascorsi = 0;
   while (secondi > 1e-10 && !salute.eMorto()) {
+    eventi.spenti += meteo.aggiornaMondo().spenti;
     const giorno = tempo.giornoCorrente();
     const mezzanotte = (24 - tempo.oraCorrente()) * tempo.SECONDI_PER_GIORNO / 24;
     // Un secondo al massimo per valutare gelo e luci anche nelle assenze.
-    const passo = Math.min(secondi, 1, Math.max(1e-9, mezzanotte), bisogni.secondiAlVuoto(opzioni));
+    const passo = Math.min(secondi, 1, Math.max(1e-9, mezzanotte), bisogni.secondiAlVuoto(opzioni), meteo.secondiAlCambio(eroe));
     salute.avanza(passo, {
       vuoti: bisogni.vuoti().filter(v => !dorme || v !== "stanchezza"),
-      alFreddo: !dorme && alFreddo(),
+      alFreddo: alFreddo(),
     });
     if (dorme) bisogni.passanoSecondi(passo);
     else bisogni.avanza(passo, { corre, siMuove });
+    meteo.avanza(passo, eroe);
     tempo.avanza(passo);
     trascorsi += passo;
     secondi -= passo;

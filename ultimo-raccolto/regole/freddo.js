@@ -15,10 +15,11 @@
 // lontano arriva, e quella è la differenza fra un fuoco e una casa.
 //
 // Quello che ne esce è che falò e torcia smettono di servire solo a vedere.
-// Una notte d'inverno diventa una domanda: accendo, dormo, o ci passo in
-// mezzo e pago. E il giaciglio guadagna un secondo mestiere senza una riga
-// nuova — chi dorme salta la notte, e saltando la notte salta il gelo.
+// Da M7.7 anche il corpo zuppo e la nevicata all'aperto richiedono calore,
+// pure di giorno. Dormire non rende impermeabili: il giaciglio va protetto
+// dalla pioggia e, nelle notti invernali, riscaldato.
 
+import * as meteo from "./meteo.js";
 import * as riparo from "./riparo.js";
 import * as tempo from "./tempo.js";
 import * as stagioni from "./stagioni.js";
@@ -41,8 +42,9 @@ const RAGGIO_FUOCO = 3;
 // quattro nemmeno quello — le due righe qui sotto escludono tutto il resto
 // dell'anno prima di guardare un solo tassello.
 export function alFreddo(eroe, cosaInMano) {
-  if (stagioni.stagioneCorrente() !== "inverno") return false;
-  if (!tempo.eNotte()) return false;
+  const notteInvernale = stagioni.stagioneCorrente() === "inverno" && tempo.eNotte();
+  const nevicata = meteo.evento() === "neve" && !meteo.alRiparo(eroe);
+  if (!notteInvernale && !nevicata && !meteo.zuppo()) return false;
 
   // La torcia in pugno scalda, come scalda il falò per terra. È la stessa
   // regola di sempre — quello che tieni in mano è quello che usi — e senza
@@ -69,4 +71,3 @@ export function alFreddo(eroe, cosaInMano) {
 
   return true;
 }
-

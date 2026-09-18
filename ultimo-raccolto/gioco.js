@@ -33,6 +33,8 @@ import * as salvataggio from "./regole/salvataggio.js";
 import * as simulazione from "./regole/simulazione.js";
 import * as pesca from "./regole/pesca.js";
 import * as acqua from "./regole/acqua.js";
+import * as meteo from "./regole/meteo.js";
+import * as atmosfera from "./arte/atmosfera.js";
 import * as sincronia from "./regole/sincronia.js";
 import { tavolozzaDi, tavolozzaBagnataDi } from "./arte/tavolozza.js";
 import { FIORI } from "./arte/sprite-fiori.js";
@@ -59,7 +61,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.6";
+const VERSIONE = "M7.7";
 
 // --- elementi -------------------------------------------------------------
 
@@ -213,6 +215,7 @@ function doveSiComincia() {
 // partenza, che è lontano da dove sei morto quanto ti eri allontanato.
 function nuovoSuperstite() {
   salute.reimposta();
+  meteo.reimposta();
   bisogni.reimposta();
   chiasso.reimposta();
   udito.reimposta();
@@ -1034,8 +1037,9 @@ function aggiorna(passo) {
     // stanno sotto le regole e non devono sapere cos'è un inventario. Lo
     // stesso vale per la forma fisica: quanto si è in forze è una regola.
     eroe.impugnato = CATALOGO[cosaInMano()]?.impugnato ?? null;
-    eroe.fattoreVelocita = bisogni.fattoreVelocita();
+    eroe.fattoreVelocita = bisogni.fattoreVelocita() * meteo.fattoreVelocita(eroe);
     eroe.puoCorrere = bisogni.puoCorrere();
+    for (const e of entita.tutte()) if (e.tipo === "infetto") e.fattoreMeteo = meteo.fattoreVelocita(e);
     entita.aggiorna(passo);
 
     // Il riparo prima del freddo, perché il freddo lo interroga: al chiuso il
@@ -1054,6 +1058,7 @@ function aggiorna(passo) {
     const primaGelava = gelando;
     const primaVuoti = new Set(bisogni.vuoti());
     simulazione.avanza(passo, {
+      eroe,
       corre: eroe.correndo, siMuove: eroe.inMovimento,
       alFreddo: () => freddo.alFreddo(eroe, cosaInMano()),
     });
@@ -1239,6 +1244,7 @@ function disegna() {
   // Prima del buio, così di notte anche le scheggie si spengono con tutto il
   // resto invece di brillare sopra l'oscurità come scintille.
   scheggie.disegna();
+  atmosfera.disegna(schermo.pennello(), meteo.evento(), tempo.giornoCorrente()*tempo.SECONDI_PER_GIORNO + tempo.oraCorrente()/24*tempo.SECONDI_PER_GIORNO, riparo.stanza());
   disegnaBuio();
   // Dopo il buio e prima dell'interfaccia: il lampo è una cosa che succede
   // nel mondo, non un cartello sul vetro, quindi la notte non lo spegne ma i
@@ -1306,6 +1312,7 @@ function disegnaInterfaccia() {
     giornoNellaStagione: stagioni.giornoNellaStagione(),
     giorniPerStagione: stagioni.GIORNI_PER_STAGIONE,
   });
+  hud.disegnaMeteo(p, { evento: meteo.evento(), domani: meteo.evento(tempo.giornoCorrente()+1), bagnato: meteo.livelloBagnato() });
   hud.disegnaAzione(p, azioneCorrente);
   const lenza = pesca.stato();
   if (lenza) {
@@ -1493,6 +1500,7 @@ function recuperaIlTempoPerso(secondiSaltati) {
   pesca.interrompi();
   if (mondoFermo()) return;
   const secondi = simulazione.avanza(Math.min(secondiSaltati, ASSENZA_MASSIMA), {
+    eroe,
     alFreddo: () => freddo.alFreddo(eroe, cosaInMano()),
   });
 

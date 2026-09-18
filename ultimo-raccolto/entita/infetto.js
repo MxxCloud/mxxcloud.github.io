@@ -117,7 +117,7 @@ function vagabonda(e, passo) {
     return;
   }
   guardaVerso(e, x, y);
-  const percorso = urti.muovi(e, x * VELOCITA_VAGA * passo, y * VELOCITA_VAGA * passo);
+  const percorso = urti.muovi(e, x * VELOCITA_VAGA * (e.fattoreMeteo ?? 1) * passo, y * VELOCITA_VAGA * (e.fattoreMeteo ?? 1) * passo);
   e.passo += percorso / 7;
   // Incastrato contro un albero: invece di spingere per secondi, si cambia
   // idea subito. È il rimedio più corto al difetto più visibile di chi vaga.
@@ -144,8 +144,8 @@ function insegue(e, passo, bx, by, fermatiA = 0) {
   }
   const percorso = urti.muovi(
     e,
-    (dx / distanza) * VELOCITA_INSEGUE * passo,
-    (dy / distanza) * VELOCITA_INSEGUE * passo
+    (dx / distanza) * VELOCITA_INSEGUE * (e.fattoreMeteo ?? 1) * passo,
+    (dy / distanza) * VELOCITA_INSEGUE * (e.fattoreMeteo ?? 1) * passo
   );
   e.passo += percorso / 7;
   // Ha spinto e non si è mosso: davanti c'è qualcosa. Chi vaga, in questo
