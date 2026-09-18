@@ -1,3 +1,5 @@
+import * as meteo from '../regole/meteo.js';
+import * as atmosfera from '../arte/atmosfera.js';
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
@@ -31,6 +33,7 @@ import { TAVOLOZZA } from '../arte/tavolozza.js';
 
 let tx, ty, eroe;
 function reset() {
+  meteo.reimposta();
   pesca.interrompi(); mappa.impostaGelo(false);
   riparo.reimposta(); tempo.reimposta(); bisogni.reimposta(); salute.reimposta();
   inventario.svuota(); modifiche.svuota(); entita.svuota(); simulazione.resoconto();
@@ -51,10 +54,11 @@ function stanza() {
 
 }
 
-test('301 secondi: fotogrammi e recupero producono la stessa salute',()=>{
+test('301 secondi in autunno: fotogrammi e recupero producono la stessa salute',()=>{
+  tempo.impostaGiorno(5);
   for(let i=0;i<301*60;i++) simulazione.avanza(1/60);
   const attiva={...bisogni.tutti(),salute:salute.livelloCorrente()};
-  reset();simulazione.avanza(301);
+  reset();tempo.impostaGiorno(5);simulazione.avanza(301);
   vicino(salute.livelloCorrente(),attiva.salute);
   assert.ok(salute.livelloCorrente()>0.99);
   for(const k of bisogni.ELENCO)vicino(bisogni.livello(k),attiva[k]);
@@ -80,6 +84,7 @@ test('il moltiplicatore invernale si applica soltanto dopo mezzanotte',()=>{
   assert.equal(tempo.giornoCorrente(),9);
 });
 test('sonno: la sete fa danno solo dopo essersi esaurita, non lo sfinimento',()=>{
+  tempo.impostaGiorno(5);
   bisogni.ripristina({fame:1,sete:0.1,stanchezza:0});
   simulazione.avanza(40,{dorme:true});
   // I primi 30 secondi possono curare; gli ultimi 10 costano 10/600.
@@ -411,4 +416,107 @@ test('minimappa già in cache distingue gelo e disgelo senza spostamenti',async(
     tempo.impostaGiorno(13);acqua.aggiorna();tinte.impostaTavolozza(tavolozzaDi('primavera'));minimappa.ridipingiSeServe(false);
     assert.deepEqual([...pixel.slice(indice,indice+3)],tinte.coloreDi(TERRENO.ACQUA_BASSA));
   } finally { globalThis.document=prima; }
+});
+
+function maltempo(tipo) {
+  for(let d=1;d<=16;d++)if(meteo.evento(d)===tipo){tempo.impostaGiorno(d);tempo.impostaOra(12);return d;}
+  assert.fail('evento mancante');
+}
+test('un evento per stagione e anno; mai pioggia estiva; previsioni stabili per seme',()=>{
+  for(const seme of ['review','altra valle','neve']) {
+    mappa.inizializza(seme);
+    for(let anno=0;anno<8;anno++)for(let stagione=0;stagione<4;stagione++) {
+      const giorni=Array.from({length:4},(_,i)=>meteo.evento(anno*16+stagione*4+i+1));
+      if(stagione===0)assert.deepEqual(giorni,['arido','arido','arido','arido']);
+      else assert.equal(giorni.filter(e=>e===(stagione===2?'neve':'pioggia')).length,1);
+    }
+    const prima=Array.from({length:32},(_,i)=>meteo.evento(i+1));
+    mappa.inizializza(seme);assert.deepEqual(Array.from({length:32},(_,i)=>meteo.evento(i+1)),prima);
+  }
+});
+test('aridità triplica la sete per tutta l’estate, anche dormendo',()=>{
+  for(const dorme of [false,true])for(let giorno=1;giorno<=4;giorno++) {
+    reset();tempo.impostaGiorno(giorno);simulazione.avanza(30,{dorme});vicino(bisogni.livello('sete'),0.7);
+  }
+  reset();tempo.impostaGiorno(5);simulazione.avanza(30);vicino(bisogni.livello('sete'),0.9);
+});
+test('aridità finisce esattamente al confine estate/autunno',()=>{
+  tempo.impostaGiorno(4);tempo.impostaOra(23);simulazione.avanza(25);
+  vicino(bisogni.livello('sete'),1-50/300);
+});
+test('danni da sete estiva non retroattivi nel recupero',()=>{
+  simulazione.avanza(101);vicino(salute.livelloCorrente(),1-1/600);
+});
+test('pioggia bagna le colture aperte ma non quelle nella stanza',()=>{
+  stanza();maltempo('pioggia');
+  modifiche.imposta(tx,ty,{oggetto:OGGETTO.SEMINATO});
+  modifiche.imposta(tx+4,ty,{oggetto:OGGETTO.SEMINATO});
+  const esito=meteo.aggiornaMondo();assert.equal(esito.innaffiate,1);
+  assert.equal(modifiche.di(tx,ty).bagnato,undefined);assert.equal(modifiche.di(tx+4,ty).bagnato,true);
+  assert.equal(meteo.aggiornaMondo().innaffiate,0);
+});
+test('pioggia spegne solo i falò scoperti; aprire la porta espone quello dentro',()=>{
+  stanza();maltempo('pioggia');
+  modifiche.imposta(tx-1,ty,{oggetto:OGGETTO.FALO_ACCESO,posata:tempo.giornoCorrente()});
+  modifiche.imposta(tx+4,ty,{oggetto:OGGETTO.FALO_ACCESO,posata:tempo.giornoCorrente()});
+  assert.equal(meteo.aggiornaMondo().spenti,1);
+  assert.equal(mappa.oggettoDi(tx-1,ty),OGGETTO.FALO_ACCESO);
+  modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.PORTA_APERTA});
+  assert.equal(meteo.aggiornaMondo().spenti,1);assert.equal(mappa.oggettoDi(tx-1,ty),OGGETTO.FALO_SPENTO);
+});
+test('pioggia impedisce di sprecare un falò posandolo allo scoperto',()=>{
+  maltempo('pioggia');inventario.aggiungi('falo',1);
+  assert.match(azioni.azionePossibile(eroe,'falo').impedito,/coperto/);
+  assert.equal(azioni.agisci(eroe,'falo'),null);assert.equal(inventario.quante('falo'),1);
+  stanza();assert.equal(azioni.agisci(eroe,'falo').tipo,'posa');
+});
+test('colture seminate dopo l’inizio della pioggia ricevono acqua',()=>{
+  maltempo('pioggia');meteo.aggiornaMondo();
+  modifiche.imposta(tx,ty,{oggetto:OGGETTO.SEMINATO});meteo.aggiornaMondo();
+  assert.equal(modifiche.di(tx,ty).bagnato,true);
+});
+test('la pioggia durante un’assenza fa crescere l’orto alla mezzanotte giusta',()=>{
+  const giorno=maltempo('pioggia');tempo.impostaOra(23);
+  modifiche.imposta(tx,ty,{oggetto:OGGETTO.SEMINATO});simulazione.avanza(13);
+  assert.equal(tempo.giornoCorrente(),giorno+1);assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.CRESCIUTA);
+  assert.equal(modifiche.di(tx,ty).bagnato,undefined);
+});
+test('pioggia inzuppa in venti secondi e raffredda anche di giorno',()=>{
+  maltempo('pioggia');assert.equal(freddo.alFreddo(eroe,null),false);
+  meteo.avanza(9,eroe);assert.equal(freddo.alFreddo(eroe,null),false);
+  meteo.avanza(11,eroe);assert.equal(meteo.livelloBagnato(),1);assert.equal(freddo.alFreddo(eroe,null),true);
+  assert.equal(freddo.alFreddo(eroe,'torcia'),false);
+});
+test('copertura impedisce di bagnarsi; fuoco coperto asciuga più in fretta',()=>{
+  stanza();maltempo('pioggia');meteo.avanza(30,eroe);assert.equal(meteo.livelloBagnato(),0);
+  meteo.ripristina(1);meteo.avanza(10,eroe);vicino(meteo.livelloBagnato(),0.75);
+  modifiche.imposta(tx-1,ty,{oggetto:OGGETTO.FALO_ACCESO});meteo.aggiornaMondo();
+  meteo.avanza(10,eroe);assert.equal(meteo.livelloBagnato(),0);assert.equal(freddo.alFreddo(eroe,null),false);
+});
+test('pioggia: simulazione a fotogrammi e recupero concordano su acqua e salute',()=>{
+  maltempo('pioggia');
+  for(let i=0;i<30*60;i++)simulazione.avanza(1/60,{eroe,alFreddo:()=>freddo.alFreddo(eroe,null)});
+  const prima=salute.livelloCorrente(),bagnato=meteo.livelloBagnato();
+  reset();maltempo('pioggia');simulazione.avanza(30,{eroe,alFreddo:()=>freddo.alFreddo(eroe,null)});
+  vicino(salute.livelloCorrente(),prima);vicino(meteo.livelloBagnato(),bagnato);
+});
+test('neve rallenta allo scoperto e causa freddo diurno; il riparo protegge',()=>{
+  maltempo('neve');assert.equal(meteo.fattoreVelocita(eroe),0.72);assert.equal(freddo.alFreddo(eroe,null),true);
+  stanza();assert.equal(meteo.fattoreVelocita(eroe),1);assert.equal(freddo.alFreddo(eroe,null),false);
+});
+test('il sonno esposto alla pioggia non evita bagnato e freddo',()=>{
+  maltempo('pioggia');modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GIACIGLIO});tempo.impostaOra(22);
+  assert.equal(azioni.agisci(eroe,null).tipo,'dormi');assert.ok(salute.livelloCorrente()<1);
+});
+test('bagnato persistente; salvataggi vecchi asciutti e valori corrotti respinti',()=>{
+  meteo.ripristina(0.8);const stato=salvataggio.istantanea(eroe,0);
+  meteo.reimposta();salvataggio.applica(stato);vicino(meteo.livelloBagnato(),0.8);
+  assert.equal(salvataggio.applica({...stato,bagnato:2}),null);vicino(meteo.livelloBagnato(),0.8);
+  delete stato.bagnato;salvataggio.applica(stato);assert.equal(meteo.livelloBagnato(),0);
+});
+test('precipitazioni disegnate soltanto negli eventi e con numero limitato di particelle',()=>{
+  let n=0;const p={save(){},restore(){},fillRect(){n++;}};
+  atmosfera.disegna(p,'arido',1);assert.equal(n,0);
+  atmosfera.disegna(p,'pioggia',1);assert.equal(n,70);
+  n=0;atmosfera.disegna(p,'neve',1);assert.equal(n,90);
 });

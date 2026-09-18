@@ -18,6 +18,8 @@ import * as contenitori from "./contenitori.js";
 import * as stagioni from "./stagioni.js";
 import * as simulazione from "./simulazione.js";
 import * as entita from "../entita/entita.js";
+import * as meteo from "./meteo.js";
+import * as freddo from "./freddo.js";
 import * as pesca from "./pesca.js";
 
 const { TASSELLO } = schermo;
@@ -172,6 +174,8 @@ export function azionePossibile(eroe, cosaInMano) {
 
   const posa = cosaInMano && CATALOGO[cosaInMano]?.posa;
   if (posa !== undefined && posa !== null && posabile(b)) {
+    if (cosaInMano === "falo" && meteo.evento() === "pioggia" && !meteo.coperto(b.tx,b.ty))
+      return { tipo: "posa", bersaglio: b, impedito: "pioggia: accendi il fuoco al coperto" };
     return { tipo: "posa", verbo: "Posa", cosa: cosaInMano, bersaglio: b,
       impedito: (cosaInMano === "muro" || cosaInMano === "porta") && occupato(b.tx, b.ty, eroe) ? "passaggio occupato" : null };
   }
@@ -555,7 +559,7 @@ export function agisci(eroe, cosaInMano) {
   }
 
   if (azione.tipo === "dormi") {
-    const secondi = simulazione.avanza(tempo.secondiFinoAlle(tempo.ALBA_PIENA), { dorme: true });
+    const secondi = simulazione.avanza(tempo.secondiFinoAlle(tempo.ALBA_PIENA), { dorme: true, eroe, alFreddo: () => freddo.alFreddo(eroe, cosaInMano) });
     if (!salute.eMorto()) bisogni.ristora("stanchezza", 1);
     return { tipo: "dormi", secondi };
   }

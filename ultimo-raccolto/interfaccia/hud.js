@@ -336,6 +336,18 @@ export function disegnaOrologio(p, { giorno, orologio, eNotte, stagione, giornoN
 
 // --- suggerimento dell'azione --------------------------------------------
 
+export function disegnaMeteo(p, { evento, domani, bagnato }) {
+  const nomi = { arido: "ARIDO: SETE X3", pioggia: "PIOGGIA", neve: "NEVE: PASSO -28%", sereno: "SERENO" };
+  const scritta = nomi[evento];
+  const x = schermo.LARGHEZZA - testo.larghezza(scritta) - 7;
+  testo.disegnaConOmbra(p, scritta, x, 33, evento === "arido" ? "#e0b46a" : "#abcdd7");
+  if (domani !== evento && domani !== "sereno") {
+    const previsione = `DOMANI ${domani === "arido" ? "ARIDO" : domani.toUpperCase()}`;
+    testo.disegnaConOmbra(p, previsione, schermo.LARGHEZZA-testo.larghezza(previsione)-7, 42, TENUE);
+  }
+  if (bagnato > 0.01) testo.disegnaConOmbra(p, bagnato >= 0.5 ? "ZUPPO: CERCA CALORE" : "BAGNATO", 7, 63, "#91b9cc");
+}
+
 export function disegnaAzione(p, azione) {
   if (!azione) return;
 

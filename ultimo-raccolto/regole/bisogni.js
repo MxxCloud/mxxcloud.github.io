@@ -82,7 +82,7 @@ export function avanza(passo, { corre = false, siMuove = false } = {}) {
     // — l'altra è il gelo, che morde una notte alla volta — e siccome
     // d'inverno non si coltiva, è ciò che fa del raccolto d'autunno una
     // provvista invece di una collezione.
-    let calo = CALO[quale] * passo * (quale === "fame" ? stagioni.fattoreFame() : 1);
+    let calo = CALO[quale] * passo * (quale === "fame" ? stagioni.fattoreFame() : quale === "sete" ? stagioni.fattoreSete() : 1);
     if (quale === "stanchezza") {
       if (corre) calo += STANCHEZZA_CORSA * passo;
       else if (siMuove) calo += STANCHEZZA_CAMMINO * passo;
@@ -115,7 +115,7 @@ export function consuma(quale, quanto) {
 // era altrove no — stava in piedi, e il tempo passato in piedi stanca.
 export function passanoSecondi(secondi, { stanca = false } = {}) {
   livelli.fame = limita(livelli.fame - CALO.fame * secondi * stagioni.fattoreFame());
-  livelli.sete = limita(livelli.sete - CALO.sete * secondi);
+  livelli.sete = limita(livelli.sete - CALO.sete * secondi * stagioni.fattoreSete());
   if (stanca) livelli.stanchezza = limita(livelli.stanchezza - CALO.stanchezza * secondi);
 }
 
@@ -166,7 +166,7 @@ export function secondiAlVuoto({ dorme = false, corre = false, siMuove = false }
   let minimo = Infinity;
   for (const quale of ELENCO) {
     if (livelli[quale] <= 1e-12 || (dorme && quale === "stanchezza")) continue;
-    let calo = CALO[quale] * (quale === "fame" ? stagioni.fattoreFame() : 1);
+    let calo = CALO[quale] * (quale === "fame" ? stagioni.fattoreFame() : quale === "sete" ? stagioni.fattoreSete() : 1);
     if (quale === "stanchezza") calo += corre ? STANCHEZZA_CORSA : siMuove ? STANCHEZZA_CAMMINO : 0;
     minimo = Math.min(minimo, livelli[quale] / calo);
   }

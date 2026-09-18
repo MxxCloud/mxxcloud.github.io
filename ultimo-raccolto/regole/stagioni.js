@@ -89,3 +89,7 @@ const FAME = { estate: 1, autunno: 1, inverno: 1.6, primavera: 1 };
 export function fattoreFame(stagione = stagioneCorrente()) {
   return FAME[stagione] ?? 1;
 }
+
+
+// L’aridità estiva vale anche nel sonno e durante le assenze.
+export function fattoreSete(stagione = stagioneCorrente()) { return stagione === "estate" ? 3 : 1; }
