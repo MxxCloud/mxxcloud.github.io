@@ -12,6 +12,47 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.8.1 — un attrezzo rotto è un pugno, e riparato non torna nuovo
+
+Tre correzioni alla tappa dell'usura, e una regola nuova su cosa si consuma.
+
+**Rotto non vuol più dire fermo.** A zero usi l'attrezzo resta in mano e vale
+come le mani nude: un'ascia rotta abbatte in quattro colpi invece che in due e
+fa un danno invece di tre, una lancia rotta colpisce da vicino. Prima toglieva
+il gesto, e il difetto si vedeva nel momento peggiore — l'ascia che si rompe
+mentre uno ti è addosso faceva smettere di rispondere la barra, e bisognava
+cambiare casella con un infetto addosso.
+
+**Riparare non riporta a nuovo.** Ogni riparazione costa sempre 1 pietra e 2
+fibre, ma toglie **un decimo** della durata di quando l'attrezzo era nuovo, e
+sotto i **due quinti** non si ripara più: va rifatto. Per l'ascia sono sei
+riparazioni — 60, 54, 48, 42, 36, 30, 24 — cioè **294 colpi in tutto** invece
+di infiniti. Con la riparazione piatta un'ascia era eterna: costava una pietra
+a ciclo, il due per cento di quello che produceva, e la ricetta dell'ascia si
+usava una volta sola in tutta la partita. La barra sotto l'icona adesso porta
+un tacchetto rosso dove arriva il pieno di quell'esemplare.
+
+**Gli attrezzi delle case arrivano usati**, fra un terzo e due terzi di quello
+che reggono da nuovi, e sempre gli stessi per la stessa cassa. Un'ascia nuova
+di zecca in fondo alla cassa di casa d'altri sgonfiava da sola la tappa:
+frugare rendeva sempre più che riparare.
+
+**Un attrezzo si consuma solo quando serve a quello che stai facendo.** La
+lancia è un'arma: impugnarla davanti a un albero non la rovina, perché con una
+lancia un albero non lo abbatte nessuno — si danno le stesse quattro manate
+che si darebbero a mani nude. Specularmente la zappa non è un'arma: menarla
+addosso a un infetto fa il danno di un pugno e non le costa niente. È la
+stessa regola detta in un dato invece che in tre eccezioni.
+
+E la rottura ha una voce: l'unica metallica del gioco, in una valle di legno,
+pietra e fibra.
+
+*(Rimessa in piedi anche la maniglia del collaudo: da M7.5.1 aprire il gioco
+con `?diagnostica` lanciava un ReferenceError — `gioco.js` aveva smesso di
+importare `decadimento` e `ricrescita` ma continuava a esporli — e nessuna
+prova dai tasti veri poteva più girare. Adesso un test statico controlla che
+il blocco non nomini cose che il file non conosce.)*
+
 ## M7.8 — attrezzi, usura e riparazioni
 
 Ascia: **60 usi**, zappa: **40**, lancia: **50**, canna: **20**.
@@ -21,13 +62,13 @@ zappa e catturare un pesce uno della canna. I tentativi a vuoto e la pesca
 interrotta non consumano nulla. Raccogliere piante e oggetti, aprire casse e
 porte non usura gli attrezzi. Secchi e torce mantengono le regole precedenti.
 
-A zero l'attrezzo resta nello zaino ma non può più lavorare o combattere:
-si può cambiare casella e usare le mani nude. Il colpo finale vale ancora.
-La barra sotto l'icona indica la durata, il promemoria riporta gli usi esatti;
-un avviso compare al 20% e alla rottura.
+A zero l'attrezzo resta nello zaino e vale come le mani nude (vedi M7.8.1);
+il colpo finale vale ancora. La barra sotto l'icona indica la durata, il
+promemoria riporta gli usi esatti; un avviso compare al 20% e alla rottura.
 
-Nel menu C, al banco, **Ripara** consuma **1 pietra e 2 fibre** e ripristina
-tutti gli usi dell'attrezzo più danneggiato di quel tipo presente nello zaino.
+Nel menu C, al banco, **Ripara** consuma **1 pietra e 2 fibre** e ricarica
+l'attrezzo più danneggiato di quel tipo presente nello zaino — non fino a
+nuovo, da M7.8.1.
 Non serve una casella libera e gli attrezzi integri non consumano materiali.
 Usura conservata in casse, mucchi, cadaveri e salvataggi; gli attrezzi delle
 partite precedenti iniziano integri. Due attrezzi a terra restano separati.

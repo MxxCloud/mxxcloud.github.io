@@ -68,12 +68,33 @@ function casellaDisegnata(p, x, y, casella, scelta, inCassa) {
     testo.disegnaConOmbra(p, etichetta, x + LATO_CASELLA - 2 - testo.larghezza(etichetta), y + LATO_CASELLA - 7, CHIARO);
   }
 
+  // La durata di un attrezzo: una barretta lungo il bordo di sotto.
+  //
+  // Da questa tappa ci sono due cose da dire invece di una. La barra colorata
+  // è la lena che resta adesso; il tacchetto rosso è fin dove arriva il pieno
+  // di questo esemplare, che scende a ogni riparazione e non risale mai. Si
+  // vede a colpo d'occhio la differenza fra un'ascia quasi scarica e un'ascia
+  // rifatta cinque volte, che è poi la cosa che decide se conviene ripararla
+  // ancora o rifarla da capo.
   const usi = inventario.usiRimasti(casella);
   if (usi !== null) {
+    const durata = CATALOGO[casella.cosa].durata;
+    const massimo = inventario.massimoDi(casella);
+    const larga = LATO_CASELLA - 4;
     p.fillStyle = usi === 0 ? ROSSO : BORDO;
-    p.fillRect(x + 2, y + LATO_CASELLA - 3, LATO_CASELLA - 4, 2);
-    p.fillStyle = coloreBisogno(usi / CATALOGO[casella.cosa].durata);
-    p.fillRect(x + 2, y + LATO_CASELLA - 3, Math.ceil((LATO_CASELLA - 4) * usi / CATALOGO[casella.cosa].durata), 2);
+    p.fillRect(x + 2, y + LATO_CASELLA - 3, larga, 2);
+    // Il colore dice quanto è carico adesso (usi sul suo pieno), la lunghezza
+    // dice quanto gli resta in assoluto (usi sul pieno di quando era nuovo).
+    // Sono due domande diverse e il giocatore se le fa tutte e due: un'ascia
+    // appena riparata è verde e corta — piena, ma non è più quella di prima.
+    p.fillStyle = coloreBisogno(usi / massimo);
+    p.fillRect(x + 2, y + LATO_CASELLA - 3, Math.ceil(larga * usi / durata), 2);
+    // Un pixel, e solo quando il tetto è sceso: su un attrezzo nuovo non c'è
+    // niente da segnare.
+    if (massimo < durata) {
+      p.fillStyle = ROSSO;
+      p.fillRect(x + 2 + Math.round(larga * massimo / durata), y + LATO_CASELLA - 4, 1, 3);
+    }
   }
 
   // La freschezza: una riga di un pixel lungo il bordo di sopra, che si
@@ -511,7 +532,12 @@ export function disegnaPromemoria(p, barra, cosaInMano, allaPorta = false, indic
   const attrezzo = inventario.attrezzo(cosaInMano, indice);
   if (attrezzo) {
     const usi = inventario.usiRimasti(attrezzo);
-    righe.push(usi === 0 ? "ROTTO: RIPARA AL BANCO" : "DURATA " + usi + "/" + CATALOGO[cosaInMano].durata);
+    // Rotto non vuol più dire "non puoi": vuol dire "vale come un pugno". Il
+    // promemoria deve dire quello, perché è la differenza fra un giocatore che
+    // preme la barra e uno che la smette di premere.
+    righe.push(usi === 0
+      ? "ROTTO: VALE COME LE MANI NUDE"
+      : "DURATA " + usi + "/" + inventario.massimoDi(attrezzo));
   }
 
   // Il promemoria del mangiare compare solo con qualcosa di commestibile in

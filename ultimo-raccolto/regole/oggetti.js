@@ -18,7 +18,7 @@ import * as ortoArte from "../arte/sprite-orto.js";
 // soltanto a usare il terreno come dispensa. Adesso c'è la cassa, quindi il
 // debito si può pagare.
 export const CATALOGO = {
-  canna: { durata: 20, nome: "Canna da pesca", icona: arte.CANNA, pila: 1,
+  canna: { durata: 20, serve: ["pesca"], nome: "Canna da pesca", icona: arte.CANNA, pila: 1,
     impugnato: { nome: "canna", righe: impugnati.CANNA, scartoY: 3 } },
   pesce_crudo: { nome: "Pesce crudo", icona: arte.PESCE_CRUDO, pila: 10,
     commestibile: { fame: 0.18 }, cuoce: "pesce_arrostito", dura: 2 },
@@ -53,6 +53,7 @@ export const CATALOGO = {
   },
   ascia: {
     durata: 60,
+    serve: ["raccolta", "combatti"],
     nome: "Ascia",
     icona: arte.ASCIA,
     pila: 1,
@@ -62,6 +63,7 @@ export const CATALOGO = {
   },
   zappa: {
     durata: 40,
+    serve: ["zappa"],
     nome: "Zappa",
     icona: arte.ZAPPA,
     pila: 1,
@@ -162,6 +164,7 @@ export const CATALOGO = {
   // dare il suo.
   lancia: {
     durata: 50,
+    serve: ["combatti"],
     nome: "Lancia",
     icona: arte.LANCIA,
     pila: 1,
@@ -199,6 +202,21 @@ export const CATALOGO = {
     cura: { salute: 0.2, infezione: true },
   },
 };
+
+// A cosa serve un attrezzo, cioè quando lavora e quando si consuma.
+//
+// Non è un elenco di permessi: è la dichiarazione di che mestiere fa. La
+// lancia è un'arma e basta — impugnarla per abbattere un albero non la rovina,
+// perché con una lancia un albero non lo abbatte nessuno: si danno le stesse
+// quattro manate che si darebbero a mani nude. Vale specularmente per la
+// zappa, che di suo non è un'arma: menarla addosso a un infetto fa il danno di
+// un pugno e non le costa niente, perché non è con quella che stai colpendo.
+//
+// È la regola generale detta in un dato invece che in tre "se": un attrezzo si
+// consuma quando serve a quello che stai facendo, e in nessun altro momento.
+export function attrezzoServe(cosa, scopo) {
+  return CATALOGO[cosa]?.serve?.includes(scopo) ?? false;
+}
 
 // Cosa fa un attrezzo tenuto in mano. La regola del gioco è una sola —
 // quello che impugni è quello che usi — e vale tanto per la torcia, che

@@ -9,7 +9,7 @@ import { OGGETTO, TERRENO } from "../mondo/generazione.js";
 import * as tempo from "./tempo.js";
 import * as bisogni from "./bisogni.js";
 import * as salute from "./salute.js";
-import { CATALOGO, ATTREZZI, raccoltaDi, colpiNecessari, dannoDi, portataDi } from "./oggetti.js";
+import { CATALOGO, ATTREZZI, raccoltaDi, colpiNecessari, dannoDi, portataDi, attrezzoServe } from "./oggetti.js";
 import * as infetti from "./infetti.js";
 import * as urti from "../entita/urti.js";
 import * as chiasso from "./chiasso.js";
@@ -47,27 +47,45 @@ export function bersaglio(eroe) {
 const SORSO = 0.45;
 
 const COLPI_DURI = new Set([OGGETTO.ALBERO, OGGETTO.SASSO, OGGETTO.MURO, OGGETTO.MURO_ROTTO, OGGETTO.BANCO]);
-function usaAttrezzo(azione) {
-  return azione && (["combatti", "zappa", "pesca"].includes(azione.tipo) ||
-    (azione.tipo === "raccogli" && COLPI_DURI.has(azione.bersaglio.oggetto)));
+
+// A che mestiere sta servendo l'attrezzo in questa azione, o null se l'azione
+// non è lavoro da attrezzi: strappare un cespuglio, aprire una cassa, posare
+// un falò non consumano niente e non chiedono niente.
+function scopoDi(azione) {
+  if (!azione) return null;
+  if (azione.tipo === "combatti") return "combatti";
+  if (azione.tipo === "zappa") return "zappa";
+  if (azione.tipo === "pesca") return "pesca";
+  if (azione.tipo === "raccogli" && COLPI_DURI.has(azione.bersaglio.oggetto)) return "raccolta";
+  return null;
+}
+
+// Cosa si ha davvero in mano, per questo mestiere.
+//
+// Tre cose diventano mani nude qui dentro, ed è giusto che sia la stessa riga
+// per tutte e tre: non avere niente, avere in mano un attrezzo rotto, e avere
+// in mano un attrezzo che quel mestiere non lo fa — la lancia davanti a un
+// albero, la zappa davanti a un infetto.
+//
+// UN ATTREZZO ROTTO NON TOGLIE IL GESTO. La prima stesura dell'usura lo
+// impediva, e il difetto si vedeva nel momento peggiore: l'ascia che si rompe
+// mentre uno ti è addosso faceva smettere di rispondere la barra, e bisognava
+// cambiare casella con un infetto addosso. Adesso vale come un pugno — che è
+// poco, ed è comunque il gesto che avevi in mano.
+export function strumento(cosaInMano, indice, scopo) {
+  if (!cosaInMano) return null;
+  if (CATALOGO[cosaInMano]?.durata === undefined) return cosaInMano;
+  if (scopo && !attrezzoServe(cosaInMano, scopo)) return null;
+  const casella = inventario.attrezzo(cosaInMano, indice);
+  return casella && inventario.usiRimasti(casella) > 0 ? cosaInMano : null;
 }
 
 export function azionePossibile(eroe, cosaInMano, indice) {
-  const azione = descriviAzione(eroe, cosaInMano);
-  if (usaAttrezzo(azione) && CATALOGO[cosaInMano]?.durata && !pesca.stato()) {
-    const attrezzo = inventario.attrezzo(cosaInMano, indice);
-    if (!attrezzo || inventario.usiRimasti(attrezzo) === 0)
-      return { ...azione, impedito: "attrezzo inutilizzabile: riparalo al banco" };
-  }
-  return azione;
-}
-
-function descriviAzione(eroe, cosaInMano) {
   // Prima di qualunque cosa, perché nel momento in cui uno ti è addosso non
   // esiste nient'altro da fare. Senza questa riga in cima, trovandosi un
   // infetto sopra un cespuglio la barra strappava il cespuglio — e sarebbe
   // stata l'ultima cosa fatta.
-  const addosso = infetti.quelloDavanti(eroe, portataDi(cosaInMano));
+  const addosso = infetti.quelloDavanti(eroe, portataDi(strumento(cosaInMano, indice, "combatti")));
   if (addosso) {
     return { tipo: "combatti", verbo: "Colpisci", nemico: addosso };
   }
@@ -137,13 +155,16 @@ function descriviAzione(eroe, cosaInMano) {
     const gia = dati?.colpi ?? 0;
     // Mai sotto uno: chi comincia a mani nude e passa all'ascia ha già dato
     // più colpi di quanti ne servano, e "restano 0" sarebbe una bugia.
-    const restano = Math.max(1, colpiNecessari(b.oggetto, cosaInMano) - gia);
+    // Con la lancia in mano si abbatte come a mani nude, e senza rovinarla:
+    // strumento() lo sa, e qui si vede da solo nel numero di colpi che manca.
+    const attrezzo = COLPI_DURI.has(b.oggetto) ? strumento(cosaInMano, indice, "raccolta") : cosaInMano;
+    const restano = Math.max(1, colpiNecessari(b.oggetto, attrezzo) - gia);
     return { tipo: "raccogli", verbo: raccolta.verbo, restano, bersaglio: b };
   }
   const terreno = mappa.terrenoDi(b.tx, b.ty);
   const acqua = terreno === TERRENO.ACQUA || terreno === TERRENO.ACQUA_BASSA;
 
-  if (cosaInMano === "canna" && (acqua || terreno === TERRENO.GHIACCIO)) {
+  if (strumento(cosaInMano, indice, "pesca") === "canna" && (acqua || terreno === TERRENO.GHIACCIO)) {
     const inCorso = pesca.stato();
     return { tipo: "pesca", verbo: inCorso ? "Ritira la lenza" : "Pesca", bersaglio: b,
       impedito: inCorso ? null : pesca.impedimento(b.tx, b.ty) };
@@ -167,7 +188,7 @@ function descriviAzione(eroe, cosaInMano) {
 
   // La zappa non accorcia un lavoro: ne apre uno che senza di lei non
   // esiste.
-  if (ATTREZZI[cosaInMano]?.zappa && b.oggetto === OGGETTO.NESSUNO && zappabile(terreno)) {
+  if (ATTREZZI[strumento(cosaInMano, indice, "zappa")]?.zappa && b.oggetto === OGGETTO.NESSUNO && zappabile(terreno)) {
     return { tipo: "zappa", verbo: "Zappa", bersaglio: b };
   }
 
@@ -236,7 +257,7 @@ function posabile(b) {
 // zaino e della cassa (media pesata, arrotondata verso il vecchio): è la
 // ragione per cui mescolaDate sta in inventario.js ed è esportata invece di
 // essere riscritta qui.
-function deponi(tx, ty, cosa, quante, dal, usi) {
+function deponi(tx, ty, cosa, quante, dal, usi, massimo) {
   const fondo = mappa.terrenoNaturaleDi(tx, ty);
   if (fondo === TERRENO.ACQUA || fondo === TERRENO.ACQUA_BASSA) return false;
   const oggetto = mappa.oggettoDi(tx, ty);
@@ -258,7 +279,11 @@ function deponi(tx, ty, cosa, quante, dal, usi) {
   if (oggetto !== OGGETTO.NESSUNO || mappa.solidoIn(tx, ty)) return false;
   const cambio = { oggetto: OGGETTO.MUCCHIO, cosa, quante };
   if (deperibile) cambio.dal = quando;
-  if (CATALOGO[cosa]?.durata) cambio.usi = usi ?? CATALOGO[cosa].durata;
+  if (CATALOGO[cosa]?.durata) {
+    cambio.usi = usi ?? CATALOGO[cosa].durata;
+    // Come nello zaino: il tetto si scrive solo se è sceso.
+    if (massimo !== undefined && massimo < CATALOGO[cosa].durata) cambio.massimo = massimo;
+  }
   mappa.cambiaTassello(tx, ty, cambio);
   return true;
 }
@@ -287,7 +312,9 @@ export function getta(eroe, indice) {
   if (!casella) return null;
 
   const { tx, ty } = bersaglio(eroe);
-  if (!deponi(tx, ty, casella.cosa, casella.quantita, casella.dal, casella.usi)) return { tipo: "nonCePosto" };
+  if (!deponi(tx, ty, casella.cosa, casella.quantita, casella.dal, casella.usi, casella.massimo)) {
+    return { tipo: "nonCePosto" };
+  }
 
   inventario.svuotaCasella(indice);
   return { tipo: "gettato", cosa: casella.cosa, quante: casella.quantita, tx, ty };
@@ -461,9 +488,14 @@ function medicati(cosa, effetto) {
 // abbatte un albero non possono sembrare lo stesso gesto.
 export function agisci(eroe, cosaInMano, indice) {
   const azione = azionePossibile(eroe, cosaInMano, indice);
-  const attrezzo = inventario.attrezzo(cosaInMano, indice);
+  const scopo = scopoDi(azione);
+  // Si consuma solo l'attrezzo che sta facendo il suo mestiere: la lancia
+  // davanti a un albero non è l'attrezzo di quel gesto, quindi non paga.
+  const attrezzo = scopo && strumento(cosaInMano, indice, scopo) === cosaInMano
+    ? inventario.attrezzo(cosaInMano, indice)
+    : null;
   const esito = esegui(eroe, cosaInMano, indice, azione);
-  if (esito && usaAttrezzo(azione) && ["combattuto", "colpo", "raccolto", "zappa"].includes(esito.tipo)) {
+  if (esito && attrezzo && ["combattuto", "colpo", "raccolto", "zappa"].includes(esito.tipo)) {
     const avviso = inventario.usura(attrezzo);
     if (avviso) esito.usura = avviso;
   }
@@ -476,7 +508,7 @@ function esegui(eroe, cosaInMano, indice, azione) {
   if (azione.tipo === "pesca") return pesca.inizia(eroe, azione.bersaglio.tx, azione.bersaglio.ty, indice);
 
   if (azione.tipo === "combatti") {
-    const esito = infetti.colpisci(azione.nemico, dannoDi(cosaInMano));
+    const esito = infetti.colpisci(azione.nemico, dannoDi(strumento(cosaInMano, indice, "combatti")));
     // Il combattimento si sente. È la ragione per cui uno che urla ne chiama
     // altri, ed è anche il motivo per cui non conviene mettersi a fare a
     // botte in mezzo alla valle di notte.
@@ -502,7 +534,7 @@ function esegui(eroe, cosaInMano, indice, azione) {
     // Si prende quello che ci sta, e il resto resta lì. Far sparire un mucchio
     // perché lo zaino era pieno sarebbe lo stesso difetto da cui nascono i
     // mucchi.
-    const resto = inventario.aggiungi(dati.cosa, dati.quante, dati.dal, dati.usi);
+    const resto = inventario.aggiungi(dati.cosa, dati.quante, dati.dal, dati.usi, dati.massimo);
     if (resto === dati.quante) return { tipo: "zainoPieno" };
     if (resto > 0) {
       // Quello che resta per terra tiene l'età che aveva: prenderne metà non
@@ -525,7 +557,7 @@ function esegui(eroe, cosaInMano, indice, azione) {
     const rimasto = [];
     const presi = [];
     for (const voce of roba) {
-      const resto = inventario.aggiungi(voce.cosa, voce.quantita, voce.dal, voce.usi);
+      const resto = inventario.aggiungi(voce.cosa, voce.quantita, voce.dal, voce.usi, voce.massimo);
       if (resto < voce.quantita) presi.push({ cosa: voce.cosa, quante: voce.quantita - resto });
       if (resto > 0) rimasto.push({ ...voce, quantita: resto });
     }
@@ -647,7 +679,10 @@ function esegui(eroe, cosaInMano, indice, azione) {
   const raccolta = raccoltaDi(oggetto);
   const precedente = modifiche.di(tx, ty) ?? {};
   const colpi = (precedente.colpi ?? 0) + 1;
-  const necessari = colpiNecessari(oggetto, cosaInMano);
+  const necessari = colpiNecessari(
+    oggetto,
+    COLPI_DURI.has(oggetto) ? strumento(cosaInMano, indice, "raccolta") : cosaInMano
+  );
 
   if (colpi < necessari) {
     // Annota e basta: l'albero è ancora lo stesso albero, quindi il settore
