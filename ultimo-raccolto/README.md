@@ -12,6 +12,31 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.7.1 — fame, esposizione e riposo invernale
+
+Per tutti e quattro i giorni d'inverno la fame si consuma a **2x**, anche nel
+sonno e durante le assenze. Nelle altre stagioni resta a 1x; l'aridità estiva
+continua a triplicare soltanto la sete.
+
+Il danno da freddo aumenta con l'esposizione continua: **1x nei primi 15
+secondi, 2x da 15 a 30 secondi, 3x da 30 secondi in poi**. Si ferma a 3x.
+Il moltiplicatore compare nell'interfaccia. Quando il personaggio non è più
+al freddo l'esposizione si azzera; salvare e ricaricare invece la conserva.
+Anche una lunga assenza paga ogni intervallo al suo valore, senza applicare
+il moltiplicatore finale ai secondi precedenti. La regola vale per ogni fonte
+di freddo, compreso il corpo zuppo.
+
+Una notte iniziata d'inverno sul giaciglio porta la stamina esattamente al
+**75% con un falò acceso entro tre tasselli dal letto**, senza pareti in mezzo,
+oppure al **25% senza quel calore**. Il falò deve restare acceso durante il
+sonno: se si spegne a mezzanotte il riposo vale il 25%. La torcia impugnata non
+sostituisce il falò. Al risveglio dal riposo freddo compare:
+**«Non ti senti molto riposato...»**.
+
+Nelle altre stagioni il riposo continua a riempire la stamina. Fame, sete e
+freddo fanno comunque danno mentre si dorme: il recupero e il messaggio del
+risveglio si applicano soltanto a chi sopravvive alla notte.
+
 ## M7.7 — pioggia, neve e aridità
 
 Ogni stagione dura quattro giorni. In autunno e primavera **piove un giorno

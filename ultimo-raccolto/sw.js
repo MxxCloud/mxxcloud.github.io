@@ -11,7 +11,7 @@
 // dimenticato non darebbe errore online, e si scoprirebbe solo la prima volta
 // che qualcuno prova a giocare in treno.
 
-const VERSIONE = "ultimo-raccolto-v32";
+const VERSIONE = "ultimo-raccolto-v33";
 
 const RISORSE = [
   "./",

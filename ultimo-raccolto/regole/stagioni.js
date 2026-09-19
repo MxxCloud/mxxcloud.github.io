@@ -84,7 +84,7 @@ export function fiorisce(stagione = stagioneCorrente()) {
 // lenta: il gelo morde una notte alla volta, questo si accumula per quattro
 // giorni. E siccome d'inverno non si coltiva, si mangia quello che si è messo
 // da parte.
-const FAME = { estate: 1, autunno: 1, inverno: 1.6, primavera: 1 };
+const FAME = { estate: 1, autunno: 1, inverno: 2, primavera: 1 };
 
 export function fattoreFame(stagione = stagioneCorrente()) {
   return FAME[stagione] ?? 1;

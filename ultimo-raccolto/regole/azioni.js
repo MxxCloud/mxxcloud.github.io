@@ -559,9 +559,21 @@ export function agisci(eroe, cosaInMano) {
   }
 
   if (azione.tipo === "dormi") {
-    const secondi = simulazione.avanza(tempo.secondiFinoAlle(tempo.ALBA_PIENA), { dorme: true, eroe, alFreddo: () => freddo.alFreddo(eroe, cosaInMano) });
-    if (!salute.eMorto()) bisogni.ristora("stanchezza", 1);
-    return { tipo: "dormi", secondi };
+    const inverno = stagioni.stagioneCorrente() === "inverno";
+    const letto = { px:(tx+0.5)*TASSELLO, py:(ty+0.75)*TASSELLO };
+    let riscaldato = freddo.fuocoPerRiposo(letto);
+    const secondi = simulazione.avanza(tempo.secondiFinoAlle(tempo.ALBA_PIENA), {
+      dorme: true, eroe: letto,
+      alFreddo: () => {
+        riscaldato = freddo.fuocoPerRiposo(letto) && riscaldato;
+        return freddo.alFreddo(letto, null);
+      },
+    });
+    const pocoRiposato = inverno && !riscaldato;
+    const stamina = inverno ? (riscaldato ? 0.75 : 0.25) : 1;
+    if (!salute.eMorto()) bisogni.ristora("stanchezza", stamina-bisogni.livello("stanchezza"));
+    return { tipo: "dormi", secondi, pocoRiposato, stamina, sveglio: !salute.eMorto(),
+      messaggio: pocoRiposato && !salute.eMorto() ? "Non ti senti molto riposato..." : null };
   }
 
   if (azione.tipo === "porta") {

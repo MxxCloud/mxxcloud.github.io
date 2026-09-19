@@ -80,7 +80,7 @@ test('l’inverno attraversato fa morire l’orto prima della primavera',()=>{
 test('il moltiplicatore invernale si applica soltanto dopo mezzanotte',()=>{
   tempo.impostaGiorno(8);tempo.impostaOra(23);
   simulazione.avanza(25);
-  vicino(bisogni.livello('fame'),1-(12.5+12.5*1.6)/540);
+  vicino(bisogni.livello('fame'),1-(12.5+12.5*2)/540);
   assert.equal(tempo.giornoCorrente(),9);
 });
 test('sonno: la sete fa danno solo dopo essersi esaurita, non lo sfinimento',()=>{
@@ -519,4 +519,91 @@ test('precipitazioni disegnate soltanto negli eventi e con numero limitato di pa
   atmosfera.disegna(p,'arido',1);assert.equal(n,0);
   atmosfera.disegna(p,'pioggia',1);assert.equal(n,70);
   n=0;atmosfera.disegna(p,'neve',1);assert.equal(n,90);
+});
+
+test('fame 2x in ogni giorno invernale, nel sonno e nel recupero',()=>{
+  for(let giorno=9;giorno<=12;giorno++)for(const dorme of [true,false]) {
+    reset();tempo.impostaGiorno(giorno);simulazione.avanza(30,{dorme});
+    vicino(bisogni.livello('fame'),1-60/540);
+  }
+});
+test('freddo: danni 1x, 2x dopo 15s, 3x dopo 30s e nessun aumento ulteriore',()=>{
+  salute.avanza(14,{alFreddo:true});assert.equal(salute.moltiplicatoreFreddo(),1);
+  salute.avanza(1,{alFreddo:true});assert.equal(salute.moltiplicatoreFreddo(),2);
+  vicino(salute.livelloCorrente(),1-15/225);
+  salute.avanza(15,{alFreddo:true});assert.equal(salute.moltiplicatoreFreddo(),3);
+  vicino(salute.livelloCorrente(),1-45/225);
+  salute.avanza(15,{alFreddo:true});vicino(salute.livelloCorrente(),1-90/225);
+  assert.equal(salute.secondiEsposto(),30);
+});
+test('una chiamata che attraversa entrambe le soglie non applica danni retroattivi',()=>{
+  salute.avanza(45,{alFreddo:true});vicino(salute.livelloCorrente(),0.6);
+});
+test('freddo progressivo identico a fotogrammi e in blocco',()=>{
+  for(let i=0;i<45*60;i++)salute.avanza(1/60,{alFreddo:true});
+  const prima=salute.livelloCorrente();assert.equal(salute.moltiplicatoreFreddo(),3);
+  salute.reimposta();salute.avanza(45,{alFreddo:true});vicino(salute.livelloCorrente(),prima);
+});
+test('tornare al caldo azzera l’esposizione, il freddo successivo riparte da 1x',()=>{
+  salute.avanza(31,{alFreddo:true});salute.avanza(1,{alFreddo:false});
+  assert.equal(salute.secondiEsposto(),0);const prima=salute.livelloCorrente();
+  salute.avanza(10,{alFreddo:true});vicino(prima-salute.livelloCorrente(),10/225);
+});
+test('salvare non azzera il freddo accumulato; vecchi salvataggi iniziano a zero',()=>{
+  salute.avanza(20,{alFreddo:true});const stato=salvataggio.istantanea(eroe,0);
+  salute.reimposta();assert.ok(salvataggio.applica(stato));assert.equal(salute.secondiEsposto(),20);
+  const prima=salute.livelloCorrente();salute.avanza(10,{alFreddo:true});vicino(prima-salute.livelloCorrente(),20/225);
+  for(const valore of [-1,31,NaN])assert.equal(salvataggio.applica({...stato,esposizioneFreddo:valore}),null);
+  delete stato.esposizioneFreddo;salvataggio.applica(stato);assert.equal(salute.secondiEsposto(),0);
+});
+function lettoInvernale() {
+  tempo.impostaGiorno(9);tempo.impostaOra(3);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GIACIGLIO});
+  bisogni.ripristina({fame:1,sete:1,stanchezza:0.9});
+}
+test('riposo invernale vicino al falò porta la stamina esattamente al 75%',()=>{
+  lettoInvernale();modifiche.imposta(tx+4,ty,{oggetto:OGGETTO.FALO_ACCESO,posata:9});
+  const esito=azioni.agisci(eroe,null);
+  assert.equal(esito.sveglio,true);assert.equal(esito.pocoRiposato,false);
+  vicino(bisogni.livello('stanchezza'),0.75);assert.equal(esito.messaggio,null);
+});
+test('riposo invernale senza falò porta la stamina al 25% e comunica il cattivo riposo',()=>{
+  lettoInvernale();const esito=azioni.agisci(eroe,null);
+  assert.equal(esito.sveglio,true);vicino(bisogni.livello('stanchezza'),0.25);
+  assert.equal(esito.messaggio,'Non ti senti molto riposato...');
+});
+test('la torcia in mano non sostituisce il falò nel riposo',()=>{
+  lettoInvernale();inventario.aggiungi('torcia',1);
+  const esito=azioni.agisci(eroe,'torcia');assert.equal(esito.pocoRiposato,true);
+  vicino(bisogni.livello('stanchezza'),0.25);
+});
+test('un falò dietro un muro o oltre tre tasselli non dà il bonus del riposo',()=>{
+  lettoInvernale();const letto=pos(tx+1,ty);
+  modifiche.imposta(tx+3,ty,{oggetto:OGGETTO.FALO_ACCESO,posata:9});
+  modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.MURO});assert.equal(freddo.fuocoPerRiposo(letto),false);
+  modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.NESSUNO});assert.equal(freddo.fuocoPerRiposo(letto),true);
+  modifiche.imposta(tx+3,ty,{oggetto:OGGETTO.NESSUNO});modifiche.imposta(tx+5,ty,{oggetto:OGGETTO.FALO_ACCESO});
+  assert.equal(freddo.fuocoPerRiposo(letto),false);
+});
+test('falò che si spegne durante la notte riduce il recupero al 25%',()=>{
+  lettoInvernale();tempo.impostaOra(23);
+  modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.FALO_ACCESO,posata:8});
+  const esito=azioni.agisci(eroe,null);assert.equal(esito.sveglio,true);assert.equal(esito.pocoRiposato,true);
+  vicino(bisogni.livello('stanchezza'),0.25);
+});
+test('notte iniziata d’inverno conserva il limite al risveglio primaverile',()=>{
+  lettoInvernale();tempo.impostaGiorno(12);tempo.impostaOra(23);
+  const esito=azioni.agisci(eroe,null);assert.equal(tempo.giornoCorrente(),13);
+  assert.equal(esito.pocoRiposato,true);vicino(bisogni.livello('stanchezza'),0.25);
+});
+test('riposo nelle altre stagioni continua a riempire la stamina',()=>{
+  lettoInvernale();tempo.impostaGiorno(5);
+  const esito=azioni.agisci(eroe,null);assert.equal(esito.sveglio,true);
+  assert.equal(esito.pocoRiposato,false);vicino(bisogni.livello('stanchezza'),1);
+});
+test('morire durante il sonno non ripristina stamina né annuncia un risveglio',()=>{
+  lettoInvernale();salute.ripristina(0.01);
+  const prima=bisogni.livello('stanchezza'),esito=azioni.agisci(eroe,null);
+  assert.equal(esito.sveglio,false);assert.equal(esito.messaggio,null);
+  vicino(bisogni.livello('stanchezza'),prima);
 });

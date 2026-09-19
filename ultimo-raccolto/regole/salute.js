@@ -27,12 +27,8 @@ const GIORNO = tempo.SECONDI_PER_GIORNO;
 // giorni interi.
 const DANNO_VUOTO = 1 / (GIORNO * 2);
 
-// Il freddo morde quasi tre volte più in fretta, e non per cattiveria: agisce
-// solo di notte e solo d'inverno, cioè per meno di metà di una stagione su
-// quattro. Con il ritmo dei bisogni non si sarebbe sentito mai. Così invece
-// una notte d'inverno passata all'aperto senza fuoco costa più di metà della
-// salute, e due di fila uccidono — che è esattamente la ragione per cui
-// esistono il falò e il giaciglio.
+// Danno di base. L'esposizione continua lo moltiplica per 2 dopo 15 secondi
+// e per 3 dopo 30: il calore interrompe l'accumulo, il sonno no.
 const DANNO_FREDDO = 1 / (GIORNO * 0.75);
 
 // Tre giorni per tornare pieni. Più lenta del danno di proposito: se
@@ -67,6 +63,7 @@ let livello = 1;
 let morto = false;
 let causa = null;
 let infezione = false;
+let esposizioneFreddo = 0;
 
 // Quanto danno ha fatto ciascuna causa da quando questo superstite è vivo.
 // Serve a nominare la morte onestamente: chi aveva fame da due giorni e sete
@@ -156,11 +153,25 @@ function controllaLaMorte() {
 // Restituisce la causa della morte se si è appena morti, altrimenti null:
 // l'interfaccia deve poterlo annunciare una volta sola, come per i bisogni
 // che si svuotano.
+// Integrale del danno: ogni tratto paga solo il proprio moltiplicatore,
+// anche se una chiamata attraversa entrambe le soglie.
+function doseFreddo(secondi) {
+  return Math.min(secondi,15) + 2*Math.min(Math.max(0,secondi-15),15) + 3*Math.max(0,secondi-30);
+}
+export function secondiEsposto() { return esposizioneFreddo; }
+export function moltiplicatoreFreddo() { return esposizioneFreddo >= 30 ? 3 : esposizioneFreddo >= 15 ? 2 : 1; }
+
 export function avanza(passo, { vuoti = [], alFreddo = false } = {}) {
-  if (morto) return null;
+  if (morto || !Number.isFinite(passo) || passo <= 0) return null;
 
   for (const quale of vuoti) ferisci(quale, DANNO_VUOTO * passo);
-  if (alFreddo) ferisci("freddo", DANNO_FREDDO * passo);
+  if (alFreddo) {
+    const fine = esposizioneFreddo + passo;
+    ferisci("freddo", DANNO_FREDDO * (doseFreddo(fine)-doseFreddo(esposizioneFreddo)));
+    esposizioneFreddo = Math.min(30,fine);
+    // Elimina soltanto il rumore di somma dei fotogrammi vicino alle soglie.
+    for (const soglia of [15,30]) if (Math.abs(esposizioneFreddo-soglia)<1e-9) esposizioneFreddo=soglia;
+  } else esposizioneFreddo = 0;
   if (infezione) ferisci("infezione", DANNO_INFEZIONE * passo);
 
   // Si guarisce solo quando non manca niente, non si gela e non si è
@@ -184,6 +195,7 @@ export function ristora(quanto) {
 // Un superstite nuovo nella stessa valle: salute piena, nessun conto aperto.
 // Non è tempo.reimposta(): il mondo non ricomincia, ricomincia il corpo.
 export function reimposta() {
+  esposizioneFreddo = 0;
   livello = 1;
   morto = false;
   causa = null;
@@ -198,12 +210,12 @@ export function reimposta() {
 // Non si salva né la morte né il conto delle cause, e non per dimenticanza:
 // un salvataggio si scrive all'alba o quando lo chiedi, cioè da vivi, e una
 // partita ripresa comincia da un superstite in piedi.
-export function ripristina(salvata, infetta = false) {
+export function ripristina(salvata, infetta = false, esposizione = 0) {
   reimposta();
   if (Number.isFinite(salvata)) livello = limita(salvata);
   // L'infezione sì che si salva, al contrario della morte: è uno stato in cui
   // si vive, e riprendere una partita guariti per il fatto di averla chiusa
   // sarebbe il modo più comodo di curarsi che esista.
   infezione = infetta === true;
+  esposizioneFreddo = Number.isFinite(esposizione) ? Math.max(0,Math.min(30,esposizione)) : 0;
 }
-
