@@ -255,6 +255,16 @@ export const GIACIGLIO_STESO = [
   "..hhhhhhhhhhhh..",
 ];
 
+// Lo stesso telaio del giaciglio, conciato. La paglia (9, a) diventa il bruno
+// della fauna (c, l); la cornice di rami (h) resta, perché un letto di pelli è
+// un letto, non un mucchio di pelli. Scambiare la tavolozza invece di
+// ridisegnare non è pigrizia: disegnare a mano è la risorsa più scarsa del
+// progetto, e due letti che si leggono come parenti dicono da soli che il
+// secondo è il primo fatto meglio.
+const concia = (righe) => righe.map(r => r.replaceAll("9", "c").replaceAll("a", "l"));
+export const GIACIGLIO_PELLI = concia(GIACIGLIO);
+export const GIACIGLIO_PELLI_STESO = concia(GIACIGLIO_STESO);
+
 export const ZAPPA = [
   "............",
   "..eeee......",

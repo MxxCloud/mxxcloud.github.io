@@ -12,6 +12,41 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.9.2 — il primo uso delle pelli
+
+Le pelli della caccia avevano un solo difetto: non servivano a niente. Si
+raccoglievano macellando, si impilavano a venti, non marcivano, e restavano lì.
+Adesso diventano un letto.
+
+**Il giaciglio di pelli** si costruisce **al banco** con **3 pelli, 4 fibre e 2
+legna** — un orso, un bufalo, o tre cervi. Si posa e si riprende come quello di
+paglia, e di notte ci si dorme; di giorno si smonta, con la stessa regola di
+sempre.
+
+Quello che cambia è **come si passa la notte d'inverno**:
+
+| | fuori dall'inverno | inverno col fuoco | inverno senza |
+| --- | --- | --- | --- |
+| Giaciglio | 100% | 75% | 25% |
+| Giaciglio di pelli | 100% | **100%** | **50%** |
+
+Con le pelli **e** un falò acceso a portata, la notte invernale riposa come
+tutte le altre: è il premio di averci investito, ed è l'unico caso in cui
+l'inverno smette di essere una tassa. Senza fuoco resta una brutta notte — e il
+gioco continua a dirtelo.
+
+Fuori dall'inverno i due letti valgono uguale, e non è una dimenticanza: quello
+che una pelliccia sotto la schiena toglie di mezzo è il freddo, e d'agosto non
+c'è niente da togliere. Pagare quattro volte tanto per dormire meglio a luglio
+sarebbe una ricetta che risponde a una domanda che nessuno fa.
+
+**Le pelli danno riposo, non calore.** D'inverno senza fuoco ci si gela sopra
+esattamente come sulla paglia: il letto migliora il risveglio, non la notte. Il
+calore che ci si porta addosso è un'altra tappa, ed è di proposito che le due
+cose stanno separate — un letto caldo e una pelliccia rispondono a due domande
+diverse, e mescolarle qui vorrebbe dire non saper più dire quale delle due ti ha
+salvato.
+
 ## M7.9.1 — una carcassa non è un muro, e due bestie non sono una sola
 
 Due correzioni alla tappa della caccia.

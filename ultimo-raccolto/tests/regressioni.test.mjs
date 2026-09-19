@@ -565,9 +565,9 @@ test('salvare non azzera il freddo accumulato; vecchi salvataggi iniziano a zero
   for(const valore of [-1,31,NaN])assert.equal(salvataggio.applica({...stato,esposizioneFreddo:valore}),null);
   delete stato.esposizioneFreddo;salvataggio.applica(stato);assert.equal(salute.secondiEsposto(),0);
 });
-function lettoInvernale() {
+function lettoInvernale(quale=OGGETTO.GIACIGLIO) {
   tempo.impostaGiorno(9);tempo.impostaOra(3);
-  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GIACIGLIO});
+  modifiche.imposta(tx+1,ty,{oggetto:quale});
   bisogni.ripristina({fame:1,sete:1,stanchezza:0.9});
 }
 test('riposo invernale vicino al falò porta la stamina esattamente al 75%',()=>{
@@ -1095,4 +1095,60 @@ test('gli animali si scansano fra loro e dal superstite, senza entrare nei muri'
   assert.ok(urti.liberoIn(a.px,a.py),'il collaudo parte da un posto libero');
   for(let i=0;i<4;i++)fauna.sgomitano(eroe);
   for(const e of [a,b]) assert.ok(urti.liberoIn(e.px,e.py),`${e.specie} finito dentro il muro`);
+});
+
+const RICETTA_PELLI = ricette.RICETTE.find(r=>r.id==='giaciglio_pelli');
+test('il giaciglio di pelli vuole il banco, tre pelli e le altre cose',()=>{
+  inventario.aggiungi('pelle',2);inventario.aggiungi('fibra',4);inventario.aggiungi('legna',2);
+  assert.equal(ricette.fai(RICETTA_PELLI).perche,'banco');
+  assert.equal(ricette.fai(RICETTA_PELLI,true).perche,'materiali');
+  inventario.aggiungi('pelle',1);
+  assert.equal(ricette.fai(RICETTA_PELLI,true).fatto,true);
+  assert.equal(inventario.quante('pelle'),0);assert.equal(inventario.quante('giaciglio_pelli'),1);
+});
+test('il giaciglio di pelli si posa e si riprende, e torna sé stesso',()=>{
+  inventario.aggiungi('giaciglio_pelli',1);
+  assert.equal(azioni.agisci(eroe,'giaciglio_pelli').tipo,'posa');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.GIACIGLIO_PELLI);
+  assert.equal(mappa.solidoIn(tx+1,ty),false);
+  tempo.impostaOra(12);
+  assert.equal(azioni.agisci(eroe,null).tipo,'raccolto');
+  assert.equal(inventario.quante('giaciglio_pelli'),1);assert.equal(inventario.quante('giaciglio'),0);
+});
+test('di notte ci si dorme, di giorno si smonta — come quello di paglia',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GIACIGLIO_PELLI});
+  tempo.impostaOra(12);assert.equal(azioni.azionePossibile(eroe,null).tipo,'raccogli');
+  tempo.impostaOra(22);assert.equal(azioni.azionePossibile(eroe,null).tipo,'dormi');
+});
+test('sulle pelli la notte invernale col fuoco riposa come le altre',()=>{
+  lettoInvernale(OGGETTO.GIACIGLIO_PELLI);
+  modifiche.imposta(tx+4,ty,{oggetto:OGGETTO.FALO_ACCESO,posata:9});
+  const esito=azioni.agisci(eroe,null);
+  assert.equal(esito.pocoRiposato,false);assert.equal(esito.messaggio,null);
+  vicino(bisogni.livello('stanchezza'),1);
+});
+test('sulle pelli senza fuoco si riposa a metà, e il cattivo riposo si dice lo stesso',()=>{
+  lettoInvernale(OGGETTO.GIACIGLIO_PELLI);
+  const esito=azioni.agisci(eroe,null);
+  vicino(bisogni.livello('stanchezza'),0.5);
+  assert.equal(esito.pocoRiposato,true);
+  assert.equal(esito.messaggio,'Non ti senti molto riposato...');
+  // Le pelli danno riposo, non calore: d'inverno senza fuoco si gela lo stesso.
+  assert.ok(salute.livelloCorrente()<1);
+});
+test('fuori dall’inverno i due letti sono indistinguibili',()=>{
+  for(const quale of [OGGETTO.GIACIGLIO,OGGETTO.GIACIGLIO_PELLI]) {
+    reset();tempo.impostaGiorno(2);tempo.impostaOra(22);
+    modifiche.imposta(tx+1,ty,{oggetto:quale});
+    bisogni.ripristina({fame:1,sete:1,stanchezza:0.4});
+    const esito=azioni.agisci(eroe,null);
+    assert.equal(esito.pocoRiposato,false);vicino(bisogni.livello('stanchezza'),1);
+  }
+});
+test('un giaciglio di pelli sopravvive a salva e carica',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GIACIGLIO_PELLI});
+  const stato=salvataggio.istantanea(eroe,0);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.NESSUNO});
+  assert.ok(salvataggio.applica(stato));
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.GIACIGLIO_PELLI);
 });

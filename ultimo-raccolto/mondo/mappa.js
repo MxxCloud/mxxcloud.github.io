@@ -60,6 +60,7 @@ const CATALOGO_OGGETTI = {
   // Non ferma: ci si deve poter camminare sopra per sdraiarcisi, e comunque
   // un materasso per terra non è un ostacolo.
   [OGGETTO.GIACIGLIO]: { sprite: coseArte.GIACIGLIO_STESO, solido: false },
+  [OGGETTO.GIACIGLIO_PELLI]: { sprite: coseArte.GIACIGLIO_PELLI_STESO, solido: false },
 
   // L'orto. Nessuno di questi ferma: ci si deve poter camminare in mezzo per
   // innaffiarlo. "Bagnabile" dice alla cottura di guardare se il tassello è

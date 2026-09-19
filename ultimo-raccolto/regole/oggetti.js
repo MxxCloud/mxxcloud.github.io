@@ -145,6 +145,16 @@ export const CATALOGO = {
     pila: 3,
     posa: OGGETTO.GIACIGLIO,
   },
+  // Il primo uso delle pelli, e il primo letto che si sceglie invece di
+  // subirlo. Si impila a due e non a tre come quello di paglia: costa quattro
+  // volte tanto, e portarsene dietro una scorta vorrebbe dire non aver capito
+  // che serve dove dormi.
+  giaciglio_pelli: {
+    nome: "Giaciglio di pelli",
+    icona: arte.GIACIGLIO_PELLI,
+    pila: 2,
+    posa: OGGETTO.GIACIGLIO_PELLI,
+  },
   falo: { nome: "Falò", icona: arte.FALO, pila: 5, posa: OGGETTO.FALO_ACCESO },
   // La cassa è il primo posto tuo che non sia il terreno. Si impila a tre
   // perché portarsene dietro una scorta non ha senso: quello che conta di una
@@ -377,6 +387,13 @@ export const RACCOLTA = {
     voce: "erba",
     scheggie: ["9", "a", "h"],
     resa: [{ cosa: "giaciglio", quante: 1 }],
+  },
+  [OGGETTO.GIACIGLIO_PELLI]: {
+    verbo: "Raccogli",
+    colpi: 1,
+    voce: "erba",
+    scheggie: ["c", "l", "h"],
+    resa: [{ cosa: "giaciglio_pelli", quante: 1 }],
   },
   // Solo la coltura matura si raccoglie: strappare un germoglio darebbe
   // niente e toglierebbe il senso dell'aspettare. Gli stadi immaturi non

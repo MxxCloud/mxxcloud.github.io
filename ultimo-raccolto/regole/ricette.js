@@ -67,6 +67,20 @@ export const RICETTE = [
       { cosa: "legna", quante: 2 },
     ],
   },
+  // Sta al banco mentre il giaciglio di paglia si fa a mani nude, ed è la
+  // stessa regola di sempre: a mani nude si fa quello che serve stanotte, al
+  // banco quello che prepara una stagione. Tre pelli sono un orso, un bufalo,
+  // o tre cervi: un paio di battute di caccia, non un pomeriggio.
+  {
+    id: "giaciglio_pelli",
+    banco: true,
+    produce: { cosa: "giaciglio_pelli", quante: 1 },
+    costo: [
+      { cosa: "pelle", quante: 3 },
+      { cosa: "fibra", quante: 4 },
+      { cosa: "legna", quante: 2 },
+    ],
+  },
   {
     id: "canna",
     produce: { cosa: "canna", quante: 1 },

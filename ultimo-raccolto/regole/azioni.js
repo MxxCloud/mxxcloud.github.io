@@ -49,6 +49,25 @@ const SORSO = 0.45;
 
 const COLPI_DURI = new Set([OGGETTO.ALBERO, OGGETTO.SASSO, OGGETTO.MURO, OGGETTO.MURO_ROTTO, OGGETTO.BANCO]);
 
+// Su cosa si dorme, e quanto rende. Due letti e due condizioni: scritto come
+// ternario annidato — `inverno ? (fuoco ? x : y) : z` — reggeva finché il letto
+// era uno solo, e il giorno che ne arriva un terzo diventa illeggibile prima di
+// essere sbagliato.
+//
+// Fuori dall'inverno i due letti valgono uguale, e non è pigrizia: quello che
+// una pelliccia sotto la schiena toglie di mezzo è il freddo, e d'agosto non
+// c'è niente da togliere. Pagare quattro volte tanto per dormire meglio a
+// luglio sarebbe una ricetta che risponde a una domanda che nessuno fa.
+//
+// E le pelli danno RIPOSO, non CALORE: d'inverno senza fuoco si continua a
+// prendere danno da gelo dormendoci sopra, esattamente come sulla paglia. Il
+// calore è la tappa dopo, ed è di proposito che le due cose stanno separate.
+const RIPOSO = {
+  [OGGETTO.GIACIGLIO]: { conFuoco: 0.75, senza: 0.25 },
+  [OGGETTO.GIACIGLIO_PELLI]: { conFuoco: 1, senza: 0.5 },
+};
+const LETTI = new Set(Object.keys(RIPOSO).map(Number));
+
 // A che mestiere sta servendo l'attrezzo in questa azione, o null se l'azione
 // non è lavoro da attrezzi: strappare un cespuglio, aprire una cassa, posare
 // un falò non consumano niente e non chiedono niente.
@@ -135,7 +154,7 @@ function sulTassello(eroe, cosaInMano, indice) {
   // notte si smonta invece di accogliere sarebbe una trappola; e dormire di
   // giorno salterebbe la giornata invece della notte, che è il contrario di
   // quello che serve.
-  if (b.oggetto === OGGETTO.GIACIGLIO && tempo.eNotte()) {
+  if (LETTI.has(b.oggetto) && tempo.eNotte()) {
     return { tipo: "dormi", verbo: "Dormi", bersaglio: b };
   }
 
@@ -671,7 +690,7 @@ function esegui(eroe, cosaInMano, indice, azione) {
       },
     });
     const pocoRiposato = inverno && !riscaldato;
-    const stamina = inverno ? (riscaldato ? 0.75 : 0.25) : 1;
+    const stamina = inverno ? RIPOSO[azione.bersaglio.oggetto][riscaldato ? "conFuoco" : "senza"] : 1;
     if (!salute.eMorto()) bisogni.ristora("stanchezza", stamina-bisogni.livello("stanchezza"));
     return { tipo: "dormi", secondi, pocoRiposato, stamina, sveglio: !salute.eMorto(),
       messaggio: pocoRiposato && !salute.eMorto() ? "Non ti senti molto riposato..." : null };
