@@ -61,7 +61,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.7.1";
+const VERSIONE = "M7.8";
 
 // --- elementi -------------------------------------------------------------
 
@@ -684,8 +684,9 @@ function leggiLeRicette() {
   const ricetta = RICETTE[ricettaScelta];
   const esito = fai(ricetta, alBanco);
   suono.suona(esito.fatto ? FATTO : NEGATO);
-  if (esito.fatto) annuncia(`fatto: ${nomeDi(ricetta.produce.cosa)}`, "#9ec97e");
+  if (esito.fatto) annuncia(`${ricetta.ripara ? "riparato" : "fatto"}: ${nomeDi(ricetta.produce.cosa)}`, "#9ec97e");
   else if (esito.perche === "banco") annuncia("questo vuole un banco da lavoro", "#c9b189");
+  else if (esito.perche === "integro") annuncia("nessun attrezzo da riparare di questo tipo", "#c9b189");
   else if (esito.perche === "zaino") annuncia("zaino pieno: getta qualcosa con G", "#c0705f");
   else annuncia("materiali insufficienti", "#c0705f");
 }
@@ -921,7 +922,7 @@ function leggiComandi() {
 
   if (!comandi.appenaPremuto("usa")) return;
 
-  const esito = azioni.agisci(eroe, cosaInMano());
+  const esito = azioni.agisci(eroe, cosaInMano(), casellaScelta);
   if (!esito) return;
 
   if (esito.tipo === "colpo" || esito.tipo === "raccolto") {
@@ -1027,6 +1028,11 @@ function leggiComandi() {
     suono.suona(POSA);
     annuncia(`posato: ${nomeDi(esito.cosa)}`, "#9ec97e");
   }
+  avvisaUsura(esito.usura);
+}
+
+function avvisaUsura(usura) {
+  if (usura) annuncia(`${nomeDi(usura.cosa)}: ${usura.rotto ? "rotto" : "quasi rotto"}, ripara al banco`, "#c0705f");
 }
 
 // --- ciclo ----------------------------------------------------------------
@@ -1115,8 +1121,9 @@ function aggiorna(passo) {
     // del mondo fermo, per una ragione che conta: il tempo saltato (una scheda
     // in secondo piano, una notte dormita) non passa da qui, quindi tornare
     // dopo mezz'ora non spara mezz'ora di passi in un fotogramma.
-    const pescato = pesca.aggiorna(passo, eroe, cosaInMano());
+    const pescato = pesca.aggiorna(passo, eroe, cosaInMano(), casellaScelta);
     if (pescato?.tipo === "pescato") { suono.suona(FATTO); annuncia("preso un pesce: arrostiscilo al fuoco", "#9ec97e"); }
+    if (pescato?.usura) avvisaUsura(pescato.usura);
     if (pescato?.tipo === "pescaInterrotta") annuncia(pescato.motivo, "#c9b189");
     udito.avanza(passo, eroe);
 
@@ -1147,7 +1154,7 @@ function aggiorna(passo) {
   if (salute.eMorto() && mortoDi === null) muori(salute.causaDellaMorte());
 
   leggiComandi();
-  azioneCorrente = mondoFermo() ? null : azioni.azionePossibile(eroe, cosaInMano());
+  azioneCorrente = mondoFermo() ? null : azioni.azionePossibile(eroe, cosaInMano(), casellaScelta);
 
   if (messaggio) {
     messaggio.vita -= passo / 2.2;
@@ -1332,7 +1339,7 @@ function disegnaInterfaccia() {
   // Il promemoria dice "C COSTRUIRE", e con la cassa aperta "C" chiude: un
   // cartello che indica la porta sbagliata è peggio di nessun cartello.
   if (!cassaAperta) {
-    hud.disegnaPromemoria(p, barra, cosaInMano(), azioneCorrente?.tipo === "porta");
+    hud.disegnaPromemoria(p, barra, cosaInMano(), azioneCorrente?.tipo === "porta", casellaScelta);
   }
   hud.disegnaMessaggio(p, messaggio);
   if (minimappaVisibile && !aperturaVisibile) minimappa.disegna(p);

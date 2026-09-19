@@ -12,6 +12,29 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.8 — attrezzi, usura e riparazioni
+
+Ascia: **60 usi**, zappa: **40**, lancia: **50**, canna: **20**.
+Un colpo a segno contro un infetto o contro albero, sasso, muro, macerie e
+banco consuma un uso dell'attrezzo impugnato; zappare consuma un uso della
+zappa e catturare un pesce uno della canna. I tentativi a vuoto e la pesca
+interrotta non consumano nulla. Raccogliere piante e oggetti, aprire casse e
+porte non usura gli attrezzi. Secchi e torce mantengono le regole precedenti.
+
+A zero l'attrezzo resta nello zaino ma non può più lavorare o combattere:
+si può cambiare casella e usare le mani nude. Il colpo finale vale ancora.
+La barra sotto l'icona indica la durata, il promemoria riporta gli usi esatti;
+un avviso compare al 20% e alla rottura.
+
+Nel menu C, al banco, **Ripara** consuma **1 pietra e 2 fibre** e ripristina
+tutti gli usi dell'attrezzo più danneggiato di quel tipo presente nello zaino.
+Non serve una casella libera e gli attrezzi integri non consumano materiali.
+Usura conservata in casse, mucchi, cadaveri e salvataggi; gli attrezzi delle
+partite precedenti iniziano integri. Due attrezzi a terra restano separati.
+
+Abbattere un muro integro rende sempre **3 pietre**, anche se costruito dal
+giocatore. Le macerie già presenti o prodotte dagli infetti restano a 1 pietra.
+
 ## M7.7.1 — fame, esposizione e riposo invernale
 
 Per tutti e quattro i giorni d'inverno la fame si consuma a **2x**, anche nel

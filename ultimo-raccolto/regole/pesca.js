@@ -22,20 +22,23 @@ export function impedimento(tx, ty) {
   return null;
 }
 
-export function inizia(eroe, tx, ty) {
+export function inizia(eroe, tx, ty, indice) {
+  const canna = inventario.attrezzo("canna", indice);
+  if (!canna || inventario.usiRimasti(canna) === 0) return null;
   if (lenza || salute.eMorto() || inventario.quante("canna") < 1 || impedimento(tx, ty)) return null;
-  lenza = { tx, ty, px: eroe.px, py: eroe.py, guarda: eroe.guarda, trascorsi: 0, salute: salute.livelloCorrente() };
+  lenza = { canna, tx, ty, px: eroe.px, py: eroe.py, guarda: eroe.guarda, trascorsi: 0, salute: salute.livelloCorrente() };
   return { tipo: "pesca" };
 }
 
 export function interrompi() { lenza = null; }
 export function stato() { return lenza ? { ...lenza } : null; }
 
-export function aggiorna(passo, eroe, cosaInMano) {
+export function aggiorna(passo, eroe, cosaInMano, indice) {
   if (!lenza) return null;
   const l = lenza;
   const impedito = impedimento(l.tx, l.ty);
-  if (salute.eMorto() || cosaInMano !== "canna" || inventario.quante("canna") < 1 ||
+  if (inventario.attrezzo(cosaInMano, indice) !== l.canna || inventario.usiRimasti(l.canna) === 0 ||
+      salute.eMorto() || cosaInMano !== "canna" || inventario.quante("canna") < 1 ||
       eroe.inMovimento || Math.hypot(eroe.px-l.px, eroe.py-l.py) > 0.1 || eroe.guarda !== l.guarda ||
       salute.livelloCorrente() < l.salute - 1e-9 || impedito) {
     interrompi();
@@ -52,5 +55,5 @@ export function aggiorna(passo, eroe, cosaInMano) {
   mappa.annotaTassello(l.tx, l.ty, { ...dati, giornoPesca: tempo.giornoCorrente(),
     pescati: (dati.giornoPesca === tempo.giornoCorrente() ? dati.pescati ?? 0 : 0) + 1 });
   interrompi();
-  return { tipo: "pescato" };
+  return { tipo: "pescato", usura: inventario.usura(l.canna) };
 }

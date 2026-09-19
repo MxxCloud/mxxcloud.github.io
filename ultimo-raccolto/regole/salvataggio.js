@@ -173,9 +173,12 @@ const positivo = v => intero(v) && v >= 1;
 const livelloValido = v => Number.isFinite(v) && v >= 0 && v <= 1;
 const tipi = new Set(Object.values(OGGETTO));
 const presente = (v, k, verifica) => v[k] === undefined || verifica(v[k]);
+function usiValidi(c) {
+  return presente(c, "usi", n => intero(n) && n >= 0 && n <= (CATALOGO[c.cosa]?.durata ?? -1));
+}
 function casellaValida(c) {
   return c === null || (oggetto(c) && Object.hasOwn(CATALOGO, c.cosa) && positivo(c.quantita)
-    && c.quantita <= CATALOGO[c.cosa].pila && presente(c, "dal", positivo));
+    && usiValidi(c) && c.quantita <= CATALOGO[c.cosa].pila && presente(c, "dal", positivo));
 }
 function filaValida(fila, massimo) {
   return Array.isArray(fila) && fila.length <= massimo && fila.every(casellaValida);
@@ -189,7 +192,7 @@ function modificaValida(v) {
     if (!presente(v, k, positivo)) return false;
   }
   if (!presente(v, "bagnato", b => typeof b === "boolean")) return false;
-  if (v.oggetto === OGGETTO.MUCCHIO && (!Object.hasOwn(CATALOGO, v.cosa) || !positivo(v.quante))) return false;
+  if (v.oggetto === OGGETTO.MUCCHIO && (!Object.hasOwn(CATALOGO, v.cosa) || !positivo(v.quante) || !usiValidi(v) || (v.usi !== undefined && v.quante !== 1))) return false;
   if (!presente(v, "contenuto", a => filaValida(a, 12))) return false;
   if (!presente(v, "roba", a => filaValida(a, inventario.CASELLE))) return false;
   return true;
@@ -275,4 +278,3 @@ export function applica(stato) {
     giorno: tempo.giornoCorrente(),
   };
 }
-

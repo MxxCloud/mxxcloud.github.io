@@ -54,7 +54,7 @@ export function mescolaDate(dalA, quanteA, dalB, quanteB) {
 // Mette in una fila di caselle e restituisce quante non ci sono entrate. Chi
 // raccoglie deve poter dire "zaino pieno" invece di far sparire la roba in
 // silenzio.
-export function mettiIn(fila, cosa, quantita, dal) {
+export function mettiIn(fila, cosa, quantita, dal, usi) {
   const pila = CATALOGO[cosa]?.pila ?? 1;
   // Solo il cibo porta una data. Darla anche alla legna vorrebbe dire
   // scrivere nel salvataggio un numero per casella che non serve a nessuno.
@@ -80,6 +80,7 @@ export function mettiIn(fila, cosa, quantita, dal) {
     if (fila[i]) continue;
     const messe = Math.min(pila, resto);
     fila[i] = deperibile ? { cosa, quantita: messe, dal: quando } : { cosa, quantita: messe };
+    if (CATALOGO[cosa]?.durata) fila[i].usi = usi ?? CATALOGO[cosa].durata;
     resto -= messe;
   }
 
@@ -102,8 +103,8 @@ export function spazioIn(fila, cosa) {
 // "dal" arriva da fuori per un caso solo ma importante: quello che si tira
 // fuori da una cassa deve conservare la sua età invece di tornare fresco,
 // altrimenti una cassa sarebbe una macchina per ringiovanire il cibo.
-export function aggiungi(cosa, quantita, dal) {
-  return mettiIn(caselle, cosa, quantita, dal);
+export function aggiungi(cosa, quantita, dal, usi) {
+  return mettiIn(caselle, cosa, quantita, dal, usi);
 }
 
 export function togli(cosa, quantita) {
@@ -138,7 +139,7 @@ export function svuotaCasella(indice) {
   const casella = caselle[indice];
   if (!casella) return null;
   caselle[indice] = null;
-  return { cosa: casella.cosa, quantita: casella.quantita, dal: casella.dal };
+  return { ...casella };
 }
 
 export function pieno() {
@@ -174,6 +175,7 @@ export function ripristina(salvate) {
     // senza la data di accensione. Chi aveva messo via delle rape in un gioco
     // in cui non marcivano non deve ritrovarsele marce.
     if (typeof c.dal === "number") caselle[i].dal = c.dal;
+    if (CATALOGO[c.cosa]?.durata) caselle[i].usi = usiRimasti(c);
   }
 }
 
@@ -186,4 +188,32 @@ export function trasforma(costi, prodotto) {
   mettiIn(copia, prodotto.cosa, prodotto.quante);
   for (let i = 0; i < CASELLE; i++) caselle[i] = copia[i];
   return true;
+}
+
+// La durata appartiene alla casella, non al tipo di attrezzo. I vecchi
+// salvataggi senza contatore ripartono con attrezzi integri.
+export function usiRimasti(casella) {
+  const massimo = CATALOGO[casella?.cosa]?.durata;
+  return massimo ? (casella.usi ?? massimo) : null;
+}
+
+export function attrezzo(cosa, indice) {
+  const c = indice === undefined ? caselle.find(c => c?.cosa === cosa) : caselle[indice];
+  return c?.cosa === cosa && CATALOGO[cosa]?.durata ? c : null;
+}
+
+export function usura(casella) {
+  const usi = usiRimasti(casella);
+  if (usi === null || usi <= 0) return null;
+  casella.usi = usi - 1;
+  if (casella.usi === 0) return { cosa: casella.cosa, rotto: true };
+  if (casella.usi === Math.floor(CATALOGO[casella.cosa].durata / 5))
+    return { cosa: casella.cosa, rotto: false };
+  return null;
+}
+
+// Una riparazione riguarda il più usurato di quel tipo; a parità il primo.
+export function daRiparare(cosa) {
+  return caselle.filter(c => c?.cosa === cosa && usiRimasti(c) < CATALOGO[cosa]?.durata)
+    .sort((a,b) => usiRimasti(a)-usiRimasti(b))[0] ?? null;
 }
