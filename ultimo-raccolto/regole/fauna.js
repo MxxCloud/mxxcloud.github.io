@@ -4,6 +4,7 @@ import * as mappa from '../mondo/mappa.js';
 import { TERRENO, OGGETTO } from '../mondo/generazione.js';
 import { vistaLibera } from '../mondo/ostacoli.js';
 import * as urti from '../entita/urti.js';
+import * as entita from '../entita/entita.js';
 import { impronta } from '../motore/casuale.js';
 import * as tempo from './tempo.js';
 import * as salute from './salute.js';
@@ -100,6 +101,63 @@ export function percepisci(e, passo, eroe) {
   }
 }
 
+// Quanto vicini si tollerano. È la stessa ragione per cui gli infetti si
+// sgomitano — due sagome sovrapposte al pixel si leggono come una sola, e in
+// un gioco in cui la domanda è "quanti ne ho intorno" saperne contare uno
+// quando sono due è l'informazione peggiore possibile — con due misure invece
+// di una: fra bestie conta la groppa, larga il doppio di un uomo; con chi
+// cammina conta il punto in cui un animale è addosso, che è lo stesso a cui si
+// ferma quando carica. Se qui fosse più largo, la carica si respingerebbe da
+// sola a ogni fotogramma e l'orso tremerebbe sul posto invece di arrivare.
+const FRA_LORO = 18;
+const ADDOSSO = 12;
+
+// Scansa "a" da "b". Con entrambi si dividono lo spostamento; senza, si sposta
+// soltanto "a", ed è il caso di chi non deve essere spinto: il superstite, che
+// si troverebbe mosso dal gioco mentre tiene premuto, e la carcassa, che sta
+// dove è caduta con sopra la roba che non ti è entrata nello zaino.
+function scansa(a, b, minima, entrambi) {
+  let dx=a.px-b.px, dy=a.py-b.py, distanza=Math.hypot(dx,dy);
+  // Negato, e non "maggiore o uguale": una distanza che non è un numero esce
+  // di qui invece di finire scritta nelle coordinate di una bestia.
+  if(!(distanza<minima)) return;
+  // Sovrapposti al pixel non esiste una direzione in cui separarli, e dividere
+  // per zero li manderebbe a coordinate che non sono numeri. Se ne prende una
+  // dal posto, non dal generatore dell'esemplare: quello sta nel salvataggio e
+  // decide il temperamento, e consumarlo qui legherebbe il carattere di un
+  // cervo a quante volte gli è passato addosso qualcuno — cioè al fotogramma.
+  if(distanza<0.001) {
+    const angolo=impronta(Math.round(a.px),Math.round(a.py),a.seme)*Math.PI*2;
+    dx=Math.cos(angolo);dy=Math.sin(angolo);distanza=1;
+  }
+  const spinta=entrambi ? (minima-distanza)/2 : minima-distanza;
+  // Sempre attraverso urti.muovi(): uno scansato dentro un muro sarebbe un
+  // animale che attraversa quello che il superstite non attraversa.
+  urti.muovi(a,dx/distanza*spinta,dy/distanza*spinta);
+  if(entrambi) urti.muovi(b,-dx/distanza*spinta,-dy/distanza*spinta);
+}
+
+// Da chiamare quando si sono mossi tutti, come per gli infetti. Le carcasse
+// non partecipano: non spingono e non si spostano. Farle spingere vorrebbe
+// dire regalare uno scudo — bastava mettersi dietro un bufalo morto e l'orso
+// non arrivava più — e farle spostare vorrebbe dire un corpo che si allontana
+// dal punto in cui l'hai abbattuto, portandosi via quello che ci hai lasciato.
+export function sgomitano(eroe) {
+  for(let i=0;i<animali.length;i++) {
+    const a=animali[i];
+    if(a.vita<=0) continue;
+    for(let j=i+1;j<animali.length;j++)
+      if(animali[j].vita>0) scansa(a,animali[j],FRA_LORO,true);
+    // Senza copie né insiemi: questa gira sessanta volte al secondo, e un
+    // array nuovo per bestia per fotogramma è spazzatura da raccogliere.
+    // L'eroe si nomina a parte perché nei collaudi non sta nel registro delle
+    // entità; in partita ci sta, e allora basta non contarlo due volte.
+    let gia=false;
+    for(const corpo of entita.tutte()) { if(corpo===eroe) gia=true; scansa(a,corpo,ADDOSSO,false); }
+    if(eroe && !gia) scansa(a,eroe,ADDOSSO,false);
+  }
+}
+
 function muovi(e, dx, dy, distanza) {
   const n=Math.hypot(dx,dy);
   if (!n) return;
@@ -116,7 +174,7 @@ function avanza(e, passo, eroe) {
   const fattore=meteo.fattoreVelocita(e);
   if(e.sussulto>0) return false;
   if(e.stato==='aggressivo' && vistaLibera(e,eroe)) {
-    muovi(e,dx,dy,Math.min(Math.max(0,distanza-12),s.velocita*fattore*passo));
+    muovi(e,dx,dy,Math.min(Math.max(0,distanza-ADDOSSO),s.velocita*fattore*passo));
     if(e.ricarica===0 && Math.hypot(e.px-eroe.px,e.py-eroe.py)<=15 && vistaLibera(e,eroe)) {
       e.ricarica=1.4;
       if(s.danno>0) { salute.ferita(s.danno,'animali'); return true; }
@@ -178,12 +236,18 @@ export function colpisci(e,danno) {
   e.stato=e.specie==='cavallo'?'fuga':'aggressivo';e.memoria=6;
   return {caduto:false};
 }
+// C'è posto per quello che uscirebbe da questa carcassa? Se la risposta è no,
+// non c'è lavoro da fare: la barra lo chiede prima di proporre il gesto e
+// macella() lo richiede prima di consumare un uso d'ascia, ed è giusto che sia
+// la stessa riga a rispondere a tutte e due.
+export function spazioPerIResti(e) {
+  if(e.resti) return Object.entries(e.resti).some(([cosa,n]) => n>0 && inventario.spazioPer(cosa)>0);
+  return inventario.spazioPer('carne_cruda')>=1 || inventario.spazioPer('pelle')>=1;
+}
 export function macella(e) {
   pulisci();
   if(!animali.includes(e)||e.vita!==0) return null;
-  if(e.resti && !Object.entries(e.resti).some(([cosa,n]) => n>0 && inventario.spazioPer(cosa)>0))
-    return {tipo:'zainoPieno'};
-  if(inventario.spazioPer('carne_cruda')<1 && inventario.spazioPer('pelle')<1) return {tipo:'zainoPieno'};
+  if(!spazioPerIResti(e)) return {tipo:'zainoPieno'};
   const lavorato=e.resti===null;
   if(lavorato) {
     e.tagli++;

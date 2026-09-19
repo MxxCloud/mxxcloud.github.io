@@ -72,6 +72,13 @@ export const OGGETTO = {
   // identificatore sarebbe una porta che si apre e resta chiusa a vedersi.
   PORTA: 20,
   PORTA_APERTA: 21,
+  // Il secondo letto. È un oggetto suo e non un giaciglio con una bandierina
+  // per la ragione per cui la porta aperta è un oggetto suo: quello che sta su
+  // un tassello è un identificatore, e la cottura dei settori guarda quello.
+  // In più, i sei collaudi del riposo invernale parlano del giaciglio di paglia
+  // e devono continuare a parlare di quello, senza sapere che ne esiste un
+  // altro.
+  GIACIGLIO_PELLI: 22,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati

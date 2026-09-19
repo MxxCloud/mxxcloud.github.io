@@ -49,6 +49,25 @@ const SORSO = 0.45;
 
 const COLPI_DURI = new Set([OGGETTO.ALBERO, OGGETTO.SASSO, OGGETTO.MURO, OGGETTO.MURO_ROTTO, OGGETTO.BANCO]);
 
+// Su cosa si dorme, e quanto rende. Due letti e due condizioni: scritto come
+// ternario annidato — `inverno ? (fuoco ? x : y) : z` — reggeva finché il letto
+// era uno solo, e il giorno che ne arriva un terzo diventa illeggibile prima di
+// essere sbagliato.
+//
+// Fuori dall'inverno i due letti valgono uguale, e non è pigrizia: quello che
+// una pelliccia sotto la schiena toglie di mezzo è il freddo, e d'agosto non
+// c'è niente da togliere. Pagare quattro volte tanto per dormire meglio a
+// luglio sarebbe una ricetta che risponde a una domanda che nessuno fa.
+//
+// E le pelli danno RIPOSO, non CALORE: d'inverno senza fuoco si continua a
+// prendere danno da gelo dormendoci sopra, esattamente come sulla paglia. Il
+// calore è la tappa dopo, ed è di proposito che le due cose stanno separate.
+const RIPOSO = {
+  [OGGETTO.GIACIGLIO]: { conFuoco: 0.75, senza: 0.25 },
+  [OGGETTO.GIACIGLIO_PELLI]: { conFuoco: 1, senza: 0.5 },
+};
+const LETTI = new Set(Object.keys(RIPOSO).map(Number));
+
 // A che mestiere sta servendo l'attrezzo in questa azione, o null se l'azione
 // non è lavoro da attrezzi: strappare un cespuglio, aprire una cassa, posare
 // un falò non consumano niente e non chiedono niente.
@@ -97,21 +116,45 @@ export function azionePossibile(eroe, cosaInMano, indice) {
     return { tipo: "combatti", verbo: addosso.specie ? "Colpisci " + fauna.SPECIE[addosso.specie].nome : "Colpisci", nemico: addosso };
   }
 
+  // Una carcassa resta per terra due giorni, e in quei due giorni copre quello
+  // che ha davanti. Passa davanti al mondo finché c'è da lavorarci; quando il
+  // lavoro non si può fare — manca l'ascia, o non c'è posto per quello che ne
+  // uscirebbe — torna davanti il mondo. Senza questa regola un bufalo caduto
+  // sulla soglia teneva chiusa la porta di casa fino a dopodomani, e l'unico
+  // modo di riaprirla era un'ascia che magari stava dentro.
+  //
+  // L'avviso non si perde: resta l'ultima risposta quando davanti non c'è
+  // nient'altro da fare, che è il momento in cui serve davvero sentirsi dire
+  // perché non succede niente.
   const carcassa = fauna.davanti(eroe, 24, true);
-  if (carcassa) {
-    const lavorata = carcassa.resti !== null;
-    return { tipo: lavorata ? "spoglia" : "macella", carcassa,
-      verbo: (lavorata ? "Raccogli " : "Macella ") + fauna.SPECIE[carcassa.specie].nome,
-      restano: lavorata ? undefined : 3-carcassa.tagli,
-      impedito: !lavorata && (!attrezzoServe(cosaInMano, "macella") || !strumento(cosaInMano, indice, "macella")) ? "serve un'ascia funzionante" : null };
-  }
+  const daMacellare = carcassa ? sullaCarcassa(carcassa, cosaInMano, indice) : null;
+  if (daMacellare && !daMacellare.impedito) return daMacellare;
+
+  return sulTassello(eroe, cosaInMano, indice) ?? daMacellare;
+}
+
+function sullaCarcassa(carcassa, cosaInMano, indice) {
+  const lavorata = carcassa.resti !== null;
+  const senzaAscia = !attrezzoServe(cosaInMano, "macella") || !strumento(cosaInMano, indice, "macella");
+  return { tipo: lavorata ? "spoglia" : "macella", carcassa,
+    verbo: (lavorata ? "Raccogli " : "Macella ") + fauna.SPECIE[carcassa.specie].nome,
+    restano: lavorata ? undefined : 3-carcassa.tagli,
+    impedito: !lavorata && senzaAscia ? "serve un'ascia funzionante"
+      : !fauna.spazioPerIResti(carcassa) ? "zaino pieno" : null };
+}
+
+// Quello che si può fare al tassello che si ha davanti. Sta in una funzione
+// sua perché la carcassa deve poterlo chiedere e poi farsi da parte, e perché
+// qui dentro si esce da una dozzina di punti diversi: con un "return" solo
+// in fondo la regola della carcassa andrebbe ripetuta a ognuno di essi.
+function sulTassello(eroe, cosaInMano, indice) {
   const b = bersaglio(eroe);
 
   // Di notte il giaciglio accoglie, di giorno si smonta. Un giaciglio che di
   // notte si smonta invece di accogliere sarebbe una trappola; e dormire di
   // giorno salterebbe la giornata invece della notte, che è il contrario di
   // quello che serve.
-  if (b.oggetto === OGGETTO.GIACIGLIO && tempo.eNotte()) {
+  if (LETTI.has(b.oggetto) && tempo.eNotte()) {
     return { tipo: "dormi", verbo: "Dormi", bersaglio: b };
   }
 
@@ -647,7 +690,7 @@ function esegui(eroe, cosaInMano, indice, azione) {
       },
     });
     const pocoRiposato = inverno && !riscaldato;
-    const stamina = inverno ? (riscaldato ? 0.75 : 0.25) : 1;
+    const stamina = inverno ? RIPOSO[azione.bersaglio.oggetto][riscaldato ? "conFuoco" : "senza"] : 1;
     if (!salute.eMorto()) bisogni.ristora("stanchezza", stamina-bisogni.livello("stanchezza"));
     return { tipo: "dormi", secondi, pocoRiposato, stamina, sveglio: !salute.eMorto(),
       messaggio: pocoRiposato && !salute.eMorto() ? "Non ti senti molto riposato..." : null };
