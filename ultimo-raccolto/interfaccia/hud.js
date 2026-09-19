@@ -336,7 +336,8 @@ export function disegnaOrologio(p, { giorno, orologio, eNotte, stagione, giornoN
 
 // --- suggerimento dell'azione --------------------------------------------
 
-export function disegnaMeteo(p, { evento, domani, bagnato }) {
+export function disegnaMeteo(p, { evento, domani, bagnato, freddo = 0 }) {
+  if (freddo > 0) testo.disegnaConOmbra(p, `FREDDO X${freddo}`, 7, 72, "#91b9cc");
   const nomi = { arido: "ARIDO: SETE X3", pioggia: "PIOGGIA", neve: "NEVE: PASSO -28%", sereno: "SERENO" };
   const scritta = nomi[evento];
   const x = schermo.LARGHEZZA - testo.larghezza(scritta) - 7;

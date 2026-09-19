@@ -85,6 +85,7 @@ export function istantanea(eroe, casellaScelta) {
     // campo e viene ripreso con la salute piena, che è la cosa giusta — chi
     // aveva salvato in un gioco dove non si moriva non deve svegliarsi ferito.
     salute: salute.livelloCorrente(),
+    esposizioneFreddo: salute.secondiEsposto(),
     // L'infezione sì che si salva, al contrario della morte: è uno stato in
     // cui si vive, e chiudere la scheda non è una cura. Anche questo non alza
     // il formato — un salvataggio che non ce l'ha si riapre sano, che è la
@@ -204,6 +205,7 @@ export function valido(stato) {
   if (Math.abs(stato.eroe.px) > Number.MAX_SAFE_INTEGER / 16 || Math.abs(stato.eroe.py) > Number.MAX_SAFE_INTEGER / 16) return false;
   if (!presente(stato.eroe, "guarda", v => ["su", "giu", "destra", "sinistra"].includes(v))) return false;
   if (!presente(stato, "casella", n => intero(n) && n >= 0 && n < inventario.CASELLE)) return false;
+  if (!presente(stato, "esposizioneFreddo", n => Number.isFinite(n) && n >= 0 && n <= 30)) return false;
   if (!presente(stato, "bagnato", livelloValido)) return false;
   if (!presente(stato, "salute", livelloValido) || !presente(stato, "infezione", v => typeof v === "boolean")) return false;
   if (!presente(stato, "bisogni", v => oggetto(v) && bisogni.ELENCO.every(k => presente(v, k, livelloValido)))) return false;
@@ -263,7 +265,7 @@ export function applica(stato) {
   tempo.impostaOra(stato.ore);
   bisogni.ripristina(stato.bisogni);
   meteo.ripristina(stato.bagnato);
-  salute.ripristina(stato.salute, stato.infezione === true);
+  salute.ripristina(stato.salute, stato.infezione === true, stato.esposizioneFreddo);
   inventario.ripristina(stato.inventario);
   esplorato.ripristina(stato.esplorato);
 

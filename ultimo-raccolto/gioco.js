@@ -61,7 +61,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.7";
+const VERSIONE = "M7.7.1";
 
 // --- elementi -------------------------------------------------------------
 
@@ -87,6 +87,7 @@ let ricettaScelta = 0;
 let alBanco = false;
 let azioneCorrente = null;
 let messaggio = null;
+let avvisoRisveglio = null;
 let aperturaVisibile = true;
 let minimappaVisibile = true;
 // La mappa grande è modale come le ricette e la partita: il mondo non avanza
@@ -969,7 +970,10 @@ function leggiComandi() {
   // Dormire non ha voce, ed è l'unico gesto che non ne ha: fra il tasto e il
   // risveglio passano ore di gioco, e un suono attaccato a quel momento
   // racconterebbe il tasto invece della notte.
-  if (esito.tipo === "dormi") annuncia(`hai dormito fino all'alba`, "#9ec97e");
+  if (esito.tipo === "dormi" && esito.sveglio) {
+    avvisoRisveglio = esito.messaggio;
+    if (!avvisoRisveglio) annuncia("hai dormito fino all'alba", "#9ec97e");
+  }
 
   if (esito.tipo === "cotto") { suono.suona(FATTO); annuncia(`sul fuoco: ${nomeDi(esito.diventa)}`, "#e0913a"); }
 
@@ -1176,6 +1180,9 @@ function aggiorna(passo) {
   // che il giocatore ha fatto: la valle si è rimessa a posto da sola.
   else if (tornati > 0) annuncia(`la valle è ricresciuta: ${tornati}`, "#7fae63");
 
+  // Il messaggio del riposo freddo non deve essere coperto dalla cronaca della notte.
+  if (avvisoRisveglio) { annuncia(avvisoRisveglio, "#c9b189"); avvisoRisveglio = null; }
+
   // Il salvataggio dell'alba, e proprio qui: dopo che il giorno ha fatto i
   // suoi conti — l'orto cresciuto, i fuochi spenti, la stagione girata — così
   // una partita ripresa non li rifà e non li salta.
@@ -1312,7 +1319,7 @@ function disegnaInterfaccia() {
     giornoNellaStagione: stagioni.giornoNellaStagione(),
     giorniPerStagione: stagioni.GIORNI_PER_STAGIONE,
   });
-  hud.disegnaMeteo(p, { evento: meteo.evento(), domani: meteo.evento(tempo.giornoCorrente()+1), bagnato: meteo.livelloBagnato() });
+  hud.disegnaMeteo(p, { evento: meteo.evento(), domani: meteo.evento(tempo.giornoCorrente()+1), bagnato: meteo.livelloBagnato(), freddo: gelando ? salute.moltiplicatoreFreddo() : 0 });
   hud.disegnaAzione(p, azioneCorrente);
   const lenza = pesca.stato();
   if (lenza) {

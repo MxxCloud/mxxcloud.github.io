@@ -24,6 +24,8 @@ import * as riparo from "./riparo.js";
 import * as tempo from "./tempo.js";
 import * as stagioni from "./stagioni.js";
 import * as mappa from "../mondo/mappa.js";
+import { OGGETTO } from "../mondo/generazione.js";
+import { vistaLibera } from "../mondo/ostacoli.js";
 import { CATALOGO } from "./oggetti.js";
 import * as schermo from "../motore/schermo.js";
 
@@ -70,4 +72,15 @@ export function alFreddo(eroe, cosaInMano) {
   if (stanza && riparo.caldaDentro(stanza)) return false;
 
   return true;
+}
+
+// Il riposo richiede un falò acceso vicino al letto, non una torcia in mano.
+// Lo stesso raggio di tre tasselli usato dal calore; le pareti separano i posti.
+export function fuocoPerRiposo(letto) {
+  const tx=Math.floor(letto.px/TASSELLO),ty=Math.floor(letto.py/TASSELLO);
+  for(let y=ty-RAGGIO_FUOCO;y<=ty+RAGGIO_FUOCO;y++)for(let x=tx-RAGGIO_FUOCO;x<=tx+RAGGIO_FUOCO;x++) {
+    if(mappa.oggettoDi(x,y)!==OGGETTO.FALO_ACCESO)continue;
+    if(vistaLibera(letto,{px:(x+0.5)*TASSELLO,py:(y+0.5)*TASSELLO}))return true;
+  }
+  return false;
 }
