@@ -97,14 +97,38 @@ export function azionePossibile(eroe, cosaInMano, indice) {
     return { tipo: "combatti", verbo: addosso.specie ? "Colpisci " + fauna.SPECIE[addosso.specie].nome : "Colpisci", nemico: addosso };
   }
 
+  // Una carcassa resta per terra due giorni, e in quei due giorni copre quello
+  // che ha davanti. Passa davanti al mondo finché c'è da lavorarci; quando il
+  // lavoro non si può fare — manca l'ascia, o non c'è posto per quello che ne
+  // uscirebbe — torna davanti il mondo. Senza questa regola un bufalo caduto
+  // sulla soglia teneva chiusa la porta di casa fino a dopodomani, e l'unico
+  // modo di riaprirla era un'ascia che magari stava dentro.
+  //
+  // L'avviso non si perde: resta l'ultima risposta quando davanti non c'è
+  // nient'altro da fare, che è il momento in cui serve davvero sentirsi dire
+  // perché non succede niente.
   const carcassa = fauna.davanti(eroe, 24, true);
-  if (carcassa) {
-    const lavorata = carcassa.resti !== null;
-    return { tipo: lavorata ? "spoglia" : "macella", carcassa,
-      verbo: (lavorata ? "Raccogli " : "Macella ") + fauna.SPECIE[carcassa.specie].nome,
-      restano: lavorata ? undefined : 3-carcassa.tagli,
-      impedito: !lavorata && (!attrezzoServe(cosaInMano, "macella") || !strumento(cosaInMano, indice, "macella")) ? "serve un'ascia funzionante" : null };
-  }
+  const daMacellare = carcassa ? sullaCarcassa(carcassa, cosaInMano, indice) : null;
+  if (daMacellare && !daMacellare.impedito) return daMacellare;
+
+  return sulTassello(eroe, cosaInMano, indice) ?? daMacellare;
+}
+
+function sullaCarcassa(carcassa, cosaInMano, indice) {
+  const lavorata = carcassa.resti !== null;
+  const senzaAscia = !attrezzoServe(cosaInMano, "macella") || !strumento(cosaInMano, indice, "macella");
+  return { tipo: lavorata ? "spoglia" : "macella", carcassa,
+    verbo: (lavorata ? "Raccogli " : "Macella ") + fauna.SPECIE[carcassa.specie].nome,
+    restano: lavorata ? undefined : 3-carcassa.tagli,
+    impedito: !lavorata && senzaAscia ? "serve un'ascia funzionante"
+      : !fauna.spazioPerIResti(carcassa) ? "zaino pieno" : null };
+}
+
+// Quello che si può fare al tassello che si ha davanti. Sta in una funzione
+// sua perché la carcassa deve poterlo chiedere e poi farsi da parte, e perché
+// qui dentro si esce da una dozzina di punti diversi: con un "return" solo
+// in fondo la regola della carcassa andrebbe ripetuta a ognuno di essi.
+function sulTassello(eroe, cosaInMano, indice) {
   const b = bersaglio(eroe);
 
   // Di notte il giaciglio accoglie, di giorno si smonta. Un giaciglio che di

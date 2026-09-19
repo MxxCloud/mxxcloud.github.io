@@ -12,6 +12,30 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.9.1 — una carcassa non è un muro, e due bestie non sono una sola
+
+Due correzioni alla tappa della caccia.
+
+**La carcassa si fa da parte quando non ci si può lavorare.** Un corpo resta
+per terra due giorni, e in quei due giorni copriva il tassello che aveva
+davanti: un bufalo caduto sulla soglia teneva chiusa la porta di casa fino a
+dopodomani, e senza un'ascia non c'era modo di toglierlo di mezzo — anche
+quando l'ascia stava dentro. Adesso la barra nomina la macellazione finché
+c'è da lavorarci; se manca l'ascia, o se non c'è posto nello zaino per quello
+che ne uscirebbe, torna davanti la porta, la cassa, il falò. L'avviso non si
+perde: resta l'ultima risposta quando davanti non c'è nient'altro da fare.
+
+**Gli animali si scansano.** Si attraversavano fra loro e attraversavano il
+superstite, e due groppe sovrapposte al pixel si leggono come una bestia sola:
+in un gioco in cui la domanda è *quanti ne ho intorno* è l'informazione
+peggiore possibile. Adesso restano a 18 pixel l'uno dall'altro e a 12 da chi
+cammina — lo stesso punto a cui si ferma una carica, così l'orso arriva
+addosso invece di tremare sul posto. Chi si scansa passa dagli urti come
+tutti, quindi nessuno finisce dentro un muro. Le carcasse no: non spingono e
+non si spostano, perché un corpo sta dove è caduto insieme a quello che non ti
+è entrato nello zaino, e perché farle spingere vorrebbe dire uno scudo —
+bastava mettersi dietro un bufalo morto e l'orso non arrivava più.
+
 ## M7.9 — caccia nelle praterie
 
 La fauna nasce nelle radure di erba e sterpaglia, fuori dall'inquadratura:

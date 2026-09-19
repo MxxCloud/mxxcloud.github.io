@@ -979,12 +979,15 @@ test('ascia rotta a metà macellazione: progresso conservato e ripresa con un al
 test('macellazione a zaino pieno non consuma; bottino parziale resta recuperabile senza ascia',()=>{
   const e=animale('orso');fauna.colpisci(e,100);
   inventario.aggiungi('ascia',8);
-  assert.equal(azioni.agisci(eroe,'ascia',0).tipo,'zainoPieno');assert.equal(e.tagli,0);
-  assert.equal(inventario.contenuto()[0].usi,60);
+  assert.equal(azioni.azionePossibile(eroe,'ascia',0).impedito,'zaino pieno');
+  assert.equal(azioni.agisci(eroe,'ascia',0),null);
+  assert.equal(fauna.macella(e).tipo,'zainoPieno');
+  assert.equal(e.tagli,0);assert.equal(inventario.contenuto()[0].usi,60);
   inventario.svuotaCasella(7);
   for(let i=0;i<3;i++)azioni.agisci(eroe,'ascia',0);
   assert.equal(e.resti.carne_cruda,0);assert.equal(e.resti.pelle,3);
-  assert.equal(azioni.agisci(eroe,'ascia',0).tipo,'zainoPieno');
+  assert.equal(azioni.azionePossibile(eroe,'ascia',0).impedito,'zaino pieno');
+  assert.equal(azioni.agisci(eroe,'ascia',0),null);
   inventario.svuotaCasella(6);
   const esito=azioni.agisci(eroe,null,6);assert.equal(esito.tipo,'macellato');assert.equal(esito.lavorato,false);
   assert.equal(inventario.quante('pelle'),3);assert.equal(inventario.contenuto()[0].usi,57);
@@ -1051,4 +1054,45 @@ test('fauna rara: due vivi al massimo, arrivi distanziati e nati in prateria fuo
     }
   }
   assert.ok(visti>0);
+});
+
+test('una carcassa non tiene chiuso quello che copre se non ci si può lavorare',()=>{
+  // Caduto sulla soglia: la carcassa sta ai piedi, la porta è il tassello
+  // davanti. Sono due cose diverse nello stesso posto, e la barra ne nomina
+  // una sola.
+  const e=animale('cervo',6);fauna.colpisci(e,100);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.PORTA});
+  assert.equal(azioni.azionePossibile(eroe,null).tipo,'porta');
+  inventario.aggiungi('ascia',8);
+  assert.equal(azioni.azionePossibile(eroe,'ascia',0).tipo,'porta');
+  // Con l'ascia e un posto dove mettere la carne il lavoro c'è, e passa avanti.
+  inventario.svuotaCasella(7);
+  assert.equal(azioni.azionePossibile(eroe,'ascia',0).tipo,'macella');
+  // Quando davanti non c'è altro da fare, l'avviso resta l'ultima risposta.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.NESSUNO});
+  assert.match(azioni.azionePossibile(eroe,null).impedito,/ascia/);
+});
+test('gli animali si scansano fra loro e dal superstite, senza entrare nei muri',()=>{
+  const a=animale('cervo',40),b=animale('bufalo',41);
+  fauna.sgomitano(eroe);
+  assert.ok(Math.hypot(a.px-b.px,a.py-b.py)>=17.9,'due groppe restano due sagome');
+  // Camminargli addosso non lo attraversa: si sposta lui, non il superstite.
+  const dove={px:eroe.px,py:eroe.py};
+  a.px=eroe.px;a.py=eroe.py;
+  for(let i=0;i<3;i++)fauna.sgomitano(eroe);
+  assert.ok(Math.hypot(a.px-eroe.px,a.py-eroe.py)>=11.9);
+  assert.deepEqual({px:eroe.px,py:eroe.py},dove);
+  // La carcassa no: sta dove è caduta, con sopra quello che non ti è entrato.
+  const morto=animale('orso',60);fauna.colpisci(morto,100);
+  const caduto={px:morto.px,py:morto.py};
+  b.px=morto.px;b.py=morto.py;fauna.sgomitano(eroe);
+  assert.deepEqual({px:morto.px,py:morto.py},caduto);
+  // Scansarsi non è un permesso di attraversare i muri.
+  modifiche.imposta(tx+3,ty,{oggetto:OGGETTO.MURO});
+  // Appoggiati al muro, uno sopra l'altro: separandosi uno dei due ha il muro
+  // dalla sua parte, e deve restarne fuori.
+  a.px=b.px=(tx+3)*16-urti.LARGHEZZA/2-1;a.py=b.py=eroe.py;
+  assert.ok(urti.liberoIn(a.px,a.py),'il collaudo parte da un posto libero');
+  for(let i=0;i<4;i++)fauna.sgomitano(eroe);
+  for(const e of [a,b]) assert.ok(urti.liberoIn(e.px,e.py),`${e.specie} finito dentro il muro`);
 });
