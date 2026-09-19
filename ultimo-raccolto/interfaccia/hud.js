@@ -396,7 +396,7 @@ export function disegnaAzione(p, azione) {
   }
 
   let etichetta = azione.verbo.toUpperCase();
-  if (azione.tipo === "raccogli" && azione.restano > 1) etichetta += ` (${azione.restano})`;
+  if (["raccogli", "macella"].includes(azione.tipo) && azione.restano > 1) etichetta += ` (${azione.restano})`;
   if (azione.tipo === "posa") etichetta += ` ${nomeDi(azione.cosa).toUpperCase()}`;
 
   const scritta = `SPAZIO  ${etichetta}`;

@@ -24,6 +24,8 @@ import * as modifiche from '../mondo/modifiche.js';
 import * as salvataggio from '../regole/salvataggio.js';
 import * as riparo from '../regole/riparo.js';
 import * as freddo from '../regole/freddo.js';
+import * as fauna from '../regole/fauna.js';
+import * as arteFauna from '../arte/sprite-fauna.js';
 import * as infetti from '../regole/infetti.js';
 import * as entita from '../entita/entita.js';
 import * as decadimento from '../regole/decadimento.js';
@@ -35,6 +37,7 @@ import { TAVOLOZZA } from '../arte/tavolozza.js';
 
 let tx, ty, eroe;
 function reset() {
+  fauna.reimposta();
   meteo.reimposta();
   pesca.interrompi(); mappa.impostaGelo(false);
   riparo.reimposta(); tempo.reimposta(); bisogni.reimposta(); salute.reimposta();
@@ -47,6 +50,10 @@ function reset() {
 }
 beforeEach(reset);
 const vicino = (a,b,eps=1e-7)=>assert.ok(Math.abs(a-b)<eps, `${a} != ${b}`);
+function animale(specie, distanza=16, seme=1) {
+  const e=fauna.crea(specie,eroe.px+distanza,eroe.py,seme);
+  fauna.tutte().push(e);return e;
+}
 const pos = (x,y)=>({px:(x+0.5)*16,py:(y+0.75)*16});
 function stanza() {
   for(let y=ty-2;y<=ty+2;y++)for(let x=tx-2;x<=tx+2;x++) {
@@ -875,4 +882,173 @@ test('la maniglia del collaudo nomina solo cose che esistono davvero',()=>{
   const dichiarati=new Set([...sorgente.matchAll(/import \* as ([\w$]+) from|^(?:let|const|function) ([\w$]+)/gm)]
     .flatMap(m=>[m[1],m[2]]).filter(Boolean));
   for(const chiave of chiavi) assert.ok(dichiarati.has(chiave),`la maniglia espone ${chiave}, che gioco.js non importa né dichiara`);
+});
+
+
+test('fauna: sagome, animazioni, carcasse e icone sono valide e distinte',()=>{
+  for(const fs of Object.values(arteFauna.ANIMALI)) for(const f of fs) decodifica(f);
+  for(const f of Object.values(arteFauna.CARCASSE)) decodifica(f);
+  for(const k of ['CARNE_CRUDA','CARNE_ARROSTITA','PELLE']) decodifica(arteFauna[k]);
+  assert.equal(new Set(Object.values(arteFauna.ANIMALI).map(f=>JSON.stringify(f[0]))).size,4);
+});
+test('il cavallo fugge sempre e non ferisce neppure dopo essere stato colpito',()=>{
+  const e=animale('cavallo',10);fauna.colpisci(e,1);
+  assert.equal(e.stato,'fuga');
+  for(let i=0;i<600;i++) {
+    e.px=eroe.px+10;e.py=eroe.py;
+    assert.equal(fauna.aggiorna(1/60,eroe).attacchi,0);
+    assert.notEqual(e.stato,'aggressivo');
+  }
+  assert.equal(salute.livelloCorrente(),1);assert.equal(salute.eInfetto(),false);
+});
+test('cervo e bufalo tollerano 5 secondi poi possono attaccare oppure fuggire',()=>{
+  for(const specie of ['cervo','bufalo']) for(const [seme,stato] of [[1,'aggressivo'],[1000,'fuga']]) {
+    const e=fauna.crea(specie,eroe.px+32,eroe.py,seme);
+    fauna.percepisci(e,4.99,eroe);assert.equal(e.stato,'allerta');
+    fauna.percepisci(e,0.01,eroe);assert.equal(e.stato,stato);
+  }
+});
+test('l’allerta si azzera allontanandosi o nascondendosi dietro un muro',()=>{
+  const e=animale('bufalo',32);fauna.percepisci(e,4,eroe);
+  e.px+=100;fauna.percepisci(e,0.1,eroe);assert.equal(e.pressione,0);
+  e.px=eroe.px+32;fauna.percepisci(e,4,eroe);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.MURO});
+  fauna.percepisci(e,1,eroe);assert.equal(e.stato,'calmo');assert.equal(e.pressione,0);
+});
+test('la decisione casuale di aggressione non dipende dal framerate',()=>{
+  const a=fauna.crea('cervo',eroe.px+32,eroe.py,1),b=structuredClone(a);
+  fauna.percepisci(a,5,eroe);
+  for(let i=0;i<300;i++)fauna.percepisci(b,1/60,eroe);
+  assert.equal(a.stato,b.stato);assert.equal(a.seme,b.seme);
+});
+test('orso: aggredisce subito a vista ma non vede né colpisce attraverso una parete',()=>{
+  const e=animale('orso',32);fauna.percepisci(e,1/60,eroe);assert.equal(e.stato,'aggressivo');
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.MURO});
+  for(let i=0;i<360;i++)fauna.aggiorna(1/60,eroe);
+  assert.equal(salute.livelloCorrente(),1);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.MURO);
+});
+test('orso: danno con ricarica, nessuna infezione; fuga oltre il raggio interrompe la caccia',()=>{
+  const e=animale('orso',12);
+  assert.equal(fauna.aggiorna(1/60,eroe).attacchi,1);vicino(salute.livelloCorrente(),0.76);
+  for(let i=0;i<30;i++)fauna.aggiorna(1/60,eroe);
+  vicino(salute.livelloCorrente(),0.76);assert.equal(salute.eInfetto(),false);
+  e.px=eroe.px+200;fauna.percepisci(e,6,eroe);assert.equal(e.stato,'calmo');
+});
+test('caccia usa portata, danno e usura della lancia; rotta torna a mani nude',()=>{
+  const e=animale('cervo',30);inventario.aggiungi('lancia',1,undefined,1);
+  assert.equal(azioni.azionePossibile(eroe,'lancia',0).nemico,e);
+  azioni.agisci(eroe,'lancia',0);assert.equal(e.vita,4);assert.equal(inventario.contenuto()[0].usi,0);
+  assert.equal(azioni.agisci(eroe,'lancia',0),null);
+  e.px=eroe.px+16;azioni.agisci(eroe,'lancia',0);assert.equal(e.vita,3);
+});
+test('il combattimento sceglie il più vicino fra fauna e infetti',()=>{
+  const e=animale('cervo',16),z={tipo:'infetto',...pos(tx+2,ty),vita:5};entita.aggiungi(z);
+  inventario.aggiungi('lancia',1);
+  assert.equal(azioni.azionePossibile(eroe,'lancia',0).nemico,e);
+  z.px=eroe.px+10;assert.equal(azioni.azionePossibile(eroe,'lancia',0).nemico,z);
+});
+test('abbattimento lascia una sola carcassa senza loot automatico',()=>{
+  const e=animale('cervo');fauna.colpisci(e,6);
+  assert.equal(e.vita,0);assert.equal(e.stato,'carcassa');assert.equal(inventario.quante('carne_cruda'),0);
+  fauna.colpisci(e,6);assert.equal(fauna.tutte().length,1);
+  for(const cosa of [null,'secchio','lancia','zappa'])assert.match(azioni.azionePossibile(eroe,cosa).impedito,/ascia/);
+});
+test('macellare richiede tre usi reali di ascia, con bottino distinto per specie',()=>{
+  for(const specie of Object.keys(fauna.SPECIE)) {
+    reset();const e=animale(specie);fauna.colpisci(e,100);
+    inventario.aggiungi('ascia',1,undefined,3);
+    for(let i=0;i<2;i++) {
+      assert.equal(azioni.agisci(eroe,'ascia',0).tipo,'macellazione');assert.equal(inventario.quante('pelle'),0);
+    }
+    const esito=azioni.agisci(eroe,'ascia',0);
+    assert.equal(esito.tipo,'macellato');assert.equal(esito.usura.rotto,true);
+    assert.equal(inventario.quante('carne_cruda'),fauna.SPECIE[specie].carne);
+    assert.equal(inventario.quante('pelle'),fauna.SPECIE[specie].pelli);
+    assert.equal(fauna.tutte().length,0);
+  }
+});
+test('ascia rotta a metà macellazione: progresso conservato e ripresa con un altro esemplare',()=>{
+  const e=animale('bufalo');fauna.colpisci(e,100);
+  inventario.aggiungi('ascia',1,undefined,1);inventario.aggiungi('ascia',1);
+  azioni.agisci(eroe,'ascia',0);assert.equal(e.tagli,1);
+  assert.equal(azioni.agisci(eroe,'ascia',0),null);assert.equal(e.tagli,1);
+  azioni.agisci(eroe,'ascia',1);azioni.agisci(eroe,'ascia',1);
+  assert.equal(inventario.quante('carne_cruda'),6);assert.equal(inventario.contenuto()[1].usi,58);
+});
+test('macellazione a zaino pieno non consuma; bottino parziale resta recuperabile senza ascia',()=>{
+  const e=animale('orso');fauna.colpisci(e,100);
+  inventario.aggiungi('ascia',8);
+  assert.equal(azioni.agisci(eroe,'ascia',0).tipo,'zainoPieno');assert.equal(e.tagli,0);
+  assert.equal(inventario.contenuto()[0].usi,60);
+  inventario.svuotaCasella(7);
+  for(let i=0;i<3;i++)azioni.agisci(eroe,'ascia',0);
+  assert.equal(e.resti.carne_cruda,0);assert.equal(e.resti.pelle,3);
+  assert.equal(azioni.agisci(eroe,'ascia',0).tipo,'zainoPieno');
+  inventario.svuotaCasella(6);
+  const esito=azioni.agisci(eroe,null,6);assert.equal(esito.tipo,'macellato');assert.equal(esito.lavorato,false);
+  assert.equal(inventario.quante('pelle'),3);assert.equal(inventario.contenuto()[0].usi,57);
+  assert.equal(fauna.tutte().length,0);
+});
+test('salvare conserva ferite, temperamento e avanzamento della macellazione senza alias',()=>{
+  const vivo=animale('bufalo',32,1000),morto=animale('cervo',16);
+  fauna.colpisci(vivo,2);fauna.colpisci(morto,100);inventario.aggiungi('ascia',1);
+  azioni.agisci(eroe,'ascia',0);
+  const stato=salvataggio.istantanea(eroe,0),prima=structuredClone(stato.fauna);
+  assert.ok(salvataggio.applica(stato));assert.deepEqual(fauna.istantanea(),prima);
+  fauna.tutte()[0].vita=1;assert.deepEqual(stato.fauna,prima);
+});
+test('salvataggio di carcassa già macellata non rigenera la carne raccolta',()=>{
+  const e=animale('cervo');fauna.colpisci(e,100);inventario.aggiungi('ascia',7);
+  for(let i=0;i<3;i++)azioni.agisci(eroe,'ascia',0);
+  const stato=salvataggio.istantanea(eroe,0);assert.ok(salvataggio.applica(stato));
+  inventario.svuotaCasella(6);azioni.agisci(eroe,null,6);
+  assert.equal(inventario.quante('carne_cruda'),3);assert.equal(inventario.quante('pelle'),1);
+  assert.equal(fauna.tutte().length,0);
+});
+test('fauna malformata rifiutata prima di alterare la partita; vecchi salvataggi compatibili',()=>{
+  animale('cervo');const stato=salvataggio.istantanea(eroe,0);
+  for(const [campo,valore] of [['specie','drago'],['vita',-1],['px',NaN],['pressione',9],['seme',-1],['tagli',4],['resti',{}]]) {
+    const copia=structuredClone(stato);copia.fauna.animali[0][campo]=valore;
+    assert.equal(salvataggio.applica(copia),null);
+    assert.deepEqual(fauna.istantanea(),stato.fauna);
+  }
+  const vecchio=structuredClone(stato);delete vecchio.fauna;
+  assert.ok(salvataggio.applica(vecchio));assert.equal(fauna.quanti(),0);
+});
+test('carcasse scadono anche dopo salvataggio o salto del tempo; macellare non ringiovanisce carne',()=>{
+  animale('cervo');const e=fauna.tutte()[0];fauna.colpisci(e,100);inventario.aggiungi('ascia',1);
+  tempo.impostaGiorno(2);for(let i=0;i<3;i++)azioni.agisci(eroe,'ascia',0);
+  assert.equal(inventario.contenuto().find(c=>c?.cosa==='carne_cruda').dal,1);
+  const altro=animale('orso');fauna.colpisci(altro,100);
+  const stato=salvataggio.istantanea(eroe,0);stato.giorno=4;
+  assert.ok(salvataggio.applica(stato));assert.equal(fauna.tutte().length,0);
+});
+test('la carne si cucina, nutre e si guasta; le pelli restano',()=>{
+  inventario.aggiungi('carne_cruda',2);inventario.aggiungi('pelle',1);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FALO_ACCESO});
+  assert.equal(azioni.agisci(eroe,'carne_cruda',0).tipo,'cotto');
+  assert.equal(inventario.quante('carne_arrostita'),1);
+  bisogni.ripristina({fame:0.1,sete:1,stanchezza:1});azioni.consuma('carne_arrostita');
+  vicino(bisogni.livello('fame'),0.55);
+  tempo.impostaGiorno(3);decadimento.nuovoGiorno();
+  assert.equal(inventario.quante('carne_cruda'),0);assert.equal(inventario.quante('pelle'),1);
+});
+test('carcassa abbattuta la sera scade insieme alla carne, senza bottino già guasto',()=>{
+  tempo.impostaOra(23);const e=animale('cervo');fauna.colpisci(e,100);
+  tempo.impostaGiorno(3);tempo.impostaOra(0);
+  assert.equal(fauna.macella(e),null);assert.equal(fauna.tutte().length,0);
+});
+test('fauna rara: due vivi al massimo, arrivi distanziati e nati in prateria fuori schermo',()=>{
+  let visti=0;
+  for(let i=0;i<150;i++) {
+    const prima=new Set(fauna.tutte());
+    fauna.aggiorna(1,eroe);
+    assert.ok(fauna.quanti()<=2);
+    for(const e of fauna.tutte()) if(!prima.has(e)) {
+      visti++;assert.ok(Math.hypot(e.px-eroe.px,e.py-eroe.py)>240);
+      assert.ok([TERRENO.ERBA,TERRENO.STERPAGLIA].includes(mappa.terrenoNaturaleDi(Math.floor(e.px/16),Math.floor(e.py/16))));
+    }
+  }
+  assert.ok(visti>0);
 });

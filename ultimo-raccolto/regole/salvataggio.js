@@ -23,6 +23,7 @@ import * as stagioni from "./stagioni.js";
 import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
 import * as esplorato from "./esplorato.js";
+import * as fauna from "./fauna.js";
 import * as meteo from "./meteo.js";
 import { CATALOGO } from "./oggetti.js";
 import { OGGETTO } from "../mondo/generazione.js";
@@ -92,6 +93,7 @@ export function istantanea(eroe, casellaScelta) {
     // cosa giusta perché è stato scritto in un gioco dove non esisteva.
     infezione: salute.eInfetto(),
     bagnato: meteo.livelloBagnato(),
+    fauna: fauna.istantanea(),
     // Copie e non riferimenti: l'array dello zaino continua a vivere e a
     // cambiare mentre il salvataggio aspetta di essere scritto.
     inventario: inventario.contenuto().map((c) => (c ? { ...c } : null)),
@@ -216,6 +218,7 @@ export function valido(stato) {
   if (!presente(stato.eroe, "guarda", v => ["su", "giu", "destra", "sinistra"].includes(v))) return false;
   if (!presente(stato, "casella", n => intero(n) && n >= 0 && n < inventario.CASELLE)) return false;
   if (!presente(stato, "esposizioneFreddo", n => Number.isFinite(n) && n >= 0 && n <= 30)) return false;
+  if (!presente(stato, "fauna", fauna.statoValido)) return false;
   if (!presente(stato, "bagnato", livelloValido)) return false;
   if (!presente(stato, "salute", livelloValido) || !presente(stato, "infezione", v => typeof v === "boolean")) return false;
   if (!presente(stato, "bisogni", v => oggetto(v) && bisogni.ELENCO.every(k => presente(v, k, livelloValido)))) return false;
@@ -277,6 +280,7 @@ export function applica(stato) {
   meteo.ripristina(stato.bagnato);
   salute.ripristina(stato.salute, stato.infezione === true, stato.esposizioneFreddo);
   inventario.ripristina(stato.inventario);
+  fauna.ripristina(stato.fauna);
   esplorato.ripristina(stato.esplorato);
 
   return {

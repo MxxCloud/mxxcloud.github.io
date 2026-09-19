@@ -1,6 +1,7 @@
 // Le cose: cosa sono, cosa rendono, quanto costa staccarle dal mondo.
 
 import { OGGETTO } from "../mondo/generazione.js";
+import * as cacciaArte from "../arte/sprite-fauna.js";
 import * as arte from "../arte/sprite-cose.js";
 import * as impugnati from "../arte/sprite-impugnati.js";
 import * as ortoArte from "../arte/sprite-orto.js";
@@ -18,6 +19,11 @@ import * as ortoArte from "../arte/sprite-orto.js";
 // soltanto a usare il terreno come dispensa. Adesso c'è la cassa, quindi il
 // debito si può pagare.
 export const CATALOGO = {
+  carne_cruda: { nome: "Carne cruda", icona: cacciaArte.CARNE_CRUDA, pila: 10,
+    commestibile: { fame: 0.15 }, cuoce: "carne_arrostita", dura: 2 },
+  carne_arrostita: { nome: "Carne arrostita", icona: cacciaArte.CARNE_ARROSTITA, pila: 10,
+    commestibile: { fame: 0.45 }, dura: 4 },
+  pelle: { nome: "Pelle", icona: cacciaArte.PELLE, pila: 20 },
   canna: { durata: 20, serve: ["pesca"], nome: "Canna da pesca", icona: arte.CANNA, pila: 1,
     impugnato: { nome: "canna", righe: impugnati.CANNA, scartoY: 3 } },
   pesce_crudo: { nome: "Pesce crudo", icona: arte.PESCE_CRUDO, pila: 10,
@@ -53,7 +59,7 @@ export const CATALOGO = {
   },
   ascia: {
     durata: 60,
-    serve: ["raccolta", "combatti"],
+    serve: ["raccolta", "combatti", "macella"],
     nome: "Ascia",
     icona: arte.ASCIA,
     pila: 1,
@@ -462,4 +468,3 @@ export const RACCOLTA = {
 export function raccoltaDi(oggetto) {
   return RACCOLTA[oggetto];
 }
-

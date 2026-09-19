@@ -22,6 +22,7 @@ import * as tempo from "./regole/tempo.js";
 import * as bisogni from "./regole/bisogni.js";
 import * as salute from "./regole/salute.js";
 import * as freddo from "./regole/freddo.js";
+import * as fauna from "./regole/fauna.js";
 import * as infetti from "./regole/infetti.js";
 import * as riparo from "./regole/riparo.js";
 import * as chiasso from "./regole/chiasso.js";
@@ -68,7 +69,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.8.1";
+const VERSIONE = "M7.9";
 
 // --- elementi -------------------------------------------------------------
 
@@ -287,7 +288,7 @@ const ARRIVO = {
 // chi chiama deve poter dire "l'inverno ha preso l'orto" invece di due
 // messaggi che si coprono a vicenda.
 function vestiLaValle() {
-  const acquaCambiata = acqua.aggiorna(entita.tutte());
+  const acquaCambiata = acqua.aggiorna([...entita.tutte(), ...fauna.tutte()]);
   if (acquaCambiata.riportati.includes(eroe)) {
     pesca.interrompi();
     annuncia("il disgelo ti riporta a riva", "#8fb8d8");
@@ -1013,7 +1014,7 @@ function leggiComandi() {
     suono.suona(COLPO_A_SEGNO);
     if (esito.caduto) {
       suono.suona(CADUTO);
-      annuncia("è caduto", "#9ec97e");
+      annuncia(esito.specie ? "animale abbattuto: macella con l'ascia" : "è caduto", "#9ec97e");
     }
   }
 
@@ -1041,6 +1042,16 @@ function leggiComandi() {
   } else if (esito.tipo === "posa") {
     suono.suona(POSA);
     annuncia(`posato: ${nomeDi(esito.cosa)}`, "#9ec97e");
+  }
+  if (esito.tipo === "macellazione") {
+    suono.suona(COLPO_A_SEGNO); annuncia("macellazione: ancora " + esito.restano + " colpi", "#c9b189");
+    chiasso.colpo();
+  }
+  if (esito.tipo === "macellato") {
+    suono.suona(PRESO);
+    const elenco = esito.presi.map(v => "+" + v.quante + " " + nomeDi(v.cosa)).join("  ");
+    annuncia(elenco + (esito.resta ? " - il resto e sulla carcassa" : ""), "#9ec97e");
+    if (esito.lavorato) chiasso.colpo();
   }
   avvisaUsura(esito.usura);
 }
@@ -1113,6 +1124,9 @@ function aggiorna(passo) {
     const visto = infetti.decidi(passo, eroe, {
       luceInMano: Boolean(CATALOGO[cosaInMano()]?.luce),
     });
+    const selvatici = fauna.aggiorna(passo, eroe);
+    if (selvatici.allerta) annuncia(selvatici.allerta, "#c9b189");
+    if (selvatici.attacchi > 0) { lampoDanno = DURATA_LAMPO; suono.suona(MORSO); }
     infetti.sgomitano();
     const morsi = infetti.raccogliIMorsi(eroe);
     if (morsi.morsi > 0) {
@@ -1258,7 +1272,7 @@ function disegna() {
 
   inPiedi.length = 0;
   for (const o of oggetti) inPiedi.push(o);
-  for (const e of entita.daDisegnare()) {
+  for (const e of [...entita.daDisegnare(), ...fauna.daDisegnare()]) {
     if (schermo.visibile(e.x, e.y, e.sprite.width, e.sprite.height)) inPiedi.push(e);
   }
   // Chi ha i piedi più in basso è più vicino a chi guarda, quindi va disegnato
@@ -1340,7 +1354,7 @@ function disegnaInterfaccia() {
     salute: salute.livelloCorrente(),
     alFreddo: gelando,
     infetto: salute.eInfetto(),
-    inseguito: infetti.inseguono() > 0,
+    inseguito: infetti.inseguono() > 0 || fauna.tutte().some(e => e.stato === "aggressivo"),
   });
   hud.disegnaOrologio(p, {
     giorno: tempo.giornoCorrente(),
@@ -1606,6 +1620,7 @@ if (parametri.has("diagnostica")) {
     salute,
     freddo,
     infetti,
+    fauna,
     infetto,
     chiasso,
     suono,

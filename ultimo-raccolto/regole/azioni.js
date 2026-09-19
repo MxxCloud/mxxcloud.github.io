@@ -10,6 +10,7 @@ import * as tempo from "./tempo.js";
 import * as bisogni from "./bisogni.js";
 import * as salute from "./salute.js";
 import { CATALOGO, ATTREZZI, raccoltaDi, colpiNecessari, dannoDi, portataDi, attrezzoServe } from "./oggetti.js";
+import * as fauna from "./fauna.js";
 import * as infetti from "./infetti.js";
 import * as urti from "../entita/urti.js";
 import * as chiasso from "./chiasso.js";
@@ -54,6 +55,7 @@ const COLPI_DURI = new Set([OGGETTO.ALBERO, OGGETTO.SASSO, OGGETTO.MURO, OGGETTO
 function scopoDi(azione) {
   if (!azione) return null;
   if (azione.tipo === "combatti") return "combatti";
+  if (azione.tipo === "macella") return "macella";
   if (azione.tipo === "zappa") return "zappa";
   if (azione.tipo === "pesca") return "pesca";
   if (azione.tipo === "raccogli" && COLPI_DURI.has(azione.bersaglio.oggetto)) return "raccolta";
@@ -85,11 +87,24 @@ export function azionePossibile(eroe, cosaInMano, indice) {
   // esiste nient'altro da fare. Senza questa riga in cima, trovandosi un
   // infetto sopra un cespuglio la barra strappava il cespuglio — e sarebbe
   // stata l'ultima cosa fatta.
-  const addosso = infetti.quelloDavanti(eroe, portataDi(strumento(cosaInMano, indice, "combatti")));
+  const portata = portataDi(strumento(cosaInMano, indice, "combatti"));
+  const infetto = infetti.quelloDavanti(eroe, portata);
+  const animale = fauna.davanti(eroe, portata);
+  // Il bersaglio più vicino: un animale non deve coprire un infetto addosso.
+  const distanza = e => e ? Math.hypot(e.px-eroe.px,e.py-eroe.py) : Infinity;
+  const addosso = distanza(infetto) <= distanza(animale) ? infetto : animale;
   if (addosso) {
-    return { tipo: "combatti", verbo: "Colpisci", nemico: addosso };
+    return { tipo: "combatti", verbo: addosso.specie ? "Colpisci " + fauna.SPECIE[addosso.specie].nome : "Colpisci", nemico: addosso };
   }
 
+  const carcassa = fauna.davanti(eroe, 24, true);
+  if (carcassa) {
+    const lavorata = carcassa.resti !== null;
+    return { tipo: lavorata ? "spoglia" : "macella", carcassa,
+      verbo: (lavorata ? "Raccogli " : "Macella ") + fauna.SPECIE[carcassa.specie].nome,
+      restano: lavorata ? undefined : 3-carcassa.tagli,
+      impedito: !lavorata && (!attrezzoServe(cosaInMano, "macella") || !strumento(cosaInMano, indice, "macella")) ? "serve un'ascia funzionante" : null };
+  }
   const b = bersaglio(eroe);
 
   // Di notte il giaciglio accoglie, di giorno si smonta. Un giaciglio che di
@@ -228,7 +243,7 @@ function zappabile(terreno) {
 
 function occupato(tx, ty, eroe) {
   // Comprende l'eroe anche nei collaudi senza registro delle entità.
-  return [eroe, ...entita.tutte()].some(e => e &&
+  return [eroe, ...entita.tutte(), ...fauna.tutte()].some(e => e &&
     e.px + urti.LARGHEZZA / 2 > tx * TASSELLO && e.px - urti.LARGHEZZA / 2 < (tx + 1) * TASSELLO &&
     e.py > ty * TASSELLO && e.py - urti.ALTEZZA < (ty + 1) * TASSELLO);
 }
@@ -495,7 +510,7 @@ export function agisci(eroe, cosaInMano, indice) {
     ? inventario.attrezzo(cosaInMano, indice)
     : null;
   const esito = esegui(eroe, cosaInMano, indice, azione);
-  if (esito && attrezzo && ["combattuto", "colpo", "raccolto", "zappa"].includes(esito.tipo)) {
+  if (esito && attrezzo && (["combattuto", "colpo", "raccolto", "zappa"].includes(esito.tipo) || esito.lavorato)) {
     const avviso = inventario.usura(attrezzo);
     if (avviso) esito.usura = avviso;
   }
@@ -507,8 +522,10 @@ function esegui(eroe, cosaInMano, indice, azione) {
   if (!azione || azione.impedito) return null;
   if (azione.tipo === "pesca") return pesca.inizia(eroe, azione.bersaglio.tx, azione.bersaglio.ty, indice);
 
+  if (azione.tipo === "macella" || azione.tipo === "spoglia") return fauna.macella(azione.carcassa);
+
   if (azione.tipo === "combatti") {
-    const esito = infetti.colpisci(azione.nemico, dannoDi(strumento(cosaInMano, indice, "combatti")));
+    const esito = (azione.nemico.specie ? fauna : infetti).colpisci(azione.nemico, dannoDi(strumento(cosaInMano, indice, "combatti")));
     // Il combattimento si sente. È la ragione per cui uno che urla ne chiama
     // altri, ed è anche il motivo per cui non conviene mettersi a fare a
     // botte in mezzo alla valle di notte.
@@ -516,6 +533,7 @@ function esegui(eroe, cosaInMano, indice, azione) {
     return {
       tipo: "combattuto",
       caduto: esito.caduto,
+      specie: azione.nemico.specie,
       px: azione.nemico.px,
       py: azione.nemico.py,
     };
