@@ -46,7 +46,23 @@ export function bersaglio(eroe) {
 // ritmo giusto perché bere sia un gesto e non un lavoro.
 const SORSO = 0.45;
 
-export function azionePossibile(eroe, cosaInMano) {
+const COLPI_DURI = new Set([OGGETTO.ALBERO, OGGETTO.SASSO, OGGETTO.MURO, OGGETTO.MURO_ROTTO, OGGETTO.BANCO]);
+function usaAttrezzo(azione) {
+  return azione && (["combatti", "zappa", "pesca"].includes(azione.tipo) ||
+    (azione.tipo === "raccogli" && COLPI_DURI.has(azione.bersaglio.oggetto)));
+}
+
+export function azionePossibile(eroe, cosaInMano, indice) {
+  const azione = descriviAzione(eroe, cosaInMano);
+  if (usaAttrezzo(azione) && CATALOGO[cosaInMano]?.durata && !pesca.stato()) {
+    const attrezzo = inventario.attrezzo(cosaInMano, indice);
+    if (!attrezzo || inventario.usiRimasti(attrezzo) === 0)
+      return { ...azione, impedito: "attrezzo inutilizzabile: riparalo al banco" };
+  }
+  return azione;
+}
+
+function descriviAzione(eroe, cosaInMano) {
   // Prima di qualunque cosa, perché nel momento in cui uno ti è addosso non
   // esiste nient'altro da fare. Senza questa riga in cima, trovandosi un
   // infetto sopra un cespuglio la barra strappava il cespuglio — e sarebbe
@@ -220,7 +236,7 @@ function posabile(b) {
 // zaino e della cassa (media pesata, arrotondata verso il vecchio): è la
 // ragione per cui mescolaDate sta in inventario.js ed è esportata invece di
 // essere riscritta qui.
-function deponi(tx, ty, cosa, quante, dal) {
+function deponi(tx, ty, cosa, quante, dal, usi) {
   const fondo = mappa.terrenoNaturaleDi(tx, ty);
   if (fondo === TERRENO.ACQUA || fondo === TERRENO.ACQUA_BASSA) return false;
   const oggetto = mappa.oggettoDi(tx, ty);
@@ -231,7 +247,7 @@ function deponi(tx, ty, cosa, quante, dal) {
 
   if (oggetto === OGGETTO.MUCCHIO) {
     const dati = modifiche.di(tx, ty);
-    if (dati?.cosa !== cosa) return false;
+    if (dati?.cosa !== cosa || CATALOGO[cosa]?.durata) return false;
     const cambio = { oggetto: OGGETTO.MUCCHIO, cosa, quante: dati.quante + quante };
     if (deperibile) {
       cambio.dal = inventario.mescolaDate(dati.dal, dati.quante, quando, quante);
@@ -242,6 +258,7 @@ function deponi(tx, ty, cosa, quante, dal) {
   if (oggetto !== OGGETTO.NESSUNO || mappa.solidoIn(tx, ty)) return false;
   const cambio = { oggetto: OGGETTO.MUCCHIO, cosa, quante };
   if (deperibile) cambio.dal = quando;
+  if (CATALOGO[cosa]?.durata) cambio.usi = usi ?? CATALOGO[cosa].durata;
   mappa.cambiaTassello(tx, ty, cambio);
   return true;
 }
@@ -270,7 +287,7 @@ export function getta(eroe, indice) {
   if (!casella) return null;
 
   const { tx, ty } = bersaglio(eroe);
-  if (!deponi(tx, ty, casella.cosa, casella.quantita, casella.dal)) return { tipo: "nonCePosto" };
+  if (!deponi(tx, ty, casella.cosa, casella.quantita, casella.dal, casella.usi)) return { tipo: "nonCePosto" };
 
   inventario.svuotaCasella(indice);
   return { tipo: "gettato", cosa: casella.cosa, quante: casella.quantita, tx, ty };
@@ -285,7 +302,7 @@ export function getta(eroe, indice) {
 // fatica di svuotarla e non la cassa.
 // La porta si stacca intera, come si smonta una cassa: è un infisso, si toglie
 // dai cardini e te la porti via. Il muro no — quello si abbatte a colpi e rende
-// due pietre delle tre che è costato, perché è muratura e spostarla si paga.
+// tutte e tre le pietre che è costato; spostarlo richiede comunque lavoro.
 // Sono due gesti diversi perché sono due cose diverse, e il gioco lo dice con
 // quello che torna in mano.
 //
@@ -358,7 +375,7 @@ export function lasciaIlCadavere(eroe, giorno) {
     // spesa, che sparisce alla prima alba. È più severo di com'era scritto
     // prima — vedi decadimento.js — ed è una regola sola invece di
     // un'eccezione.
-    .map((casella) => ({ cosa: casella.cosa, quantita: casella.quantita, dal: casella.dal }));
+    .map((casella) => ({ ...casella }));
   inventario.svuota();
 
   const tx0 = Math.floor(eroe.px / TASSELLO);
@@ -442,11 +459,21 @@ function medicati(cosa, effetto) {
 // Restituisce un resoconto di cosa è successo, perché l'interfaccia deve
 // poterlo dire al giocatore: un colpo che non ottiene niente e un colpo che
 // abbatte un albero non possono sembrare lo stesso gesto.
-export function agisci(eroe, cosaInMano) {
+export function agisci(eroe, cosaInMano, indice) {
+  const azione = azionePossibile(eroe, cosaInMano, indice);
+  const attrezzo = inventario.attrezzo(cosaInMano, indice);
+  const esito = esegui(eroe, cosaInMano, indice, azione);
+  if (esito && usaAttrezzo(azione) && ["combattuto", "colpo", "raccolto", "zappa"].includes(esito.tipo)) {
+    const avviso = inventario.usura(attrezzo);
+    if (avviso) esito.usura = avviso;
+  }
+  return esito;
+}
+
+function esegui(eroe, cosaInMano, indice, azione) {
   if (pesca.stato()) { pesca.interrompi(); return { tipo: "pescaInterrotta" }; }
-  const azione = azionePossibile(eroe, cosaInMano);
   if (!azione || azione.impedito) return null;
-  if (azione.tipo === "pesca") return pesca.inizia(eroe, azione.bersaglio.tx, azione.bersaglio.ty);
+  if (azione.tipo === "pesca") return pesca.inizia(eroe, azione.bersaglio.tx, azione.bersaglio.ty, indice);
 
   if (azione.tipo === "combatti") {
     const esito = infetti.colpisci(azione.nemico, dannoDi(cosaInMano));
@@ -475,7 +502,7 @@ export function agisci(eroe, cosaInMano) {
     // Si prende quello che ci sta, e il resto resta lì. Far sparire un mucchio
     // perché lo zaino era pieno sarebbe lo stesso difetto da cui nascono i
     // mucchi.
-    const resto = inventario.aggiungi(dati.cosa, dati.quante, dati.dal);
+    const resto = inventario.aggiungi(dati.cosa, dati.quante, dati.dal, dati.usi);
     if (resto === dati.quante) return { tipo: "zainoPieno" };
     if (resto > 0) {
       // Quello che resta per terra tiene l'età che aveva: prenderne metà non
@@ -498,9 +525,9 @@ export function agisci(eroe, cosaInMano) {
     const rimasto = [];
     const presi = [];
     for (const voce of roba) {
-      const resto = inventario.aggiungi(voce.cosa, voce.quantita, voce.dal);
+      const resto = inventario.aggiungi(voce.cosa, voce.quantita, voce.dal, voce.usi);
       if (resto < voce.quantita) presi.push({ cosa: voce.cosa, quante: voce.quantita - resto });
-      if (resto > 0) rimasto.push({ cosa: voce.cosa, quantita: resto, dal: voce.dal });
+      if (resto > 0) rimasto.push({ ...voce, quantita: resto });
     }
 
     if (presi.length === 0 && rimasto.length > 0) return { tipo: "zainoPieno" };

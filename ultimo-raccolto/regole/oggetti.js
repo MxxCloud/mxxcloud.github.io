@@ -18,7 +18,7 @@ import * as ortoArte from "../arte/sprite-orto.js";
 // soltanto a usare il terreno come dispensa. Adesso c'è la cassa, quindi il
 // debito si può pagare.
 export const CATALOGO = {
-  canna: { nome: "Canna da pesca", icona: arte.CANNA, pila: 1,
+  canna: { durata: 20, nome: "Canna da pesca", icona: arte.CANNA, pila: 1,
     impugnato: { nome: "canna", righe: impugnati.CANNA, scartoY: 3 } },
   pesce_crudo: { nome: "Pesce crudo", icona: arte.PESCE_CRUDO, pila: 10,
     commestibile: { fame: 0.18 }, cuoce: "pesce_arrostito", dura: 2 },
@@ -52,6 +52,7 @@ export const CATALOGO = {
     luce: { raggio: 46, intensita: 0.9 },
   },
   ascia: {
+    durata: 60,
     nome: "Ascia",
     icona: arte.ASCIA,
     pila: 1,
@@ -60,6 +61,7 @@ export const CATALOGO = {
     impugnato: { nome: "ascia", righe: impugnati.ASCIA, scartoY: 5 },
   },
   zappa: {
+    durata: 40,
     nome: "Zappa",
     icona: arte.ZAPPA,
     pila: 1,
@@ -159,6 +161,7 @@ export const CATALOGO = {
   // tutta qui la scelta: tre colpi tenendolo a distanza, o due lasciandogli
   // dare il suo.
   lancia: {
+    durata: 50,
     nome: "Lancia",
     icona: arte.LANCIA,
     pila: 1,
@@ -399,7 +402,7 @@ export const RACCOLTA = {
     colpi: 5,
     voce: "pietra",
     scheggie: ["e", "f", "d"],
-    resa: [{ cosa: "pietra", quante: 2 }],
+    resa: [{ cosa: "pietra", quante: 3 }],
   },
   // Le macerie si spalano via in un colpo. Ci si passa già sopra, quindi
   // toglierle non apre niente: rendono poco e servono a chi sta raccogliendo

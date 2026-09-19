@@ -16,6 +16,7 @@ import * as bisogni from '../regole/bisogni.js';
 import * as salute from '../regole/salute.js';
 import * as simulazione from '../regole/simulazione.js';
 import * as inventario from '../regole/inventario.js';
+import * as contenitori from '../regole/contenitori.js';
 import * as azioni from '../regole/azioni.js';
 import * as ricette from '../regole/ricette.js';
 import * as mappa from '../mondo/mappa.js';
@@ -606,4 +607,161 @@ test('morire durante il sonno non ripristina stamina né annuncia un risveglio',
   const prima=bisogni.livello('stanchezza'),esito=azioni.agisci(eroe,null);
   assert.equal(esito.sveglio,false);assert.equal(esito.messaggio,null);
   vicino(bisogni.livello('stanchezza'),prima);
+});
+
+const riparazione = cosa => ricette.RICETTE.find(r => r.id === 'ripara_'+cosa);
+test('ascia: sessanta colpi efficaci, poi resta rotta; si può continuare a mani nude',()=>{
+  inventario.aggiungi('ascia',1);
+  for(let i=0;i<60;i++) {
+    modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.ALBERO});
+    const esito=azioni.agisci(eroe,'ascia',0);
+    assert.equal(esito.tipo,'colpo');assert.equal(inventario.contenuto()[0].usi,59-i);
+    if(i===47) assert.deepEqual(esito.usura,{cosa:'ascia',rotto:false});
+    if(i===59) assert.deepEqual(esito.usura,{cosa:'ascia',rotto:true});
+  }
+  assert.match(azioni.azionePossibile(eroe,'ascia',0).impedito,/riparalo al banco/);
+  assert.equal(azioni.agisci(eroe,'ascia',0),null);
+  assert.equal(inventario.quante('ascia'),1);
+  assert.equal(azioni.agisci(eroe,null,7).tipo,'colpo');
+});
+test('ultimo uso mantiene bonus e resa, senza consumare l’altra ascia',()=>{
+  inventario.aggiungi('ascia',1,undefined,42);inventario.aggiungi('ascia',1,undefined,1);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.ALBERO,colpi:1});
+  assert.equal(azioni.agisci(eroe,'ascia',1).tipo,'raccolto');
+  assert.equal(inventario.quante('legna'),3);
+  assert.equal(inventario.contenuto()[0].usi,42);assert.equal(inventario.contenuto()[1].usi,0);
+});
+test('zappa: il terreno riuscito consuma un uso, ripetere o agire nel vuoto no',()=>{
+  inventario.aggiungi('zappa',1,undefined,1);
+  // Cerca un tassello realmente coltivabile nella fattoria.
+  let trovato=false;
+  for(let y=ty-4;y<ty+4&&!trovato;y++)for(let x=tx-4;x<tx+4&&!trovato;x++) {
+    eroe={...pos(x-1,y),guarda:'destra'};
+    if(azioni.azionePossibile(eroe,'zappa',0)?.tipo==='zappa') trovato=true;
+  }
+  assert.ok(trovato);assert.equal(azioni.agisci(eroe,'zappa',0).tipo,'zappa');
+  assert.equal(inventario.contenuto()[0].usi,0);
+  assert.equal(azioni.agisci(eroe,'zappa',0),null);
+});
+test('lancia: consuma solo colpi a segno e a zero non danneggia',()=>{
+  inventario.aggiungi('lancia',1,undefined,1);
+  assert.equal(azioni.agisci(eroe,'lancia',0),null);
+  assert.equal(inventario.contenuto()[0].usi,1);
+  const nemico={tipo:'infetto',...pos(tx+1,ty),vita:5};entita.aggiungi(nemico);
+  assert.equal(azioni.agisci(eroe,'lancia',0).tipo,'combattuto');assert.equal(nemico.vita,3);
+  assert.equal(azioni.agisci(eroe,'lancia',0),null);assert.equal(nemico.vita,3);
+});
+test('prendere piante e aprire casse non consuma e funziona anche con attrezzo rotto',()=>{
+  inventario.aggiungi('ascia',1,undefined,0);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CESPUGLIO});
+  assert.equal(azioni.agisci(eroe,'ascia',0).tipo,'raccolto');
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CASSA,contenuto:[]});
+  assert.equal(azioni.agisci(eroe,'ascia',0).tipo,'aperta');
+  assert.equal(inventario.contenuto()[0].usi,0);
+});
+test('canna: solo la cattura consuma, l’ultimo pesce entra e poi serve riparare',()=>{
+  allaRiva();inventario.contenuto()[0].usi=1;
+  azioni.agisci(eroe,'canna',0);pesca.aggiorna(5,eroe,'canna',0);
+  azioni.agisci(eroe,'canna',0);assert.equal(inventario.contenuto()[0].usi,1);
+  azioni.agisci(eroe,'canna',0);
+  const esito=pesca.aggiorna(pesca.ATTESA,eroe,'canna',0);
+  assert.equal(esito.tipo,'pescato');assert.equal(esito.usura.rotto,true);
+  assert.equal(inventario.quante('pesce_crudo'),1);assert.equal(inventario.contenuto()[0].usi,0);
+  assert.equal(azioni.agisci(eroe,'canna',0),null);
+});
+test('cambiare fra due canne interrompe senza usurare nessuna delle due',()=>{
+  allaRiva();inventario.aggiungi('canna',1,undefined,7);
+  azioni.agisci(eroe,'canna',1);
+  assert.equal(pesca.aggiorna(pesca.ATTESA,eroe,'canna',0).tipo,'pescaInterrotta');
+  assert.equal(inventario.contenuto()[0].usi,20);assert.equal(inventario.contenuto()[1].usi,7);
+});
+test('riparazione: richiede banco e materiali senza perdite in caso di rifiuto',()=>{
+  inventario.aggiungi('ascia',1,undefined,0);inventario.aggiungi('pietra',1);
+  let prima=structuredClone(inventario.contenuto());
+  assert.deepEqual(ricette.fai(riparazione('ascia'),true),{fatto:false,perche:'materiali'});
+  assert.deepEqual(inventario.contenuto(),prima);
+  inventario.aggiungi('fibra',2);prima=structuredClone(inventario.contenuto());
+  assert.deepEqual(ricette.fai(riparazione('ascia'),false),{fatto:false,perche:'banco'});
+  assert.deepEqual(inventario.contenuto(),prima);
+});
+test('riparazione a zaino pieno ripristina solo il più usurato, costa 1 pietra e 2 fibre',()=>{
+  inventario.aggiungi('ascia',1,undefined,9);inventario.aggiungi('ascia',1,undefined,0);
+  inventario.aggiungi('pietra',5);inventario.aggiungi('fibra',8);inventario.aggiungi('zappa',4);
+  assert.equal(inventario.pieno(),true);
+  assert.equal(ricette.fai(riparazione('ascia'),true).fatto,true);
+  assert.equal(inventario.contenuto()[0].usi,9);assert.equal(inventario.contenuto()[1].usi,60);
+  assert.equal(inventario.quante('pietra'),4);assert.equal(inventario.quante('fibra'),6);
+  for(const cosa of ['zappa','lancia']) {
+    const prima=structuredClone(inventario.contenuto());
+    assert.equal(ricette.fai(riparazione(cosa),true).perche,'integro');
+    assert.deepEqual(inventario.contenuto(),prima);
+  }
+});
+test('ogni attrezzo nuovo e riparato ha la propria durata',()=>{
+  for(const [cosa,durata] of Object.entries({ascia:60,zappa:40,lancia:50,canna:20})) {
+    inventario.svuota();inventario.aggiungi(cosa,1);
+    assert.equal(inventario.contenuto()[0].usi,durata);
+    inventario.contenuto()[0].usi=0;inventario.aggiungi('pietra',1);inventario.aggiungi('fibra',2);
+    assert.equal(ricette.fai(riparazione(cosa),true).fatto,true);
+    assert.equal(inventario.contenuto()[0].usi,durata);
+  }
+});
+test('usura conservata nel trasferimento in cassa e ritorno, incluso zero',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CASSA,contenuto:[]});
+  inventario.aggiungi('ascia',1,undefined,0);inventario.aggiungi('ascia',1,undefined,17);
+  contenitori.sposta(tx+1,ty,true,0);contenitori.sposta(tx+1,ty,true,1);
+  assert.deepEqual(contenitori.contenutoDi(tx+1,ty).filter(Boolean).map(c=>c.usi),[0,17]);
+  contenitori.sposta(tx+1,ty,false,0);contenitori.sposta(tx+1,ty,false,1);
+  assert.deepEqual(inventario.contenuto().filter(Boolean).map(c=>c.usi),[0,17]);
+});
+test('gettare e riprendere non ripara, due attrezzi non si fondono sul terreno',()=>{
+  inventario.aggiungi('ascia',1,undefined,3);inventario.aggiungi('ascia',1,undefined,0);
+  assert.equal(azioni.getta(eroe,0).tipo,'gettato');
+  assert.equal(azioni.getta(eroe,1).tipo,'nonCePosto');
+  assert.equal(azioni.agisci(eroe,null).tipo,'preso');
+  assert.deepEqual(inventario.contenuto().filter(Boolean).map(c=>c.usi),[3,0]);
+});
+test('cadavere e recupero parziale conservano l’usura di ogni oggetto',()=>{
+  inventario.aggiungi('ascia',1,undefined,0);inventario.aggiungi('ascia',1,undefined,11);
+  const corpo=azioni.lasciaIlCadavere(eroe,1);
+  inventario.aggiungi('zappa',7);eroe={...pos(corpo.tx-1,corpo.ty),guarda:'destra'};
+  assert.equal(azioni.agisci(eroe,null).tipo,'frugato');
+  assert.equal(inventario.contenuto()[7].usi,0);
+  assert.equal(modifiche.di(corpo.tx,corpo.ty).roba[0].usi,11);
+  inventario.svuota();azioni.agisci(eroe,null);assert.equal(inventario.contenuto()[0].usi,11);
+});
+test('salvataggio conserva usi in zaino, cassa, mucchio e cadavere e respinge valori corrotti',()=>{
+  inventario.aggiungi('ascia',1,undefined,0);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CASSA,contenuto:[{cosa:'canna',quantita:1,usi:9}]});
+  modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.MUCCHIO,cosa:'zappa',quante:1,usi:2});
+  modifiche.imposta(tx+3,ty,{oggetto:OGGETTO.CADAVERE,roba:[{cosa:'lancia',quantita:1,usi:3}]});
+  const stato=salvataggio.istantanea(eroe,0);
+  assert.ok(salvataggio.applica(JSON.parse(JSON.stringify(stato))));
+  assert.equal(inventario.contenuto()[0].usi,0);
+  assert.equal(contenitori.contenutoDi(tx+1,ty)[0].usi,9);
+  assert.equal(modifiche.di(tx+2,ty).usi,2);assert.equal(modifiche.di(tx+3,ty).roba[0].usi,3);
+  for(const valore of [-1,61,0.5,NaN,null,'3'])for(const dove of ['inventario','cassa','mucchio','cadavere']) {
+    const copia=structuredClone(stato);
+    if(dove==='inventario') copia.inventario[0].usi=valore;
+    else {
+      const d=copia.modifiche.find(v=>v.tx===tx+({cassa:1,mucchio:2,cadavere:3}[dove])&&v.ty===ty);
+      (dove==='cassa'?d.contenuto[0]:dove==='cadavere'?d.roba[0]:d).usi=valore;
+    }
+    assert.equal(salvataggio.applica(copia),null);
+    assert.equal(inventario.contenuto()[0].usi,0);
+  }
+});
+test('vecchi salvataggi: attrezzi integri anche nelle vecchie pile a terra',()=>{
+  const stato=salvataggio.istantanea(eroe,0);
+  stato.inventario=[{cosa:'ascia',quantita:1}];
+  stato.modifiche=[{tx:tx+1,ty,oggetto:OGGETTO.MUCCHIO,cosa:'canna',quante:2}];
+  assert.ok(salvataggio.applica(stato));assert.equal(inventario.contenuto()[0].usi,60);
+  azioni.agisci(eroe,null);assert.deepEqual(inventario.contenuto().filter(c=>c?.cosa==='canna').map(c=>c.usi),[20,20]);
+});
+test('muro abbattuto rende 3 pietre; rocce e macerie mantengono le rese',()=>{
+  for(const [oggetto,colpi,pietre] of [[OGGETTO.MURO,5,3],[OGGETTO.SASSO,2,2],[OGGETTO.MURO_ROTTO,1,1]]) {
+    inventario.svuota();modifiche.imposta(tx+1,ty,{oggetto});
+    for(let i=0;i<colpi;i++) azioni.agisci(eroe,null);
+    assert.equal(inventario.quante('pietra'),pietre);
+  }
 });

@@ -162,6 +162,7 @@ export function contenutoDi(tx, ty) {
     if (!CATALOGO[c.cosa]) continue;
     fila[i] = { cosa: c.cosa, quantita: Math.min(c.quantita, CATALOGO[c.cosa].pila ?? 1) };
     if (typeof c.dal === "number") fila[i].dal = c.dal;
+    if (CATALOGO[c.cosa]?.durata) fila[i].usi = inventario.usiRimasti(c);
   }
   return fila;
 }
@@ -211,7 +212,7 @@ export function sposta(tx, ty, versoLaCassa, indice) {
   if (versoLaCassa) {
     const casella = inventario.contenuto()[indice];
     if (!casella) return null;
-    const resto = inventario.mettiIn(fila, casella.cosa, casella.quantita, casella.dal);
+    const resto = inventario.mettiIn(fila, casella.cosa, casella.quantita, casella.dal, casella.usi);
     if (resto === casella.quantita) return { tipo: "pieno" };
     // Si toglie dallo zaino esattamente quello che è entrato, e il resto resta
     // dov'è: svuotare la casella e poi rimetterci l'avanzo la sposterebbe
@@ -225,10 +226,11 @@ export function sposta(tx, ty, versoLaCassa, indice) {
 
   const casella = fila[indice];
   if (!casella) return null;
-  const resto = inventario.aggiungi(casella.cosa, casella.quantita, casella.dal);
+  const resto = inventario.aggiungi(casella.cosa, casella.quantita, casella.dal, casella.usi);
   if (resto === casella.quantita) return { tipo: "pieno" };
   if (resto === 0) fila[indice] = null;
   else casella.quantita = resto;
   scrivi(tx, ty, fila);
   return { tipo: "spostato", verso: "zaino", cosa: casella.cosa };
 }
+

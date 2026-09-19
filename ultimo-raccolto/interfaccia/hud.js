@@ -68,6 +68,14 @@ function casellaDisegnata(p, x, y, casella, scelta, inCassa) {
     testo.disegnaConOmbra(p, etichetta, x + LATO_CASELLA - 2 - testo.larghezza(etichetta), y + LATO_CASELLA - 7, CHIARO);
   }
 
+  const usi = inventario.usiRimasti(casella);
+  if (usi !== null) {
+    p.fillStyle = usi === 0 ? ROSSO : BORDO;
+    p.fillRect(x + 2, y + LATO_CASELLA - 3, LATO_CASELLA - 4, 2);
+    p.fillStyle = coloreBisogno(usi / CATALOGO[casella.cosa].durata);
+    p.fillRect(x + 2, y + LATO_CASELLA - 3, Math.ceil((LATO_CASELLA - 4) * usi / CATALOGO[casella.cosa].durata), 2);
+  }
+
   // La freschezza: una riga di un pixel lungo il bordo di sopra, che si
   // accorcia e cambia colore. Un pixel e non una barra vera perché è
   // un'informazione di sfondo — serve a far scegliere quale rapa mangiare per
@@ -458,7 +466,7 @@ export function disegnaRicette(p, { scelta, alBanco }) {
     const icona = CATALOGO[ricetta.produce.cosa]?.icona;
     if (icona) p.drawImage(cuoci(icona), x + 5, ry - 2);
 
-    const nome = nomeDi(ricetta.produce.cosa).toUpperCase();
+    const nome = ((ricetta.ripara ? "Ripara " : "") + nomeDi(ricetta.produce.cosa)).toUpperCase();
     testo.disegna(p, nome, x + 20, ry, possibile ? CHIARO : GRIGIO);
 
     // Quante ne escono, se sono più di una: due conserve da sei bacche è
@@ -488,7 +496,7 @@ export function disegnaRicette(p, { scelta, alBanco }) {
     }
   }
 
-  const piede = "FRECCE SCEGLI   SPAZIO COSTRUISCI   C CHIUDI";
+  const piede = RICETTE[scelta]?.ripara ? "SPAZIO RIPARA IL PIU USURATO   C CHIUDI" : "FRECCE SCEGLI   SPAZIO COSTRUISCI   C CHIUDI";
   testo.disegna(p, piede, x + Math.round((larghezza - testo.larghezza(piede)) / 2), y + altezza - 9, GRIGIO);
 }
 
@@ -498,8 +506,13 @@ export function disegnaRicette(p, { scelta, alBanco }) {
 // versione: chi raccoglieva legna non aveva modo di scoprire che serviva a
 // costruire, perché niente sullo schermo nominava il tasto. Un sistema che
 // non si trova è come se non ci fosse.
-export function disegnaPromemoria(p, barra, cosaInMano, allaPorta = false) {
+export function disegnaPromemoria(p, barra, cosaInMano, allaPorta = false, indice) {
   const righe = ["C  COSTRUIRE"];
+  const attrezzo = inventario.attrezzo(cosaInMano, indice);
+  if (attrezzo) {
+    const usi = inventario.usiRimasti(attrezzo);
+    righe.push(usi === 0 ? "ROTTO: RIPARA AL BANCO" : "DURATA " + usi + "/" + CATALOGO[cosaInMano].durata);
+  }
 
   // Il promemoria del mangiare compare solo con qualcosa di commestibile in
   // mano. È lo stesso difetto di prima in un'altra forma: un tasto che

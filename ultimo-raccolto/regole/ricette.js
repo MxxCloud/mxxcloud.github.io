@@ -24,6 +24,7 @@
 // mezz'ora una decisione — dove lo metto — invece di una lista della spesa.
 
 import * as inventario from "./inventario.js";
+import { CATALOGO } from "./oggetti.js";
 
 // L'ordine è quello in cui si incontrano: prima quello che si fa con le mani,
 // poi quello che vuole un banco. Non si mescolano, perché la prima cosa da
@@ -89,6 +90,11 @@ export const RICETTE = [
   },
 
   // --- al banco -----------------------------------------------------------
+  ...["ascia", "zappa", "lancia", "canna"].map(cosa => ({
+    id: "ripara_" + cosa, ripara: cosa, banco: true,
+    produce: { cosa, quante: 1 },
+    costo: [{ cosa: "pietra", quante: 1 }, { cosa: "fibra", quante: 2 }],
+  })),
   // Gli attrezzi passano di qui, ed è il cambiamento che si sente di più.
   // Prima l'ascia era la prima cosa che si faceva, in piedi in mezzo a un
   // prato; adesso è la seconda, e la prima è aver deciso dove stare.
@@ -180,7 +186,7 @@ export const RICETTE = [
 ];
 
 export function bastano(ricetta) {
-  return ricetta.costo.every((voce) => inventario.quante(voce.cosa) >= voce.quante);
+  return (!ricetta.ripara || Boolean(inventario.daRiparare(ricetta.ripara))) && ricetta.costo.every((voce) => inventario.quante(voce.cosa) >= voce.quante);
 }
 
 // Restituisce il motivo del rifiuto e non un no secco. I due modi di non
@@ -191,8 +197,16 @@ export function fai(ricetta, alBanco = false) {
   // Il banco prima dei materiali: chi sta in mezzo a un bosco con tutto il
   // necessario deve sentirsi dire che gli manca il posto, non la roba.
   if (ricetta.banco && !alBanco) return { fatto: false, perche: "banco" };
+  if (ricetta.ripara && !inventario.daRiparare(ricetta.ripara)) return { fatto: false, perche: "integro" };
   if (!bastano(ricetta)) return { fatto: false, perche: "materiali" };
 
+  if (ricetta.ripara) {
+    const attrezzo = inventario.daRiparare(ricetta.ripara);
+    for (const voce of ricetta.costo) inventario.togli(voce.cosa, voce.quante);
+    // Nessuna casella aggiuntiva: si ripara lo stesso oggetto, anche a zaino pieno.
+    attrezzo.usi = CATALOGO[attrezzo.cosa].durata;
+    return { fatto: true };
+  }
   if (!inventario.trasforma(ricetta.costo, ricetta.produce)) {
     return { fatto: false, perche: "zaino" };
   }
