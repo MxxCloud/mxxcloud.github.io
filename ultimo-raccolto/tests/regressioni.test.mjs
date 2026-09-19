@@ -28,6 +28,7 @@ import * as infetti from '../regole/infetti.js';
 import * as entita from '../entita/entita.js';
 import * as decadimento from '../regole/decadimento.js';
 import { OGGETTO, TERRENO } from '../mondo/generazione.js';
+import { CATALOGO } from '../regole/oggetti.js';
 import { vistaLibera, fattoreSuono } from '../mondo/ostacoli.js';
 import * as sprite from '../arte/sprite-cose.js';
 import { TAVOLOZZA } from '../arte/tavolozza.js';
@@ -619,8 +620,14 @@ test('ascia: sessanta colpi efficaci, poi resta rotta; si può continuare a mani
     if(i===47) assert.deepEqual(esito.usura,{cosa:'ascia',rotto:false});
     if(i===59) assert.deepEqual(esito.usura,{cosa:'ascia',rotto:true});
   }
-  assert.match(azioni.azionePossibile(eroe,'ascia',0).impedito,/riparalo al banco/);
-  assert.equal(azioni.agisci(eroe,'ascia',0),null);
+  // Rotta non toglie il gesto: vale come un pugno, quindi l'albero chiede i
+  // quattro colpi delle mani nude invece dei due dell'ascia, e non si consuma
+  // più niente perché non c'è più niente da consumare.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.ALBERO});
+  const dopo=azioni.azionePossibile(eroe,'ascia',0);
+  assert.ok(!dopo.impedito);assert.equal(dopo.restano,4);
+  assert.equal(azioni.agisci(eroe,'ascia',0).tipo,'colpo');
+  assert.equal(inventario.contenuto()[0].usi,0);
   assert.equal(inventario.quante('ascia'),1);
   assert.equal(azioni.agisci(eroe,null,7).tipo,'colpo');
 });
@@ -643,13 +650,15 @@ test('zappa: il terreno riuscito consuma un uso, ripetere o agire nel vuoto no',
   assert.equal(inventario.contenuto()[0].usi,0);
   assert.equal(azioni.agisci(eroe,'zappa',0),null);
 });
-test('lancia: consuma solo colpi a segno e a zero non danneggia',()=>{
+test('lancia: consuma solo colpi a segno, e rotta colpisce come un pugno',()=>{
   inventario.aggiungi('lancia',1,undefined,1);
   assert.equal(azioni.agisci(eroe,'lancia',0),null);
   assert.equal(inventario.contenuto()[0].usi,1);
   const nemico={tipo:'infetto',...pos(tx+1,ty),vita:5};entita.aggiungi(nemico);
   assert.equal(azioni.agisci(eroe,'lancia',0).tipo,'combattuto');assert.equal(nemico.vita,3);
-  assert.equal(azioni.agisci(eroe,'lancia',0),null);assert.equal(nemico.vita,3);
+  // A zero resta un bastone: un danno invece di due, e niente da consumare.
+  assert.equal(azioni.agisci(eroe,'lancia',0).tipo,'combattuto');assert.equal(nemico.vita,2);
+  assert.equal(inventario.contenuto()[0].usi,0);
 });
 test('prendere piante e aprire casse non consuma e funziona anche con attrezzo rotto',()=>{
   inventario.aggiungi('ascia',1,undefined,0);
@@ -689,7 +698,9 @@ test('riparazione a zaino pieno ripristina solo il più usurato, costa 1 pietra 
   inventario.aggiungi('pietra',5);inventario.aggiungi('fibra',8);inventario.aggiungi('zappa',4);
   assert.equal(inventario.pieno(),true);
   assert.equal(ricette.fai(riparazione('ascia'),true).fatto,true);
-  assert.equal(inventario.contenuto()[0].usi,9);assert.equal(inventario.contenuto()[1].usi,60);
+  // Riparata, non rifatta: cinquantaquattro invece di sessanta.
+  assert.equal(inventario.contenuto()[0].usi,9);assert.equal(inventario.contenuto()[1].usi,54);
+  assert.equal(inventario.massimoDi(inventario.contenuto()[1]),54);
   assert.equal(inventario.quante('pietra'),4);assert.equal(inventario.quante('fibra'),6);
   for(const cosa of ['zappa','lancia']) {
     const prima=structuredClone(inventario.contenuto());
@@ -697,13 +708,14 @@ test('riparazione a zaino pieno ripristina solo il più usurato, costa 1 pietra 
     assert.deepEqual(inventario.contenuto(),prima);
   }
 });
-test('ogni attrezzo nuovo e riparato ha la propria durata',()=>{
+test('ogni attrezzo nuovo ha la propria durata, e riparato ne perde un decimo',()=>{
   for(const [cosa,durata] of Object.entries({ascia:60,zappa:40,lancia:50,canna:20})) {
     inventario.svuota();inventario.aggiungi(cosa,1);
     assert.equal(inventario.contenuto()[0].usi,durata);
     inventario.contenuto()[0].usi=0;inventario.aggiungi('pietra',1);inventario.aggiungi('fibra',2);
     assert.equal(ricette.fai(riparazione(cosa),true).fatto,true);
-    assert.equal(inventario.contenuto()[0].usi,durata);
+    assert.equal(inventario.contenuto()[0].usi,Math.round(durata*0.9));
+    assert.equal(inventario.massimoDi(inventario.contenuto()[0]),Math.round(durata*0.9));
   }
 });
 test('usura conservata nel trasferimento in cassa e ritorno, incluso zero',()=>{
@@ -764,4 +776,103 @@ test('muro abbattuto rende 3 pietre; rocce e macerie mantengono le rese',()=>{
     for(let i=0;i<colpi;i++) azioni.agisci(eroe,null);
     assert.equal(inventario.quante('pietra'),pietre);
   }
+});
+test('sei riparazioni e poi va rifatta: il tetto scende di un decimo per volta',()=>{
+  inventario.aggiungi('ascia',1);inventario.aggiungi('pietra',20);inventario.aggiungi('fibra',20);
+  const tetti=[];
+  for(let i=0;i<10;i++) {
+    const attrezzo=inventario.contenuto()[0];
+    attrezzo.usi=0;
+    const esito=ricette.fai(riparazione('ascia'),true);
+    if(!esito.fatto) { assert.equal(esito.perche,'consumato');break; }
+    tetti.push(inventario.massimoDi(inventario.contenuto()[0]));
+  }
+  assert.deepEqual(tetti,[54,48,42,36,30,24]);
+  // Arrivata al minimo il tetto resta lì e nessuno la raddrizza più: da qui in
+  // avanti l'ascia non si ripara, si rifà.
+  assert.equal(inventario.massimoDi(inventario.contenuto()[0]),24);
+  assert.equal(ricette.fai(riparazione('ascia'),true).perche,'consumato');
+  // Sei riparazioni pagate e la settima rifiutata senza togliere niente.
+  assert.equal(inventario.quante('pietra'),14);
+  assert.equal(inventario.quante('fibra'),8);
+});
+test('la lancia davanti a un albero vale come le mani nude e non si consuma',()=>{
+  inventario.aggiungi('lancia',1);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.ALBERO});
+  assert.equal(azioni.azionePossibile(eroe,'lancia',0).restano,4);
+  for(let i=0;i<3;i++) assert.equal(azioni.agisci(eroe,'lancia',0).tipo,'colpo');
+  assert.equal(azioni.agisci(eroe,'lancia',0).tipo,'raccolto');
+  assert.equal(inventario.contenuto()[0].usi,50);
+});
+test('la zappa addosso a un infetto fa il danno di un pugno e non si consuma',()=>{
+  inventario.aggiungi('zappa',1);
+  const nemico={tipo:'infetto',...pos(tx+1,ty),vita:5};entita.aggiungi(nemico);
+  assert.equal(azioni.agisci(eroe,'zappa',0).tipo,'combattuto');
+  assert.equal(nemico.vita,4);assert.equal(inventario.contenuto()[0].usi,40);
+});
+test('una canna rotta non pesca, e non toglie il bere',()=>{
+  inventario.aggiungi('canna',1,undefined,0);
+  let riva=null;
+  for(let r=1;r<60&&!riva;r++) for(let dy=-r;dy<=r&&!riva;dy++) for(let dx=-r;dx<=r&&!riva;dx++) {
+    if(Math.max(Math.abs(dx),Math.abs(dy))!==r) continue;
+    const t=mappa.terrenoDi(tx+dx,ty+dy);
+    if(t===TERRENO.ACQUA||t===TERRENO.ACQUA_BASSA) riva={x:tx+dx,y:ty+dy};
+  }
+  assert.ok(riva,'nessuna acqua vicino alla fattoria');
+  eroe={...pos(riva.x-1,riva.y),guarda:'destra'};
+  const azione=azioni.azionePossibile(eroe,'canna',0);
+  assert.notEqual(azione?.tipo,'pesca');
+  bisogni.consuma?.('sete',0.5);
+  assert.ok(['bevi','riempi',undefined].includes(azione?.tipo));
+});
+test('gli attrezzi trovati nelle case arrivano usati, e sempre gli stessi',()=>{
+  let trovati=0;
+  for(let r=1;r<110&&trovati<2;r++) for(let dy=-r;dy<=r&&trovati<2;dy++) for(let dx=-r;dx<=r&&trovati<2;dx++) {
+    if(Math.max(Math.abs(dx),Math.abs(dy))!==r) continue;
+    const x=tx+dx,y=ty+dy;
+    if(mappa.oggettoGenerato(x,y)!==OGGETTO.CASSA) continue;
+    for(const c of contenitori.contenutoDi(x,y).filter(Boolean)) {
+      const durata=CATALOGO[c.cosa]?.durata;
+      if(durata===undefined) continue;
+      trovati++;
+      assert.ok(c.usi>=Math.round(durata*0.3)&&c.usi<=Math.round(durata*0.65),`${c.cosa} ${c.usi}/${durata}`);
+      // Riaprire la stessa cassa non rimescola niente.
+      assert.equal(contenitori.contenutoDi(x,y).find(v=>v?.cosa===c.cosa).usi,c.usi);
+    }
+  }
+  assert.ok(trovati>0,'nessun attrezzo nelle case entro cento tasselli');
+});
+test('il tetto sceso viaggia in cassa, per terra e nel salvataggio',()=>{
+  inventario.aggiungi('ascia',1,undefined,5,30);
+  assert.equal(inventario.massimoDi(inventario.contenuto()[0]),30);
+  assert.equal(azioni.getta(eroe,0).tipo,'gettato');
+  assert.equal(modifiche.di(tx+1,ty).massimo,30);
+  assert.equal(azioni.agisci(eroe,null).tipo,'preso');
+  assert.equal(inventario.massimoDi(inventario.contenuto()[0]),30);
+  const stato=salvataggio.istantanea(eroe,0);
+  assert.ok(salvataggio.applica(structuredClone(stato)));
+  assert.equal(inventario.massimoDi(inventario.contenuto()[0]),30);
+  // Un tetto impossibile è un salvataggio storto, e si rifiuta prima di toccare niente.
+  for(const valore of [0,61,12.5,'30']) {
+    const copia=structuredClone(stato);copia.inventario[0].massimo=valore;
+    assert.equal(salvataggio.applica(copia),null);
+  }
+  // E gli usi non possono superare il tetto dichiarato.
+  const oltre=structuredClone(stato);oltre.inventario[0].usi=31;
+  assert.equal(salvataggio.applica(oltre),null);
+});
+test('la maniglia del collaudo nomina solo cose che esistono davvero',()=>{
+  // Una prova statica, e sta qui per una ragione precisa: il difetto che ha
+  // tenuto ferma la maniglia per due tappe non era nella logica di gioco — che
+  // questi test coprono bene — ma nel ponte verso il collaudo dal browser, che
+  // non guardava nessuno. Si legge gioco.js, si prendono le chiavi abbreviate
+  // del blocco globalThis.ultimoRaccolto e si verifica che ognuna sia un nome
+  // che il file conosce.
+  const sorgente=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  const blocco=sorgente.slice(sorgente.indexOf('globalThis.ultimoRaccolto = {'));
+  const chiavi=[...blocco.matchAll(/^\s{4}([a-zA-Z_$][\w$]*),$/gm)].map(m=>m[1]);
+  assert.ok(chiavi.length>10,'blocco della maniglia non riconosciuto');
+  const dichiarati=new Set([...sorgente.matchAll(/import \* as ([\w$]+) from|^(?:let|const|function) ([\w$]+)/gm)]
+    .flatMap(m=>[m[1],m[2]]).filter(Boolean));
+  for(const chiave of chiavi) assert.ok(dichiarati.has(chiave),`la maniglia espone ${chiave}, che gioco.js non importa né dichiara`);
 });

@@ -54,7 +54,7 @@ export function mescolaDate(dalA, quanteA, dalB, quanteB) {
 // Mette in una fila di caselle e restituisce quante non ci sono entrate. Chi
 // raccoglie deve poter dire "zaino pieno" invece di far sparire la roba in
 // silenzio.
-export function mettiIn(fila, cosa, quantita, dal, usi) {
+export function mettiIn(fila, cosa, quantita, dal, usi, massimo) {
   const pila = CATALOGO[cosa]?.pila ?? 1;
   // Solo il cibo porta una data. Darla anche alla legna vorrebbe dire
   // scrivere nel salvataggio un numero per casella che non serve a nessuno.
@@ -80,7 +80,14 @@ export function mettiIn(fila, cosa, quantita, dal, usi) {
     if (fila[i]) continue;
     const messe = Math.min(pila, resto);
     fila[i] = deperibile ? { cosa, quantita: messe, dal: quando } : { cosa, quantita: messe };
-    if (CATALOGO[cosa]?.durata) fila[i].usi = usi ?? CATALOGO[cosa].durata;
+    if (CATALOGO[cosa]?.durata) {
+      // Il tetto si scrive solo se è sceso: un campo in più su ogni attrezzo
+      // nuovo sarebbe un numero per casella che non dice niente, e questo
+      // salvataggio è piccolo perché non scrive quello che si sa già.
+      const tetto = Math.min(CATALOGO[cosa].durata, massimo ?? CATALOGO[cosa].durata);
+      if (tetto < CATALOGO[cosa].durata) fila[i].massimo = tetto;
+      fila[i].usi = Math.min(tetto, usi ?? tetto);
+    }
     resto -= messe;
   }
 
@@ -103,8 +110,8 @@ export function spazioIn(fila, cosa) {
 // "dal" arriva da fuori per un caso solo ma importante: quello che si tira
 // fuori da una cassa deve conservare la sua età invece di tornare fresco,
 // altrimenti una cassa sarebbe una macchina per ringiovanire il cibo.
-export function aggiungi(cosa, quantita, dal, usi) {
-  return mettiIn(caselle, cosa, quantita, dal, usi);
+export function aggiungi(cosa, quantita, dal, usi, massimo) {
+  return mettiIn(caselle, cosa, quantita, dal, usi, massimo);
 }
 
 export function togli(cosa, quantita) {
@@ -175,7 +182,11 @@ export function ripristina(salvate) {
     // senza la data di accensione. Chi aveva messo via delle rape in un gioco
     // in cui non marcivano non deve ritrovarsele marce.
     if (typeof c.dal === "number") caselle[i].dal = c.dal;
-    if (CATALOGO[c.cosa]?.durata) caselle[i].usi = usiRimasti(c);
+    if (CATALOGO[c.cosa]?.durata) {
+      const tetto = massimoDi(c);
+      if (tetto < CATALOGO[c.cosa].durata) caselle[i].massimo = tetto;
+      caselle[i].usi = usiRimasti(c);
+    }
   }
 }
 
@@ -190,11 +201,43 @@ export function trasforma(costi, prodotto) {
   return true;
 }
 
+// --- l'usura ---------------------------------------------------------------
+
+// Quanto una riparazione toglie alla durata massima, e sotto quale soglia non
+// si ripara più. Sono frazioni della durata di partenza, così valgono per
+// tutti e quattro gli attrezzi senza quattro numeri da tenere allineati.
+//
+// UN ATTREZZO RIPARATO NON TORNA NUOVO, ed è la differenza fra un promemoria e
+// una regola. Con la riparazione piatta un'ascia era eterna: costava una
+// pietra a ciclo, cioè il due per cento di quello che quell'ascia produceva, e
+// la ricetta dell'ascia si usava una volta sola in tutta la partita. Adesso
+// ogni riparazione le toglie un decimo della lena di quando era nuova, e sotto
+// i due quinti non c'è più niente da raddrizzare: l'ascia va rifatta.
+//
+// Per l'ascia sono sei riparazioni — 60, 54, 48, 42, 36, 30, 24 — cioè
+// duecentonovantaquattro colpi in tutto invece di infiniti. Resta un attrezzo
+// che dura, ma smette di essere per sempre, che è quello che questo gioco
+// dice di sé fin dalla prima riga del README: cura contro entropia.
+const CALO = 0.1;
+const MINIMO = 0.4;
+
+const caloDi = (cosa) => Math.max(1, Math.round(CATALOGO[cosa].durata * CALO));
+const minimoDi = (cosa) => Math.max(1, Math.round(CATALOGO[cosa].durata * MINIMO));
+
+// La durata massima di questo esemplare: quella di catalogo finché non lo si
+// ripara. Sta sulla casella come gli usi, perché due asce nello stesso zaino
+// hanno due storie diverse.
+export function massimoDi(casella) {
+  const catalogo = CATALOGO[casella?.cosa]?.durata;
+  if (!catalogo) return null;
+  return Math.min(catalogo, casella.massimo ?? catalogo);
+}
+
 // La durata appartiene alla casella, non al tipo di attrezzo. I vecchi
 // salvataggi senza contatore ripartono con attrezzi integri.
 export function usiRimasti(casella) {
-  const massimo = CATALOGO[casella?.cosa]?.durata;
-  return massimo ? (casella.usi ?? massimo) : null;
+  const massimo = massimoDi(casella);
+  return massimo === null ? null : Math.min(massimo, casella.usi ?? massimo);
 }
 
 export function attrezzo(cosa, indice) {
@@ -207,13 +250,39 @@ export function usura(casella) {
   if (usi === null || usi <= 0) return null;
   casella.usi = usi - 1;
   if (casella.usi === 0) return { cosa: casella.cosa, rotto: true };
-  if (casella.usi === Math.floor(CATALOGO[casella.cosa].durata / 5))
+  // L'avviso arriva a un quinto di quello che questo esemplare regge adesso,
+  // non di quello che reggeva da nuovo: un'ascia riparata cinque volte deve
+  // avvisare quando è quasi finita lei, non quando lo sarebbe stata un'altra.
+  if (casella.usi === Math.floor(massimoDi(casella) / 5))
     return { cosa: casella.cosa, rotto: false };
   return null;
 }
 
-// Una riparazione riguarda il più usurato di quel tipo; a parità il primo.
+// Si ripara finché resta lena da raddrizzare. Sotto il minimo si dice di no e
+// non si toglie niente a nessuno: è il momento in cui l'attrezzo va rifatto.
+export function riparabile(casella) {
+  const massimo = massimoDi(casella);
+  if (massimo === null) return false;
+  return massimo - caloDi(casella.cosa) >= minimoDi(casella.cosa);
+}
+
+export function ripara(casella) {
+  if (!riparabile(casella)) return false;
+  casella.massimo = massimoDi(casella) - caloDi(casella.cosa);
+  casella.usi = casella.massimo;
+  return true;
+}
+
+// Una riparazione riguarda il più usurato di quel tipo; a parità il primo. Chi
+// è sceso sotto il minimo non è "il più usurato": è fuori gioco, e sceglierlo
+// vorrebbe dire non poter più riparare gli altri.
 export function daRiparare(cosa) {
-  return caselle.filter(c => c?.cosa === cosa && usiRimasti(c) < CATALOGO[cosa]?.durata)
-    .sort((a,b) => usiRimasti(a)-usiRimasti(b))[0] ?? null;
+  return caselle.filter(c => c?.cosa === cosa && usiRimasti(c) < massimoDi(c) && riparabile(c))
+    .sort((a, b) => usiRimasti(a) - usiRimasti(b))[0] ?? null;
+}
+
+// Ce n'è uno di quel tipo che è arrivato al capolinea? Serve a dire la
+// differenza fra "non c'è niente da riparare" e "non si ripara più".
+export function troppoConsumato(cosa) {
+  return caselle.some(c => c?.cosa === cosa && !riparabile(c));
 }

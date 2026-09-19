@@ -317,6 +317,28 @@ export const GELO = {
   volume: 0.07,
 };
 
+// Un attrezzo che si spezza.
+//
+// L'unica voce metallica del gioco, e deve esserlo: in una valle di legno,
+// pietra e fibra il metallo è la cosa che il superstite non sa rifare da
+// niente: quando sente questo suono ha appena perso un viaggio.
+//
+// Onda quadra e non rumore, al contrario di quasi tutto il resto di questo
+// file: un tonfo e uno schiocco sono rumore, ma il metallo che si spezza ha
+// un'altezza, e sono le armoniche dispari della quadra a farlo sentire
+// metallo invece che legno. Scende poco e in fretta, e poi resta a ronzare
+// mezzo secondo dentro un filtro stretto e risonante — la coda è la parte che
+// fa "clang" invece di "toc".
+export const ROTTURA = {
+  onda: "quadra",
+  da: 2400,
+  a: 1500,
+  attacco: 0.001,
+  coda: 0.55,
+  filtro: { tipo: "passabanda", taglio: 3000, a: 1800, risonanza: 9 },
+  volume: 0.3,
+};
+
 // La morte. Lunga, grave, e l'unica voce del gioco che si prende più di un
 // secondo: è anche l'unico momento in cui non c'è altro da ascoltare, perché
 // il mondo si ferma dietro la schermata.

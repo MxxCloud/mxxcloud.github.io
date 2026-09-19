@@ -173,8 +173,15 @@ const positivo = v => intero(v) && v >= 1;
 const livelloValido = v => Number.isFinite(v) && v >= 0 && v <= 1;
 const tipi = new Set(Object.values(OGGETTO));
 const presente = (v, k, verifica) => v[k] === undefined || verifica(v[k]);
+// Il tetto sceso dalle riparazioni si controlla come gli usi, e gli usi non
+// possono superarlo: un salvataggio che dichiara più lena di quanta
+// l'attrezzo ne possa avere è storto, e va rifiutato prima di toccare la
+// partita — non dopo.
 function usiValidi(c) {
-  return presente(c, "usi", n => intero(n) && n >= 0 && n <= (CATALOGO[c.cosa]?.durata ?? -1));
+  const durata = CATALOGO[c.cosa]?.durata ?? -1;
+  if (!presente(c, "massimo", n => intero(n) && n >= 1 && n <= durata)) return false;
+  const tetto = c.massimo ?? durata;
+  return presente(c, "usi", n => intero(n) && n >= 0 && n <= tetto);
 }
 function casellaValida(c) {
   return c === null || (oggetto(c) && Object.hasOwn(CATALOGO, c.cosa) && positivo(c.quantita)

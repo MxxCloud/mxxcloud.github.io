@@ -31,6 +31,13 @@ import * as orto from "./regole/orto.js";
 import * as stagioni from "./regole/stagioni.js";
 import * as salvataggio from "./regole/salvataggio.js";
 import * as simulazione from "./regole/simulazione.js";
+// Questi due non li usa il ciclo di gioco — se ne occupa simulazione.js — ma
+// li espone la maniglia del collaudo in fondo al file. Sono rimasti elencati
+// lì senza essere importati da M7.5.1 in poi, e il risultato era che aprire il
+// gioco con ?diagnostica lanciava un ReferenceError e la maniglia non nasceva:
+// il gioco si vedeva bene e nessuna prova dai tasti veri poteva più girare.
+import * as decadimento from "./regole/decadimento.js";
+import * as ricrescita from "./regole/ricrescita.js";
 import * as pesca from "./regole/pesca.js";
 import * as acqua from "./regole/acqua.js";
 import * as meteo from "./regole/meteo.js";
@@ -43,7 +50,7 @@ import { FIORI } from "./arte/sprite-fiori.js";
 // nello stesso file sono l'errore che si scopre tardi.
 import {
   colpoDi, MORSO, COLPO_A_SEGNO, CADUTO, ZAPPA, SEMINA, ACQUA, SORSO, MANGIA,
-  BENDA, POSA, SCELTA, FATTO, NEGATO, PRESO, GELO, MORTE, COPERCHIO,
+  BENDA, POSA, SCELTA, FATTO, NEGATO, PRESO, GELO, MORTE, COPERCHIO, ROTTURA,
 } from "./arte/voci.js";
 import * as inventario from "./regole/inventario.js";
 import * as azioni from "./regole/azioni.js";
@@ -61,7 +68,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.8";
+const VERSIONE = "M7.8.1";
 
 // --- elementi -------------------------------------------------------------
 
@@ -684,9 +691,16 @@ function leggiLeRicette() {
   const ricetta = RICETTE[ricettaScelta];
   const esito = fai(ricetta, alBanco);
   suono.suona(esito.fatto ? FATTO : NEGATO);
-  if (esito.fatto) annuncia(`${ricetta.ripara ? "riparato" : "fatto"}: ${nomeDi(ricetta.produce.cosa)}`, "#9ec97e");
+  if (esito.fatto) {
+    // Riparando si dice anche quanto regge adesso: una riparazione che non
+    // torna al numero di prima va detta, altrimenti sembra un errore del
+    // gioco la prima volta che si guarda la barra.
+    const quanto = ricetta.ripara ? ` (tiene ${esito.massimo})` : "";
+    annuncia(`${ricetta.ripara ? "riparato" : "fatto"}: ${nomeDi(ricetta.produce.cosa)}${quanto}`, "#9ec97e");
+  }
   else if (esito.perche === "banco") annuncia("questo vuole un banco da lavoro", "#c9b189");
   else if (esito.perche === "integro") annuncia("nessun attrezzo da riparare di questo tipo", "#c9b189");
+  else if (esito.perche === "consumato") annuncia("troppo consumato: va rifatto", "#c0705f");
   else if (esito.perche === "zaino") annuncia("zaino pieno: getta qualcosa con G", "#c0705f");
   else annuncia("materiali insufficienti", "#c0705f");
 }
@@ -1032,7 +1046,17 @@ function leggiComandi() {
 }
 
 function avvisaUsura(usura) {
-  if (usura) annuncia(`${nomeDi(usura.cosa)}: ${usura.rotto ? "rotto" : "quasi rotto"}, ripara al banco`, "#c0705f");
+  if (!usura) return;
+  // Il messaggio dice cosa è successo, il suono dice che è successo: è la
+  // regola di tutto il gioco, e qui conta il doppio — un attrezzo si rompe nel
+  // mezzo di un gesto, cioè mentre si sta guardando altro.
+  if (usura.rotto) suono.suona(ROTTURA);
+  annuncia(
+    usura.rotto
+      ? `${nomeDi(usura.cosa)}: rotto, vale come le mani nude`
+      : `${nomeDi(usura.cosa)}: quasi rotto, ripara al banco`,
+    "#c0705f"
+  );
 }
 
 // --- ciclo ----------------------------------------------------------------

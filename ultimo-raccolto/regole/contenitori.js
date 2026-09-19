@@ -87,6 +87,15 @@ const BOTTINO_FATTORIA = [
   { cosa: "bacche_secche", da: 1, a: 3, peso: 1 },
 ];
 
+// Quanto ne resta a un attrezzo lasciato lì da qualcun altro. Dal generatore
+// della cassa e non da un tiro nuovo, come tutto il resto del bottino: la
+// stessa cassa dà sempre la stessa ascia, con la stessa lena dentro.
+function usiTrovati(cosa, caso) {
+  const durata = CATALOGO[cosa]?.durata;
+  if (durata === undefined) return undefined;
+  return Math.max(1, Math.round(durata * (0.3 + caso() * 0.35)));
+}
+
 const pesoDi = (tavola) => tavola.reduce((somma, v) => somma + v.peso, 0);
 const PESO_TOTALE = pesoDi(BOTTINO);
 
@@ -135,7 +144,13 @@ function bottinoDi(tx, ty) {
     // Si passa da mettiIn come tutto il resto: impila come lo zaino, e al cibo
     // mette la data di oggi — quello che trovi è quello che si è conservato
     // fin qui, non quello che è marcito mentre non guardavi.
-    inventario.mettiIn(fila, voce.cosa, n);
+    //
+    // Gli attrezzi però no: quelli si trovano usati. Un'ascia nuova di zecca
+    // in fondo a una cassa di casa d'altri è la cosa che sgonfia da sola la
+    // tappa dell'usura — frugare renderebbe sempre più che riparare, e il
+    // banco tornerebbe a servire una volta sola. Fra un terzo e due terzi di
+    // quello che regge da nuova: serve ancora, e non ti risolve la stagione.
+    inventario.mettiIn(fila, voce.cosa, n, undefined, usiTrovati(voce.cosa, caso));
   }
   return fila;
 }
@@ -212,7 +227,7 @@ export function sposta(tx, ty, versoLaCassa, indice) {
   if (versoLaCassa) {
     const casella = inventario.contenuto()[indice];
     if (!casella) return null;
-    const resto = inventario.mettiIn(fila, casella.cosa, casella.quantita, casella.dal, casella.usi);
+    const resto = inventario.mettiIn(fila, casella.cosa, casella.quantita, casella.dal, casella.usi, casella.massimo);
     if (resto === casella.quantita) return { tipo: "pieno" };
     // Si toglie dallo zaino esattamente quello che è entrato, e il resto resta
     // dov'è: svuotare la casella e poi rimetterci l'avanzo la sposterebbe
@@ -226,7 +241,7 @@ export function sposta(tx, ty, versoLaCassa, indice) {
 
   const casella = fila[indice];
   if (!casella) return null;
-  const resto = inventario.aggiungi(casella.cosa, casella.quantita, casella.dal, casella.usi);
+  const resto = inventario.aggiungi(casella.cosa, casella.quantita, casella.dal, casella.usi, casella.massimo);
   if (resto === casella.quantita) return { tipo: "pieno" };
   if (resto === 0) fila[indice] = null;
   else casella.quantita = resto;

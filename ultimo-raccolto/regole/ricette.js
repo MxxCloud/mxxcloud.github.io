@@ -24,7 +24,6 @@
 // mezz'ora una decisione — dove lo metto — invece di una lista della spesa.
 
 import * as inventario from "./inventario.js";
-import { CATALOGO } from "./oggetti.js";
 
 // L'ordine è quello in cui si incontrano: prima quello che si fa con le mani,
 // poi quello che vuole un banco. Non si mescolano, perché la prima cosa da
@@ -197,15 +196,21 @@ export function fai(ricetta, alBanco = false) {
   // Il banco prima dei materiali: chi sta in mezzo a un bosco con tutto il
   // necessario deve sentirsi dire che gli manca il posto, non la roba.
   if (ricetta.banco && !alBanco) return { fatto: false, perche: "banco" };
-  if (ricetta.ripara && !inventario.daRiparare(ricetta.ripara)) return { fatto: false, perche: "integro" };
+  if (ricetta.ripara && !inventario.daRiparare(ricetta.ripara)) {
+    // Due no diversi, e vanno detti diversi: "non c'è niente da riparare" si
+    // risolve aspettando di usarlo, "non si ripara più" si risolve rifacendolo.
+    return { fatto: false, perche: inventario.troppoConsumato(ricetta.ripara) ? "consumato" : "integro" };
+  }
   if (!bastano(ricetta)) return { fatto: false, perche: "materiali" };
 
   if (ricetta.ripara) {
     const attrezzo = inventario.daRiparare(ricetta.ripara);
     for (const voce of ricetta.costo) inventario.togli(voce.cosa, voce.quante);
-    // Nessuna casella aggiuntiva: si ripara lo stesso oggetto, anche a zaino pieno.
-    attrezzo.usi = CATALOGO[attrezzo.cosa].durata;
-    return { fatto: true };
+    // Nessuna casella aggiuntiva: si ripara lo stesso oggetto, anche a zaino
+    // pieno. E non torna nuovo: ogni riparazione gli toglie un pezzo di quello
+    // che reggeva (vedi inventario.js), finché non resta che rifarlo.
+    inventario.ripara(attrezzo);
+    return { fatto: true, massimo: inventario.massimoDi(attrezzo) };
   }
   if (!inventario.trasforma(ricetta.costo, ricetta.produce)) {
     return { fatto: false, perche: "zaino" };
