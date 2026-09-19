@@ -12,6 +12,40 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.9 — caccia nelle praterie
+
+La fauna nasce nelle radure di erba e sterpaglia, fuori dall'inquadratura:
+al massimo **2 animali vivi nei dintorni**, un tentativo di arrivo ogni
+**40 secondi** (primo dopo 12). Gli infetti possono essere 5 nella notte.
+Gli animali restano anche di giorno e nessuno è cavalcabile.
+
+| Specie | Comportamento | Carne / pelli |
+| --- | --- | --- |
+| Cavallo | Fugge entro 60 pixel; mai aggressivo, neanche se ferito | 4 / 2 |
+| Cervo | Entro 48 pixel per 5 secondi: 35% di attacco, altrimenti fugge | 3 / 1 |
+| Bufalo | Entro 48 pixel per 5 secondi: 55% di attacco, altrimenti fugge | 6 / 3 |
+| Orso | Attacca sempre quando ti vede entro 64 pixel | 5 / 3 |
+
+Cervi e bufali diventano inquieti prima di decidere. Allontanarsi o perdere
+la linea di vista interrompe il conteggio; colpirli provoca una reazione
+immediata. Anche l'orso reagisce se ferito. Muri e porte chiuse impediscono
+vista e attacchi. Gli animali non sfondano i muri, non infettano e perdono
+l'interesse se riesci a distanziarli. La neve rallenta anche loro.
+
+Si caccia con il normale comando Spazio: ascia e lancia consumano usi come
+nel combattimento con gli infetti. Un attrezzo rotto vale ancora come un pugno.
+Abbattere un animale lascia una **carcassa**, senza loot automatico. Per
+macellarla occorrono **3 colpi con un'ascia funzionante**, un uso per colpo.
+Finita la macellazione, il bottino che non entra nello zaino resta sulla
+carcassa e si raccoglie con Spazio anche senza attrezzo.
+
+Carne cruda: 15% fame, durata 2 giorni; arrostita sul falò: 45%, durata
+4 giorni. Le pelli sono impilabili a 20 e non deperiscono; questa tappa le
+rende raccoglibili, senza aggiungere ancora ricette di lavorazione.
+Le carcasse spariscono al secondo cambio di giorno, come la carne cruda: macellare tardi non
+ringiovanisce la carne. Vivi feriti, temperamento, carcasse e raccolta parziale
+si salvano, evitando di duplicare il bottino ricaricando una partita.
+
 ## M7.8.1 — un attrezzo rotto è un pugno, e riparato non torna nuovo
 
 Tre correzioni alla tappa dell'usura, e una regola nuova su cosa si consuma.

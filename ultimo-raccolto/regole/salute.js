@@ -56,6 +56,7 @@ export const CAUSE = {
   stanchezza: "di sfinimento",
   freddo: "di freddo",
   infetti: "sbranato",
+  animali: "ucciso da un animale",
   infezione: "d'infezione",
 };
 
@@ -70,7 +71,7 @@ let esposizioneFreddo = 0;
 // da dieci secondi è morto di fame, anche se l'ultimo colpo l'ha dato la
 // sete. Nominare l'ultima causa sarebbe più facile da scrivere e più facile
 // da sbagliare.
-const danni = { fame: 0, sete: 0, stanchezza: 0, freddo: 0, infetti: 0, infezione: 0 };
+const danni = { fame: 0, sete: 0, stanchezza: 0, freddo: 0, infetti: 0, animali: 0, infezione: 0 };
 
 export function livelloCorrente() {
   return livello;
