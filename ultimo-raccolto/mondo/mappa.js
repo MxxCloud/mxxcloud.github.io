@@ -58,6 +58,11 @@ const CATALOGO_OGGETTI = {
     fotogrammi: coseArte.FALO_ACCESO,
     solido: true,
     luce: { raggio: 64, intensita: 1 },
+    // Il falò è l'unica cosa che scalda, ed è per questo che "scalda" è un
+    // campo suo invece della luce. Una torcia illumina e non riscalda: fin qui
+    // le due cose erano lo stesso campo, e una torcia piantata scaldava come un
+    // fuoco perché nessuno aveva mai avuto bisogno di distinguerle.
+    scalda: true,
   },
   [OGGETTO.FALO_SPENTO]: { sprite: coseArte.FALO_SPENTO, solido: false },
 
@@ -245,6 +250,10 @@ export function impostaGelo(attivo) {
   if (gelo === attivo) return false;
   gelo = attivo; settori.clear(); return true;
 }
+// Sta gelando? La pone il pozzo, che deve ghiacciare insieme agli stagni e non
+// per conto suo: due calendari che decidono la stessa cosa prima o poi si
+// contraddicono, e il giorno che succede è il giocatore a doverlo capire.
+export function gelato() { return gelo; }
 export function terrenoNaturaleDi(tx, ty) { return terrenoIn(tx, ty, seme); }
 export function terrenoDi(tx, ty) {
   const t = terrenoNaturaleDi(tx, ty);
@@ -300,11 +309,11 @@ export function scordaSettori() {
 // serve che sia una domanda sul mondo e non sull'inquadratura: lumiVisibili()
 // risponderebbe quasi sempre uguale e ogni tanto no, perché dipende da dove
 // sta la camera — cioè una regola di sopravvivenza decisa dal disegno.
-export function luceVicina(tx, ty, raggio) {
+export function fuocoVicino(tx, ty, raggio) {
   for (let dy = -raggio; dy <= raggio; dy += 1) {
     for (let dx = -raggio; dx <= raggio; dx += 1) {
       const oggetto = oggettoDi(tx + dx, ty + dy);
-      if (oggetto !== OGGETTO.NESSUNO && CATALOGO_OGGETTI[oggetto].luce) return true;
+      if (oggetto !== OGGETTO.NESSUNO && CATALOGO_OGGETTI[oggetto].scalda) return true;
     }
   }
   return false;

@@ -30,6 +30,7 @@ import * as modifiche from '../mondo/modifiche.js';
 import * as salvataggio from '../regole/salvataggio.js';
 import * as riparo from '../regole/riparo.js';
 import * as freddo from '../regole/freddo.js';
+import * as fiamma from '../regole/fiamma.js';
 import * as fauna from '../regole/fauna.js';
 import * as arteFauna from '../arte/sprite-fauna.js';
 import * as infetti from '../regole/infetti.js';
@@ -43,6 +44,7 @@ import { TAVOLOZZA } from '../arte/tavolozza.js';
 
 let tx, ty, eroe;
 function reset() {
+  fiamma.reimposta();
   fauna.reimposta();
   meteo.reimposta();
   pesca.interrompi(); mappa.impostaGelo(false);
@@ -350,10 +352,10 @@ test('coltura bagnata cresce una sola volta per mezzanotte',()=>{
 });
 test('il gelo viene applicato nel recupero e cessato nel riparo',()=>{
   tempo.impostaGiorno(9);tempo.impostaOra(22);
-  simulazione.avanza(10,{alFreddo:()=>freddo.alFreddo(eroe,null)});
+  simulazione.avanza(10,{alFreddo:()=>freddo.alFreddo(eroe)});
   vicino(salute.livelloCorrente(),1-10/225);
   stanza();modifiche.imposta(tx-1,ty,{oggetto:OGGETTO.FALO_ACCESO});salute.reimposta();
-  simulazione.avanza(10,{alFreddo:()=>freddo.alFreddo(eroe,null)});
+  simulazione.avanza(10,{alFreddo:()=>freddo.alFreddo(eroe)});
   assert.equal(salute.livelloCorrente(),1);
 });
 test('getta e riprendi non ringiovaniscono il cibo',()=>{
@@ -452,7 +454,7 @@ test('non si colpisce con la lancia attraverso un muro',()=>{
 function chiuso() { riparo.aggiorna(0,tx,ty); return riparo.alChiuso(); }
 test('muri e porta chiusa delimitano la stanza, ma senza fuoco resta fredda',()=>{
   stanza();tempo.impostaGiorno(9);tempo.impostaOra(22);
-  assert.equal(chiuso(),true);assert.equal(freddo.alFreddo(eroe,null),true);
+  assert.equal(chiuso(),true);assert.equal(freddo.alFreddo(eroe),true);
   modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.PORTA_APERTA});assert.equal(chiuso(),false);
 });
 test('il fuoco riscalda tutta la stanza finché la porta è chiusa',()=>{
@@ -461,8 +463,8 @@ test('il fuoco riscalda tutta la stanza finché la porta è chiusa',()=>{
   modifiche.imposta(tx+4,ty,{oggetto:OGGETTO.PORTA});
   modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.FALO_ACCESO});
   eroe={...eroe,...pos(tx+2,ty)};tempo.impostaGiorno(9);tempo.impostaOra(22);
-  assert.equal(freddo.alFreddo(eroe,null),false);
-  modifiche.imposta(tx+4,ty,{oggetto:OGGETTO.PORTA_APERTA});assert.equal(freddo.alFreddo(eroe,null),true);
+  assert.equal(freddo.alFreddo(eroe),false);
+  modifiche.imposta(tx+4,ty,{oggetto:OGGETTO.PORTA_APERTA});assert.equal(freddo.alFreddo(eroe),true);
 });
 test('rompere il muro invalida immediatamente il riparo',()=>{
   stanza();assert.equal(chiuso(),true);
@@ -733,27 +735,27 @@ test('la pioggia durante un’assenza fa crescere l’orto alla mezzanotte giust
   assert.equal(modifiche.di(tx,ty).bagnato,undefined);
 });
 test('pioggia inzuppa in venti secondi e raffredda anche di giorno',()=>{
-  maltempo('pioggia');assert.equal(freddo.alFreddo(eroe,null),false);
-  meteo.avanza(9,eroe);assert.equal(freddo.alFreddo(eroe,null),false);
-  meteo.avanza(11,eroe);assert.equal(meteo.livelloBagnato(),1);assert.equal(freddo.alFreddo(eroe,null),true);
-  assert.equal(freddo.alFreddo(eroe,'torcia'),false);
+  maltempo('pioggia');assert.equal(freddo.alFreddo(eroe),false);
+  meteo.avanza(9,eroe);assert.equal(freddo.alFreddo(eroe),false);
+  meteo.avanza(11,eroe);assert.equal(meteo.livelloBagnato(),1);assert.equal(freddo.alFreddo(eroe),true);
+  assert.equal(freddo.alFreddo(eroe),true,'la torcia in mano non scalda più');
 });
 test('copertura impedisce di bagnarsi; fuoco coperto asciuga più in fretta',()=>{
   stanza();maltempo('pioggia');meteo.avanza(30,eroe);assert.equal(meteo.livelloBagnato(),0);
   meteo.ripristina(1);meteo.avanza(10,eroe);vicino(meteo.livelloBagnato(),0.75);
   modifiche.imposta(tx-1,ty,{oggetto:OGGETTO.FALO_ACCESO});meteo.aggiornaMondo();
-  meteo.avanza(10,eroe);assert.equal(meteo.livelloBagnato(),0);assert.equal(freddo.alFreddo(eroe,null),false);
+  meteo.avanza(10,eroe);assert.equal(meteo.livelloBagnato(),0);assert.equal(freddo.alFreddo(eroe),false);
 });
 test('pioggia: simulazione a fotogrammi e recupero concordano su acqua e salute',()=>{
   maltempo('pioggia');
-  for(let i=0;i<30*60;i++)simulazione.avanza(1/60,{eroe,alFreddo:()=>freddo.alFreddo(eroe,null)});
+  for(let i=0;i<30*60;i++)simulazione.avanza(1/60,{eroe,alFreddo:()=>freddo.alFreddo(eroe)});
   const prima=salute.livelloCorrente(),bagnato=meteo.livelloBagnato();
-  reset();maltempo('pioggia');simulazione.avanza(30,{eroe,alFreddo:()=>freddo.alFreddo(eroe,null)});
+  reset();maltempo('pioggia');simulazione.avanza(30,{eroe,alFreddo:()=>freddo.alFreddo(eroe)});
   vicino(salute.livelloCorrente(),prima);vicino(meteo.livelloBagnato(),bagnato);
 });
 test('neve rallenta allo scoperto e causa freddo diurno; il riparo protegge',()=>{
-  maltempo('neve');assert.equal(meteo.fattoreVelocita(eroe),0.72);assert.equal(freddo.alFreddo(eroe,null),true);
-  stanza();assert.equal(meteo.fattoreVelocita(eroe),1);assert.equal(freddo.alFreddo(eroe,null),false);
+  maltempo('neve');assert.equal(meteo.fattoreVelocita(eroe),0.72);assert.equal(freddo.alFreddo(eroe),true);
+  stanza();assert.equal(meteo.fattoreVelocita(eroe),1);assert.equal(freddo.alFreddo(eroe),false);
 });
 test('il sonno esposto alla pioggia non evita bagnato e freddo',()=>{
   maltempo('pioggia');modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GIACIGLIO});tempo.impostaOra(22);
@@ -1393,4 +1395,72 @@ test('un giaciglio di pelli sopravvive a salva e carica',()=>{
   modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.NESSUNO});
   assert.ok(salvataggio.applica(stato));
   assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.GIACIGLIO_PELLI);
+});
+
+test('la torcia illumina ma non scalda: né in mano, né piantata, né al chiuso',()=>{
+  tempo.impostaGiorno(9);tempo.impostaOra(3);
+  inventario.aggiungi('torcia',1);
+  assert.equal(freddo.alFreddo(eroe),true,'notte invernale, torcia in mano');
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.TORCIA_PIANTATA});
+  assert.equal(freddo.alFreddo(eroe),true,'né piantata accanto');
+  stanza();modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.TORCIA_PIANTATA});
+  assert.equal(freddo.alFreddo(eroe),true,'né dentro una stanza chiusa');
+  // Quello che scalda resta il fuoco vero, e questa è la regressione del
+  // passaggio da luceVicina() a fuocoVicino().
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FALO_ACCESO});
+  assert.equal(freddo.alFreddo(eroe),false,'il falò sì');
+});
+test('la torcia accesa si consuma, la pila scala, e nello zaino non brucia',()=>{
+  inventario.aggiungi('torcia',2);
+  assert.equal(inventario.contenuto()[0].usi,60);
+  assert.deepEqual(fiamma.avanza(5,'legna',0),[],'quello che non fa luce non brucia');
+  assert.deepEqual(fiamma.avanza(5,null,0),[],'e nemmeno le mani vuote');
+  assert.equal(inventario.contenuto()[0].usi,60,'la torcia nello zaino è intatta');
+  for(let i=0;i<59;i++) assert.deepEqual(fiamma.avanza(5,'torcia',0),[]);
+  assert.equal(inventario.contenuto()[0].usi,1);
+  assert.deepEqual(fiamma.avanza(5,'torcia',0),[{cosa:'torcia',finita:true,ancora:1}]);
+  assert.equal(inventario.quante('torcia'),1);
+  assert.equal(inventario.contenuto()[0].usi,60,'ne comincia un\'altra intera');
+  for(let i=0;i<59;i++) fiamma.avanza(5,'torcia',0);
+  assert.deepEqual(fiamma.avanza(5,'torcia',0),[{cosa:'torcia',finita:true,ancora:0}]);
+  assert.equal(inventario.quante('torcia'),0,'finita la pila, finita la casella');
+});
+test('il ritmo della fiamma non dipende dai fotogrammi',()=>{
+  inventario.aggiungi('torcia',1);
+  for(let i=0;i<300;i++) fiamma.avanza(1/60,'torcia',0);
+  assert.equal(inventario.contenuto()[0].usi,59,'cinque secondi sono un uso, comunque li conti');
+});
+test('il pozzo gela d’inverno e torna a dare acqua col disgelo',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.POZZO});
+  bisogni.ripristina({fame:1,sete:0.3,stanchezza:1});
+  inventario.aggiungi('secchio',1);
+  assert.equal(azioni.azionePossibile(eroe,null).tipo,'bevi');
+  assert.equal(azioni.azionePossibile(eroe,'secchio').impedito,null);
+  tempo.impostaGiorno(9);acqua.aggiorna();
+  assert.match(azioni.azionePossibile(eroe,null).impedito,/gelato/);
+  assert.match(azioni.azionePossibile(eroe,'secchio').impedito,/gelato/);
+  assert.equal(azioni.agisci(eroe,null),null,'e premere non fa niente');
+  vicino(bisogni.livello('sete'),0.3);
+  tempo.impostaGiorno(13);acqua.aggiorna();
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,null,'il disgelo lo riapre');
+  assert.equal(azioni.agisci(eroe,null).tipo,'bevi');
+});
+
+test('la valle resta più natura che costruito, e il conto è misurato non dichiarato',()=>{
+  const R=12;
+  let celle=0,case_=0,luoghi=0;
+  for(const seme of ['valle-1','prova']) {
+    mappa.inizializza(seme);
+    for(let cy=-R;cy<=R;cy++)for(let cx=-R;cx<=R;cx++) {
+      celle++;
+      const c=mappa.rovinaNellaCella(cx,cy);
+      if(!c) continue;
+      c.luogo ? luoghi++ : case_++;
+    }
+  }
+  const pc=n=>100*n/celle, natura=pc(celle-case_-luoghi);
+  // Le rovine non si toccano: è la riga che protegge i mondi già in gioco.
+  assert.ok(pc(case_)>22 && pc(case_)<27,`rovine ${pc(case_).toFixed(1)}%`);
+  assert.ok(pc(luoghi)>28 && pc(luoghi)<34,`luoghi ${pc(luoghi).toFixed(1)}%`);
+  assert.ok(natura>42,`natura ${natura.toFixed(1)}%: la valle si sta riempiendo`);
 });

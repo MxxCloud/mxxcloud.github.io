@@ -245,6 +245,27 @@ export function attrezzo(cosa, indice) {
   return c?.cosa === cosa && CATALOGO[cosa]?.durata ? c : null;
 }
 
+// Quello che brucia invece di smussarsi. È diverso dall'usura di un attrezzo
+// per due motivi, ed è per questo che non è la stessa funzione: un'ascia
+// consumata resta in mano e vale come un pugno, una torcia consumata non c'è
+// più; e una casella di torce è una pila, quindi quando finisce quella accesa
+// ne comincia un'altra invece di svuotare la casella.
+//
+// La barra sotto l'icona misura la torcia accesa, il numero dice quante ne
+// restano. Sono due informazioni diverse nello stesso posto, ed è l'unico modo
+// onesto di mostrare una pila di cose che si consumano una per volta.
+export function brucia(indice) {
+  const c = caselle[indice];
+  const massimo = massimoDi(c);
+  if (massimo === null) return null;
+  const restano = usiRimasti(c) - 1;
+  if (restano > 0) { c.usi = restano; return { cosa: c.cosa, finita: false }; }
+  const cosa = c.cosa;
+  if (c.quantita > 1) { c.quantita -= 1; c.usi = massimo; return { cosa, finita: true, ancora: c.quantita }; }
+  caselle[indice] = null;
+  return { cosa, finita: true, ancora: 0 };
+}
+
 export function usura(casella) {
   const usi = usiRimasti(casella);
   if (usi === null || usi <= 0) return null;

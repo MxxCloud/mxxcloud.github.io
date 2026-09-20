@@ -23,6 +23,7 @@ import * as riposo from "./regole/riposo.js";
 import * as bisogni from "./regole/bisogni.js";
 import * as salute from "./regole/salute.js";
 import * as freddo from "./regole/freddo.js";
+import * as fiamma from "./regole/fiamma.js";
 import * as fauna from "./regole/fauna.js";
 import * as infetti from "./regole/infetti.js";
 import * as riparo from "./regole/riparo.js";
@@ -70,7 +71,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.11";
+const VERSIONE = "M7.11.1";
 
 // --- elementi -------------------------------------------------------------
 
@@ -237,6 +238,7 @@ function nuovoSuperstite() {
   // insieme a loro: senza, l'esclamativo resterebbe acceso per un fotogramma
   // addosso a un superstite che non esisteva ancora.
   infetti.svuota();
+  fiamma.reimposta();
   // Anche il riparo: la stanza in cui si stava non è la stanza in cui ci si
   // risveglia, e tenersela vorrebbe dire un superstite nuovo che non gela in
   // mezzo a un prato.
@@ -521,6 +523,7 @@ function riprendi(ripreso) {
   // allo stato che avrebbe appena creata — niente passo a metà, niente
   // direzione ereditata dalla partita di prima.
   infetti.svuota();
+  fiamma.reimposta();
   // E il riparo, per la stessa ragione: la stanza in cui si stava non è quella
   // della partita che si sta aprendo, e tenersela vorrebbe dire un caricamento
   // che per mezzo secondo non gela in mezzo alla neve.
@@ -1079,7 +1082,7 @@ function completaSvenimento() {
   const rimasto = riposo.secondiDiSonno();
   if (rimasto <= 0 || salute.eMorto()) return false;
   pesca.interrompi();
-  simulazione.avanza(rimasto, { eroe, alFreddo: () => freddo.alFreddo(eroe, null) });
+  simulazione.avanza(rimasto, { eroe, alFreddo: () => freddo.alFreddo(eroe) });
   return true;
 }
 
@@ -1114,21 +1117,30 @@ function aggiorna(passo) {
       annuncia(riparo.alChiuso() ? "sei al chiuso" : "sei allo scoperto", "#c9b189");
     }
 
+    for (const fine of fiamma.avanza(passo, cosaInMano(), casellaScelta)) {
+      suono.suona(POSA);
+      annuncia(fine.ancora ? `${nomeDi(fine.cosa)} consumata: ne accendi un'altra`
+        : `${nomeDi(fine.cosa)} si è spenta`, "#c9b189");
+    }
+
     const primaGelava = gelando;
     const primaVuoti = new Set(bisogni.vuoti());
     simulazione.avanza(passo, {
       eroe,
       corre: eroe.correndo, siMuove: eroe.inMovimento,
-      alFreddo: () => freddo.alFreddo(eroe, riposo.secondiDiSonno() > 0 ? null : cosaInMano()),
+      alFreddo: () => freddo.alFreddo(eroe),
     });
     haDormito = completaSvenimento() || haDormito;
     for (const vuoto of bisogni.vuoti()) {
       if (vuoto !== "stanchezza" && !primaVuoti.has(vuoto)) annuncia(AVVISI_BISOGNI[vuoto], "#c0705f");
     }
-    gelando = freddo.alFreddo(eroe, cosaInMano());
+    gelando = freddo.alFreddo(eroe);
     if (gelando && !primaGelava) {
       suono.suona(GELO);
-      annuncia("stai gelando: serve una fiamma", "#8fa8d8");
+      // "Una fiamma" era vero finché bastava la torcia. Adesso scaldano solo
+      // il fuoco per terra e la stanza che ne contiene uno, e un messaggio che
+      // dice una cosa che non funziona più è peggio di nessun messaggio.
+      annuncia("stai gelando: serve un fuoco", "#8fa8d8");
     }
 
     // Il chiasso dopo il movimento, perché dipende da come ci si è appena
@@ -1579,7 +1591,7 @@ function recuperaIlTempoPerso(secondiSaltati) {
   if (mondoFermo()) return;
   const secondi = simulazione.avanza(Math.min(secondiSaltati, ASSENZA_MASSIMA), {
     eroe,
-    alFreddo: () => freddo.alFreddo(eroe, riposo.secondiDiSonno() > 0 ? null : cosaInMano()),
+    alFreddo: () => freddo.alFreddo(eroe),
   });
 
   // Si dice quanto è passato, perché tornare e trovare l'orto morto senza

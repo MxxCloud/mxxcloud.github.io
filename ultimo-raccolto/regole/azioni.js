@@ -151,12 +151,20 @@ function sullaCarcassa(carcassa, cosaInMano, indice) {
 function sulTassello(eroe, cosaInMano, indice) {
   const b = bersaglio(eroe);
 
-  // Acqua di falda: il pozzo resta utilizzabile anche d'inverno. Non è una
-  // riva dove pescare e non si porta via come un oggetto dello zaino.
+  // Il pozzo d'inverno gela come tutto il resto. Non è una riva dove pescare e
+  // non si porta via come un oggetto dello zaino.
+  //
+  // Reggerlo aperto tutto l'anno sarebbe stato comodo e sbagliato: la sete
+  // d'inverno è il vincolo che l'acqua ghiacciata mette da M4, e un pozzo ogni
+  // dieci celle l'avrebbe sciolto ovunque senza che nessuno l'avesse deciso.
+  // Lo stato del gelo si chiede a mappa e non alle stagioni: il pozzo deve
+  // ghiacciare nello stesso istante degli stagni, e due calendari che
+  // rispondono alla stessa domanda prima o poi si contraddicono.
   if (b.oggetto === OGGETTO.POZZO) {
-    if (cosaInMano === "secchio") return { tipo: "riempi", verbo: "Attingi acqua", bersaglio: b };
+    const gelato = mappa.gelato() ? "il pozzo è gelato" : null;
+    if (cosaInMano === "secchio") return { tipo: "riempi", verbo: "Attingi acqua", bersaglio: b, impedito: gelato };
     return { tipo: "bevi", verbo: "Bevi dal pozzo", bersaglio: b,
-      impedito: bisogni.livello("sete") >= 1 ? "non hai sete" : null };
+      impedito: gelato ?? (bisogni.livello("sete") >= 1 ? "non hai sete" : null) };
   }
 
   // Di giorno due ore; la notte fino alle sette. X smonta il letto.
@@ -714,7 +722,7 @@ function esegui(eroe, cosaInMano, indice, azione) {
       dorme: true, eroe: letto,
       alFreddo: () => {
         riscaldato = freddo.fuocoPerRiposo(letto) && riscaldato;
-        return freddo.alFreddo(letto, null);
+        return freddo.alFreddo(letto);
       },
     });
     const pocoRiposato = inverno && !riscaldato;

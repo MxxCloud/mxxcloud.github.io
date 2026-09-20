@@ -26,7 +26,6 @@ import * as stagioni from "./stagioni.js";
 import * as mappa from "../mondo/mappa.js";
 import { OGGETTO } from "../mondo/generazione.js";
 import { vistaLibera } from "../mondo/ostacoli.js";
-import { CATALOGO } from "./oggetti.js";
 import * as schermo from "../motore/schermo.js";
 
 const { TASSELLO } = schermo;
@@ -43,20 +42,27 @@ const RAGGIO_FUOCO = 3;
 // millisecondo, cioè un ottocentesimo di fotogramma, e per tre stagioni su
 // quattro nemmeno quello — le due righe qui sotto escludono tutto il resto
 // dell'anno prima di guardare un solo tassello.
-export function alFreddo(eroe, cosaInMano) {
+export function alFreddo(eroe) {
   const notteInvernale = stagioni.stagioneCorrente() === "inverno" && tempo.eNotte();
   const nevicata = meteo.evento() === "neve" && !meteo.alRiparo(eroe);
   if (!notteInvernale && !nevicata && !meteo.zuppo()) return false;
 
-  // La torcia in pugno scalda, come scalda il falò per terra. È la stessa
-  // regola di sempre — quello che tieni in mano è quello che usi — e senza
-  // di essa attraversare la valle di notte d'inverno sarebbe impossibile
-  // invece che caro.
-  if (cosaInMano && CATALOGO[cosaInMano]?.luce) return false;
-
+  // La torcia NON scalda, né in pugno né piantata. Una fiamma in punta a un
+  // bastone illumina: non è un cappotto, e non lo era nemmeno prima — è che
+  // luce e calore erano lo stesso campo, quindi lo diventava per sbaglio.
+  //
+  // Era anche l'unico buco nel freddo: la torcia costa un ramo e due fibre,
+  // non si consumava, e tenerla in mano annullava notte invernale, nevicata
+  // ed essere zuppi. Per sempre e gratis. Il progetto se n'era già accorto a
+  // metà — il ramo del dormire passa apposta null qui dentro, e c'è un
+  // collaudo che dice "la torcia in mano non sostituisce il falò nel riposo".
+  // Adesso vale anche per chi sta in piedi.
+  //
+  // Quello che scalda è il fuoco vero: un falò a tre tasselli, o una stanza
+  // chiusa che ne contiene uno.
   const tx = Math.floor(eroe.px / TASSELLO);
   const ty = Math.floor(eroe.py / TASSELLO);
-  if (mappa.luceVicina(tx, ty, RAGGIO_FUOCO)) return false;
+  if (mappa.fuocoVicino(tx, ty, RAGGIO_FUOCO)) return false;
 
   // Al chiuso il calore resta dentro: un fuoco acceso in un punto qualsiasi
   // della stanza la scalda tutta, invece di fermarsi a tre tasselli.

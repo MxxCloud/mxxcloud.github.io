@@ -86,7 +86,7 @@ export function stanzaDi(tx, ty) {
 // parte della parete, sta a due tasselli dal pavimento di qua.
 export function caldaDentro(stanza) {
   for (const { tx, ty } of stanza) {
-    if (mappa.luceVicina(tx, ty, 1)) return true;
+    if (mappa.fuocoVicino(tx, ty, 1)) return true;
   }
   return false;
 }

@@ -53,6 +53,11 @@ export const CATALOGO = {
     nome: "Torcia",
     icona: arte.TORCIA,
     pila: 10,
+    // Sessanta usi, uno ogni cinque secondi accesa: trecento secondi, cioè
+    // la stessa giornata che dura una torcia piantata. Non è un attrezzo che
+    // si smussa — è un bastone che brucia — quindi non compare fra le
+    // riparazioni e a zero non resta in mano: finisce.
+    durata: 60,
     posa: OGGETTO.TORCIA_PIANTATA,
     impugnato: { nome: "torcia", righe: impugnati.TORCIA, scartoY: 2 },
     luce: { raggio: 46, intensita: 0.9 },
