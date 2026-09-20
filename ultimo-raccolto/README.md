@@ -509,7 +509,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.5**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.12**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -517,6 +517,15 @@ c'è un posto in cui mettere le cose, non è più soltanto natura, si comincia d
 una fattoria in rovina — e adesso **quel posto serve a qualcosa**: certe cose
 si fanno solo al banco da lavoro, e **quel posto si può chiudere**: muri,
 una porta, e di notte qualcuno che li prende a colpi.
+
+**E da lì in poi la valle ha smesso di essere solo un posto in cui stare.**
+C'è l'acqua e si pesca; il cielo fa piovere, nevicare e seccare; gli attrezzi si
+consumano e si riparano senza tornare nuovi; nelle praterie c'è fauna da cacciare
+e carcasse da macellare; le azioni costano fatica, e a zero si sviene; fra una
+rovina e l'altra si incontrano carri rovesciati, pozzi e accampamenti bruciati.
+E l'inverno, che si annullava tenendo una torcia in tasca, adesso si attraversa
+solo con un fuoco vero, una stanza che ne contiene uno, o **una pelliccia
+addosso** — la prima cosa che questo gioco ti lascia indossare.
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
 con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne
@@ -1176,9 +1185,19 @@ Da qui viene l'ordine, che non è quello immaginato all'inizio:
 | **M7.3** | La fattoria e il paese | Si comincia da una fattoria in rovina, e da qualche parte c'è un paese. *Qui l'apertura di questo file smette di essere una promessa.* |
 | **M7.4** | Il banco da lavoro | Le ricette diventano due elenchi, e l'accampamento comincia a valere qualcosa. *Qui il menu smette di avere un tetto.* |
 | **M7.5** | Riparo e muri | Muri e porte che si costruiscono, infetti che li sfondano, e il calore che al chiuso resta dentro. *Qui quello che costruisci comincia a difenderti.* |
-| **M7.12** | La pelliccia addosso | Le pelli diventano qualcosa che si porta, e l'inverno si attraversa invece di aspettarlo. *Qui il freddo diventa una distanza invece di un muro.* |
-| **M7.6** | Il morale | Quanto tieni al tuo posto — che a quel punto esiste. |
+| **M7.6** | L'acqua e la pesca | Il secchio, la riva, la lenza: un cibo che non viene dall'orto e non scappa. |
+| **M7.7** | Il cielo | Pioggia, neve e aridità. *Qui la stagione smette di essere una cosa che succede ai cambi e diventa una cosa che succede ogni giorno.* |
+| **M7.8** | L'usura | Gli attrezzi si consumano, si riparano, e non tornano nuovi. *Qui l'ascia smette di essere una cosa che si trova una volta sola.* |
+| **M7.9** | La caccia | Fauna nelle praterie, e carcasse da macellare per carne e pelli. *Qui la valle smette di dare soltanto quello che sta fermo.* |
+| **M7.10** | La fatica | Le azioni costano stamina, il sonno rende in proporzione, e a zero si sviene. |
+| **M7.11** | I piccoli luoghi | Carri rovesciati, pozzi, accampamenti bruciati: le tracce di chi passava di qui. |
+| **M7.12** | La pelliccia addosso | Le pelli diventano qualcosa che si porta, e nasce l'addosso. *Qui il freddo diventa una distanza invece di un muro.* |
+| **M7.13** | Il morale | Quanto tieni al tuo posto — che a quel punto esiste. |
 | **M8** | Superstiti, abilità, rifinitura | |
+
+Le tappe con un numero in più — M7.5.1, M7.7.1, M7.8.1, M7.9.1, M7.9.2, M7.11.1 —
+non stanno qui di proposito: sono correzioni e aggiunte piccole, e questa tabella
+racconta l'arco, non il registro. Hanno una sezione loro in cima a questo file.
 
 **Perché la morte così tardi.** Morire conta in proporzione a quanto hai da
 perdere: prima dell'orto e delle stagioni non avresti perso niente.
@@ -1204,69 +1223,17 @@ fuoco acceso, un orto curato, un letto — e quel posto comincia a esistere
 davvero con la costruzione. Un morale oggi sarebbe un quarto numero che dice
 "è notte e ti inseguono", cioè quello che schermo e orecchie dicono già.
 
+Il suo numero però è cambiato due volte: da M5 a M7.6, e da M7.6 a M7.13. Non
+perché slitti — ogni volta che toccava a lui è emerso qualcosa che aveva più
+bisogno di esistere, l'acqua, il cielo, l'usura, la caccia. Il numero non è una
+data, è una posizione in fila, e questa fila si è allungata dal di dentro.
+
 **Il salvataggio stava fuori da questa scala** e si è incastrato qui, dopo le
 stagioni: era il momento giusto, perché un posto che sparisce chiudendo la
 scheda è tuo solo per una seduta, e l'orto e le stagioni valevano meno di
 quanto valgono davvero.
 
-**La pelliccia è dettagliata e le altre no**, e non è un'eccezione alla riga
-qui sotto: è una tappa che è stata progettata prima di essere rimandata, e
-buttare via il progetto per riscriverlo uguale fra un mese sarebbe l'unico
-spreco vero. Il numero è 7.12 perché il 7.10 se l'è preso la fatica.
-
-*Perché adesso.* Fino a M7.11.1 il freddo aveva una risposta gratuita e
-permanente — una torcia in mano — quindi una pelliccia sarebbe stata una
-seconda risposta a una domanda già risolta. Adesso scaldano solo il falò e la
-stanza che ne contiene uno: due risposte che stanno ferme dove le hai messe.
-Manca quella che cammina con te, ed è questa.
-
-*I numeri, misurati.* `DANNO_FREDDO` è `1/225` al secondo e l'esposizione
-continua lo moltiplica per 2 dopo quindici secondi e per 3 dopo trenta. Da vita
-piena si muore di freddo in **90 secondi**. La notte dura **125 secondi**
-(`eNotte()` è `luceAmbiente() < 0.55`, cioè dalle 20 alle 6: dieci ore su
-ventiquattro di una giornata da 300 secondi). Cioè: una notte invernale allo
-scoperto uccide con trentacinque secondi di margine.
-
-*La regola.* La pelliccia **non dà immunità** — sarebbe la torcia un'altra
-volta, con più passaggi. Tiene il moltiplicatore a ×1 e basta:
-
-| | si muore dopo | una notte intera fuori |
-|---|---|---|
-| Senza | 90 s | uccide |
-| Con la pelliccia | **225 s** | **costa 0,56 di salute** |
-
-Si arriva dall'altra parte, e ci si arriva conciati: la cura è `1/900` al
-secondo, quindi risalire vuol dire cinquecento secondi al caldo — una notte
-passata fuori si paga per un giorno e due terzi. La seconda scala è il bagnato:
-`ritmo()` dà `+1/20` al secondo sotto la pioggia allo scoperto, cioè zuppi in
-dieci secondi, che è meno di quanto serva ad attraversare un campo; con la
-pelliccia diventano diciotto, cioè una decina di tasselli — la distanza da cui
-l'accampamento è ancora raggiungibile. E **una pelliccia zuppa non scalda**: è
-quello che tiene la pioggia pericolosa e dà alla pelliccia un costo ricorrente
-pagato in legna invece che in un contatore invisibile.
-
-*Il pezzo architettonico da non sbagliare.* Oggi esiste solo la mano:
-`cosaInMano()` è la casella selezionata dello zaino. L'addosso deve vivere in un
-modulo suo e **non** come campo dell'eroe, perché `salute.avanza(passo, {vuoti,
-alFreddo})` non riceve l'eroe: l'unico modo di far arrivare la pelliccia ai
-gradini del freddo è un modulo che le regole possano interrogare, come già fanno
-con `riparo`. Si indossa con `E`, che significa già *usa sulla tua persona*
-(mangiare, fasciarsi); `E` a mani vuote spoglia, ed è l'unico significato libero
-rimasto su quel tasto. Costa quattro pelli e tre fibre al banco, e non si
-consuma: l'usura di questo gioco conta gesti, una pelliccia si logora col tempo,
-e costruire una seconda usura per un oggetto solo costerebbe più di quanto
-renda.
-
-*E la trappola.* `salvataggio.js` valida la roba di un cadavere con un tetto di
-otto voci, quante sono le caselle. Morire con lo zaino pieno **e** la pelliccia
-addosso farebbe un cadavere da nove voci, e il salvataggio verrebbe rifiutato:
-la partita diventa illeggibile *dopo* essere morti, in silenzio. Il rimedio è un
-numero — un cadavere è un mucchio, non uno zaino — e va scritto prima degli
-effetti, mentre il capo è ancora un oggetto che non fa niente. Allo stesso modo
-`nuovoSuperstite()` deve azzerare l'addosso, o la pelliccia sopravvive alla
-morte mentre lo zaino no.
-
-Le tappe restanti sono volutamente abbozzate: l'ordine è già cambiato due
+Le tappe restanti sono volutamente abbozzate: l'ordine è già cambiato più
 volte per quello che è emerso costruendo, e cambierà ancora. Si dettagliano
 quando ci si arriva.
 
@@ -1306,7 +1273,7 @@ e un posto con dentro una cassa e niente altro è ancora un accampamento.
 | `Maiusc` | correre |
 | `Spazio` | agire su ciò che si ha davanti: colpire, raccogliere, zappare, seminare, innaffiare, bere, dormire, posare, aprire una cassa o una porta, frugare un cadavere, difendersi |
 | `1`-`8` | scegliere la casella, cioè cosa si impugna |
-| `E` | mangiare, o fasciarsi con una benda |
+| `E` | mangiare, fasciarsi con una benda, o indossare quello che hai in mano; a mani vuote, togliere quello che hai addosso |
 | `G` | posare per terra la casella scelta, davanti ai piedi |
 | `C` | aprire e chiudere le costruzioni, e chiudere la cassa |
 | `X` | staccare la porta che si ha davanti, e smontare la cassa aperta |
