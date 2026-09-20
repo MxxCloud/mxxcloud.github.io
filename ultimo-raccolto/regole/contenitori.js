@@ -87,6 +87,36 @@ const BOTTINO_FATTORIA = [
   { cosa: "bacche_secche", da: 1, a: 3, peso: 1 },
 ];
 
+// Scorte piccole e legate al posto, non altre casse ricche come quelle delle
+// case. Nessuna carne fresca dimenticata da anni, attrezzi sempre già usati.
+const BOTTINO_LUOGHI = {
+  carro: [
+    { cosa: "fibra", da: 2, a: 4, peso: 3 },
+    { cosa: "legna", da: 1, a: 3, peso: 3 },
+    { cosa: "benda", da: 1, a: 1, peso: 1 },
+  ],
+  pozzo: [
+    { cosa: "secchio", da: 1, a: 1, peso: 2 },
+    { cosa: "fibra", da: 2, a: 3, peso: 3 },
+    { cosa: "pietra", da: 1, a: 2, peso: 1 },
+  ],
+  bruciato: [
+    { cosa: "fibra", da: 1, a: 3, peso: 3 },
+    { cosa: "benda", da: 1, a: 1, peso: 2 },
+    { cosa: "conserva", da: 1, a: 1, peso: 1 },
+  ],
+  boscaioli: [
+    { cosa: "legna", da: 2, a: 4, peso: 4 },
+    { cosa: "ramo", da: 2, a: 3, peso: 3 },
+    { cosa: "ascia", da: 1, a: 1, peso: 1 },
+  ],
+  orto: [
+    { cosa: "semi", da: 2, a: 4, peso: 4 },
+    { cosa: "fibra", da: 2, a: 3, peso: 2 },
+    { cosa: "zappa", da: 1, a: 1, peso: 1 },
+  ],
+};
+
 // Quanto ne resta a un attrezzo lasciato lì da qualcun altro. Dal generatore
 // della cassa e non da un tiro nuovo, come tutto il resto del bottino: la
 // stessa cassa dà sempre la stessa ascia, con la stessa lena dentro.
@@ -127,9 +157,12 @@ function bottinoDi(tx, ty) {
   // esiste, e qui la regola paga anche in pratica — riaprire una cassa che non
   // si è toccata non deve rimescolare quello che c'è dentro.
   const caso = generatore(Math.floor(impronta(tx, ty, 0xb07715) * 4294967296));
-  const tavola = dellaFattoria(tx, ty) ? BOTTINO_FATTORIA : BOTTINO;
+  const luogo = mappa.luogoIn(tx, ty);
+  const tavolaLuogo = BOTTINO_LUOGHI[luogo?.luogo];
+  const tavola = dellaFattoria(tx, ty) ? BOTTINO_FATTORIA : tavolaLuogo ?? BOTTINO;
   const totale = pesoDi(tavola);
-  const quante = PILE[0] + Math.floor(caso() * (PILE[1] - PILE[0] + 1));
+  const quante = tavolaLuogo ? 1 + Math.floor(caso() * 2)
+    : PILE[0] + Math.floor(caso() * (PILE[1] - PILE[0] + 1));
   // Mai due volte la stessa cosa. Non è pulizia: gli attrezzi si impilano a
   // uno, quindi due zappe sono due caselle occupate da due zappe — visto in
   // una prova, e una casa che contiene due zappe e nient'altro racconta un
@@ -248,4 +281,3 @@ export function sposta(tx, ty, versoLaCassa, indice) {
   scrivi(tx, ty, fila);
   return { tipo: "spostato", verso: "zaino", cosa: casella.cosa };
 }
-

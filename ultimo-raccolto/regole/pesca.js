@@ -1,3 +1,4 @@
+import * as bisogni from "./bisogni.js";
 // Una cattura richiede tempo alla riva; nessun salto dell'orologio o pausa.
 import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
@@ -55,5 +56,6 @@ export function aggiorna(passo, eroe, cosaInMano, indice) {
   mappa.annotaTassello(l.tx, l.ty, { ...dati, giornoPesca: tempo.giornoCorrente(),
     pescati: (dati.giornoPesca === tempo.giornoCorrente() ? dati.pescati ?? 0 : 0) + 1 });
   interrompi();
+  bisogni.consuma("stanchezza", 0.01);
   return { tipo: "pescato", usura: inventario.usura(l.canna) };
 }

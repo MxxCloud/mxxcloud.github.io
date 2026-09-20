@@ -340,7 +340,8 @@ export function disegna(p, eroe) {
     // vista è il contrario di quello che questa mappa fa.
     if (!esplorato.eVisto(Math.floor(tx / SETTORE), Math.floor(ty / SETTORE))) continue;
     const { x, y } = suSchermo(tx, ty);
-    segnale(x, y, ROVINA, 3);
+    const colore = rovina.luogo === "pozzo" ? "#8fb8d8" : rovina.luogo ? "#c79a62" : ROVINA;
+    segnale(x, y, colore, rovina.luogo ? 2 : 3);
   }
 
   modifiche.perOgnuno((tx, ty, cambio) => {
@@ -381,7 +382,7 @@ export function disegna(p, eroe) {
   testo.disegna(p, titolo, MARGINE, 5, CHIARO);
   const quanti = `${esplorato.quanti()} SETTORI`;
   testo.disegna(p, quanti, schermo.LARGHEZZA - MARGINE - testo.larghezza(quanti), 5, GRIGIO);
-  const piede = "TAB CHIUDI";
+  const piede = "TAB CHIUDI   BLU POZZI   OCRA LUOGHI";
   testo.disegna(p, piede, Math.round((schermo.LARGHEZZA - testo.larghezza(piede)) / 2), schermo.ALTEZZA - 9, GRIGIO);
 }
 

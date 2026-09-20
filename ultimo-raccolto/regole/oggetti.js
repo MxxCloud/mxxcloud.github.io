@@ -243,7 +243,7 @@ export const ATTREZZI = {
   // cinque, cioè prenderne uno invece di tre. È quello che la trasforma da
   // attrezzo più veloce ad arma — senza aggiungere una spada, che avrebbe
   // voluto dire un secondo oggetto per un gesto che già esiste.
-  ascia: { colpi: { [OGGETTO.ALBERO]: 2 }, danno: 3 },
+  ascia: { colpi: { [OGGETTO.ALBERO]: 2, [OGGETTO.CARRO]: 2, [OGGETTO.TRONCO]: 1 }, danno: 3 },
   // La zappa non accorcia niente: apre un'azione che senza di lei non
   // esiste. È il secondo modo in cui un attrezzo può contare.
   zappa: { zappa: true },
@@ -293,6 +293,14 @@ export function nomeDi(cosa) {
 // ciò che rende l'abbattere un albero una decisione invece di un riflesso —
 // e più avanti, quando ci sarà qualcosa che ti sente, anche un rischio.
 export const RACCOLTA = {
+  [OGGETTO.CARRO]: {
+    verbo: "Smantella carro", colpi: 4, voce: "legno", scheggie: ["w", "h", "c"],
+    resa: [{ cosa: "legna", quante: 3 }, { cosa: "fibra", quante: 2 }],
+  },
+  [OGGETTO.TRONCO]: {
+    verbo: "Spacca tronco", colpi: 2, voce: "legno", scheggie: ["h", "d"],
+    resa: [{ cosa: "legna", quante: 1 }],
+  },
   [OGGETTO.ALBERO]: {
     verbo: "Abbatti",
     colpi: 4,

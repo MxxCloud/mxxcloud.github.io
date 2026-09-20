@@ -1,5 +1,6 @@
 // Un'unica cronologia per fotogrammi, sonno e assenze. Le soglie dei bisogni
 // e la mezzanotte sono confini: il passato non usa le condizioni del futuro.
+import * as riposo from "./riposo.js";
 import * as meteo from "./meteo.js";
 import * as tempo from "./tempo.js";
 import * as bisogni from "./bisogni.js";
@@ -8,7 +9,7 @@ import * as orto from "./orto.js";
 import * as decadimento from "./decadimento.js";
 import * as ricrescita from "./ricrescita.js";
 
-const vuoto = () => ({ cresciute: 0, appassite: 0, spenti: 0, guaste: 0, inScadenza: 0, tornati: 0 });
+const vuoto = () => ({ cresciute: 0, appassite: 0, spenti: 0, guaste: 0, inScadenza: 0, tornati: 0, risvegliForzati: 0 });
 let eventi = vuoto();
 
 export function resoconto() {
@@ -19,20 +20,27 @@ export function resoconto() {
 
 export function avanza(secondi, { eroe = null, dorme = false, corre = false, siMuove = false, alFreddo = () => false } = {}) {
   if (!Number.isFinite(secondi) || secondi <= 0) return 0;
-  const opzioni = { dorme, corre, siMuove };
   let trascorsi = 0;
   while (secondi > 1e-10 && !salute.eMorto()) {
     eventi.spenti += meteo.aggiornaMondo().spenti;
+    const esaurito = bisogni.livello("stanchezza") === 0;
+    const dormendo = dorme || riposo.secondiDiSonno() > 0;
+    const confineRiposo = riposo.confine(esaurito, dorme);
+    const opzioni = { dorme: dormendo, corre, siMuove };
     const giorno = tempo.giornoCorrente();
     const mezzanotte = (24 - tempo.oraCorrente()) * tempo.SECONDI_PER_GIORNO / 24;
     // Un secondo al massimo per valutare gelo e luci anche nelle assenze.
-    const passo = Math.min(secondi, 1, Math.max(1e-9, mezzanotte), bisogni.secondiAlVuoto(opzioni), meteo.secondiAlCambio(eroe));
+    const passo = Math.min(secondi, 1, confineRiposo, Math.max(1e-9, mezzanotte), bisogni.secondiAlVuoto(opzioni), meteo.secondiAlCambio(eroe));
     salute.avanza(passo, {
-      vuoti: bisogni.vuoti().filter(v => !dorme || v !== "stanchezza"),
+      vuoti: bisogni.vuoti().filter(v => !dormendo || v !== "stanchezza"),
       alFreddo: alFreddo(),
     });
-    if (dorme) bisogni.passanoSecondi(passo);
+    if (dormendo) bisogni.passanoSecondi(passo);
     else bisogni.avanza(passo, { corre, siMuove });
+    if (riposo.avanza(passo, { esaurito, dorme, vivo: !salute.eMorto() })) {
+      bisogni.ristora("stanchezza", 0.25);
+      eventi.risvegliForzati++;
+    }
     meteo.avanza(passo, eroe);
     tempo.avanza(passo);
     trascorsi += passo;

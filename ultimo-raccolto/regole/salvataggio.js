@@ -16,6 +16,7 @@
 // suo commento prometteva questo file fin dal primo giorno.
 
 import * as tempo from "./tempo.js";
+import * as riposo from "./riposo.js";
 import * as bisogni from "./bisogni.js";
 import * as salute from "./salute.js";
 import * as inventario from "./inventario.js";
@@ -78,6 +79,7 @@ export function istantanea(eroe, casellaScelta) {
     eroe: { px: eroe.px, py: eroe.py, guarda: eroe.guarda },
     casella: casellaScelta,
     bisogni: { ...bisogni.tutti() },
+    riposo: riposo.istantanea(),
     // La salute sta accanto ai bisogni e non dentro: non è un quarto bisogno,
     // e infilarcela avrebbe voluto dire che bisogni.ripristina() se la
     // sarebbe trovata fra le mani senza sapere cosa farne.
@@ -218,6 +220,7 @@ export function valido(stato) {
   if (!presente(stato.eroe, "guarda", v => ["su", "giu", "destra", "sinistra"].includes(v))) return false;
   if (!presente(stato, "casella", n => intero(n) && n >= 0 && n < inventario.CASELLE)) return false;
   if (!presente(stato, "esposizioneFreddo", n => Number.isFinite(n) && n >= 0 && n <= 30)) return false;
+  if (!presente(stato, "riposo", riposo.statoValido)) return false;
   if (!presente(stato, "fauna", fauna.statoValido)) return false;
   if (!presente(stato, "bagnato", livelloValido)) return false;
   if (!presente(stato, "salute", livelloValido) || !presente(stato, "infezione", v => typeof v === "boolean")) return false;
@@ -277,6 +280,7 @@ export function applica(stato) {
   tempo.impostaGiorno(stato.giorno);
   tempo.impostaOra(stato.ore);
   bisogni.ripristina(stato.bisogni);
+  riposo.ripristina(stato.riposo);
   meteo.ripristina(stato.bagnato);
   salute.ripristina(stato.salute, stato.infezione === true, stato.esposizioneFreddo);
   inventario.ripristina(stato.inventario);

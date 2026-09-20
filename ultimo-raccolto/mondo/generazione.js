@@ -79,6 +79,9 @@ export const OGGETTO = {
   // e devono continuare a parlare di quello, senza sapere che ne esiste un
   // altro.
   GIACIGLIO_PELLI: 22,
+  CARRO: 23,
+  POZZO: 24,
+  TRONCO: 25,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati
@@ -175,10 +178,24 @@ const COSTRUITO = {
   ".": OGGETTO.NESSUNO,
   c: OGGETTO.CASSA,
   f: OGGETTO.FALO_SPENTO,
+  v: OGGETTO.CARRO,
+  o: OGGETTO.POZZO,
+  t: OGGETTO.TRONCO,
+  g: OGGETTO.GIACIGLIO,
+  a: OGGETTO.APPASSITA,
 };
 
 export function rovinaNellaCella(cx, cy) {
   return rovine.nellaCella(cx, cy, adatto);
+}
+
+// Identità del piccolo luogo solo entro la sua impronta (o il margine
+// richiesto per l'annuncio). Nessuna scansione del mondo circostante.
+export function luogoIn(tx, ty, margine = 0) {
+  const r = rovinaNellaCella(Math.floor(tx / rovine.CELLA), Math.floor(ty / rovine.CELLA));
+  if (!r?.luogo || tx < r.tx0-margine || ty < r.ty0-margine ||
+      tx >= r.tx0+r.larghezza+margine || ty >= r.ty0+r.altezza+margine) return null;
+  return r;
 }
 
 // Dove comincia la partita: la fattoria, non l'origine delle coordinate.
@@ -226,4 +243,3 @@ export function oggettoIn(x, y, seme, terreno) {
 
   return OGGETTO.NESSUNO;
 }
-

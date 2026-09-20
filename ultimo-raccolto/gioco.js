@@ -19,6 +19,7 @@ import * as giocatore from "./entita/giocatore.js";
 import * as infetto from "./entita/infetto.js";
 import * as urti from "./entita/urti.js";
 import * as tempo from "./regole/tempo.js";
+import * as riposo from "./regole/riposo.js";
 import * as bisogni from "./regole/bisogni.js";
 import * as salute from "./regole/salute.js";
 import * as freddo from "./regole/freddo.js";
@@ -69,7 +70,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.9.2";
+const VERSIONE = "M7.11";
 
 // --- elementi -------------------------------------------------------------
 
@@ -96,6 +97,7 @@ let alBanco = false;
 let azioneCorrente = null;
 let messaggio = null;
 let avvisoRisveglio = null;
+let luogoAttuale = null;
 let aperturaVisibile = true;
 let minimappaVisibile = true;
 // La mappa grande è modale come le ricette e la partita: il mondo non avanza
@@ -239,6 +241,7 @@ function nuovoSuperstite() {
   // risveglia, e tenersela vorrebbe dire un superstite nuovo che non gela in
   // mezzo a un prato.
   riparo.reimposta();
+  luogoAttuale = null;
   entita.svuota();
   const partenza = doveSiComincia();
   eroe = entita.aggiungi(giocatore.crea(partenza.px, partenza.py));
@@ -522,6 +525,7 @@ function riprendi(ripreso) {
   // della partita che si sta aprendo, e tenersela vorrebbe dire un caricamento
   // che per mezzo secondo non gela in mezzo alla neve.
   riparo.reimposta();
+  luogoAttuale = null;
   entita.svuota();
   eroe = entita.aggiungi(giocatore.crea(ripreso.eroe.px, ripreso.eroe.py));
   eroe.guarda = ripreso.eroe.guarda ?? "giu";
@@ -920,13 +924,13 @@ function leggiComandi() {
     }
   }
 
-  // Lo stesso tasto con cui si smonta una cassa, e vuol dire la stessa cosa:
-  // togli di mezzo quello che hai davanti. Risponde soltanto alle porte —
-  // chiederlo a qualunque cosa vorrebbe dire smontare una cassa passandoci
-  // accanto, cioè il contrario di quello che la cassa ha deciso a M7.1.
+  // X smonta porte e giacigli; Spazio li usa. Le casse si smontano dal loro pannello.
   if (comandi.appenaPremuto("spegni")) {
-    const esito = azioni.staccaLaPorta(eroe);
-    if (esito?.tipo === "staccata") {
+    const esito = azioni.smontaIlLetto(eroe) ?? azioni.staccaLaPorta(eroe);
+    if (esito?.tipo === "lettoSmontato") {
+      suono.suona(POSA);
+      annuncia("giaciglio smontato", "#9ec97e");
+    } else if (esito?.tipo === "staccata") {
       suono.suona(POSA, { tono: 0.85 });
       annuncia("porta staccata", "#9ec97e");
     } else if (esito?.tipo === "zainoPieno") {
@@ -987,8 +991,7 @@ function leggiComandi() {
   // risveglio passano ore di gioco, e un suono attaccato a quel momento
   // racconterebbe il tasto invece della notte.
   if (esito.tipo === "dormi" && esito.sveglio) {
-    avvisoRisveglio = esito.messaggio;
-    if (!avvisoRisveglio) annuncia("hai dormito fino all'alba", "#9ec97e");
+    avvisoRisveglio = esito.messaggio ?? `dormito ${(esito.secondi / riposo.ORA).toFixed(1)} ore: +${Math.round(esito.recuperata * 100)}% stamina`;
   }
 
   if (esito.tipo === "cotto") { suono.suona(FATTO); annuncia(`sul fuoco: ${nomeDi(esito.diventa)}`, "#e0913a"); }
@@ -1072,11 +1075,22 @@ function avvisaUsura(usura) {
 
 // --- ciclo ----------------------------------------------------------------
 
+function completaSvenimento() {
+  const rimasto = riposo.secondiDiSonno();
+  if (rimasto <= 0 || salute.eMorto()) return false;
+  pesca.interrompi();
+  simulazione.avanza(rimasto, { eroe, alFreddo: () => freddo.alFreddo(eroe, null) });
+  return true;
+}
+
 function aggiorna(passo) {
+  let haDormito = false;
+  const staminaIniziale = bisogni.livello("stanchezza");
   if (mondoFermo()) pesca.interrompi();
   // Il tempo non scorre mentre si sceglie cosa costruire: un menu che ti fa
   // arrivare la notte addosso mentre lo leggi è una punizione, non una sfida.
   if (!mondoFermo()) {
+    haDormito = completaSvenimento();
 
     // Quello che si ha in mano lo decide lo zaino, non l'entità: le entità
     // stanno sotto le regole e non devono sapere cos'è un inventario. Lo
@@ -1105,10 +1119,11 @@ function aggiorna(passo) {
     simulazione.avanza(passo, {
       eroe,
       corre: eroe.correndo, siMuove: eroe.inMovimento,
-      alFreddo: () => freddo.alFreddo(eroe, cosaInMano()),
+      alFreddo: () => freddo.alFreddo(eroe, riposo.secondiDiSonno() > 0 ? null : cosaInMano()),
     });
+    haDormito = completaSvenimento() || haDormito;
     for (const vuoto of bisogni.vuoti()) {
-      if (!primaVuoti.has(vuoto)) annuncia(AVVISI_BISOGNI[vuoto], "#c0705f");
+      if (vuoto !== "stanchezza" && !primaVuoti.has(vuoto)) annuncia(AVVISI_BISOGNI[vuoto], "#c0705f");
     }
     gelando = freddo.alFreddo(eroe, cosaInMano());
     if (gelando && !primaGelava) {
@@ -1179,6 +1194,10 @@ function aggiorna(passo) {
     // rumore — così premere TAB non calcola niente.
     const scoperti = esplorato.segna(eroe);
     if (scoperti.length > 0) mappaGrande.aggiungi(scoperti);
+    const luogo = mappa.luogoIn(Math.floor(eroe.px / TASSELLO), Math.floor(eroe.py / TASSELLO), 3);
+    const chiaveLuogo = luogo ? `${luogo.tx0},${luogo.ty0}` : null;
+    if (chiaveLuogo && chiaveLuogo !== luogoAttuale) annuncia(luogo.nome, "#c9b189");
+    luogoAttuale = chiaveLuogo;
 
     if (colpito) {
       colpito.resta -= passo;
@@ -1194,7 +1213,7 @@ function aggiorna(passo) {
   // Il terzo, il sonno, era già sfuggito una volta scrivendolo.
   if (salute.eMorto() && mortoDi === null) muori(salute.causaDellaMorte());
 
-  leggiComandi();
+  if (!haDormito) leggiComandi();
   azioneCorrente = mondoFermo() ? null : azioni.azionePossibile(eroe, cosaInMano(), casellaScelta);
 
   if (messaggio) {
@@ -1202,7 +1221,7 @@ function aggiorna(passo) {
     if (messaggio.vita <= 0) messaggio = null;
   }
 
-  const { cresciute, appassite, spenti, guaste, inScadenza, tornati } = simulazione.resoconto();
+  const { cresciute, appassite, spenti, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
 
   const arrivata = vestiLaValle();
 
@@ -1229,6 +1248,10 @@ function aggiorna(passo) {
   else if (tornati > 0) annuncia(`la valle è ricresciuta: ${tornati}`, "#7fae63");
 
   // Il messaggio del riposo freddo non deve essere coperto dalla cronaca della notte.
+  if (staminaIniziale > 0 && bisogni.livello("stanchezza") === 0 && !salute.eMorto()) {
+    annuncia(AVVISI_BISOGNI.stanchezza, "#c0705f");
+  }
+  if (risvegliForzati > 0 && !salute.eMorto()) avvisoRisveglio = "Sei svenuto: hai dormito 2 ore sul posto (+25% stamina)";
   if (avvisoRisveglio) { annuncia(avvisoRisveglio, "#c9b189"); avvisoRisveglio = null; }
 
   // Il salvataggio dell'alba, e proprio qui: dopo che il giorno ha fatto i
@@ -1380,7 +1403,7 @@ function disegnaInterfaccia() {
   // Il promemoria dice "C COSTRUIRE", e con la cassa aperta "C" chiude: un
   // cartello che indica la porta sbagliata è peggio di nessun cartello.
   if (!cassaAperta) {
-    hud.disegnaPromemoria(p, barra, cosaInMano(), azioneCorrente?.tipo === "porta", casellaScelta);
+    hud.disegnaPromemoria(p, barra, cosaInMano(), azioneCorrente?.tipo === "porta", casellaScelta, azioneCorrente?.tipo === "dormi");
   }
   hud.disegnaMessaggio(p, messaggio);
   if (minimappaVisibile && !aperturaVisibile) minimappa.disegna(p);
@@ -1427,7 +1450,7 @@ const NOMI_TERRENO = ["acqua", "bassofondo", "sabbia", "erba", "sterpaglia", "ro
 const AVVISI_BISOGNI = {
   fame: "hai fame",
   sete: "hai sete",
-  stanchezza: "sei allo stremo",
+  stanchezza: "sei allo stremo: riposa, fra un'ora svieni",
 };
 
 function aggiornaDiagnostica() {
@@ -1556,7 +1579,7 @@ function recuperaIlTempoPerso(secondiSaltati) {
   if (mondoFermo()) return;
   const secondi = simulazione.avanza(Math.min(secondiSaltati, ASSENZA_MASSIMA), {
     eroe,
-    alFreddo: () => freddo.alFreddo(eroe, cosaInMano()),
+    alFreddo: () => freddo.alFreddo(eroe, riposo.secondiDiSonno() > 0 ? null : cosaInMano()),
   });
 
   // Si dice quanto è passato, perché tornare e trovare l'orto morto senza

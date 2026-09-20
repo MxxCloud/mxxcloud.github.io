@@ -1,3 +1,9 @@
+import * as riposo from "../regole/riposo.js";
+import { createHash } from 'node:crypto';
+import { LUOGHI } from '../arte/luoghi.js';
+import * as spriteLuoghi from '../arte/sprite-luoghi.js';
+import * as rovine from '../mondo/rovine.js';
+import * as ricrescita from '../regole/ricrescita.js';
 import * as meteo from '../regole/meteo.js';
 import * as atmosfera from '../arte/atmosfera.js';
 import { test, beforeEach } from 'node:test';
@@ -49,6 +55,242 @@ function reset() {
   for(let y=ty-5;y<=ty+5;y++) for(let x=tx-5;x<=tx+5;x++) modifiche.imposta(x,y,{oggetto:OGGETTO.NESSUNO});
 }
 beforeEach(reset);
+
+function trovaLuogo(id) {
+  for(let y=-12;y<=12;y++)for(let x=-12;x<=12;x++) {
+    const r=mappa.rovinaNellaCella(x,y);if(r?.luogo===id)return r;
+  }
+  assert.fail('luogo assente: '+id);
+}
+function segnoNelLuogo(r,segno) {
+  for(let y=0;y<r.altezza;y++)for(let x=0;x<r.larghezza;x++)if(r.pianta[y][x]===segno)return {tx:r.tx0+x,ty:r.ty0+y};
+  assert.fail('segno assente: '+segno);
+}
+test('47 rovine e fattorie di quattro semi conservano esattamente pianta e posizione',()=>{
+  const fixture=JSON.parse(readFileSync(new URL('./rovine-pre-luoghi.json',import.meta.url),'utf8'));
+  for(const f of fixture) {
+    mappa.inizializza(f.seme);const r=mappa.rovinaNellaCella(f.cx,f.cy);
+    assert.ok(r);assert.equal(r.luogo,undefined);
+    assert.equal(createHash('sha256').update(JSON.stringify([r.tx0,r.ty0,r.pianta])).digest('hex'),f.hash);
+  }
+});
+test('le cinque piante sono rettangolari, diverse e lasciano accesso ai punti utili',()=>{
+  assert.equal(new Set(LUOGHI.map(l=>l.id)).size,5);
+  for(const l of LUOGHI) {
+    const w=l.pianta[0].length,h=l.pianta.length;
+    assert.ok(l.pianta.every(r=>r.length===w));assert.equal(l.pianta.join('').split('c').length-1,1);
+    const visitati=new Set(),coda=[[-1,-1]];
+    for(let i=0;i<coda.length;i++){
+      const [x,y]=coda[i],k=`${x},${y}`;
+      if(x<-1||y<-1||x>w||y>h||visitati.has(k)||'cvot'.includes(l.pianta[y]?.[x]??' '))continue;
+      visitati.add(k);coda.push([x-1,y],[x+1,y],[x,y-1],[x,y+1]);
+    }
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      assert.ok(' .cvotgaf%'.includes(l.pianta[y][x]));
+      if('cvotgf'.includes(l.pianta[y][x]))assert.ok([[x-1,y],[x+1,y],[x,y-1],[x,y+1]].some(p=>visitati.has(p.join(','))),l.id);
+    }
+  }
+});
+test('sprite dei luoghi decodificabili in tutte le stagioni',()=>{
+  for(const stagione of ['estate','autunno','inverno','primavera'])for(const s of Object.values(spriteLuoghi)) {
+    const d=decodifica(s,tavolozzaDi(stagione));assert.equal(d.larghezza,16);assert.ok(d.pixel.some(v=>v>0));
+  }
+});
+test('luoghi deterministici, dentro la cella, anche a coordinate negative e dopo svuotamento cache',()=>{
+  const trovati=[];
+  for(const l of LUOGHI) {
+    const r=trovaLuogo(l.id),cx=Math.floor(r.tx0/64),cy=Math.floor(r.ty0/64);
+    assert.ok(r.tx0>=cx*64+6&&r.ty0>=cy*64+6);
+    assert.ok(r.tx0+r.larghezza<=cx*64+58&&r.ty0+r.altezza<=cy*64+58);
+    assert.equal(mappa.luogoIn(r.tx0,r.ty0)?.luogo,l.id);
+    assert.equal(mappa.luogoIn(r.tx0-1,r.ty0),null);
+    assert.equal(mappa.luogoIn(r.tx0-1,r.ty0,3)?.luogo,l.id);
+    trovati.push({cx,cy,r:structuredClone(r)});
+  }
+  for(let x=40;x<120;x++)mappa.rovinaNellaCella(x,40);
+  for(const f of trovati)assert.deepEqual(mappa.rovinaNellaCella(f.cx,f.cy),f.r);
+  assert.equal(mappa.rovinaNellaCella(0,0).luogo,undefined);
+});
+test('nessuna costruzione viene collocata quando il terreno è acqua',()=>{
+  rovine.inizializza(1234);
+  for(let y=-3;y<=3;y++)for(let x=-3;x<=3;x++)assert.equal(rovine.nellaCella(x,y,()=>false),null);
+});
+test('pozzo: si beve e si riempiono i secchi anche in inverno, senza pesca o distruzione',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.POZZO});tempo.impostaGiorno(9);
+  bisogni.consuma('sete',0.8);assert.equal(azioni.agisci(eroe,null).tipo,'bevi');vicino(bisogni.livello('sete'),0.65);
+  inventario.aggiungi('secchio',2);assert.equal(azioni.agisci(eroe,'secchio').quanti,2);
+  assert.equal(inventario.quante('secchio_pieno'),2);vicino(bisogni.livello('stanchezza'),0.995);
+  bisogni.ristora('sete',1);inventario.aggiungi('canna',1);inventario.aggiungi('ascia',1);
+  assert.equal(azioni.agisci(eroe,'canna'),null);assert.equal(azioni.agisci(eroe,'ascia'),null);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.POZZO);assert.equal(mappa.solidoIn(tx+1,ty),true);
+});
+test('carro e tronchi richiedono lavoro, consumano ascia e stamina e non ricrescono',()=>{
+  const r=trovaLuogo('carro'),p=segnoNelLuogo(r,'v');
+  eroe={...pos(p.tx-1,p.ty),guarda:'destra'};
+  // Libera il punto in cui sta il personaggio, mantenendo il carro generato.
+  modifiche.imposta(p.tx-1,p.ty,{oggetto:OGGETTO.NESSUNO});
+  inventario.aggiungi('ascia',1);
+  assert.equal(azioni.agisci(eroe,'ascia').tipo,'colpo');assert.equal(azioni.agisci(eroe,'ascia').tipo,'raccolto');
+  assert.equal(inventario.attrezzo('ascia').usi,58);vicino(bisogni.livello('stanchezza'),0.97);
+  assert.equal(inventario.quante('legna'),3);assert.equal(inventario.quante('fibra'),2);
+  const stato=salvataggio.istantanea(eroe,0);assert.ok(salvataggio.applica(stato));
+  tempo.impostaGiorno(100);ricrescita.nuovoGiorno();assert.equal(mappa.oggettoDi(p.tx,p.ty),OGGETTO.NESSUNO);
+  modifiche.imposta(p.tx,p.ty,{oggetto:OGGETTO.TRONCO});
+  assert.equal(azioni.agisci(eroe,'ascia').tipo,'raccolto');assert.equal(inventario.attrezzo('ascia').usi,57);
+  assert.equal(inventario.quante('legna'),4);
+});
+test('bottino dei piccoli luoghi tematico, modesto e stabile alla riapertura',()=>{
+  const ammessi={carro:['fibra','legna','benda'],pozzo:['secchio','fibra','pietra'],bruciato:['fibra','benda','conserva'],boscaioli:['legna','ramo','ascia'],orto:['semi','fibra','zappa']};
+  for(const l of LUOGHI) {
+    const r=trovaLuogo(l.id),p=segnoNelLuogo(r,'c');
+    const prima=contenitori.contenutoDi(p.tx,p.ty),pile=prima.filter(Boolean);
+    assert.ok(pile.length>=1&&pile.length<=2);
+    for(const c of pile){assert.ok(ammessi[l.id].includes(c.cosa));assert.ok(c.quantita<=4);}
+    assert.deepEqual(contenitori.contenutoDi(p.tx,p.ty),prima);
+    assert.equal(modifiche.di(p.tx,p.ty),undefined);
+  }
+});
+test('una cassa saccheggiata non rigenera il bottino dopo salva e carica',()=>{
+  const r=trovaLuogo('boscaioli'),p=segnoNelLuogo(r,'c');
+  for(let i=0;i<contenitori.CASELLE;i++)contenitori.sposta(p.tx,p.ty,false,i);
+  assert.equal(contenitori.eVuota(p.tx,p.ty),true);
+  const stato=salvataggio.istantanea(eroe,0);assert.ok(salvataggio.applica(stato));
+  assert.equal(contenitori.eVuota(p.tx,p.ty),true);
+});
+test('le costruzioni salvate prevalgono sui nuovi oggetti generati',()=>{
+  const r=trovaLuogo('pozzo'),p=segnoNelLuogo(r,'o');
+  modifiche.imposta(p.tx,p.ty,{oggetto:OGGETTO.MURO,colpi:1});
+  const stato=salvataggio.istantanea(eroe,0);assert.ok(salvataggio.applica(stato));
+  assert.equal(mappa.oggettoDi(p.tx,p.ty),OGGETTO.MURO);assert.equal(modifiche.di(p.tx,p.ty).colpi,1);
+});
+
+test('ogni colpo di raccolta costa stamina, incluso quello finale e le mani nude',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.ALBERO});
+  inventario.aggiungi('ascia',1);
+  let colpi=0,esito;
+  do { esito=azioni.agisci(eroe,'ascia');colpi++; } while(esito.tipo==='colpo');
+  assert.equal(esito.tipo,'raccolto');vicino(bisogni.livello('stanchezza'),1-colpi*0.015);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.SASSO});
+  azioni.agisci(eroe,null);vicino(bisogni.livello('stanchezza'),1-(colpi+1)*0.015);
+});
+test('combattere costa il 2% anche con un attrezzo rotto e si può colpire a zero',()=>{
+  animale('orso');inventario.aggiungi('ascia',1);inventario.attrezzo('ascia').usi=0;
+  assert.equal(azioni.agisci(eroe,'ascia').tipo,'combattuto');
+  vicino(bisogni.livello('stanchezza'),0.98);
+  bisogni.consuma('stanchezza',1);
+  assert.equal(azioni.agisci(eroe,'ascia').tipo,'combattuto');
+  assert.equal(bisogni.livello('stanchezza'),0);
+});
+test('zappare costa il 2%, seminare e innaffiare lo 0,5%',()=>{
+  inventario.aggiungi('zappa',1);inventario.aggiungi('semi',1);inventario.aggiungi('secchio_pieno',1);
+  // Un tassello sicuramente coltivabile.
+  let trovato=null;
+  for(let y=ty-20;y<=ty+20&&!trovato;y++)for(let x=tx-20;x<=tx+20;x++) {
+    modifiche.imposta(x,y,{oggetto:OGGETTO.NESSUNO});
+    const e={...pos(x-1,y),guarda:'destra'};
+    if(azioni.azionePossibile(e,'zappa')?.tipo==='zappa'){trovato=e;break;}
+  }
+  assert.ok(trovato);
+  assert.equal(azioni.agisci(trovato,'zappa').tipo,'zappa');vicino(bisogni.livello('stanchezza'),0.98);
+  assert.equal(azioni.agisci(trovato,'semi').tipo,'semina');vicino(bisogni.livello('stanchezza'),0.975);
+  assert.equal(azioni.agisci(trovato,'secchio_pieno').tipo,'innaffia');vicino(bisogni.livello('stanchezza'),0.97);
+});
+test('ogni taglio di macellazione costa il 2%; senza ascia non si paga',()=>{
+  const a=animale('cervo');fauna.colpisci(a,100);
+  assert.equal(azioni.agisci(eroe,null),null);vicino(bisogni.livello('stanchezza'),1);
+  inventario.aggiungi('ascia',1);
+  for(let i=0;i<3;i++){assert.equal(azioni.agisci(eroe,'ascia').lavorato,true);vicino(bisogni.livello('stanchezza'),1-(i+1)*0.02);}
+});
+test('costruzione e riparazione costano solo quando riescono',()=>{
+  const benda=ricette.RICETTE.find(r=>r.id==='benda');
+  assert.equal(ricette.fai(benda).fatto,false);vicino(bisogni.livello('stanchezza'),1);
+  inventario.aggiungi('fibra',5);assert.equal(ricette.fai(benda).fatto,true);vicino(bisogni.livello('stanchezza'),0.98);
+  inventario.aggiungi('ascia',1);inventario.attrezzo('ascia').usi=1;inventario.aggiungi('pietra',1);
+  const ricetta=ricette.RICETTE.find(r=>r.id==='ripara_ascia');
+  assert.equal(ricette.fai(ricetta,false).fatto,false);vicino(bisogni.livello('stanchezza'),0.98);
+  assert.equal(ricette.fai(ricetta,true).fatto,true);vicino(bisogni.livello('stanchezza'),0.96);
+});
+test('aprire una porta non costa stamina',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.PORTA});
+  assert.equal(azioni.agisci(eroe,null).tipo,'porta');vicino(bisogni.livello('stanchezza'),1);
+});
+test('il recupero notturno è proporzionale alle ore effettive, fino a otto',()=>{
+  for(const [ora,atteso] of [[23,1],[3,0.5],[5.9,1.1/8]]) {
+    reset();tempo.impostaGiorno(5);tempo.impostaOra(ora);
+    modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GIACIGLIO});bisogni.consuma('stanchezza',1);
+    const esito=azioni.agisci(eroe,null);
+    assert.equal(esito.sveglio,true);vicino(bisogni.livello('stanchezza'),atteso);
+    vicino(esito.recuperata,atteso);vicino(tempo.oraCorrente(),7);
+  }
+});
+test('di giorno il giaciglio dà due ore di riposo e 25 punti stamina',()=>{
+  tempo.impostaGiorno(5);tempo.impostaOra(12);bisogni.consuma('stanchezza',0.8);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GIACIGLIO});
+  const esito=azioni.agisci(eroe,null);
+  vicino(esito.secondi,25);vicino(tempo.oraCorrente(),14);vicino(bisogni.livello('stanchezza'),0.45);
+  vicino(bisogni.livello('sete'),1-25/300);assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.GIACIGLIO);
+});
+test('dormire non sottrae stamina già posseduta oltre il limite invernale',()=>{
+  lettoInvernale();bisogni.ristora('stanchezza',0.9);
+  azioni.agisci(eroe,null);vicino(bisogni.livello('stanchezza'),0.9);
+});
+test('lo smontaggio con zaino pieno lascia intatto il giaciglio e non stanca',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GIACIGLIO});
+  inventario.aggiungi('pietra',CATALOGO.pietra.pila*inventario.CASELLE);
+  assert.equal(azioni.smontaIlLetto(eroe).tipo,'zainoPieno');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.GIACIGLIO);vicino(bisogni.livello('stanchezza'),1);
+});
+test('si sviene dopo un’ora a zero; due ore dopo ci si sveglia al 25%',()=>{
+  tempo.impostaGiorno(5);
+  bisogni.consuma('stanchezza',1);
+  simulazione.avanza(12);assert.equal(riposo.secondiDiSonno(),0);
+  simulazione.avanza(0.5);vicino(riposo.secondiDiSonno(),25);
+  simulazione.avanza(24);vicino(riposo.secondiDiSonno(),1);vicino(bisogni.livello('stanchezza'),0);
+  simulazione.avanza(1);assert.equal(riposo.secondiDiSonno(),0);vicino(bisogni.livello('stanchezza'),0.25);
+  vicino(bisogni.livello('sete'),1-37.5/300);assert.equal(simulazione.resoconto().risvegliForzati,1);
+});
+test('il tempo prima di arrivare a zero non conta come esaurimento',()=>{
+  bisogni.consuma('stanchezza',1-2/600);
+  simulazione.avanza(14);assert.equal(riposo.secondiDiSonno(),0);vicino(riposo.istantanea().esaurimento,12);
+  simulazione.avanza(0.5);vicino(riposo.secondiDiSonno(),25);
+});
+test('recuperare stamina azzera l’ora continuativa di esaurimento',()=>{
+  bisogni.consuma('stanchezza',1);simulazione.avanza(12);
+  bisogni.ristora('stanchezza',0.1);bisogni.consuma('stanchezza',1);
+  simulazione.avanza(1);vicino(riposo.istantanea().esaurimento,1);assert.equal(riposo.secondiDiSonno(),0);
+});
+test('sonno volontario a zero non fa scattare uno svenimento',()=>{
+  bisogni.consuma('stanchezza',1);simulazione.avanza(10);
+  simulazione.avanza(25,{dorme:true});assert.deepEqual(riposo.istantanea(),{esaurimento:0,sonno:0});
+});
+test('svenimento attraversando mezzanotte: fotogrammi e assenza equivalenti',()=>{
+  function prepara(){reset();tempo.impostaGiorno(5);tempo.impostaOra(23);bisogni.consuma('stanchezza',1);}
+  prepara();for(let i=0;i<50*60;i++)simulazione.avanza(1/60);
+  const stato={...bisogni.tutti(),salute:salute.livelloCorrente(),ora:tempo.oraCorrente()};
+  prepara();simulazione.avanza(50);
+  for(const k of bisogni.ELENCO)vicino(bisogni.livello(k),stato[k]);
+  vicino(salute.livelloCorrente(),stato.salute);vicino(tempo.oraCorrente(),stato.ora);
+  assert.equal(tempo.giornoCorrente(),6);assert.equal(simulazione.resoconto().risvegliForzati,1);
+});
+test('esaurimento e sonno forzato sopravvivono a salva/carica',()=>{
+  bisogni.consuma('stanchezza',1);simulazione.avanza(12);
+  const prima=salvataggio.istantanea(eroe,0);reset();assert.ok(salvataggio.applica(prima));
+  simulazione.avanza(0.5);vicino(riposo.secondiDiSonno(),25);simulazione.avanza(10);
+  const durante=salvataggio.istantanea(eroe,0);reset();assert.ok(salvataggio.applica(durante));
+  vicino(riposo.secondiDiSonno(),15);simulazione.avanza(15);vicino(bisogni.livello('stanchezza'),0.25);
+});
+test('vecchi salvataggi compatibili; timer corrotti rifiutati senza mutazioni',()=>{
+  const stato=salvataggio.istantanea(eroe,0);delete stato.riposo;assert.ok(salvataggio.applica(stato));
+  assert.deepEqual(riposo.istantanea(),{esaurimento:0,sonno:0});
+  for(const riposo of [null,{esaurimento:12.5,sonno:0},{esaurimento:-1,sonno:0},{esaurimento:0,sonno:26},{esaurimento:1,sonno:2},{esaurimento:NaN,sonno:0}]) {
+    assert.equal(salvataggio.applica({...stato,riposo}),null);vicino(bisogni.livello('stanchezza'),1);
+  }
+});
+test('morire durante lo svenimento non dà stamina né risveglio',()=>{
+  bisogni.consuma('stanchezza',1);simulazione.avanza(12.5);salute.ripristina(0.01);
+  simulazione.avanza(25,{alFreddo:()=>true});assert.equal(salute.eMorto(),true);
+  vicino(bisogni.livello('stanchezza'),0);assert.equal(simulazione.resoconto().risvegliForzati,0);
+});
 const vicino = (a,b,eps=1e-7)=>assert.ok(Math.abs(a-b)<eps, `${a} != ${b}`);
 function animale(specie, distanza=16, seme=1) {
   const e=fauna.crea(specie,eroe.px+distanza,eroe.py,seme);
@@ -568,23 +810,23 @@ test('salvare non azzera il freddo accumulato; vecchi salvataggi iniziano a zero
 function lettoInvernale(quale=OGGETTO.GIACIGLIO) {
   tempo.impostaGiorno(9);tempo.impostaOra(3);
   modifiche.imposta(tx+1,ty,{oggetto:quale});
-  bisogni.ripristina({fame:1,sete:1,stanchezza:0.9});
+  bisogni.ripristina({fame:1,sete:1,stanchezza:0});
 }
-test('riposo invernale vicino al falò porta la stamina esattamente al 75%',()=>{
+test('quattro ore invernali vicino al falò recuperano il 37,5%',()=>{
   lettoInvernale();modifiche.imposta(tx+4,ty,{oggetto:OGGETTO.FALO_ACCESO,posata:9});
   const esito=azioni.agisci(eroe,null);
   assert.equal(esito.sveglio,true);assert.equal(esito.pocoRiposato,false);
-  vicino(bisogni.livello('stanchezza'),0.75);assert.equal(esito.messaggio,null);
+  vicino(bisogni.livello('stanchezza'),0.375);assert.equal(esito.messaggio,null);
 });
-test('riposo invernale senza falò porta la stamina al 25% e comunica il cattivo riposo',()=>{
+test('quattro ore invernali senza falò recuperano il 12,5% e comunicano il cattivo riposo',()=>{
   lettoInvernale();const esito=azioni.agisci(eroe,null);
-  assert.equal(esito.sveglio,true);vicino(bisogni.livello('stanchezza'),0.25);
+  assert.equal(esito.sveglio,true);vicino(bisogni.livello('stanchezza'),0.125);
   assert.equal(esito.messaggio,'Non ti senti molto riposato...');
 });
 test('la torcia in mano non sostituisce il falò nel riposo',()=>{
   lettoInvernale();inventario.aggiungi('torcia',1);
   const esito=azioni.agisci(eroe,'torcia');assert.equal(esito.pocoRiposato,true);
-  vicino(bisogni.livello('stanchezza'),0.25);
+  vicino(bisogni.livello('stanchezza'),0.125);
 });
 test('un falò dietro un muro o oltre tre tasselli non dà il bonus del riposo',()=>{
   lettoInvernale();const letto=pos(tx+1,ty);
@@ -605,10 +847,10 @@ test('notte iniziata d’inverno conserva il limite al risveglio primaverile',()
   const esito=azioni.agisci(eroe,null);assert.equal(tempo.giornoCorrente(),13);
   assert.equal(esito.pocoRiposato,true);vicino(bisogni.livello('stanchezza'),0.25);
 });
-test('riposo nelle altre stagioni continua a riempire la stamina',()=>{
+test('quattro ore nelle altre stagioni recuperano metà stamina',()=>{
   lettoInvernale();tempo.impostaGiorno(5);
   const esito=azioni.agisci(eroe,null);assert.equal(esito.sveglio,true);
-  assert.equal(esito.pocoRiposato,false);vicino(bisogni.livello('stanchezza'),1);
+  assert.equal(esito.pocoRiposato,false);vicino(bisogni.livello('stanchezza'),0.5);
 });
 test('morire durante il sonno non ripristina stamina né annuncia un risveglio',()=>{
   lettoInvernale();salute.ripristina(0.01);
@@ -1112,12 +1354,12 @@ test('il giaciglio di pelli si posa e si riprende, e torna sé stesso',()=>{
   assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.GIACIGLIO_PELLI);
   assert.equal(mappa.solidoIn(tx+1,ty),false);
   tempo.impostaOra(12);
-  assert.equal(azioni.agisci(eroe,null).tipo,'raccolto');
+  assert.equal(azioni.smontaIlLetto(eroe).tipo,'lettoSmontato');
   assert.equal(inventario.quante('giaciglio_pelli'),1);assert.equal(inventario.quante('giaciglio'),0);
 });
-test('di notte ci si dorme, di giorno si smonta — come quello di paglia',()=>{
+test('sulle pelli si dorme sia di giorno sia di notte',()=>{
   modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GIACIGLIO_PELLI});
-  tempo.impostaOra(12);assert.equal(azioni.azionePossibile(eroe,null).tipo,'raccogli');
+  tempo.impostaOra(12);assert.equal(azioni.azionePossibile(eroe,null).verbo,'Riposa 2 ore');
   tempo.impostaOra(22);assert.equal(azioni.azionePossibile(eroe,null).tipo,'dormi');
 });
 test('sulle pelli la notte invernale col fuoco riposa come le altre',()=>{
@@ -1125,12 +1367,12 @@ test('sulle pelli la notte invernale col fuoco riposa come le altre',()=>{
   modifiche.imposta(tx+4,ty,{oggetto:OGGETTO.FALO_ACCESO,posata:9});
   const esito=azioni.agisci(eroe,null);
   assert.equal(esito.pocoRiposato,false);assert.equal(esito.messaggio,null);
-  vicino(bisogni.livello('stanchezza'),1);
+  vicino(bisogni.livello('stanchezza'),0.5);
 });
 test('sulle pelli senza fuoco si riposa a metà, e il cattivo riposo si dice lo stesso',()=>{
   lettoInvernale(OGGETTO.GIACIGLIO_PELLI);
   const esito=azioni.agisci(eroe,null);
-  vicino(bisogni.livello('stanchezza'),0.5);
+  vicino(bisogni.livello('stanchezza'),0.25);
   assert.equal(esito.pocoRiposato,true);
   assert.equal(esito.messaggio,'Non ti senti molto riposato...');
   // Le pelli danno riposo, non calore: d'inverno senza fuoco si gela lo stesso.
