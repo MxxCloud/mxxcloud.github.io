@@ -25,7 +25,8 @@ import * as mappa from "../mondo/mappa.js";
 import * as schermo from "../motore/schermo.js";
 import * as suono from "../motore/suono.js";
 import { generatore } from "../motore/casuale.js";
-import { PASSO, PASSO_INFETTO, RESPIRO, CREPITIO } from "../arte/voci.js";
+import * as fauna from "./fauna.js";
+import { PASSO, PASSO_INFETTO, RESPIRO, CREPITIO, VERSO_BESTIA } from "../arte/voci.js";
 
 // Da quanto lontano si sente camminare qualcuno. Il numero viene dalla
 // geometria degli infetti e non dal gusto: nascono a 260 pixel come minimo,
@@ -39,6 +40,30 @@ const PORTATA_PASSI = 300;
 // Il verso porta più lontano dei piedi, ed è giusto: è il segnale forte, e
 // vale la pena che arrivi da oltre lo schermo.
 const PORTATA_RESPIRO = 380;
+
+// Le bestie. Fino a qui la valle aveva i passi degli infetti, il loro respiro
+// a trecentottanta pixel e il crepitio del fuoco — e un bufalo da mezza
+// tonnellata camminava in silenzio assoluto. Peggio l'orso, che attacca sempre
+// appena ti vede entro quattro tasselli: arrivava senza che niente lo
+// annunciasse, ed è la trappola che questo gioco evita dappertutto — una
+// scadenza che non si vede.
+//
+// Due portate e due cadenze, e la regola è la stessa degli infetti: il segnale
+// debole è la presenza, quello forte è l'avviso. Calma, una bestia si sente
+// ogni nove-diciotto secondi ed è l'ambiente, quello che dice "là fuori c'è
+// qualcosa di grosso". Inquieta o addosso, si sente da più lontano e ogni due
+// secondi: quello non è ambiente, è il momento di decidere se restare.
+//
+// La portata della calma è trecento come i passi degli infetti, e per la
+// stessa ragione misurata che sta scritta qui sopra: le bestie nascono fra 260
+// e 380 pixel e poi pascolano, quindi un orecchio che arrivasse a 220 non ne
+// sentirebbe quasi mai una — provato, con un cavallo che brucava a 307.
+// Sarebbe stato un sistema che esiste senza succedere, cioè l'errore che
+// chiasso.js racconta di aver già fatto una volta con i dieci tasselli.
+const PORTATA_VERSO = 300;
+const PORTATA_VERSO_ADDOSSO = 380;
+const VERSO_OGNI = [9, 18];
+const VERSO_OGNI_ADDOSSO = [2.2, 4.2];
 
 // Il fuoco si sente da tredici tasselli, cioè poco più di mezzo schermo. È
 // quanto basta a ritrovare l'accampamento al buio senza che diventi un faro
@@ -193,7 +218,45 @@ export function avanza(passo, eroe) {
     if (sentito) suono.suona(RESPIRO, { ...sentito, tono: 0.88 + caso() * 0.28 });
   }
 
+  bestie(passo, eroe);
   fuochi(passo, eroe);
+}
+
+// --- le bestie -------------------------------------------------------------
+
+// Solo il verso, e non i passi: quattro zampe su un prato non sono il segnale
+// che serve, e sarebbe anche la voce più fitta della valle. Quello che il
+// giocatore deve poter sapere senza guardare è due cose — ce n'è una grossa
+// qui intorno, e si è accorta di te — e sono esattamente i due stati che
+// fauna.js già distingue.
+//
+// Le carcasse tacciono, e non è una battuta: restano nell'elenco per due
+// giorni, e una bestia morta che sbuffa sarebbe il difetto più facile da
+// scrivere di tutta questa funzione.
+function bestie(passo, eroe) {
+  for (const e of fauna.tutte()) {
+    if (e.vita <= 0) continue;
+    const r = ricordoDi(e);
+    const addosso = e.stato === "allerta" || e.stato === "aggressivo";
+    // Il momento in cui si accorge di te è il momento in cui devi sentirlo, e
+    // non fra quattordici secondi. Senza questa riga il conto alla rovescia
+    // della calma restava in piedi anche mentre l'orso ti arrivava addosso:
+    // provato con un cervo, dodici secondi senza un fiato. È la stessa regola
+    // che gli infetti hanno qui sopra — chi non ti insegue non ringhia, e il
+    // conto riparte — letta dall'altra parte.
+    if (addosso && !r.inquieta) r.verso = 0;
+    r.inquieta = addosso;
+    r.verso = (r.verso ?? fra(VERSO_OGNI)) - passo;
+    if (r.verso > 0) continue;
+    r.verso = fra(addosso ? VERSO_OGNI_ADDOSSO : VERSO_OGNI);
+    const sentito = dove(eroe, e.px, e.py, addosso ? PORTATA_VERSO_ADDOSSO : PORTATA_VERSO);
+    if (!sentito) continue;
+    // Il tono della specie, scostato di poco a ogni verso: due sbuffi identici
+    // di fila si sentono come un campione ripetuto, ed è la stessa ragione per
+    // cui i colpi sugli alberi prendono l'altezza dall'impronta del tassello.
+    const voce = fauna.SPECIE[e.specie].voce;
+    suono.suona(VERSO_BESTIA, { ...sentito, tono: voce * (0.94 + caso() * 0.12) });
+  }
 }
 
 // --- il fuoco -------------------------------------------------------------

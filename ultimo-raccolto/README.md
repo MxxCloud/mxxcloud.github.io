@@ -12,6 +12,55 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.12.1 — la caccia impara che stagione è
+
+Tre correzioni alla caccia, e la prima è quella che conta.
+
+**La fauna non sapeva che stagione fosse.** D'inverno i pesci non abboccano
+(M7.6), l'orto non cresce e i cespugli danno l'undici per cento (M6.5): tre
+tappe costruite apposta perché l'inverno fosse l'esame. Le bestie arrivavano
+identiche a luglio, e il conto diceva il resto — una giornata costa **0,556
+barre** di fame, **una intera d'inverno**, e un bufalo arrostito ne rende
+**2,7**. Con due bestie sempre a un passo dallo schermo, **la stagione più dura
+era quella in cui si mangiava meglio**.
+
+Adesso l'autunno è la stagione della caccia grossa e l'inverno è il magro:
+
+| | bestie intorno | un arrivo ogni | carne |
+| --- | --- | --- | --- |
+| Estate, primavera | 2 | 40 s | piena |
+| **Autunno** | 2 | **32 s** | piena |
+| **Inverno** | **1** | **95 s** | **sei decimi** |
+
+D'inverno sono **meno e magre**, e servivano tutt'e due: diradare porta la
+giornata di caccia da sette bestie a quattro, che sono ancora quasi otto
+giornate di cibo — perché il tetto non è mai stato il vincolo, lo è quanto
+rende una bestia. Con la resa a sei decimi una giornata passata a cacciare
+copre l'inverno e non il mese: **la caccia resta la risposta al freddo, smette
+di essere la risposta a tutto**. Le pelli no, quelle restano: una pelle è una
+pelle anche su una bestia magra, e toglierle d'inverno vorrebbe dire rendere
+più cara la pelliccia proprio nella stagione per cui esiste. Conta il giorno in
+cui la bestia è caduta, non quello in cui la macelli.
+
+**Il cavallo era il pasto migliore e il più sicuro insieme** — quattro carni,
+due pelli, danno zero, mai aggressivo — cioè il rischio e la ricompensa
+ordinati al contrario: conveniva lasciar perdere il cervo, che rende meno e può
+caricarti. Adesso ti vede da **cento pixel** e scappa a **88**, che si prende
+solo correndo, e correre costa fiato. Quello che ne esce sono **due carni e una
+pelle**: un pasto, non una scorta.
+
+**E le bestie si sentono.** La valle aveva i passi degli infetti, il loro
+respiro a trecentottanta pixel e il crepitio del fuoco; un bufalo da mezza
+tonnellata camminava in silenzio, e l'orso — che attacca sempre appena ti vede
+entro quattro tasselli — arrivava senza che niente lo annunciasse. Una voce
+sola per quattro specie, come `colpoDi()` è una voce sola per quattro
+materiali: cambia il tono, che sta accanto alle altre misure della specie —
+l'orso cupo a 0,62, il cervo sottile a 1,25. Calma, una bestia si sente da
+**300 pixel** e ogni nove-diciotto secondi: è l'ambiente. Inquieta, si sente da
+**380** e ogni due-quattro secondi, **e il primo verso arriva nell'istante in
+cui si accorge di te**: quello non è ambiente, è il momento di decidere se
+restare.
+
 ## M7.12 — la pelliccia addosso
 
 Le pelli servivano a una cosa sola, il giaciglio. Adesso diventano qualcosa che
@@ -261,12 +310,12 @@ bastava mettersi dietro un bufalo morto e l'orso non arrivava più.
 
 La fauna nasce nelle radure di erba e sterpaglia, fuori dall'inquadratura:
 al massimo **2 animali vivi nei dintorni**, un tentativo di arrivo ogni
-**40 secondi** (primo dopo 12). Gli infetti possono essere 5 nella notte.
+**40 secondi** (primo dopo 12) — d'inverno uno solo e ogni 95, vedi M7.12.1. Gli infetti possono essere 5 nella notte.
 Gli animali restano anche di giorno e nessuno è cavalcabile.
 
 | Specie | Comportamento | Carne / pelli |
 | --- | --- | --- |
-| Cavallo | Fugge entro 60 pixel; mai aggressivo, neanche se ferito | 4 / 2 |
+| Cavallo | Fugge entro 100 pixel; mai aggressivo, neanche se ferito | 2 / 1 |
 | Cervo | Entro 48 pixel per 5 secondi: 35% di attacco, altrimenti fugge | 3 / 1 |
 | Bufalo | Entro 48 pixel per 5 secondi: 55% di attacco, altrimenti fugge | 6 / 3 |
 | Orso | Attacca sempre quando ti vede entro 64 pixel | 5 / 3 |

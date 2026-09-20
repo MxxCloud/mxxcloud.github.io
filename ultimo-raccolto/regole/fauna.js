@@ -7,20 +7,89 @@ import * as urti from '../entita/urti.js';
 import * as entita from '../entita/entita.js';
 import { impronta } from '../motore/casuale.js';
 import * as tempo from './tempo.js';
+import * as stagioni from './stagioni.js';
 import * as salute from './salute.js';
 import * as inventario from './inventario.js';
 import * as meteo from './meteo.js';
 import { cuoci, riflesso } from '../arte/sprite.js';
 import { ANIMALI, CARCASSE } from '../arte/sprite-fauna.js';
 
+// Il cavallo è quello che non si fa avvicinare, e il resto dei suoi numeri
+// viene da lì. Prima era il pasto migliore e il più sicuro insieme — quattro
+// carni e due pelli, danno zero, mai aggressivo — cioè il rischio e la
+// ricompensa ordinati al contrario: conveniva lasciar perdere il cervo, che
+// può caricarti e rende meno. Adesso ti vede da sei tasselli e scappa a una
+// velocità che si prende solo correndo, e correre costa fiato: quello che ne
+// esce è un pasto, non una scorta.
+//
+// "voce" è quanto è grave il suo verso, e la usa l'udito: l'orso profondo, il
+// cervo sottile. Sta qui con le altre misure della specie perché è un suo
+// tratto quanto la velocità — e perché un dato solo, in un posto solo, è la
+// regola che questo progetto segue anche per le tavolozze.
 export const SPECIE = {
-  cavallo: { nome: 'Cavallo', vita: 8, velocita: 78, danno: 0, raggio: 60, rischio: 0, carne: 4, pelli: 2 },
-  cervo: { nome: 'Cervo', vita: 6, velocita: 80, danno: 0.12, raggio: 48, rischio: 0.35, carne: 3, pelli: 1 },
-  bufalo: { nome: 'Bufalo', vita: 12, velocita: 62, danno: 0.18, raggio: 48, rischio: 0.55, carne: 6, pelli: 3 },
-  orso: { nome: 'Orso', vita: 15, velocita: 70, danno: 0.24, raggio: 64, rischio: 1, carne: 5, pelli: 3 },
+  cavallo: { nome: 'Cavallo', vita: 6, velocita: 88, danno: 0, raggio: 100, rischio: 0, carne: 2, pelli: 1, voce: 1 },
+  cervo: { nome: 'Cervo', vita: 6, velocita: 80, danno: 0.12, raggio: 48, rischio: 0.35, carne: 3, pelli: 1, voce: 1.25 },
+  bufalo: { nome: 'Bufalo', vita: 12, velocita: 62, danno: 0.18, raggio: 48, rischio: 0.55, carne: 6, pelli: 3, voce: 0.78 },
+  orso: { nome: 'Orso', vita: 15, velocita: 70, danno: 0.24, raggio: 64, rischio: 1, carne: 5, pelli: 3, voce: 0.62 },
 };
-export const MASSIMI = 2;
-export const INTERVALLO = 40;
+
+// Quante bestie intorno, e ogni quanto ne arriva una. Dipende dalla stagione,
+// e prima non dipendeva da niente.
+//
+// Era il buco più grosso della tappa della caccia, e non si vedeva perché
+// stava fra due tappe: d'inverno i pesci non abboccano (M7.6), l'orto non
+// cresce e i cespugli danno l'undici per cento (M6.5) — tre tappe costruite
+// apposta perché l'inverno fosse l'esame — e la fauna arrivava identica a
+// luglio. Misurato: una giornata costa 0,556 barre di fame, un'intera
+// d'inverno, e un bufalo arrostito ne rende 2,7. Con due bestie sempre a un
+// passo dallo schermo, la stagione più dura era quella in cui si mangiava
+// meglio.
+//
+// Adesso l'autunno è la stagione della caccia grossa — è lì che si fa la
+// provvista — e l'inverno è il magro: una bestia alla volta e un arrivo ogni
+// novantacinque secondi, cioè tre tentativi in una giornata invece di sette.
+// Non toglie la caccia d'inverno: toglie che basti da sola.
+//
+// E d'inverno sono anche magre. Il conto dice perché serviva tutt'e due:
+// diradare porta la giornata di caccia da sette bestie a quattro, che sono
+// ancora quasi otto giornate di cibo — perché il tetto non è mai stato il
+// vincolo, lo è quanto rende una bestia. Con la resa invernale a sei decimi
+// una giornata passata a cacciare copre l'inverno e non il mese: la caccia
+// resta la risposta al freddo, smette di essere la risposta a tutto.
+//
+// Le pelli no, restano quelle: una pelle è una pelle anche su una bestia
+// magra, e toglierle d'inverno vorrebbe dire rendere più cara la pelliccia
+// proprio nella stagione per cui esiste.
+export const PER_STAGIONE = {
+  estate: { massimi: 2, intervallo: 40, resa: 1 },
+  autunno: { massimi: 2, intervallo: 32, resa: 1 },
+  inverno: { massimi: 1, intervallo: 95, resa: 0.6 },
+  primavera: { massimi: 2, intervallo: 40, resa: 1 },
+};
+const dellaStagione = () => PER_STAGIONE[stagioni.stagioneCorrente()] ?? PER_STAGIONE.estate;
+export const quanteNeVuole = () => dellaStagione().massimi;
+export const ogniQuanto = () => dellaStagione().intervallo;
+
+// I due tetti che servono a controllare un salvataggio, e sono quelli di tutto
+// l'anno, non quelli di oggi. Un salvataggio scritto d'autunno con due bestie
+// intorno, riaperto d'inverno quando ne è ammessa una, deve caricarsi: quello
+// che il salvataggio dichiara è successo davvero, e rifiutarlo sarebbe dire
+// che una partita legittima è storta perché nel frattempo è cambiata la
+// stagione.
+// Quanta carne dà questa bestia. La stagione è quella in cui è caduta, non
+// quella in cui la macelli: la magrezza è una cosa che l'animale aveva
+// addosso, non una regola che si applica al coltello. Si legge da mortoIl, che
+// è già nel salvataggio e già controllato — nessun campo nuovo, nessuna
+// partita da migrare — e siccome una carcassa dura due giorni, non c'è modo di
+// aspettare la primavera per macellare un cervo d'inverno.
+export function carneDi(e) {
+  const giorno = Math.floor(e.mortoIl / tempo.SECONDI_PER_GIORNO) + 1;
+  const resa = PER_STAGIONE[stagioni.stagioneDi(giorno)]?.resa ?? 1;
+  return Math.max(1, Math.round(SPECIE[e.specie].carne * resa));
+}
+
+const VIVI_MASSIMI = Math.max(...Object.values(PER_STAGIONE).map(v => v.massimi));
+const ATTESA_MASSIMA = Math.max(...Object.values(PER_STAGIONE).map(v => v.intervallo));
 export const TOLLERANZA = 5;
 const animali = [];
 let attesa = 12, sequenza = 0;
@@ -200,7 +269,10 @@ export function aggiorna(passo, eroe) {
     if(animali[i].vita>0 && Math.hypot(animali[i].px-eroe.px,animali[i].py-eroe.py)>620) animali.splice(i,1);
   }
   attesa-=passo;
-  if(attesa<=0) { attesa=INTERVALLO; if(quanti()<MASSIMI) nasce(eroe); }
+  // Il tetto si chiede adesso e non all'arrivo di prima: cambiando stagione
+  // quelle che c'erano restano — non si dissolvono sotto gli occhi — e il
+  // magro comincia dal fatto che non ne arrivano altre.
+  if(attesa<=0) { attesa=ogniQuanto(); if(quanti()<quanteNeVuole()) nasce(eroe); }
   for(const e of animali) {
     if(e.vita<=0 || salute.eMorto()) continue;
     const prima=e.stato;
@@ -252,7 +324,7 @@ export function macella(e) {
   if(lavorato) {
     e.tagli++;
     if(e.tagli<3) return {tipo:'macellazione',restano:3-e.tagli,lavorato:true};
-    e.resti={carne_cruda:SPECIE[e.specie].carne,pelle:SPECIE[e.specie].pelli};
+    e.resti={carne_cruda:carneDi(e),pelle:SPECIE[e.specie].pelli};
   }
   const presi=[];
   for(const cosa of ['carne_cruda','pelle']) {
@@ -282,7 +354,7 @@ export function ripristina(dati) {
 export function statoValido(dati) {
   const numero=(n,a,b)=>Number.isFinite(n)&&n>=a&&n<=b;
   const intero=(n,a,b)=>Number.isSafeInteger(n)&&n>=a&&n<=b;
-  if(!dati || !numero(dati.attesa,0,INTERVALLO)||!intero(dati.sequenza,0,Number.MAX_SAFE_INTEGER)||
+  if(!dati || !numero(dati.attesa,0,ATTESA_MASSIMA)||!intero(dati.sequenza,0,Number.MAX_SAFE_INTEGER)||
       !Array.isArray(dati.animali)||dati.animali.length>64) return false;
   let vivi=0;
   return dati.animali.every(e=>{
@@ -294,7 +366,7 @@ export function statoValido(dati) {
       !numero(e.giro,-1,6)||!numero(e.dx,-1,1)||!numero(e.dy,-1,1)||!numero(e.passo,0,1e12)||
       !numero(e.sussulto,0,0.3)||!intero(e.tagli,0,3)) return false;
     if(e.specie==='cavallo' && ['aggressivo','allerta'].includes(e.stato)) return false;
-    if(e.vita>0) return ++vivi<=MASSIMI && e.stato!=='carcassa' && e.mortoIl===null && e.tagli===0 && e.resti===null;
+    if(e.vita>0) return ++vivi<=VIVI_MASSIMI && e.stato!=='carcassa' && e.mortoIl===null && e.tagli===0 && e.resti===null;
     if(e.stato!=='carcassa'||!numero(e.mortoIl,0,1e12)) return false;
     if(e.tagli<3) return e.resti===null;
     return e.resti && intero(e.resti.carne_cruda,0,s.carne) && intero(e.resti.pelle,0,s.pelli);

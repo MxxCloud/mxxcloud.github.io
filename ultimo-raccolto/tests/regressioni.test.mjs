@@ -1581,3 +1581,66 @@ test('morire con lo zaino pieno e la pelliccia addosso non rompe il salvataggio'
   const stato=salvataggio.istantanea(eroe,0);
   assert.ok(salvataggio.valido(stato),'una fila da nove è ammessa: un cadavere è un mucchio');
 });
+test('fauna: l’inverno è magro, l’autunno è la stagione della caccia',()=>{
+  // Trecento secondi, cioè una giornata intera, uccidendo tutto quello che
+  // arriva: così si conta quante bestie offre la stagione, non quante ne
+  // stanno intorno insieme.
+  const inUnaGiornata = (giorno) => {
+    tempo.reimposta(); tempo.impostaGiorno(giorno); fauna.reimposta();
+    let arrivate = 0;
+    for (let s = 0; s < tempo.SECONDI_PER_GIORNO; s += 1) {
+      const prima = new Set(fauna.tutte());
+      fauna.aggiorna(1, eroe);
+      for (const e of fauna.tutte()) if (!prima.has(e)) { arrivate += 1; e.vita = 0; e.stato = 'carcassa'; e.mortoIl = 0; }
+    }
+    return arrivate;
+  };
+  const estate = inUnaGiornata(1), autunno = inUnaGiornata(5), inverno = inUnaGiornata(9);
+  assert.ok(inverno < estate, `inverno ${inverno} non è meno di estate ${estate}`);
+  assert.ok(autunno >= estate, `autunno ${autunno} non è almeno quanto estate ${estate}`);
+  assert.equal(fauna.PER_STAGIONE.inverno.massimi, 1);
+});
+test('fauna: d’inverno se ne tollera una sola viva, e quelle che c’erano restano',()=>{
+  tempo.reimposta(); tempo.impostaGiorno(5); fauna.reimposta();
+  const a = animale('cervo', 300), b = animale('bufalo', 320);
+  tempo.impostaGiorno(9);
+  assert.equal(fauna.quanteNeVuole(), 1);
+  for (let s = 0; s < 200; s += 1) fauna.aggiorna(1, eroe);
+  // Nessuna dissolta sotto gli occhi, e nessuna arrivata in più.
+  assert.ok(fauna.tutte().includes(a) && fauna.tutte().includes(b));
+  assert.equal(fauna.quanti(), 2);
+});
+test('il cavallo si fa notare da lontano e rende un pasto, non una scorta',()=>{
+  const s = fauna.SPECIE.cavallo;
+  assert.ok(s.raggio >= 96, 'il cavallo deve accorgersi di te da lontano');
+  assert.ok(s.carne < fauna.SPECIE.cervo.carne, 'il sicuro non può rendere più del rischioso');
+  assert.ok(s.velocita > fauna.SPECIE.bufalo.velocita);
+  // Si accorge di te da sei tasselli e scappa, senza aspettare la tolleranza.
+  const e = animale('cavallo', 96);
+  fauna.aggiorna(1 / 60, eroe);
+  assert.equal(e.stato, 'fuga');
+});
+test('ogni specie ha una voce, e la voce è una misura sensata',()=>{
+  for (const [specie, s] of Object.entries(fauna.SPECIE)) {
+    assert.ok(Number.isFinite(s.voce) && s.voce > 0.3 && s.voce < 2, `${specie} senza voce`);
+  }
+  assert.ok(fauna.SPECIE.orso.voce < fauna.SPECIE.cervo.voce, 'l’orso deve essere più cupo del cervo');
+});
+test('d’inverno le bestie sono magre, e conta il giorno in cui sono cadute',()=>{
+  // Un cervo abbattuto d'inverno rende meno di uno abbattuto d'estate, e
+  // macellarlo il giorno dopo non lo ingrassa.
+  const resa = (giorno) => {
+    tempo.reimposta(); tempo.impostaGiorno(giorno); fauna.reimposta(); inventario.svuota();
+    const e = animale('cervo', 16);
+    fauna.colpisci(e, 99);
+    for (let i = 0; i < 3; i += 1) fauna.macella(e);
+    return inventario.quante('carne_cruda');
+  };
+  const estate = resa(1), inverno = resa(9);
+  assert.equal(estate, fauna.SPECIE.cervo.carne);
+  assert.ok(inverno < estate, `inverno ${inverno} non è meno di estate ${estate}`);
+  assert.ok(inverno >= 1, 'una bestia magra rende poco, non niente');
+  // Le pelli non cambiano: la pelliccia non deve costare di più proprio
+  // nella stagione per cui esiste.
+  assert.equal(inventario.quante('pelle'), fauna.SPECIE.cervo.pelli);
+});
