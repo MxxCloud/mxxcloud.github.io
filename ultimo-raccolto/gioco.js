@@ -69,7 +69,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.9";
+const VERSIONE = "M7.9.2";
 
 // --- elementi -------------------------------------------------------------
 
@@ -1128,6 +1128,9 @@ function aggiorna(passo) {
     if (selvatici.allerta) annuncia(selvatici.allerta, "#c9b189");
     if (selvatici.attacchi > 0) { lampoDanno = DURATA_LAMPO; suono.suona(MORSO); }
     infetti.sgomitano();
+    // Anche le bestie, e dopo di loro: si sono mosse tutte, adesso si guarda
+    // chi è finito dentro chi.
+    fauna.sgomitano(eroe);
     const morsi = infetti.raccogliIMorsi(eroe);
     if (morsi.morsi > 0) {
       lampoDanno = DURATA_LAMPO;
