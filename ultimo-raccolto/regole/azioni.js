@@ -48,7 +48,7 @@ export function bersaglio(eroe) {
 // ritmo giusto perché bere sia un gesto e non un lavoro.
 const SORSO = 0.45;
 
-const COLPI_DURI = new Set([OGGETTO.ALBERO, OGGETTO.SASSO, OGGETTO.MURO, OGGETTO.MURO_ROTTO, OGGETTO.BANCO]);
+const COLPI_DURI = new Set([OGGETTO.ALBERO, OGGETTO.SASSO, OGGETTO.MURO, OGGETTO.MURO_ROTTO, OGGETTO.BANCO, OGGETTO.CARRO, OGGETTO.TRONCO]);
 
 // Su cosa si dorme, e quanto rende. Due letti e due condizioni: scritto come
 // ternario annidato — `inverno ? (fuoco ? x : y) : z` — reggeva finché il letto
@@ -150,6 +150,14 @@ function sullaCarcassa(carcassa, cosaInMano, indice) {
 // in fondo la regola della carcassa andrebbe ripetuta a ognuno di essi.
 function sulTassello(eroe, cosaInMano, indice) {
   const b = bersaglio(eroe);
+
+  // Acqua di falda: il pozzo resta utilizzabile anche d'inverno. Non è una
+  // riva dove pescare e non si porta via come un oggetto dello zaino.
+  if (b.oggetto === OGGETTO.POZZO) {
+    if (cosaInMano === "secchio") return { tipo: "riempi", verbo: "Attingi acqua", bersaglio: b };
+    return { tipo: "bevi", verbo: "Bevi dal pozzo", bersaglio: b,
+      impedito: bisogni.livello("sete") >= 1 ? "non hai sete" : null };
+  }
 
   // Di giorno due ore; la notte fino alle sette. X smonta il letto.
   if (LETTI.has(b.oggetto)) {

@@ -11,6 +11,7 @@ import { impronta, semeDaTesto } from "../motore/casuale.js";
 import { cuoci, mascherato, ruotato, sovrapposto } from "../arte/sprite.js";
 import * as terrenoArte from "../arte/sprite-terreno.js";
 import * as oggettiArte from "../arte/sprite-oggetti.js";
+import * as luoghiArte from "../arte/sprite-luoghi.js";
 import * as coseArte from "../arte/sprite-cose.js";
 import * as ortoArte from "../arte/sprite-orto.js";
 import * as transizioniArte from "../arte/sprite-transizioni.js";
@@ -44,6 +45,9 @@ const CATALOGO = {
 // bloccare. Alberi e sassi fermano, e fermano l'intero tassello — più preciso
 // di così, a sedici pixel, il giocatore lo leggerebbe come un blocco casuale.
 const CATALOGO_OGGETTI = {
+  [OGGETTO.CARRO]: { sprite: luoghiArte.CARRO, solido: true },
+  [OGGETTO.POZZO]: { sprite: luoghiArte.POZZO, solido: true },
+  [OGGETTO.TRONCO]: { sprite: luoghiArte.TRONCO, solido: true },
   [OGGETTO.ALBERO]: { sprite: oggettiArte.ALBERO, solido: true },
   [OGGETTO.SASSO]: { sprite: oggettiArte.SASSO, solido: true },
   [OGGETTO.CESPUGLIO]: { sprite: oggettiArte.CESPUGLIO, solido: false },
@@ -227,7 +231,7 @@ export function inizializza(nome) {
 // La rovina di una cella, per chi disegna la mappa grande. Il mondo la sa già
 // — la maglia è in rovine.js — e passare di qui evita che l'interfaccia debba
 // sapere che esiste un seme.
-export { rovinaNellaCella, laFattoria } from "./generazione.js";
+export { rovinaNellaCella, laFattoria, luogoIn } from "./generazione.js";
 export { CELLA as CELLA_ROVINE } from "./rovine.js";
 
 export function semeCorrente() {
@@ -705,4 +709,3 @@ export function precuociVicini() {
 export function settoriInMemoria() {
   return settori.size;
 }
-

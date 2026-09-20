@@ -70,7 +70,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.10";
+const VERSIONE = "M7.11";
 
 // --- elementi -------------------------------------------------------------
 
@@ -97,6 +97,7 @@ let alBanco = false;
 let azioneCorrente = null;
 let messaggio = null;
 let avvisoRisveglio = null;
+let luogoAttuale = null;
 let aperturaVisibile = true;
 let minimappaVisibile = true;
 // La mappa grande è modale come le ricette e la partita: il mondo non avanza
@@ -240,6 +241,7 @@ function nuovoSuperstite() {
   // risveglia, e tenersela vorrebbe dire un superstite nuovo che non gela in
   // mezzo a un prato.
   riparo.reimposta();
+  luogoAttuale = null;
   entita.svuota();
   const partenza = doveSiComincia();
   eroe = entita.aggiungi(giocatore.crea(partenza.px, partenza.py));
@@ -523,6 +525,7 @@ function riprendi(ripreso) {
   // della partita che si sta aprendo, e tenersela vorrebbe dire un caricamento
   // che per mezzo secondo non gela in mezzo alla neve.
   riparo.reimposta();
+  luogoAttuale = null;
   entita.svuota();
   eroe = entita.aggiungi(giocatore.crea(ripreso.eroe.px, ripreso.eroe.py));
   eroe.guarda = ripreso.eroe.guarda ?? "giu";
@@ -1191,6 +1194,10 @@ function aggiorna(passo) {
     // rumore — così premere TAB non calcola niente.
     const scoperti = esplorato.segna(eroe);
     if (scoperti.length > 0) mappaGrande.aggiungi(scoperti);
+    const luogo = mappa.luogoIn(Math.floor(eroe.px / TASSELLO), Math.floor(eroe.py / TASSELLO), 3);
+    const chiaveLuogo = luogo ? `${luogo.tx0},${luogo.ty0}` : null;
+    if (chiaveLuogo && chiaveLuogo !== luogoAttuale) annuncia(luogo.nome, "#c9b189");
+    luogoAttuale = chiaveLuogo;
 
     if (colpito) {
       colpito.resta -= passo;

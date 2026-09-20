@@ -12,6 +12,40 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.11 — piccoli luoghi nella valle
+
+Tra una rovina e l'altra si incontrano cinque tipi di luogo, anche in forma
+specchiata. Il nome compare avvicinandosi e la mappa TAB li segna nei settori
+esplorati: ocra per i piccoli luoghi, azzurro per i pozzi.
+
+| Luogo | Cosa offre |
+| --- | --- |
+| Carro rovesciato | Carico sparso in una cassa; il carro rende 3 legna e 2 fibre |
+| Pozzo dei viandanti | Acqua da bere o attingere con i secchi, anche d'inverno; piccole scorte da viaggio |
+| Accampamento bruciato | Focolare spento, tronchi carbonizzati, pochi materiali o una provvista superstite |
+| Sosta dei boscaioli | Un giaciglio, un focolare da recuperare, legname e talvolta un'ascia usata |
+| Orto abbandonato | Filari appassiti da ripulire, macerie e una cassa con semi, fibra o una zappa usata |
+
+Ogni cassa contiene una o due pile modeste, scelte in modo deterministico.
+Il bottino prelevato resta prelevato dopo salva/carica. Carro e tronchi non
+ricrescono: quattro/due colpi a mani nude, due/uno con l'ascia; ogni colpo
+consuma stamina e, quando usata, l'ascia. Un tronco rende una legna.
+Il pozzo è una fonte fissa: non si raccoglie e non ci si pesca.
+
+La generazione conserva le vecchie piante, probabilità e coordinate delle
+rovine. Soltanto nelle celle rimaste senza rovine, esclusa quella della
+fattoria, prova ad aggiungere un piccolo luogo con probabilità del 65%.
+Ci sono al massimo quattro tentativi su terreno asciutto, con un margine
+libero dall'acqua; ogni pianta resta interamente nella propria cella di
+64 × 64 tasselli. Non ci sono spawn temporizzati: il luogo esiste già come
+funzione delle coordinate e del seme.
+
+Su 3.600 celle in quattro semi i piccoli luoghi occupano il 45,6% delle celle,
+le vecchie rovine il 23,7%; il resto rimane natura. La fattoria e tutte le
+rovine preesistenti del campione sono identiche alla versione precedente.
+Le modifiche salvate del giocatore continuano a prevalere sugli oggetti
+generati. Non occorre iniziare una nuova partita.
+
 ## M7.10 — fatica e riposo
 
 Le azioni fisiche consumano stamina oltre al calo dovuto al tempo e al movimento.

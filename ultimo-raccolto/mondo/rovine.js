@@ -26,6 +26,7 @@
 
 import { impronta } from "../motore/casuale.js";
 import { PIANTE, FATTORIA, misuraDi } from "../arte/piante.js";
+import { LUOGHI } from "../arte/luoghi.js";
 
 export const CELLA = 64;
 
@@ -159,6 +160,26 @@ function risolvi(cx, cy, adatto) {
   return { tx0, ty0, pianta, larghezza, altezza };
 }
 
+// Un piccolo luogo in alcune delle celle rimaste vuote, mai al posto di una
+// casa o della fattoria. Quattro tentativi per evitare di perdere una radura
+// soltanto perché il primo punto cade sul bordo di un lago.
+export const QUOTA_LUOGHI = 0.65;
+function piccoloLuogo(cx, cy, adatto) {
+  if ((cx === 0 && cy === 0) || impronta(cx, cy, scarto(semeCorrente, 31)) >= QUOTA_LUOGHI) return null;
+  const luogo = LUOGHI[Math.floor(impronta(cx, cy, scarto(semeCorrente, 32)) * LUOGHI.length)];
+  const specchiato = impronta(cx, cy, scarto(semeCorrente, 33)) < 0.5;
+  const pianta = specchiato ? luogo.pianta.map(r => [...r].reverse().join("")) : luogo.pianta;
+  const { larghezza, altezza } = misuraDi(pianta);
+  for (let i = 0; i < 4; i++) {
+    const tx0 = cx * CELLA + MARGINE + Math.floor(impronta(cx, cy, scarto(semeCorrente, 40+i*2)) * (CELLA-larghezza-MARGINE*2+1));
+    const ty0 = cy * CELLA + MARGINE + Math.floor(impronta(cx, cy, scarto(semeCorrente, 41+i*2)) * (CELLA-altezza-MARGINE*2+1));
+    if (reggeIlTerreno(tx0, ty0, larghezza, altezza, adatto)) {
+      return { tx0, ty0, pianta, larghezza, altezza, luogo: luogo.id, nome: luogo.nome };
+    }
+  }
+  return null;
+}
+
 // La rovina di una cella, o null. "adatto" arriva da fuori — da
 // generazione.js, che è l'unico a sapere cosa sia l'acqua — e questo è ciò che
 // tiene le dipendenze in una direzione sola.
@@ -166,7 +187,7 @@ export function nellaCella(cx, cy, adatto) {
   const chiave = `${cx},${cy}`;
   if (risolte.has(chiave)) return risolte.get(chiave);
   if (risolte.size > CELLE_TENUTE) risolte.clear();
-  const rovina = risolvi(cx, cy, adatto);
+  const rovina = risolvi(cx, cy, adatto) ?? piccoloLuogo(cx, cy, adatto);
   risolte.set(chiave, rovina);
   return rovina;
 }
@@ -205,3 +226,4 @@ export function tasselloDi(tx, ty, adatto) {
   const segno = rovina.pianta[dy][dx];
   return segno === " " ? null : segno;
 }
+

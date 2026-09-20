@@ -1,4 +1,9 @@
 import * as riposo from "../regole/riposo.js";
+import { createHash } from 'node:crypto';
+import { LUOGHI } from '../arte/luoghi.js';
+import * as spriteLuoghi from '../arte/sprite-luoghi.js';
+import * as rovine from '../mondo/rovine.js';
+import * as ricrescita from '../regole/ricrescita.js';
 import * as meteo from '../regole/meteo.js';
 import * as atmosfera from '../arte/atmosfera.js';
 import { test, beforeEach } from 'node:test';
@@ -50,6 +55,114 @@ function reset() {
   for(let y=ty-5;y<=ty+5;y++) for(let x=tx-5;x<=tx+5;x++) modifiche.imposta(x,y,{oggetto:OGGETTO.NESSUNO});
 }
 beforeEach(reset);
+
+function trovaLuogo(id) {
+  for(let y=-12;y<=12;y++)for(let x=-12;x<=12;x++) {
+    const r=mappa.rovinaNellaCella(x,y);if(r?.luogo===id)return r;
+  }
+  assert.fail('luogo assente: '+id);
+}
+function segnoNelLuogo(r,segno) {
+  for(let y=0;y<r.altezza;y++)for(let x=0;x<r.larghezza;x++)if(r.pianta[y][x]===segno)return {tx:r.tx0+x,ty:r.ty0+y};
+  assert.fail('segno assente: '+segno);
+}
+test('47 rovine e fattorie di quattro semi conservano esattamente pianta e posizione',()=>{
+  const fixture=JSON.parse(readFileSync(new URL('./rovine-pre-luoghi.json',import.meta.url),'utf8'));
+  for(const f of fixture) {
+    mappa.inizializza(f.seme);const r=mappa.rovinaNellaCella(f.cx,f.cy);
+    assert.ok(r);assert.equal(r.luogo,undefined);
+    assert.equal(createHash('sha256').update(JSON.stringify([r.tx0,r.ty0,r.pianta])).digest('hex'),f.hash);
+  }
+});
+test('le cinque piante sono rettangolari, diverse e lasciano accesso ai punti utili',()=>{
+  assert.equal(new Set(LUOGHI.map(l=>l.id)).size,5);
+  for(const l of LUOGHI) {
+    const w=l.pianta[0].length,h=l.pianta.length;
+    assert.ok(l.pianta.every(r=>r.length===w));assert.equal(l.pianta.join('').split('c').length-1,1);
+    const visitati=new Set(),coda=[[-1,-1]];
+    for(let i=0;i<coda.length;i++){
+      const [x,y]=coda[i],k=`${x},${y}`;
+      if(x<-1||y<-1||x>w||y>h||visitati.has(k)||'cvot'.includes(l.pianta[y]?.[x]??' '))continue;
+      visitati.add(k);coda.push([x-1,y],[x+1,y],[x,y-1],[x,y+1]);
+    }
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      assert.ok(' .cvotgaf%'.includes(l.pianta[y][x]));
+      if('cvotgf'.includes(l.pianta[y][x]))assert.ok([[x-1,y],[x+1,y],[x,y-1],[x,y+1]].some(p=>visitati.has(p.join(','))),l.id);
+    }
+  }
+});
+test('sprite dei luoghi decodificabili in tutte le stagioni',()=>{
+  for(const stagione of ['estate','autunno','inverno','primavera'])for(const s of Object.values(spriteLuoghi)) {
+    const d=decodifica(s,tavolozzaDi(stagione));assert.equal(d.larghezza,16);assert.ok(d.pixel.some(v=>v>0));
+  }
+});
+test('luoghi deterministici, dentro la cella, anche a coordinate negative e dopo svuotamento cache',()=>{
+  const trovati=[];
+  for(const l of LUOGHI) {
+    const r=trovaLuogo(l.id),cx=Math.floor(r.tx0/64),cy=Math.floor(r.ty0/64);
+    assert.ok(r.tx0>=cx*64+6&&r.ty0>=cy*64+6);
+    assert.ok(r.tx0+r.larghezza<=cx*64+58&&r.ty0+r.altezza<=cy*64+58);
+    assert.equal(mappa.luogoIn(r.tx0,r.ty0)?.luogo,l.id);
+    assert.equal(mappa.luogoIn(r.tx0-1,r.ty0),null);
+    assert.equal(mappa.luogoIn(r.tx0-1,r.ty0,3)?.luogo,l.id);
+    trovati.push({cx,cy,r:structuredClone(r)});
+  }
+  for(let x=40;x<120;x++)mappa.rovinaNellaCella(x,40);
+  for(const f of trovati)assert.deepEqual(mappa.rovinaNellaCella(f.cx,f.cy),f.r);
+  assert.equal(mappa.rovinaNellaCella(0,0).luogo,undefined);
+});
+test('nessuna costruzione viene collocata quando il terreno è acqua',()=>{
+  rovine.inizializza(1234);
+  for(let y=-3;y<=3;y++)for(let x=-3;x<=3;x++)assert.equal(rovine.nellaCella(x,y,()=>false),null);
+});
+test('pozzo: si beve e si riempiono i secchi anche in inverno, senza pesca o distruzione',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.POZZO});tempo.impostaGiorno(9);
+  bisogni.consuma('sete',0.8);assert.equal(azioni.agisci(eroe,null).tipo,'bevi');vicino(bisogni.livello('sete'),0.65);
+  inventario.aggiungi('secchio',2);assert.equal(azioni.agisci(eroe,'secchio').quanti,2);
+  assert.equal(inventario.quante('secchio_pieno'),2);vicino(bisogni.livello('stanchezza'),0.995);
+  bisogni.ristora('sete',1);inventario.aggiungi('canna',1);inventario.aggiungi('ascia',1);
+  assert.equal(azioni.agisci(eroe,'canna'),null);assert.equal(azioni.agisci(eroe,'ascia'),null);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.POZZO);assert.equal(mappa.solidoIn(tx+1,ty),true);
+});
+test('carro e tronchi richiedono lavoro, consumano ascia e stamina e non ricrescono',()=>{
+  const r=trovaLuogo('carro'),p=segnoNelLuogo(r,'v');
+  eroe={...pos(p.tx-1,p.ty),guarda:'destra'};
+  // Libera il punto in cui sta il personaggio, mantenendo il carro generato.
+  modifiche.imposta(p.tx-1,p.ty,{oggetto:OGGETTO.NESSUNO});
+  inventario.aggiungi('ascia',1);
+  assert.equal(azioni.agisci(eroe,'ascia').tipo,'colpo');assert.equal(azioni.agisci(eroe,'ascia').tipo,'raccolto');
+  assert.equal(inventario.attrezzo('ascia').usi,58);vicino(bisogni.livello('stanchezza'),0.97);
+  assert.equal(inventario.quante('legna'),3);assert.equal(inventario.quante('fibra'),2);
+  const stato=salvataggio.istantanea(eroe,0);assert.ok(salvataggio.applica(stato));
+  tempo.impostaGiorno(100);ricrescita.nuovoGiorno();assert.equal(mappa.oggettoDi(p.tx,p.ty),OGGETTO.NESSUNO);
+  modifiche.imposta(p.tx,p.ty,{oggetto:OGGETTO.TRONCO});
+  assert.equal(azioni.agisci(eroe,'ascia').tipo,'raccolto');assert.equal(inventario.attrezzo('ascia').usi,57);
+  assert.equal(inventario.quante('legna'),4);
+});
+test('bottino dei piccoli luoghi tematico, modesto e stabile alla riapertura',()=>{
+  const ammessi={carro:['fibra','legna','benda'],pozzo:['secchio','fibra','pietra'],bruciato:['fibra','benda','conserva'],boscaioli:['legna','ramo','ascia'],orto:['semi','fibra','zappa']};
+  for(const l of LUOGHI) {
+    const r=trovaLuogo(l.id),p=segnoNelLuogo(r,'c');
+    const prima=contenitori.contenutoDi(p.tx,p.ty),pile=prima.filter(Boolean);
+    assert.ok(pile.length>=1&&pile.length<=2);
+    for(const c of pile){assert.ok(ammessi[l.id].includes(c.cosa));assert.ok(c.quantita<=4);}
+    assert.deepEqual(contenitori.contenutoDi(p.tx,p.ty),prima);
+    assert.equal(modifiche.di(p.tx,p.ty),undefined);
+  }
+});
+test('una cassa saccheggiata non rigenera il bottino dopo salva e carica',()=>{
+  const r=trovaLuogo('boscaioli'),p=segnoNelLuogo(r,'c');
+  for(let i=0;i<contenitori.CASELLE;i++)contenitori.sposta(p.tx,p.ty,false,i);
+  assert.equal(contenitori.eVuota(p.tx,p.ty),true);
+  const stato=salvataggio.istantanea(eroe,0);assert.ok(salvataggio.applica(stato));
+  assert.equal(contenitori.eVuota(p.tx,p.ty),true);
+});
+test('le costruzioni salvate prevalgono sui nuovi oggetti generati',()=>{
+  const r=trovaLuogo('pozzo'),p=segnoNelLuogo(r,'o');
+  modifiche.imposta(p.tx,p.ty,{oggetto:OGGETTO.MURO,colpi:1});
+  const stato=salvataggio.istantanea(eroe,0);assert.ok(salvataggio.applica(stato));
+  assert.equal(mappa.oggettoDi(p.tx,p.ty),OGGETTO.MURO);assert.equal(modifiche.di(p.tx,p.ty).colpi,1);
+});
 
 test('ogni colpo di raccolta costa stamina, incluso quello finale e le mani nude',()=>{
   modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.ALBERO});
