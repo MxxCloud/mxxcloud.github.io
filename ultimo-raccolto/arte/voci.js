@@ -317,6 +317,24 @@ export const GELO = {
   volume: 0.07,
 };
 
+// Il verso di una bestia grossa.
+//
+// Rumore filtrato basso, con un attacco che non è uno schiocco: è fiato, non
+// un colpo. Una voce sola per quattro specie, come colpoDi() è una voce sola
+// per quattro materiali — a cambiare è il tono, che sta accanto alle altre
+// misure della specie in fauna.js: l'orso profondo a 0,62, il cervo sottile a
+// 1,25. Il rumore bianco non ha un'altezza da spostare, quindi il tono muove
+// il taglio del filtro (vedi motore/suono.js), ed è esattamente quello che
+// serve qui: la differenza fra uno sbuffo e un brontolio non è una nota, è
+// quanto è cupo.
+export const VERSO_BESTIA = {
+  onda: "rumore",
+  attacco: 0.03,
+  coda: 0.34,
+  filtro: { tipo: "passabasso", taglio: 620, a: 240, risonanza: 2.4 },
+  volume: 0.4,
+};
+
 // Un attrezzo che si spezza.
 //
 // L'unica voce metallica del gioco, e deve esserlo: in una valle di legno,
