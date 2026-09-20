@@ -12,6 +12,53 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.11.1 — la luce non è il calore, e la valle non è un paese
+
+Tre correzioni, due alla tappa dei piccoli luoghi e una che paga un debito
+vecchio quanto il freddo.
+
+**La torcia illumina e si consuma, ma non scalda.** Fin qui luce e calore erano
+lo stesso campo, quindi una torcia scaldava per sbaglio — in pugno *e* piantata
+per terra. Era l'unico buco nel freddo, e non era piccolo: la torcia costa un
+ramo e due fibre, non si consumava, e tenerla in mano annullava notte
+invernale, nevicata ed essere zuppi. Per sempre e gratis. Adesso scalda solo il
+fuoco vero: un **falò** entro tre tasselli, o una stanza chiusa che ne contiene
+uno. Il progetto se n'era già accorto a metà — il riposo passava apposta "niente
+in mano" al calcolo del gelo, e c'era un collaudo che diceva *"la torcia in mano
+non sostituisce il falò nel riposo"*. Adesso vale anche per chi sta in piedi.
+
+E la torcia **si consuma mentre è accesa**: sessanta usi, uno ogni cinque
+secondi, cioè **trecento secondi** — la stessa giornata che dura una torcia
+piantata. Nello zaino non brucia, perché lì non è accesa. La barra sotto
+l'icona misura la torcia accesa, il numero dice quante ne restano: finita
+quella in mano ne comincia un'altra della pila, e quando la pila finisce la
+casella si svuota. Una torcia non si ripara: è un bastone che brucia.
+
+**Il pozzo gela.** D'inverno l'acqua ghiaccia da sempre e la barra dice *"cerca
+acqua aperta"*; un pozzo ogni dieci celle scioglieva quel vincolo ovunque senza
+che nessuno l'avesse deciso. Adesso il pozzo ghiaccia **nello stesso istante
+degli stagni** — lo stato del gelo lo chiede alla mappa, non a un secondo
+calendario — e torna a dare acqua col disgelo.
+
+**La valle si è diradata.** I piccoli luoghi erano al 46 per cento delle celle:
+con le rovine faceva il 70 di valle costruita, e la natura vergine scendeva
+sotto il terzo. Una cella è 64 tasselli, cioè due schermate e mezza, quindi si
+incontrava qualcosa di costruito ogni quattro schermate invece che ogni undici
+— e una cassa gratis ogni quattro schermate sgonfia la metà del gioco che
+dovrebbe essere *un posto in cui investi*. Adesso:
+
+| | prima | adesso |
+| --- | --- | --- |
+| Rovine | 24% | **24%** (invariate) |
+| Piccoli luoghi | 46% | **31%** |
+| Natura | 30% | **45%** |
+
+Le rovine non si toccano di proposito: abbassare anche quelle avrebbe fatto
+sparire cinque delle quarantasette case del collaudo dai mondi già in gioco, e
+la stessa valle si ottiene togliendo soltanto luoghi che nessuno ha ancora
+visto. Le partite in corso non perdono niente, e il collaudo che congela pianta
+e posizione delle vecchie case resta verde senza essere stato rigenerato.
+
 ## M7.11 — piccoli luoghi nella valle
 
 Tra una rovina e l'altra si incontrano cinque tipi di luogo, anche in forma

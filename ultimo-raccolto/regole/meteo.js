@@ -75,7 +75,7 @@ function ritmo(eroe) {
   const tx=Math.floor(eroe.px/TASSELLO),ty=Math.floor(eroe.py/TASSELLO);
   const dentro=alRiparo(eroe);
   if (evento()==="pioggia" && !dentro) return 1/20;
-  if (mappa.luceVicina(tx,ty,3) || (dentro && riparo.caldaDentro(riparo.stanzaDi(tx,ty)))) return -1/10;
+  if (mappa.fuocoVicino(tx,ty,3) || (dentro && riparo.caldaDentro(riparo.stanzaDi(tx,ty)))) return -1/10;
   return dentro ? -1/40 : -1/80;
 }
 

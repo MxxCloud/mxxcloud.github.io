@@ -163,7 +163,26 @@ function risolvi(cx, cy, adatto) {
 // Un piccolo luogo in alcune delle celle rimaste vuote, mai al posto di una
 // casa o della fattoria. Quattro tentativi per evitare di perdere una radura
 // soltanto perché il primo punto cade sul bordo di un lago.
-export const QUOTA_LUOGHI = 0.65;
+//
+// Misurata come la quota delle rovine, e per la stessa ragione — il numero che
+// conta non è quello che si scrive qui, è quello che si incontra camminando.
+// Contate su 3600 celle per seme, su quattro semi: 0,43 dà **31 per cento di
+// celle con un piccolo luogo**, che sommato al 24 delle rovine fa 55 di valle
+// costruita e 45 di natura.
+//
+// Era 0,65, cioè 46 per cento: con le rovine si arrivava al 70, e la natura
+// vergine scendeva sotto il terzo. Il numero da guardare non era quello però:
+// una cella è 64 tasselli, cioè due schermate e mezza, quindi al 70 per cento
+// si incontrava qualcosa di costruito ogni quattro schermate invece che ogni
+// undici. Il pilastro di questo gioco ha due metà — un posto in cui investi e
+// un mondo che se lo riprende — e una cassa gratis ogni quattro schermate
+// sgonfia la prima: se la valle ti rifornisce, l'orto è un passatempo.
+//
+// Le rovine restano a QUOTA: abbassare anche quelle avrebbe fatto sparire
+// cinque delle quarantasette case del collaudo dai mondi già in gioco, e la
+// stessa valle si sarebbe ottenuta togliendo soltanto dei luoghi che nessuno
+// ha ancora visto.
+export const QUOTA_LUOGHI = 0.43;
 function piccoloLuogo(cx, cy, adatto) {
   if ((cx === 0 && cy === 0) || impronta(cx, cy, scarto(semeCorrente, 31)) >= QUOTA_LUOGHI) return null;
   const luogo = LUOGHI[Math.floor(impronta(cx, cy, scarto(semeCorrente, 32)) * LUOGHI.length)];

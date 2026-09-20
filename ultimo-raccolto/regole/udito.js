@@ -205,7 +205,7 @@ const scoppietti = new Map();
 // Le fiamme si chiedono a lumiVisibili(), che è la lista di quelle inquadrate,
 // e mappa.js mette in guardia proprio da questo: dipende da dove sta la
 // camera, quindi una regola di sopravvivenza che la usasse sarebbe decisa dal
-// disegno. Il freddo infatti non la usa — usa luceVicina(), che è una domanda
+// disegno. Il freddo infatti non la usa — usa fuocoVicino(), che è una domanda
 // sul mondo.
 //
 // Qui si accetta, e la differenza è che questa non è una regola: nessuno vive
