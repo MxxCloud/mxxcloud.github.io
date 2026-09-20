@@ -12,6 +12,59 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.12 — la pelliccia addosso
+
+Le pelli servivano a una cosa sola, il giaciglio. Adesso diventano qualcosa che
+si porta, e l'inverno si attraversa invece di aspettarlo.
+
+**Pelle e pelliccia sono due cose**, e non per vocabolario. La pelle è già una
+valuta — tre vanno nel giaciglio — e indossarla grezza vorrebbe dire risolvere
+l'inverno con **un cervo**, cioè meno di quanto costasse la torcia a cui M7.11.1
+ha appena tolto il calore. Qui vale la grammatica di tutto il resto del gioco:
+niente si usa grezzo. La pietra diventa muro, la pelle diventa pelliccia.
+
+La **pelliccia** si cuce al banco con **4 pelli e 3 fibre** — due animali
+grossi, o un bufalo più un cervo.
+
+**Nasce l'addosso.** Una cosa per volta, fuori dalle otto caselle, in una
+casella sua staccata a destra della barra. Si indossa con **`E`**, che significa
+già *usa quello che hai in mano su di te*: mangiare, fasciarsi, vestirsi sono lo
+stesso gesto. E siccome quello che hai addosso non sta in nessuna casella —
+quindi non lo si può selezionare — **`E` a mani vuote lo toglie**. Non c'è un
+tasto nuovo da imparare: quel significato era l'unico ancora libero.
+
+**La pelliccia non dà immunità**, e non poteva darla: sarebbe stata la torcia
+un'altra volta con più passaggi. Fa una cosa sola — **il freddo smette di
+peggiorare col tempo**. Il gelo moltiplica per due dopo quindici secondi e per
+tre dopo trenta; con la pelliccia resta a uno dal primo secondo all'ultimo.
+
+| | si muore dopo | una notte invernale intera all'aperto |
+| --- | --- | --- |
+| Senza | 90 secondi | uccide |
+| Con la pelliccia | **225 secondi** | **costa il 56% della salute** |
+
+Si arriva dall'altra parte, e ci si arriva conciati: la guarigione è lenta di
+proposito, quindi una notte passata fuori si paga per un giorno e due terzi.
+L'esposizione continua ad accumularsi anche protetti — chi si spoglia dopo due
+minuti trova i gradini già saliti, perché il contatore misura quanto sei stato
+al freddo, non quanto ti è costato.
+
+**Ci si bagna più lentamente**: sotto la pioggia si diventa zuppi in diciotto
+secondi invece di dieci, che è la distanza da cui l'accampamento è ancora
+raggiungibile. Ma **una pelliccia zuppa non scalda**, ed è la regola che tiene
+insieme le due cose: l'unico modo di rimetterla in funzione è asciugarsi, cioè
+un fuoco. È il costo ricorrente della pelliccia, pagato in legna e visibile
+nella barra del bagnato invece che in un contatore invisibile.
+
+**Non si consuma.** L'usura di questo gioco conta gesti, e una pelliccia si
+logora col tempo: costruire una seconda usura per un oggetto solo chiederebbe un
+campo nel salvataggio, un indicatore nell'HUD e una ricetta di riparazione. Il
+costo sta nella costruzione — e l'entropia c'è già, perché **si muore, e quello
+che avevi addosso resta sul cadavere**, lontano da casa e d'inverno.
+
+I vecchi salvataggi si riaprono a torso nudo, che è la cosa giusta: sono stati
+scritti in un gioco in cui non ci si vestiva.
+
 ## M7.11.1 — la luce non è il calore, e la valle non è un paese
 
 Tre correzioni, due alla tappa dei piccoli luoghi e una che paga un debito

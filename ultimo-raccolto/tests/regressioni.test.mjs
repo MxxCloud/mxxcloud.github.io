@@ -31,6 +31,7 @@ import * as salvataggio from '../regole/salvataggio.js';
 import * as riparo from '../regole/riparo.js';
 import * as freddo from '../regole/freddo.js';
 import * as fiamma from '../regole/fiamma.js';
+import * as addosso from '../regole/addosso.js';
 import * as fauna from '../regole/fauna.js';
 import * as arteFauna from '../arte/sprite-fauna.js';
 import * as infetti from '../regole/infetti.js';
@@ -45,6 +46,7 @@ import { TAVOLOZZA } from '../arte/tavolozza.js';
 let tx, ty, eroe;
 function reset() {
   fiamma.reimposta();
+  addosso.reimposta();
   fauna.reimposta();
   meteo.reimposta();
   pesca.interrompi(); mappa.impostaGelo(false);
@@ -1132,7 +1134,8 @@ test('la maniglia del collaudo nomina solo cose che esistono davvero',()=>{
 test('fauna: sagome, animazioni, carcasse e icone sono valide e distinte',()=>{
   for(const fs of Object.values(arteFauna.ANIMALI)) for(const f of fs) decodifica(f);
   for(const f of Object.values(arteFauna.CARCASSE)) decodifica(f);
-  for(const k of ['CARNE_CRUDA','CARNE_ARROSTITA','PELLE']) decodifica(arteFauna[k]);
+  for(const k of ['CARNE_CRUDA','CARNE_ARROSTITA','PELLE','PELLICCIA']) decodifica(arteFauna[k]);
+  assert.notDeepEqual(arteFauna.PELLE,arteFauna.PELLICCIA,'spoglia e capo si devono distinguere');
   assert.equal(new Set(Object.values(arteFauna.ANIMALI).map(f=>JSON.stringify(f[0]))).size,4);
 });
 test('il cavallo fugge sempre e non ferisce neppure dopo essere stato colpito',()=>{
@@ -1463,4 +1466,118 @@ test('la valle resta più natura che costruito, e il conto è misurato non dichi
   assert.ok(pc(case_)>22 && pc(case_)<27,`rovine ${pc(case_).toFixed(1)}%`);
   assert.ok(pc(luoghi)>28 && pc(luoghi)<34,`luoghi ${pc(luoghi).toFixed(1)}%`);
   assert.ok(natura>42,`natura ${natura.toFixed(1)}%: la valle si sta riempiendo`);
+});
+
+test('il cadavere regge una voce più dello zaino: è un mucchio, non uno zaino',()=>{
+  // Nessun oggetto indossabile esiste ancora: la fila da nove si costruisce a
+  // mano, ed è esattamente il caso che il giorno della pelliccia arriverà da
+  // solo — morire con lo zaino pieno e qualcosa addosso.
+  for(let i=0;i<8;i++)inventario.aggiungi('pietra',1);
+  const stato=salvataggio.istantanea(eroe,0);
+  const roba=[...Array(9)].map(()=>({cosa:'pietra',quantita:1}));
+  stato.modifiche=[{tx:tx+1,ty,oggetto:OGGETTO.CADAVERE,roba,giorno:1}];
+  assert.ok(salvataggio.valido(stato),'nove voci sono ammesse');
+  stato.modifiche[0].roba=[...roba,{cosa:'pietra',quantita:1}];
+  assert.equal(salvataggio.valido(stato),false,'dieci no: il tetto resta un tetto');
+});
+
+const RICETTA_PELLICCIA = ricette.RICETTE.find(r=>r.id==='pelliccia');
+const gela = (secondi)=>simulazione.avanza(secondi,{eroe,alFreddo:()=>freddo.alFreddo(eroe)});
+function vestito() { inventario.aggiungi('pelliccia',1);azioni.consuma('pelliccia',0); }
+
+test('la pelliccia si indossa con E, la casella si libera, la seconda si scambia',()=>{
+  inventario.aggiungi('pelliccia',1);
+  assert.deepEqual(azioni.consuma('pelliccia',0),{tipo:'indossato',cosa:'pelliccia',tolto:null});
+  assert.equal(addosso.indossato().cosa,'pelliccia');
+  assert.equal(inventario.quante('pelliccia'),0,'non occupa più una casella');
+  inventario.aggiungi('pelliccia',1);
+  assert.equal(azioni.consuma('pelliccia',0).tolto,'pelliccia','la vecchia torna nello zaino');
+  assert.equal(inventario.quante('pelliccia'),1);
+  assert.equal(addosso.indossato().cosa,'pelliccia');
+});
+test('a mani vuote E spoglia; a zaino pieno si rifiuta senza perdere il capo',()=>{
+  vestito();
+  // Otto asce e non otto pietre: la pietra si impila a quaranta, quindi otto
+  // pietre stanno in una casella sola e lo zaino pieno non sarebbe pieno.
+  inventario.aggiungi('ascia',8);
+  assert.deepEqual(azioni.spogliati(),{tipo:'zainoPieno'});
+  assert.equal(addosso.indossato().cosa,'pelliccia','resta addosso');
+  inventario.svuotaCasella(7);
+  assert.deepEqual(azioni.spogliati(),{tipo:'tolto',cosa:'pelliccia'});
+  assert.equal(addosso.indossato(),null);assert.equal(inventario.quante('pelliccia'),1);
+  assert.equal(azioni.spogliati(),null,'a torso nudo non fa niente');
+});
+test('la pelliccia tiene il freddo a uno: sessanta secondi di neve costano meno della metà',()=>{
+  bisogni.ripristina({fame:1,sete:1,stanchezza:1});
+  maltempo('neve');vestito();
+  gela(60);
+  vicino(salute.livelloCorrente(),1-60/225,1e-6);
+  assert.equal(salute.moltiplicatoreFreddo(true),1);
+  reset();bisogni.ripristina({fame:1,sete:1,stanchezza:1});maltempo('neve');
+  gela(60);
+  vicino(salute.livelloCorrente(),1-135/225,1e-6);
+  assert.equal(salute.moltiplicatoreFreddo(),3);
+});
+test('una notte invernale intera vestiti si attraversa invece di uccidere',()=>{
+  bisogni.ripristina({fame:1,sete:1,stanchezza:1});
+  maltempo('neve');vestito();
+  gela(125);
+  assert.equal(salute.eMorto(),false,'si arriva dall’altra parte');
+  vicino(salute.livelloCorrente(),1-125/225,1e-6);
+});
+test('l’esposizione si accumula anche protetti: spogliarsi non azzera i gradini',()=>{
+  bisogni.ripristina({fame:1,sete:1,stanchezza:1});
+  maltempo('neve');vestito();
+  gela(40);
+  vicino(salute.secondiEsposto(),30);
+  assert.equal(salute.moltiplicatoreFreddo(),3,'i gradini erano saliti lo stesso');
+});
+test('una pelliccia zuppa non scalda',()=>{
+  bisogni.ripristina({fame:1,sete:1,stanchezza:1});
+  maltempo('neve');vestito();meteo.ripristina(1);
+  gela(30);
+  vicino(salute.livelloCorrente(),1-45/225,1e-6,'zuppa vale come niente');
+  reset();bisogni.ripristina({fame:1,sete:1,stanchezza:1});
+  maltempo('neve');vestito();meteo.ripristina(0.4);
+  gela(30);
+  vicino(salute.livelloCorrente(),1-30/225,1e-6,'bagnata ma non zuppa protegge ancora');
+});
+test('con la pelliccia ci si bagna in diciotto secondi invece di dieci',()=>{
+  maltempo('pioggia');
+  meteo.avanza(10,eroe);assert.equal(meteo.zuppo(),true,'nudi bastano dieci secondi');
+  reset();maltempo('pioggia');vestito();
+  meteo.avanza(18,eroe);assert.equal(meteo.zuppo(),false);
+  meteo.avanza(1,eroe);assert.equal(meteo.zuppo(),true);
+});
+test('la ricetta della pelliccia vuole il banco e quattro pelli',()=>{
+  inventario.aggiungi('pelle',3);inventario.aggiungi('fibra',3);
+  assert.equal(ricette.fai(RICETTA_PELLICCIA).perche,'banco');
+  assert.equal(ricette.fai(RICETTA_PELLICCIA,true).perche,'materiali');
+  inventario.aggiungi('pelle',1);
+  assert.equal(ricette.fai(RICETTA_PELLICCIA,true).fatto,true);
+  assert.equal(inventario.quante('pelle'),0);assert.equal(inventario.quante('pelliccia'),1);
+});
+test('la pelliccia si salva e torna addosso; i capi storti sono respinti prima di toccare la partita',()=>{
+  vestito();
+  const stato=salvataggio.istantanea(eroe,0);
+  addosso.reimposta();
+  assert.ok(salvataggio.applica(stato));
+  assert.equal(addosso.indossato().cosa,'pelliccia');
+  for(const storto of [{cosa:'pietra'},{cosa:'nulla'},'pelliccia',42]) {
+    assert.equal(salvataggio.valido({...stato,addosso:storto}),false,JSON.stringify(storto));
+  }
+  const vecchio={...stato};delete vecchio.addosso;
+  assert.ok(salvataggio.applica(vecchio));
+  assert.equal(addosso.indossato(),null,'un salvataggio vecchio si riapre a torso nudo');
+});
+test('morire con lo zaino pieno e la pelliccia addosso non rompe il salvataggio',()=>{
+  vestito();
+  inventario.aggiungi('ascia',8);
+  const morto=azioni.lasciaIlCadavere(eroe,1);
+  assert.equal(morto.quante,9,'otto caselle più quello che avevi addosso');
+  assert.equal(addosso.indossato(),null,'il capo resta sul corpo');
+  const dati=modifiche.di(morto.tx,morto.ty);
+  assert.ok(dati.roba.some(c=>c.cosa==='pelliccia'&&c.quantita===1));
+  const stato=salvataggio.istantanea(eroe,0);
+  assert.ok(salvataggio.valido(stato),'una fila da nove è ammessa: un cadavere è un mucchio');
 });

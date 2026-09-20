@@ -2,6 +2,7 @@
 // e la mezzanotte sono confini: il passato non usa le condizioni del futuro.
 import * as riposo from "./riposo.js";
 import * as meteo from "./meteo.js";
+import * as addosso from "./addosso.js";
 import * as tempo from "./tempo.js";
 import * as bisogni from "./bisogni.js";
 import * as salute from "./salute.js";
@@ -31,9 +32,19 @@ export function avanza(secondi, { eroe = null, dorme = false, corre = false, siM
     const mezzanotte = (24 - tempo.oraCorrente()) * tempo.SECONDI_PER_GIORNO / 24;
     // Un secondo al massimo per valutare gelo e luci anche nelle assenze.
     const passo = Math.min(secondi, 1, confineRiposo, Math.max(1e-9, mezzanotte), bisogni.secondiAlVuoto(opzioni), meteo.secondiAlCambio(eroe));
+    // Una pelliccia zuppa non scalda, ed è la regola che tiene insieme le due
+    // scale: l'unico modo di rimetterla in funzione è asciugarsi, cioè un
+    // fuoco. È il costo ricorrente della pelliccia, pagato in legna e visibile
+    // nella barra del bagnato invece che in un contatore invisibile.
+    //
+    // Sta qui e non in addosso.js perché è una frase sul freddo, non sulla
+    // pelliccia — e perché meteo deve poter chiedere ad addosso per la
+    // pioggia: metterla là creerebbe un ciclo fra i due.
+    const protetto = Boolean(addosso.dati()?.gradiniFermi) && !meteo.zuppo();
     salute.avanza(passo, {
       vuoti: bisogni.vuoti().filter(v => !dormendo || v !== "stanchezza"),
       alFreddo: alFreddo(),
+      protetto,
     });
     if (dormendo) bisogni.passanoSecondi(passo);
     else bisogni.avanza(passo, { corre, siMuove });

@@ -4,6 +4,7 @@ import * as schermo from "../motore/schermo.js";
 import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
 import * as inventario from "./inventario.js";
+import * as addosso from "./addosso.js";
 import { impronta } from "../motore/casuale.js";
 import { OGGETTO, TERRENO } from "../mondo/generazione.js";
 import * as tempo from "./tempo.js";
@@ -486,6 +487,13 @@ export function lasciaIlCadavere(eroe, giorno) {
     // prima — vedi decadimento.js — ed è una regola sola invece di
     // un'eccezione.
     .map((casella) => ({ ...casella }));
+  // Anche quello che si aveva addosso: è roba tua come il resto, e lasciarla
+  // sul morto è l'unica entropia che questa tappa porta — si perde morendo, e
+  // fa male perché ti coglie lontano da casa e d'inverno. La quantità non è
+  // cosmetica: casellaValida() pretende un intero positivo, e una voce senza
+  // renderebbe illeggibile il salvataggio.
+  const capo = addosso.togliDiDosso();
+  if (capo) roba.push({ ...capo, quantita: 1 });
   inventario.svuota();
 
   const tx0 = Math.floor(eroe.px / TASSELLO);
@@ -526,12 +534,41 @@ function resaDi(raccolta, tx, ty) {
 // avrebbe voluto dire decidere se si mangia o si abbatte l'albero che si ha
 // di fronte. Adesso serve anche alle bende, che è quello che il commento qui
 // sopra prometteva da M2.
-export function consuma(cosaInMano) {
+export function consuma(cosaInMano, indice) {
   const voce = cosaInMano && CATALOGO[cosaInMano];
   if (!voce) return null;
   if (voce.commestibile) return mangia(cosaInMano, voce.commestibile);
   if (voce.cura) return medicati(cosaInMano, voce.cura);
+  // Il terzo ramo della stessa frase. "E" significa già usa quello che hai in
+  // mano su di te — mangiare, fasciarsi — e indossare è lo stesso gesto con
+  // una parola in più. A smistare è il catalogo, come per gli altri due.
+  if (voce.addosso) return vesti(cosaInMano, indice);
   return null;
+}
+
+function vesti(cosa, indice) {
+  if (inventario.contenuto()[indice]?.cosa !== cosa) return null;
+  inventario.svuotaCasella(indice);
+  const prima = addosso.indossa(cosa);
+  // Lo scambio non può fallire: la casella si è appena liberata, quindi il
+  // capo vecchio ci sta sempre. Una via d'uscita per un caso che non succede
+  // sarebbe una riga che nessuno potrà mai leggere per capire se funziona.
+  if (prima) inventario.aggiungi(prima.cosa, 1);
+  return { tipo: "indossato", cosa, tolto: prima?.cosa ?? null };
+}
+
+// Togliersi qualcosa non ha una casella da cui partire: quello che hai addosso
+// non sta nello zaino, quindi non lo si può selezionare e premere E sopra. Per
+// questo il gesto sta su "E a mani vuote", che oggi non fa niente ed è l'unico
+// significato libero rimasto su quel tasto — e significa già, alla lettera,
+// usare le mani su di sé.
+export function spogliati() {
+  const capo = addosso.indossato();
+  if (!capo) return null;
+  if (inventario.spazioPer(capo.cosa) < 1) return { tipo: "zainoPieno" };
+  addosso.togliDiDosso();
+  inventario.aggiungi(capo.cosa, 1);
+  return { tipo: "tolto", cosa: capo.cosa };
 }
 
 function mangia(cosa, effetto) {

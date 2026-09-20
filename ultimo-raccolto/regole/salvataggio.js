@@ -25,6 +25,7 @@ import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
 import * as esplorato from "./esplorato.js";
 import * as fauna from "./fauna.js";
+import * as addosso from "./addosso.js";
 import * as meteo from "./meteo.js";
 import { CATALOGO } from "./oggetti.js";
 import { OGGETTO } from "../mondo/generazione.js";
@@ -96,6 +97,7 @@ export function istantanea(eroe, casellaScelta) {
     infezione: salute.eInfetto(),
     bagnato: meteo.livelloBagnato(),
     fauna: fauna.istantanea(),
+    addosso: addosso.istantanea(),
     // Copie e non riferimenti: l'array dello zaino continua a vivere e a
     // cambiare mentre il salvataggio aspetta di essere scritto.
     inventario: inventario.contenuto().map((c) => (c ? { ...c } : null)),
@@ -205,7 +207,14 @@ function modificaValida(v) {
   if (!presente(v, "bagnato", b => typeof b === "boolean")) return false;
   if (v.oggetto === OGGETTO.MUCCHIO && (!Object.hasOwn(CATALOGO, v.cosa) || !positivo(v.quante) || !usiValidi(v) || (v.usi !== undefined && v.quante !== 1))) return false;
   if (!presente(v, "contenuto", a => filaValida(a, 12))) return false;
-  if (!presente(v, "roba", a => filaValida(a, inventario.CASELLE))) return false;
+  // Un cadavere è un mucchio, non uno zaino: di suo non ha il limite di otto.
+  // Il posto in più è per quello che si porta addosso, che non sta in nessuna
+  // casella e finisce lì insieme al resto. Senza questa riga, morire con lo
+  // zaino pieno e qualcosa indosso farebbe una fila da nove, valido() direbbe
+  // di no, e la partita diventerebbe illeggibile DOPO essere morti — senza un
+  // errore che spieghi perché. È il genere di guasto che si trova per caso,
+  // mesi dopo, con addosso il salvataggio di qualcun altro.
+  if (!presente(v, "roba", a => filaValida(a, inventario.CASELLE + 1))) return false;
   return true;
 }
 
@@ -222,6 +231,7 @@ export function valido(stato) {
   if (!presente(stato, "esposizioneFreddo", n => Number.isFinite(n) && n >= 0 && n <= 30)) return false;
   if (!presente(stato, "riposo", riposo.statoValido)) return false;
   if (!presente(stato, "fauna", fauna.statoValido)) return false;
+  if (!presente(stato, "addosso", addosso.statoValido)) return false;
   if (!presente(stato, "bagnato", livelloValido)) return false;
   if (!presente(stato, "salute", livelloValido) || !presente(stato, "infezione", v => typeof v === "boolean")) return false;
   if (!presente(stato, "bisogni", v => oggetto(v) && bisogni.ELENCO.every(k => presente(v, k, livelloValido)))) return false;
@@ -285,6 +295,7 @@ export function applica(stato) {
   salute.ripristina(stato.salute, stato.infezione === true, stato.esposizioneFreddo);
   inventario.ripristina(stato.inventario);
   fauna.ripristina(stato.fauna);
+  addosso.ripristina(stato.addosso);
   esplorato.ripristina(stato.esplorato);
 
   return {

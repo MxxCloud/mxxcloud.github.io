@@ -24,6 +24,7 @@ import * as bisogni from "./regole/bisogni.js";
 import * as salute from "./regole/salute.js";
 import * as freddo from "./regole/freddo.js";
 import * as fiamma from "./regole/fiamma.js";
+import * as addosso from "./regole/addosso.js";
 import * as fauna from "./regole/fauna.js";
 import * as infetti from "./regole/infetti.js";
 import * as riparo from "./regole/riparo.js";
@@ -71,7 +72,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.11.1";
+const VERSIONE = "M7.12";
 
 // --- elementi -------------------------------------------------------------
 
@@ -239,6 +240,7 @@ function nuovoSuperstite() {
   // addosso a un superstite che non esisteva ancora.
   infetti.svuota();
   fiamma.reimposta();
+  addosso.reimposta();
   // Anche il riparo: la stanza in cui si stava non è la stanza in cui ci si
   // risveglia, e tenersela vorrebbe dire un superstite nuovo che non gela in
   // mezzo a un prato.
@@ -898,7 +900,10 @@ function leggiComandi() {
   if (mappaAperta) return;
 
   if (comandi.appenaPremuto("consuma")) {
-    const esito = azioni.consuma(cosaInMano());
+    // A mani vuote "E" spoglia. È il solo significato che quel tasto non
+    // aveva ancora, e non ne serve uno nuovo da imparare: quello che hai
+    // addosso non sta in nessuna casella, quindi non c'è modo di puntarlo.
+    const esito = cosaInMano() ? azioni.consuma(cosaInMano(), casellaScelta) : azioni.spogliati();
     if (esito?.tipo === "consumato") {
       // Bere e mangiare sono lo stesso tasto ma non lo stesso gesto, e a
       // deciderlo è cosa è stato ristorato invece di un elenco di cose da
@@ -910,6 +915,15 @@ function leggiComandi() {
     else if (esito?.tipo === "medicato") {
       suono.suona(BENDA);
       annuncia(esito.curata ? "fasciato: l'infezione è passata" : "ti sei fasciato", "#9ec97e");
+    } else if (esito?.tipo === "indossato") {
+      suono.suona(POSA);
+      annuncia(esito.tolto ? `hai cambiato: ${nomeDi(esito.cosa)}` : `indossi: ${nomeDi(esito.cosa)}`, "#9ec97e");
+    } else if (esito?.tipo === "tolto") {
+      suono.suona(POSA);
+      annuncia(`ti sei tolto: ${nomeDi(esito.cosa)}`, "#c9b189");
+    } else if (esito?.tipo === "zainoPieno") {
+      suono.suona(NEGATO);
+      annuncia("zaino pieno: getta qualcosa con G", "#c0705f");
     } else if (esito?.tipo === "nonServe") {
       suono.suona(NEGATO);
       annuncia("non ne hai bisogno adesso", "#c9b189");
@@ -1402,7 +1416,7 @@ function disegnaInterfaccia() {
     giornoNellaStagione: stagioni.giornoNellaStagione(),
     giorniPerStagione: stagioni.GIORNI_PER_STAGIONE,
   });
-  hud.disegnaMeteo(p, { evento: meteo.evento(), domani: meteo.evento(tempo.giornoCorrente()+1), bagnato: meteo.livelloBagnato(), freddo: gelando ? salute.moltiplicatoreFreddo() : 0 });
+  hud.disegnaMeteo(p, { evento: meteo.evento(), domani: meteo.evento(tempo.giornoCorrente()+1), bagnato: meteo.livelloBagnato(), freddo: gelando ? salute.moltiplicatoreFreddo(Boolean(addosso.dati()?.gradiniFermi) && !meteo.zuppo()) : 0 });
   hud.disegnaAzione(p, azioneCorrente);
   const lenza = pesca.stato();
   if (lenza) {
@@ -1659,6 +1673,7 @@ if (parametri.has("diagnostica")) {
     freddo,
     infetti,
     fauna,
+    addosso,
     infetto,
     chiasso,
     suono,

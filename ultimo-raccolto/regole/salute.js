@@ -156,19 +156,34 @@ function controllaLaMorte() {
 // che si svuotano.
 // Integrale del danno: ogni tratto paga solo il proprio moltiplicatore,
 // anche se una chiamata attraversa entrambe le soglie.
-function doseFreddo(secondi) {
+// Con "gradini" falso il freddo non peggiora col tempo: fa male uguale dal
+// primo secondo all'ultimo. È quello che fa una pelliccia, e non è immunità —
+// si muore lo stesso, in 225 secondi invece che in 90. La differenza è che
+// una notte invernale (125 secondi) si attraversa invece di finirci dentro.
+//
+// Chi decide sta fuori: questo modulo riceve un booleano e non sa cosa sia una
+// pelliccia, come non sa cosa sia un falò.
+function doseFreddo(secondi, gradini = true) {
+  if (!gradini) return secondi;
   return Math.min(secondi,15) + 2*Math.min(Math.max(0,secondi-15),15) + 3*Math.max(0,secondi-30);
 }
 export function secondiEsposto() { return esposizioneFreddo; }
-export function moltiplicatoreFreddo() { return esposizioneFreddo >= 30 ? 3 : esposizioneFreddo >= 15 ? 2 : 1; }
+export function moltiplicatoreFreddo(protetto = false) {
+  if (protetto) return 1;
+  return esposizioneFreddo >= 30 ? 3 : esposizioneFreddo >= 15 ? 2 : 1;
+}
 
-export function avanza(passo, { vuoti = [], alFreddo = false } = {}) {
+export function avanza(passo, { vuoti = [], alFreddo = false, protetto = false } = {}) {
   if (morto || !Number.isFinite(passo) || passo <= 0) return null;
 
   for (const quale of vuoti) ferisci(quale, DANNO_VUOTO * passo);
   if (alFreddo) {
     const fine = esposizioneFreddo + passo;
-    ferisci("freddo", DANNO_FREDDO * (doseFreddo(fine)-doseFreddo(esposizioneFreddo)));
+    // L'esposizione continua ad accumularsi anche protetti, ed è voluto: chi
+    // si spoglia — o si bagna — dopo due minuti deve trovarsi i gradini già
+    // saliti, non un contatore azzerato. Il contatore misura quanto sei stato
+    // al freddo, non quanto ti è costato.
+    ferisci("freddo", DANNO_FREDDO * (doseFreddo(fine, !protetto)-doseFreddo(esposizioneFreddo, !protetto)));
     esposizioneFreddo = Math.min(30,fine);
     // Elimina soltanto il rumore di somma dei fotogrammi vicino alle soglie.
     for (const soglia of [15,30]) if (Math.abs(esposizioneFreddo-soglia)<1e-9) esposizioneFreddo=soglia;

@@ -97,6 +97,11 @@ export const CARNE_CRUDA = [
   '....AAAAA...','............','............','............',
 ];
 export const CARNE_ARROSTITA = CARNE_CRUDA.map(r=>r.replaceAll('t','c').replaceAll('m','w').replaceAll('A','g'));
+export const PELLICCIA = [
+  '............','...cccccc...','..cwwwwwwc..','.cwwwhhwwwc.',
+  '.cwwwhhwwwc.','.cwwwhhwwwc.','.cwwwhhwwwc.','.cwwwhhwwwc.',
+  '.cwwwhhwwwc.','..cwwwwwwc..','...cccccc...','............',
+];
 export const PELLE = [
   '..cc....cc..','..cww..wwc..','...cwwwwc...','..cwwwwwwc..',
   '.cwwwwwwwwc.','.cwwwwwwwwc.','..cwwwwwwc..','..cwwwwwwc..',

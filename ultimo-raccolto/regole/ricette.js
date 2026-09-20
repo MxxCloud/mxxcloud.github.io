@@ -73,6 +73,20 @@ export const RICETTE = [
   // banco quello che prepara una stagione. Tre pelli sono un orso, un bufalo,
   // o tre cervi: un paio di battute di caccia, non un pomeriggio.
   {
+    // Quattro pelli sono due animali grossi, o un bufalo più un cervo: un paio
+    // di battute di caccia. Le fibre sono la riga che dice "questa cosa è
+    // cucita", ed è anche l'unica che impedisce di arrivare al banco con
+    // quattro pelli e uscirne senza aver pensato. Al banco perché prepara una
+    // stagione, e quello che prepara sta dove hai deciso che è casa.
+    id: "pelliccia",
+    banco: true,
+    produce: { cosa: "pelliccia", quante: 1 },
+    costo: [
+      { cosa: "pelle", quante: 4 },
+      { cosa: "fibra", quante: 3 },
+    ],
+  },
+  {
     id: "giaciglio_pelli",
     banco: true,
     produce: { cosa: "giaciglio_pelli", quante: 1 },
