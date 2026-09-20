@@ -12,7 +12,59 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
-## M7.9.2 — il primo uso delle pelli
+## M7.10 — fatica e riposo
+
+Le azioni fisiche consumano stamina oltre al calo dovuto al tempo e al movimento.
+I costi sono punti percentuali della barra, addebitati soltanto a gesto riuscito:
+
+| Gesto | Stamina |
+| --- | --- |
+| Colpo in combattimento, anche a mani nude | 2% |
+| Colpo su albero, pietra, muro o banco, compreso quello finale | 1,5% |
+| Taglio di macellazione (tre per carcassa) | 2% |
+| Zappare | 2% |
+| Costruire o riparare una ricetta | 2% |
+| Raccogliere risorse leggere, seminare, innaffiare, cucinare, riempire secchi | 0,5% |
+| Posare una costruzione, smontare un giaciglio, catturare un pesce | 1% |
+
+Aprire porte e casse, recuperare bottino già macellato e tentativi rifiutati
+non consumano stamina. A zero si può ancora lavorare e difendersi, ma restano
+il rallentamento, il divieto di corsa e il danno da esaurimento.
+
+**Sonno volontario.** Spazio davanti a un giaciglio dorme fino alle 7 di notte,
+oppure riposa per due ore di giorno. X smonta il giaciglio, anche di notte.
+Fuori dall'inverno ogni ora dormita aggiunge 12,5 punti stamina: due ore +25,
+quattro +50, otto +100, senza superare la barra piena.
+
+D'inverno il recupero orario e il limite dipendono dal letto e dal falò:
+
+| Letto | Falò durante tutto il riposo | Recupero per ora | Limite |
+| --- | --- | --- | --- |
+| Paglia | Sì | 9,375% | 75% |
+| Paglia | No | 3,125% | 25% |
+| Pelli | Sì | 12,5% | 100% |
+| Pelli | No | 6,25% | 50% |
+
+La stamina già posseduta sopra il limite non viene sottratta. Per esempio,
+quattro ore invernali sulla paglia con fuoco portano da 0 a 37,5%, oppure da
+50 a 75%. Il falò deve scaldare il letto per tutto il sonno; le pelli non
+proteggono dal danno da freddo. Rimane l'avviso «Non ti senti molto riposato...»
+quando si dorme d'inverno senza calore sufficiente.
+
+**Svenimento.** Dopo un'ora di gioco continuativa a stamina zero si cade
+addormentati sul posto per due ore e, se vivi, ci si risveglia con il 25%.
+Recuperare stamina interrompe il conto; salvare e caricare lo conserva.
+Nell'attuale orologio un'ora di gioco dura 12,5 secondi reali: il tempo dormito
+viene saltato come quello sul giaciglio, mentre nelle assenze rientra nel
+tempo effettivamente trascorso. La pesca si interrompe allo svenimento.
+
+Fame, sete, gelo, meteo e scadenze continuano durante ogni sonno; la torcia in
+mano non riscalda chi dorme. Il sonno mantiene la simulazione già usata dal
+giaciglio: non fa avanzare gli spostamenti e gli attacchi di infetti e animali.
+Morire durante il sonno interrompe il tempo, senza recupero o annuncio di risveglio.
+I vecchi salvataggi restano compatibili e il nuovo modulo è disponibile offline.
+
+## M7.9.2 — il primo uso delle pelli (regole del riposo aggiornate in M7.10)
 
 Le pelli della caccia avevano un solo difetto: non servivano a niente. Si
 raccoglievano macellando, si impilavano a venti, non marcivano, e restavano lì.

@@ -11,6 +11,7 @@
 // ci si trova. Tre indicatori sono già il massimo che un giocatore tiene
 // d'occhio mentre fa altro.
 
+import * as riposo from "./riposo.js";
 import * as tempo from "./tempo.js";
 import * as stagioni from "./stagioni.js";
 
@@ -98,6 +99,7 @@ export function ristora(quale, quanto) {
   if (!(quale in livelli)) return 0;
   const prima = livelli[quale];
   livelli[quale] = limita(prima + quanto);
+  if (quale === "stanchezza" && livelli[quale] > 0 && riposo.secondiDiSonno() === 0) riposo.reimposta();
   return livelli[quale] - prima;
 }
 
@@ -147,6 +149,7 @@ export function fattoreVelocita() {
 }
 
 export function reimposta() {
+  riposo.reimposta();
   for (const quale of ELENCO) livelli[quale] = 1;
 }
 
@@ -154,6 +157,7 @@ export function reimposta() {
 // scelta indulgente delle due, e adesso che si muore la differenza fra le due
 // è che un bisogno inventato a zero ucciderebbe per colpa di un file storto.
 export function ripristina(salvati) {
+  riposo.reimposta();
   for (const quale of ELENCO) {
     const v = salvati?.[quale];
     livelli[quale] = Number.isFinite(v) ? limita(v) : 1;

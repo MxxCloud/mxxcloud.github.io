@@ -1,3 +1,4 @@
+import * as bisogni from "./bisogni.js";
 // Cosa si può costruire, e dove.
 //
 // Poche ricette, e ognuna risponde a qualcosa. Il gioco a M1 ha un problema —
@@ -224,10 +225,12 @@ export function fai(ricetta, alBanco = false) {
     // pieno. E non torna nuovo: ogni riparazione gli toglie un pezzo di quello
     // che reggeva (vedi inventario.js), finché non resta che rifarlo.
     inventario.ripara(attrezzo);
+    bisogni.consuma("stanchezza", 0.02);
     return { fatto: true, massimo: inventario.massimoDi(attrezzo) };
   }
   if (!inventario.trasforma(ricetta.costo, ricetta.produce)) {
     return { fatto: false, perche: "zaino" };
   }
+  bisogni.consuma("stanchezza", 0.02);
   return { fatto: true };
 }

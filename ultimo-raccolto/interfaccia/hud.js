@@ -527,7 +527,7 @@ export function disegnaRicette(p, { scelta, alBanco }) {
 // versione: chi raccoglieva legna non aveva modo di scoprire che serviva a
 // costruire, perché niente sullo schermo nominava il tasto. Un sistema che
 // non si trova è come se non ci fosse.
-export function disegnaPromemoria(p, barra, cosaInMano, allaPorta = false, indice) {
+export function disegnaPromemoria(p, barra, cosaInMano, allaPorta = false, indice, alLetto = false) {
   const righe = ["C  COSTRUIRE"];
   const attrezzo = inventario.attrezzo(cosaInMano, indice);
   if (attrezzo) {
@@ -566,6 +566,7 @@ export function disegnaPromemoria(p, barra, cosaInMano, allaPorta = false, indic
   // gesto che si fa due volte in una partita; con, è la risposta alla domanda
   // che uno si fa proprio lì — e adesso come la tolgo?
   if (allaPorta) righe.push("X  STACCA LA PORTA");
+  if (alLetto) righe.push("X  SMONTA GIACIGLIO");
 
   let y = barra.y + 7 - (righe.length - 1) * 7;
   for (const scritta of righe) {
@@ -584,7 +585,7 @@ const COMANDI = [
   ["C", "COSTRUIRE"],
   ["E", "MANGIARE O FASCIARTI"],
   ["G", "POSARE PER TERRA CIÒ CHE HAI IN MANO"],
-  ["X", "STACCARE LA PORTA CHE HAI DAVANTI"],
+  ["X", "SMONTARE PORTA O GIACIGLIO"],
   ["M", "MINIMAPPA"],
   ["TAB", "LA MAPPA DI QUELLO CHE HAI VISTO"],
   ["V", "IL VOLUME: MUTO, PIANO, FORTE"],

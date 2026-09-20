@@ -7,6 +7,7 @@ import * as inventario from "./inventario.js";
 import { impronta } from "../motore/casuale.js";
 import { OGGETTO, TERRENO } from "../mondo/generazione.js";
 import * as tempo from "./tempo.js";
+import * as riposo from "./riposo.js";
 import * as bisogni from "./bisogni.js";
 import * as salute from "./salute.js";
 import { CATALOGO, ATTREZZI, raccoltaDi, colpiNecessari, dannoDi, portataDi, attrezzoServe } from "./oggetti.js";
@@ -150,12 +151,9 @@ function sullaCarcassa(carcassa, cosaInMano, indice) {
 function sulTassello(eroe, cosaInMano, indice) {
   const b = bersaglio(eroe);
 
-  // Di notte il giaciglio accoglie, di giorno si smonta. Un giaciglio che di
-  // notte si smonta invece di accogliere sarebbe una trappola; e dormire di
-  // giorno salterebbe la giornata invece della notte, che è il contrario di
-  // quello che serve.
-  if (LETTI.has(b.oggetto) && tempo.eNotte()) {
-    return { tipo: "dormi", verbo: "Dormi", bersaglio: b };
+  // Di giorno due ore; la notte fino alle sette. X smonta il letto.
+  if (LETTI.has(b.oggetto)) {
+    return { tipo: "dormi", verbo: tempo.eNotte() ? "Dormi fino alle 7" : "Riposa 2 ore", bersaglio: b };
   }
 
   // Prima di tutto il resto: un mucchio sta per terra e non copre niente, e
@@ -406,6 +404,17 @@ export function staccaLaPorta(eroe) {
   return { tipo: "staccata", tx, ty };
 }
 
+export function smontaIlLetto(eroe) {
+  const { tx, ty, oggetto } = bersaglio(eroe);
+  if (!LETTI.has(oggetto)) return null;
+  const cosa = oggetto === OGGETTO.GIACIGLIO_PELLI ? "giaciglio_pelli" : "giaciglio";
+  if (inventario.spazioPer(cosa) < 1) return { tipo: "zainoPieno" };
+  inventario.aggiungi(cosa, 1);
+  mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
+  bisogni.consuma("stanchezza", 0.01);
+  return { tipo: "lettoSmontato" };
+}
+
 export function smonta(tx, ty) {
   if (mappa.oggettoDi(tx, ty) !== OGGETTO.CASSA) return null;
   if (!contenitori.eVuota(tx, ty)) return { tipo: "nonEVuota" };
@@ -552,7 +561,15 @@ export function agisci(eroe, cosaInMano, indice) {
   const attrezzo = scopo && strumento(cosaInMano, indice, scopo) === cosaInMano
     ? inventario.attrezzo(cosaInMano, indice)
     : null;
+  if (salute.eMorto() || riposo.secondiDiSonno() > 0) return null;
   const esito = esegui(eroe, cosaInMano, indice, azione);
+  // Si paga il gesto compiuto, anche a mani nude, non un tentativo rifiutato.
+  const costo = esito?.lavorato ? 0.02
+    : esito?.tipo === "combattuto" ? 0.02
+    : esito?.tipo === "zappa" ? 0.02
+    : ["colpo", "raccolto"].includes(esito?.tipo) ? (scopo === "raccolta" ? 0.015 : 0.005)
+    : ({ semina: 0.005, innaffia: 0.005, posa: 0.01, cotto: 0.005, riempi: 0.005 }[esito?.tipo] ?? 0);
+  if (costo) bisogni.consuma("stanchezza", costo);
   if (esito && attrezzo && (["combattuto", "colpo", "raccolto", "zappa"].includes(esito.tipo) || esito.lavorato)) {
     const avviso = inventario.usura(attrezzo);
     if (avviso) esito.usura = avviso;
@@ -680,9 +697,12 @@ function esegui(eroe, cosaInMano, indice, azione) {
 
   if (azione.tipo === "dormi") {
     const inverno = stagioni.stagioneCorrente() === "inverno";
+    const diurno = !tempo.eNotte();
+    const prima = bisogni.livello("stanchezza");
+    riposo.reimposta();
     const letto = { px:(tx+0.5)*TASSELLO, py:(ty+0.75)*TASSELLO };
     let riscaldato = freddo.fuocoPerRiposo(letto);
-    const secondi = simulazione.avanza(tempo.secondiFinoAlle(tempo.ALBA_PIENA), {
+    const secondi = simulazione.avanza(diurno ? 2 * riposo.ORA : tempo.secondiFinoAlle(tempo.ALBA_PIENA), {
       dorme: true, eroe: letto,
       alFreddo: () => {
         riscaldato = freddo.fuocoPerRiposo(letto) && riscaldato;
@@ -690,9 +710,9 @@ function esegui(eroe, cosaInMano, indice, azione) {
       },
     });
     const pocoRiposato = inverno && !riscaldato;
-    const stamina = inverno ? RIPOSO[azione.bersaglio.oggetto][riscaldato ? "conFuoco" : "senza"] : 1;
-    if (!salute.eMorto()) bisogni.ristora("stanchezza", stamina-bisogni.livello("stanchezza"));
-    return { tipo: "dormi", secondi, pocoRiposato, stamina, sveglio: !salute.eMorto(),
+    const limite = inverno ? RIPOSO[azione.bersaglio.oggetto][riscaldato ? "conFuoco" : "senza"] : 1;
+    const recuperata = salute.eMorto() ? 0 : bisogni.ristora("stanchezza", riposo.recupero(prima, secondi, limite));
+    return { tipo: "dormi", secondi, diurno, recuperata, pocoRiposato, stamina: bisogni.livello("stanchezza"), sveglio: !salute.eMorto(),
       messaggio: pocoRiposato && !salute.eMorto() ? "Non ti senti molto riposato..." : null };
   }
 
