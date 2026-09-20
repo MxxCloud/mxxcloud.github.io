@@ -12,6 +12,59 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.12 — la pelliccia addosso
+
+Le pelli servivano a una cosa sola, il giaciglio. Adesso diventano qualcosa che
+si porta, e l'inverno si attraversa invece di aspettarlo.
+
+**Pelle e pelliccia sono due cose**, e non per vocabolario. La pelle è già una
+valuta — tre vanno nel giaciglio — e indossarla grezza vorrebbe dire risolvere
+l'inverno con **un cervo**, cioè meno di quanto costasse la torcia a cui M7.11.1
+ha appena tolto il calore. Qui vale la grammatica di tutto il resto del gioco:
+niente si usa grezzo. La pietra diventa muro, la pelle diventa pelliccia.
+
+La **pelliccia** si cuce al banco con **4 pelli e 3 fibre** — due animali
+grossi, o un bufalo più un cervo.
+
+**Nasce l'addosso.** Una cosa per volta, fuori dalle otto caselle, in una
+casella sua staccata a destra della barra. Si indossa con **`E`**, che significa
+già *usa quello che hai in mano su di te*: mangiare, fasciarsi, vestirsi sono lo
+stesso gesto. E siccome quello che hai addosso non sta in nessuna casella —
+quindi non lo si può selezionare — **`E` a mani vuote lo toglie**. Non c'è un
+tasto nuovo da imparare: quel significato era l'unico ancora libero.
+
+**La pelliccia non dà immunità**, e non poteva darla: sarebbe stata la torcia
+un'altra volta con più passaggi. Fa una cosa sola — **il freddo smette di
+peggiorare col tempo**. Il gelo moltiplica per due dopo quindici secondi e per
+tre dopo trenta; con la pelliccia resta a uno dal primo secondo all'ultimo.
+
+| | si muore dopo | una notte invernale intera all'aperto |
+| --- | --- | --- |
+| Senza | 90 secondi | uccide |
+| Con la pelliccia | **225 secondi** | **costa il 56% della salute** |
+
+Si arriva dall'altra parte, e ci si arriva conciati: la guarigione è lenta di
+proposito, quindi una notte passata fuori si paga per un giorno e due terzi.
+L'esposizione continua ad accumularsi anche protetti — chi si spoglia dopo due
+minuti trova i gradini già saliti, perché il contatore misura quanto sei stato
+al freddo, non quanto ti è costato.
+
+**Ci si bagna più lentamente**: sotto la pioggia si diventa zuppi in diciotto
+secondi invece di dieci, che è la distanza da cui l'accampamento è ancora
+raggiungibile. Ma **una pelliccia zuppa non scalda**, ed è la regola che tiene
+insieme le due cose: l'unico modo di rimetterla in funzione è asciugarsi, cioè
+un fuoco. È il costo ricorrente della pelliccia, pagato in legna e visibile
+nella barra del bagnato invece che in un contatore invisibile.
+
+**Non si consuma.** L'usura di questo gioco conta gesti, e una pelliccia si
+logora col tempo: costruire una seconda usura per un oggetto solo chiederebbe un
+campo nel salvataggio, un indicatore nell'HUD e una ricetta di riparazione. Il
+costo sta nella costruzione — e l'entropia c'è già, perché **si muore, e quello
+che avevi addosso resta sul cadavere**, lontano da casa e d'inverno.
+
+I vecchi salvataggi si riaprono a torso nudo, che è la cosa giusta: sono stati
+scritti in un gioco in cui non ci si vestiva.
+
 ## M7.11.1 — la luce non è il calore, e la valle non è un paese
 
 Tre correzioni, due alla tappa dei piccoli luoghi e una che paga un debito
@@ -1123,6 +1176,7 @@ Da qui viene l'ordine, che non è quello immaginato all'inizio:
 | **M7.3** | La fattoria e il paese | Si comincia da una fattoria in rovina, e da qualche parte c'è un paese. *Qui l'apertura di questo file smette di essere una promessa.* |
 | **M7.4** | Il banco da lavoro | Le ricette diventano due elenchi, e l'accampamento comincia a valere qualcosa. *Qui il menu smette di avere un tetto.* |
 | **M7.5** | Riparo e muri | Muri e porte che si costruiscono, infetti che li sfondano, e il calore che al chiuso resta dentro. *Qui quello che costruisci comincia a difenderti.* |
+| **M7.12** | La pelliccia addosso | Le pelli diventano qualcosa che si porta, e l'inverno si attraversa invece di aspettarlo. *Qui il freddo diventa una distanza invece di un muro.* |
 | **M7.6** | Il morale | Quanto tieni al tuo posto — che a quel punto esiste. |
 | **M8** | Superstiti, abilità, rifinitura | |
 
@@ -1154,6 +1208,63 @@ davvero con la costruzione. Un morale oggi sarebbe un quarto numero che dice
 stagioni: era il momento giusto, perché un posto che sparisce chiudendo la
 scheda è tuo solo per una seduta, e l'orto e le stagioni valevano meno di
 quanto valgono davvero.
+
+**La pelliccia è dettagliata e le altre no**, e non è un'eccezione alla riga
+qui sotto: è una tappa che è stata progettata prima di essere rimandata, e
+buttare via il progetto per riscriverlo uguale fra un mese sarebbe l'unico
+spreco vero. Il numero è 7.12 perché il 7.10 se l'è preso la fatica.
+
+*Perché adesso.* Fino a M7.11.1 il freddo aveva una risposta gratuita e
+permanente — una torcia in mano — quindi una pelliccia sarebbe stata una
+seconda risposta a una domanda già risolta. Adesso scaldano solo il falò e la
+stanza che ne contiene uno: due risposte che stanno ferme dove le hai messe.
+Manca quella che cammina con te, ed è questa.
+
+*I numeri, misurati.* `DANNO_FREDDO` è `1/225` al secondo e l'esposizione
+continua lo moltiplica per 2 dopo quindici secondi e per 3 dopo trenta. Da vita
+piena si muore di freddo in **90 secondi**. La notte dura **125 secondi**
+(`eNotte()` è `luceAmbiente() < 0.55`, cioè dalle 20 alle 6: dieci ore su
+ventiquattro di una giornata da 300 secondi). Cioè: una notte invernale allo
+scoperto uccide con trentacinque secondi di margine.
+
+*La regola.* La pelliccia **non dà immunità** — sarebbe la torcia un'altra
+volta, con più passaggi. Tiene il moltiplicatore a ×1 e basta:
+
+| | si muore dopo | una notte intera fuori |
+|---|---|---|
+| Senza | 90 s | uccide |
+| Con la pelliccia | **225 s** | **costa 0,56 di salute** |
+
+Si arriva dall'altra parte, e ci si arriva conciati: la cura è `1/900` al
+secondo, quindi risalire vuol dire cinquecento secondi al caldo — una notte
+passata fuori si paga per un giorno e due terzi. La seconda scala è il bagnato:
+`ritmo()` dà `+1/20` al secondo sotto la pioggia allo scoperto, cioè zuppi in
+dieci secondi, che è meno di quanto serva ad attraversare un campo; con la
+pelliccia diventano diciotto, cioè una decina di tasselli — la distanza da cui
+l'accampamento è ancora raggiungibile. E **una pelliccia zuppa non scalda**: è
+quello che tiene la pioggia pericolosa e dà alla pelliccia un costo ricorrente
+pagato in legna invece che in un contatore invisibile.
+
+*Il pezzo architettonico da non sbagliare.* Oggi esiste solo la mano:
+`cosaInMano()` è la casella selezionata dello zaino. L'addosso deve vivere in un
+modulo suo e **non** come campo dell'eroe, perché `salute.avanza(passo, {vuoti,
+alFreddo})` non riceve l'eroe: l'unico modo di far arrivare la pelliccia ai
+gradini del freddo è un modulo che le regole possano interrogare, come già fanno
+con `riparo`. Si indossa con `E`, che significa già *usa sulla tua persona*
+(mangiare, fasciarsi); `E` a mani vuote spoglia, ed è l'unico significato libero
+rimasto su quel tasto. Costa quattro pelli e tre fibre al banco, e non si
+consuma: l'usura di questo gioco conta gesti, una pelliccia si logora col tempo,
+e costruire una seconda usura per un oggetto solo costerebbe più di quanto
+renda.
+
+*E la trappola.* `salvataggio.js` valida la roba di un cadavere con un tetto di
+otto voci, quante sono le caselle. Morire con lo zaino pieno **e** la pelliccia
+addosso farebbe un cadavere da nove voci, e il salvataggio verrebbe rifiutato:
+la partita diventa illeggibile *dopo* essere morti, in silenzio. Il rimedio è un
+numero — un cadavere è un mucchio, non uno zaino — e va scritto prima degli
+effetti, mentre il capo è ancora un oggetto che non fa niente. Allo stesso modo
+`nuovoSuperstite()` deve azzerare l'addosso, o la pelliccia sopravvive alla
+morte mentre lo zaino no.
 
 Le tappe restanti sono volutamente abbozzate: l'ordine è già cambiato due
 volte per quello che è emerso costruendo, e cambierà ancora. Si dettagliano

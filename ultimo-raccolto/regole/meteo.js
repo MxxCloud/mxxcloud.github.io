@@ -8,6 +8,7 @@ import { OGGETTO } from "../mondo/generazione.js";
 import { impronta } from "../motore/casuale.js";
 import { TASSELLO } from "../motore/schermo.js";
 import * as riparo from "./riparo.js";
+import * as addosso from "./addosso.js";
 import * as orto from "./orto.js";
 
 export function evento(giorno = tempo.giornoCorrente()) {
@@ -74,7 +75,12 @@ function ritmo(eroe) {
   if (bagnato === 0 && evento() !== "pioggia") return 0;
   const tx=Math.floor(eroe.px/TASSELLO),ty=Math.floor(eroe.py/TASSELLO);
   const dentro=alRiparo(eroe);
-  if (evento()==="pioggia" && !dentro) return 1/20;
+  // Diciotto secondi invece di dieci per diventare zuppi: una decina di
+  // tasselli, cioè la distanza da cui l'accampamento è ancora raggiungibile
+  // quando cominci a bagnarti. Non toglie la pioggia dal gioco, dà il tempo di
+  // reagirci. L'asciugatura invece non cambia: sarebbe un secondo premio per
+  // un prezzo solo, e su una scala che il giocatore non può osservare.
+  if (evento()==="pioggia" && !dentro) return (1/20) * (addosso.dati()?.pioggia ?? 1);
   if (mappa.fuocoVicino(tx,ty,3) || (dentro && riparo.caldaDentro(riparo.stanzaDi(tx,ty)))) return -1/10;
   return dentro ? -1/40 : -1/80;
 }

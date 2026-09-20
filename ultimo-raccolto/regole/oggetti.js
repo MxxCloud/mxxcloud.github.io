@@ -24,6 +24,19 @@ export const CATALOGO = {
   carne_arrostita: { nome: "Carne arrostita", icona: cacciaArte.CARNE_ARROSTITA, pila: 10,
     commestibile: { fame: 0.45 }, dura: 4 },
   pelle: { nome: "Pelle", icona: cacciaArte.PELLE, pila: 20 },
+  // Il capo, e non la spoglia. Sono due cose per una ragione che non è di
+  // vocabolario ma di economia: la pelle è già una valuta — tre vanno nel
+  // giaciglio — e indossarla grezza vorrebbe dire risolvere l'inverno con un
+  // cervo, cioè meno di quanto costasse la torcia a cui il calore è stato
+  // appena tolto. Qui vale la grammatica di tutto il resto: niente si usa
+  // grezzo, la pietra diventa muro e la pelle diventa pelliccia.
+  //
+  // "addosso" è insieme gli effetti e il predicato "si indossa". Una cosa
+  // sola da guardare, come "posa" per quello che si mette per terra.
+  pelliccia: {
+    nome: "Pelliccia", icona: cacciaArte.PELLICCIA, pila: 1,
+    addosso: { gradiniFermi: true, pioggia: 0.55 },
+  },
   canna: { durata: 20, serve: ["pesca"], nome: "Canna da pesca", icona: arte.CANNA, pila: 1,
     impugnato: { nome: "canna", righe: impugnati.CANNA, scartoY: 3 } },
   pesce_crudo: { nome: "Pesce crudo", icona: arte.PESCE_CRUDO, pila: 10,

@@ -13,6 +13,7 @@ import * as indicatori from "../arte/sprite-indicatori.js";
 import * as bisogni from "../regole/bisogni.js";
 import { CATALOGO } from "../regole/oggetti.js";
 import * as inventario from "../regole/inventario.js";
+import * as addosso from "../regole/addosso.js";
 import { RICETTE, bastano } from "../regole/ricette.js";
 import * as contenitori from "../regole/contenitori.js";
 import * as decadimento from "../regole/decadimento.js";
@@ -20,6 +21,13 @@ import { nomeDi } from "../regole/oggetti.js";
 
 const LATO_CASELLA = 18;
 const DISTANZA_CASELLE = 2;
+// Quanto la casella dell'addosso sta staccata dalla barra. È l'unica cosa che
+// dice che non è una nona casella: non la raggiunge nessun tasto numerico,
+// perché quello che porti addosso non è un posto in cui la roba sta — è uno
+// stato del corpo. Sta a destra e non a sinistra perché a sinistra c'è il
+// promemoria, che si allinea al bordo della barra: di là tutte le sue righe si
+// sposterebbero.
+const DISTANZA_ADDOSSO = 7;
 const MARGINE_BASSO = 6;
 
 const CHIARO = "#e4e2d6";
@@ -127,6 +135,11 @@ export function disegnaZaino(p, scelta) {
     const x = x0 + i * (LATO_CASELLA + DISTANZA_CASELLE);
     casellaDisegnata(p, x, y, caselle[i], i === scelta, false);
   }
+
+  // Sempre disegnata, anche vuota: una casella che compare solo quando è piena
+  // è una casella di cui nessuno scopre l'esistenza. Il valore di ritorno non
+  // cambia — chi legge la barra non deve sapere che accanto ce n'è una in più.
+  casellaDisegnata(p, x0 + totale + DISTANZA_ADDOSSO, y, addosso.indossato(), false, false);
 
   return { x0, y, larghezza: totale };
 }
@@ -554,6 +567,11 @@ export function disegnaPromemoria(p, barra, cosaInMano, allaPorta = false, indic
   // Stessa regola per la benda, stesso tasto: si nomina quando si ha in mano
   // qualcosa che si usa su di sé.
   if (cosaInMano && CATALOGO[cosaInMano]?.cura) righe.push("E  FASCIATI");
+  // E la stessa per il vestirsi. Il togliersi va nominato quando si hanno le
+  // mani vuote, perché è l'unico momento in cui quel tasto fa quello — ed è
+  // anche l'unico modo che ha un giocatore di scoprirlo.
+  if (addosso.indossabile(cosaInMano)) righe.push(`E  INDOSSA ${nomeDi(cosaInMano).toUpperCase()}`);
+  else if (!cosaInMano && addosso.indossato()) righe.push(`E  TOGLI ${nomeDi(addosso.indossato().cosa).toUpperCase()}`);
 
   // Stessa regola per il gettare, e con lo stesso momento giusto: si nomina
   // quando serve. A zaino pieno non poter costruire né raccogliere è un
@@ -583,7 +601,7 @@ const COMANDI = [
   ["SPAZIO", "COLPIRE CIÒ CHE HAI DAVANTI"],
   ["1-8", "SCEGLIERE DALLO ZAINO"],
   ["C", "COSTRUIRE"],
-  ["E", "MANGIARE O FASCIARTI"],
+  ["E", "MANGIARE, FASCIARTI, VESTIRTI"],
   ["G", "POSARE PER TERRA CIÒ CHE HAI IN MANO"],
   ["X", "SMONTARE PORTA O GIACIGLIO"],
   ["M", "MINIMAPPA"],
