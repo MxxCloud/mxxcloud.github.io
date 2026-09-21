@@ -103,6 +103,21 @@ export const RICETTE = [
       { cosa: "legna", quante: 4 },
     ],
   },
+  // L'essiccatoio. Al banco, come tutto quello che prepara una stagione.
+  //
+  // Niente pietra: non è una cosa che si paga, è una cosa che si costruisce —
+  // quattro legne per il telaio, due rami per le traverse, sei fibre per le
+  // corde a cui si appende. È il contrario esatto del focolare anche nel costo.
+  {
+    id: "essiccatoio",
+    banco: true,
+    produce: { cosa: "essiccatoio", quante: 1 },
+    costo: [
+      { cosa: "legna", quante: 4 },
+      { cosa: "ramo", quante: 2 },
+      { cosa: "fibra", quante: 6 },
+    ],
+  },
   {
     id: "giaciglio_pelli",
     banco: true,

@@ -1876,3 +1876,88 @@ test('la pioggia non spegne il focolare: è il motivo per cui sta al chiuso',()=
   meteo.aggiornaMondo();
   assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
 });
+
+// --- M7.14: l'essiccatoio --------------------------------------------------
+
+function essiccatoio(oggetto=OGGETTO.ESSICCATOIO, extra={}) {
+  modifiche.imposta(tx+1,ty,{oggetto,...extra});
+  return {tx:tx+1,ty};
+}
+test('l’essiccatoio vuole aria: dentro una stanza non si posa',()=>{
+  inventario.aggiungi('essiccatoio',1);stanza();
+  assert.match(azioni.azionePossibile(eroe,'essiccatoio',0).impedito,/aria/);
+  assert.equal(azioni.agisci(eroe,'essiccatoio',0),null);
+  assert.equal(inventario.quante('essiccatoio'),1);
+  reset();inventario.aggiungi('essiccatoio',1);
+  assert.equal(azioni.agisci(eroe,'essiccatoio',0).tipo,'posa');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.ESSICCATOIO);
+});
+test('si stende a multipli di tre, mai quattro né cinque',()=>{
+  assert.deepEqual([0,1,2,3,4,5,6,7,9,20].map(azioni.quanteSiStendono),
+    [0,0,0,3,3,3,6,6,6,6]);
+  essiccatoio();inventario.aggiungi('carne_cruda',2);
+  assert.match(azioni.azionePossibile(eroe,'carne_cruda',0).impedito,/almeno 3/);
+  assert.equal(azioni.agisci(eroe,'carne_cruda',0),null);
+  assert.equal(inventario.quante('carne_cruda'),2);
+  inventario.aggiungi('carne_cruda',3);
+  assert.equal(azioni.agisci(eroe,'carne_cruda',0).quante,3);
+  assert.equal(inventario.quante('carne_cruda'),2);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.ESSICCATOIO_CARICO);
+  assert.equal(modifiche.di(tx+1,ty).quante,3);
+});
+test('la carne secca vuole tre albe asciutte: due non bastano',()=>{
+  // L'estate è arida per tutti e quattro i giorni, quindi qui non piove mai.
+  tempo.impostaGiorno(1);essiccatoio(OGGETTO.ESSICCATOIO_CARICO,{dal:1,quante:6});
+  tempo.impostaGiorno(3);decadimento.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.ESSICCATOIO_CARICO);
+  tempo.impostaGiorno(4);decadimento.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.ESSICCATOIO_PRONTO);
+  assert.equal(modifiche.di(tx+1,ty).quante,6);
+});
+test('la pioggia ferma il conto senza rovinare la carne',()=>{
+  const pioggia=maltempo('pioggia');
+  // Si stende il giorno prima dell'acquazzone: quel giorno non conta, quindi
+  // ce ne vogliono quattro invece di tre.
+  const dal=pioggia-1;
+  assert.equal(decadimento.giorniAsciutti(dal,dal+3),2,'il giorno di pioggia non conta');
+  assert.equal(decadimento.giorniAsciutti(dal,dal+4),3);
+  essiccatoio(OGGETTO.ESSICCATOIO_CARICO,{dal,quante:3});
+  tempo.impostaGiorno(dal+3);decadimento.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.ESSICCATOIO_CARICO,'la carne è ancora lì');
+  tempo.impostaGiorno(dal+4);decadimento.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.ESSICCATOIO_PRONTO);
+});
+test('ritirare dà una carne secca ogni tre, e lascia il telaio vuoto',()=>{
+  essiccatoio(OGGETTO.ESSICCATOIO_PRONTO,{quante:6});
+  assert.equal(azioni.azionePossibile(eroe,null,0).verbo,'Ritira');
+  assert.equal(azioni.agisci(eroe,null,0).secche,2);
+  assert.equal(inventario.quante('carne_secca'),2);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.ESSICCATOIO);
+});
+test('un essiccatoio carico non si smonta e non si svuota per sbaglio',()=>{
+  essiccatoio(OGGETTO.ESSICCATOIO_CARICO,{dal:1,quante:6});
+  assert.match(azioni.azionePossibile(eroe,null,0).impedito,/seccando/);
+  assert.equal(azioni.agisci(eroe,null,0),null);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.ESSICCATOIO_CARICO);
+  reset();essiccatoio();
+  assert.equal(azioni.azionePossibile(eroe,null,0).verbo,'Smonta');
+  azioni.agisci(eroe,null,0);azioni.agisci(eroe,null,0);
+  assert.equal(inventario.quante('essiccatoio'),1);
+});
+test('la carne secca dura dodici giorni, trentasei in cassa',()=>{
+  tempo.impostaGiorno(1);inventario.aggiungi('carne_secca',1,1);
+  tempo.impostaGiorno(12);decadimento.nuovoGiorno();
+  assert.equal(inventario.quante('carne_secca'),1);
+  tempo.impostaGiorno(13);decadimento.nuovoGiorno();
+  assert.equal(inventario.quante('carne_secca'),0);
+  assert.equal(decadimento.vitaDi('carne_secca',true),36);
+});
+test('un carico fuori scala rende il salvataggio non valido',()=>{
+  const stato=salvataggio.istantanea(eroe,0);
+  stato.modifiche=[{tx:tx+1,ty,oggetto:OGGETTO.ESSICCATOIO_CARICO,dal:1,quante:6}];
+  assert.ok(salvataggio.valido(stato),'sei carni sono il carico massimo');
+  for(const storto of [7,0,-1,2.5,'tre',undefined]) {
+    stato.modifiche=[{tx:tx+1,ty,oggetto:OGGETTO.ESSICCATOIO_CARICO,dal:1,quante:storto}];
+    assert.equal(salvataggio.valido(stato),false,String(storto));
+  }
+});

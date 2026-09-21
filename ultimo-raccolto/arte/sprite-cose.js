@@ -248,6 +248,82 @@ export const FOCOLARE_SPENTO = [
   "................",
 ];
 
+// L'essiccatoio: un telaio di rami con le corde tese, e quello che ci pende.
+//
+// I tre stati sono tre disegni e non uno con un dettaglio in più, perché il
+// disegno è l'unica cosa che dice se vale la pena tornare: vuoto sono corde
+// nude, carico sono strisce rosse, pronto sono strisce scure e strette. Si
+// legge da una schermata di distanza, che è dove si sta quando si decide.
+export const ESSICCATOIO = [
+  "............",
+  ".hh......hh.",
+  ".hhgggggghh.",
+  ".hhtt.tt.hh.",
+  ".hhtt.tt.hh.",
+  ".hhgggggghh.",
+  ".hhtt.tt.hh.",
+  ".hhtt.tt.hh.",
+  ".hhgggggghh.",
+  ".hh......hh.",
+  ".gg......gg.",
+  "............",
+];
+
+// Vuoto: solo il telaio e le tre traverse. Si legge come una cosa che aspetta.
+export const ESSICCATOIO_VUOTO = [
+  "................",
+  "..hh........hh..",
+  "..hhgggggggghh..",
+  "..hh........hh..",
+  "..hh........hh..",
+  "..hhgggggggghh..",
+  "..hh........hh..",
+  "..hh........hh..",
+  "..hhgggggggghh..",
+  "..hh........hh..",
+  "..hh........hh..",
+  "..gg........gg..",
+  ".ggg........ggg.",
+  "................",
+];
+
+// Carico: le strisce crude, larghe e rosse, che pendono da ogni traversa.
+export const ESSICCATOIO_CARICO = [
+  "................",
+  "..hh........hh..",
+  "..hhgggggggghh..",
+  "..hhtt.tt.tthh..",
+  "..hhtt.tt.tthh..",
+  "..hhgggggggghh..",
+  "..hhtt.tt.tthh..",
+  "..hhtt.tt.tthh..",
+  "..hhgggggggghh..",
+  "..hh........hh..",
+  "..hh........hh..",
+  "..gg........gg..",
+  ".ggg........ggg.",
+  "................",
+];
+
+// Pronto: le stesse strisce raggrinzite — più corte, più strette, e di un
+// colore che non è più carne. È il modo in cui il disegno dice "adesso".
+export const ESSICCATOIO_PRONTO = [
+  "................",
+  "..hh........hh..",
+  "..hhgggggggghh..",
+  "..hhAA.AA.AAhh..",
+  "..hh.A..A..A.h..",
+  "..hhgggggggghh..",
+  "..hhAA.AA.AAhh..",
+  "..hh.A..A..A.h..",
+  "..hhgggggggghh..",
+  "..hh........hh..",
+  "..hh........hh..",
+  "..gg........gg..",
+  ".ggg........ggg.",
+  "................",
+];
+
 export const ASCIA = [
   "............",
   "..eeee......",

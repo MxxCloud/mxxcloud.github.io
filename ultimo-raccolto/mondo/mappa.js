@@ -82,6 +82,13 @@ const CATALOGO_OGGETTI = {
   // un metro cubo di pietra che è rimasto dov'era.
   [OGGETTO.FOCOLARE_SPENTO]: { sprite: coseArte.FOCOLARE_SPENTO, solido: true },
 
+  // L'essiccatoio, nei suoi tre stati. Ferma come il banco e la cassa: è un
+  // mobile, e un mobile ingombra. Non scalda e non illumina — è l'unica
+  // struttura che non fa niente per chi ci sta accanto, e tutto per chi torna.
+  [OGGETTO.ESSICCATOIO]: { sprite: coseArte.ESSICCATOIO_VUOTO, solido: true },
+  [OGGETTO.ESSICCATOIO_CARICO]: { sprite: coseArte.ESSICCATOIO_CARICO, solido: true },
+  [OGGETTO.ESSICCATOIO_PRONTO]: { sprite: coseArte.ESSICCATOIO_PRONTO, solido: true },
+
   // Non ferma: ci si deve poter camminare sopra per sdraiarcisi, e comunque
   // un materasso per terra non è un ostacolo.
   [OGGETTO.GIACIGLIO]: { sprite: coseArte.GIACIGLIO_STESO, solido: false },

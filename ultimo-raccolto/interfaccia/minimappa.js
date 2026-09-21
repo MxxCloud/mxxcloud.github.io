@@ -42,6 +42,9 @@ const SEGNAPOSTI = {
   [OGGETTO.FALO_ACCESO]: "#f2d06b",
   [OGGETTO.FOCOLARE_ACCESO]: "#f2d06b",
   [OGGETTO.FOCOLARE_SPENTO]: "#55534a",
+  [OGGETTO.ESSICCATOIO]: "#56402a",
+  [OGGETTO.ESSICCATOIO_CARICO]: "#a33b2a",
+  [OGGETTO.ESSICCATOIO_PRONTO]: "#5a4430",
   [OGGETTO.TORCIA_PIANTATA]: "#e0913a",
   [OGGETTO.FALO_SPENTO]: "#7b756a",
   // Gli stessi colori della mappa grande, per le stesse cose. Il cadavere

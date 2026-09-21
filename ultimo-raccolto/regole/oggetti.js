@@ -23,6 +23,14 @@ export const CATALOGO = {
     commestibile: { fame: 0.15 }, cuoce: "carne_arrostita", dura: 2 },
   carne_arrostita: { nome: "Carne arrostita", icona: cacciaArte.CARNE_ARROSTITA, pila: 10,
     commestibile: { fame: 0.45 }, dura: 4 },
+  // La carne che aspetta. Nutre meno dell'arrostita e dura tre volte tanto, ed
+  // è lo stesso baratto della conserva di bacche: tre carni crude valgono 0,45
+  // e questa ne vale 0,35, cioè il 78% — esattamente la proporzione che sei
+  // bacche già perdono diventando due conserve. Non è il cibo con cui si mangia
+  // bene, è il cibo con cui si arriva a marzo, ed è il primo che viene dalla
+  // caccia invece che dall'orto.
+  carne_secca: { nome: "Carne secca", icona: cacciaArte.CARNE_SECCA, pila: 20,
+    commestibile: { fame: 0.35 }, dura: 12 },
   pelle: { nome: "Pelle", icona: cacciaArte.PELLE, pila: 20 },
   // Il capo, e non la spoglia. Sono due cose per una ragione che non è di
   // vocabolario ma di economia: la pelle è già una valuta — tre vanno nel
@@ -179,6 +187,9 @@ export const CATALOGO = {
   // focolari in una casa ce n'è uno. Portarsene dietro due vorrebbe dire non
   // aver capito che cos'è.
   focolare: { nome: "Focolare", icona: arte.FOCOLARE, pila: 1, posa: OGGETTO.FOCOLARE_ACCESO },
+  // L'essiccatoio. Si impila a uno come il focolare, e per la stessa ragione:
+  // quello che conta è dove lo metti, e una fattoria ne ha uno.
+  essiccatoio: { nome: "Essiccatoio", icona: arte.ESSICCATOIO, pila: 1, posa: OGGETTO.ESSICCATOIO },
   // La cassa è il primo posto tuo che non sia il terreno. Si impila a tre
   // perché portarsene dietro una scorta non ha senso: quello che conta di una
   // cassa è dove la metti, e una volta messa non la sposti più.
@@ -464,6 +475,17 @@ export const RACCOLTA = {
   // casa senza perderle. Due colpi e non uno — smontare un focolare non è
   // raccogliere un falò — ma nemmeno cinque: non è un muro da abbattere, è
   // roba tua che si porta via.
+  // L'essiccatoio si smonta solo da vuoto: i due stati pieni non stanno in
+  // questo catalogo, e azioni.js dice perché non si può. Smontarne uno carico
+  // farebbe sparire sei carni senza dirlo, che è il genere di regola che si
+  // impara perdendo una battuta di caccia.
+  [OGGETTO.ESSICCATOIO]: {
+    verbo: "Smonta",
+    colpi: 2,
+    voce: "erba",
+    scheggie: ["h", "g", "9"],
+    resa: [{ cosa: "essiccatoio", quante: 1 }],
+  },
   [OGGETTO.FOCOLARE_ACCESO]: {
     verbo: "Smonta",
     colpi: 2,
