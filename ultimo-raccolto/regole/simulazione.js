@@ -41,10 +41,16 @@ export function avanza(secondi, { eroe = null, dorme = false, corre = false, siM
     // pelliccia — e perché meteo deve poter chiedere ad addosso per la
     // pioggia: metterla là creerebbe un ciclo fra i due.
     const protetto = Boolean(addosso.dati()?.gradiniFermi) && !meteo.zuppo();
+    // Il richiamo restituisce che freddo è, non se fa freddo: "gelo",
+    // "bagnato" o niente (vedi freddo.js). Boolean() regge anche un richiamo
+    // vecchio che rispondeva sì o no, e in quel caso mite resta falso — cioè
+    // la regola severa, che è la risposta giusta quando non si sa.
+    const che = alFreddo();
     salute.avanza(passo, {
       vuoti: bisogni.vuoti().filter(v => !dormendo || v !== "stanchezza"),
-      alFreddo: alFreddo(),
+      alFreddo: Boolean(che),
       protetto,
+      mite: che === "bagnato",
     });
     if (dormendo) bisogni.passanoSecondi(passo);
     else bisogni.avanza(passo, { corre, siMuove });

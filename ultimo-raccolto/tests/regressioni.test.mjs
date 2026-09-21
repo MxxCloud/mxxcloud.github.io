@@ -721,7 +721,7 @@ test('pioggia spegne solo i falò scoperti; aprire la porta espone quello dentro
 });
 test('pioggia impedisce di sprecare un falò posandolo allo scoperto',()=>{
   maltempo('pioggia');inventario.aggiungi('falo',1);
-  assert.match(azioni.azionePossibile(eroe,'falo').impedito,/coperto/);
+  assert.match(azioni.azionePossibile(eroe,'falo').impedito,/piove/);
   assert.equal(azioni.agisci(eroe,'falo'),null);assert.equal(inventario.quante('falo'),1);
   stanza();assert.equal(azioni.agisci(eroe,'falo').tipo,'posa');
 });
@@ -760,8 +760,15 @@ test('neve rallenta allo scoperto e causa freddo diurno; il riparo protegge',()=
   stanza();assert.equal(meteo.fattoreVelocita(eroe),1);assert.equal(freddo.alFreddo(eroe),false);
 });
 test('il sonno esposto alla pioggia non evita bagnato e freddo',()=>{
-  maltempo('pioggia');modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GIACIGLIO});tempo.impostaOra(22);
-  assert.equal(azioni.agisci(eroe,null).tipo,'dormi');assert.ok(salute.livelloCorrente()<1);
+  // Un sonnellino di due ore in pieno giorno di pioggia: ci si fradicia e si
+  // paga. Di notte si pagherebbe ugualmente, ma la pioggia finisce a
+  // mezzanotte e da M7.12.2 il bagnato morde così piano che all'alba il corpo
+  // se l'è già ripreso — il che è la regola nuova, non un buco.
+  maltempo('pioggia');modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GIACIGLIO});tempo.impostaOra(12);
+  assert.equal(azioni.agisci(eroe,null).tipo,'dormi');
+  assert.equal(meteo.fradicio(),true);
+  assert.ok(salute.livelloCorrente()<1);
+  assert.ok(salute.livelloCorrente()>0.9,'una dormita sotto l’acqua non è una condanna');
 });
 test('bagnato persistente; salvataggi vecchi asciutti e valori corrotti respinti',()=>{
   meteo.ripristina(0.8);const stato=salvataggio.istantanea(eroe,0);
@@ -1643,4 +1650,56 @@ test('d’inverno le bestie sono magre, e conta il giorno in cui sono cadute',()
   // Le pelli non cambiano: la pelliccia non deve costare di più proprio
   // nella stagione per cui esiste.
   assert.equal(inventario.quante('pelle'), fauna.SPECIE.cervo.pelli);
+});
+test('la pioggia non uccide più chi la prende all’aperto',()=>{
+  // Il caso che ha aperto questa tappa: fermi in mezzo a un prato, in pieno
+  // giorno, senza aver fatto niente di sbagliato. Prima: zuppo a 10 secondi,
+  // morto a 101.
+  maltempo('pioggia');tempo.impostaOra(0);
+  salute.reimposta();meteo.reimposta();
+  let fradicioA=null;
+  // Una giornata intera sotto l'acqua, dalla mezzanotte alla mezzanotte.
+  for(let s=1;s<=295;s+=1) {
+    simulazione.avanza(1,{eroe,alFreddo:()=>freddo.tipo(eroe)});
+    if(fradicioA===null && meteo.fradicio()) fradicioA=s;
+  }
+  assert.ok(fradicioA>=20 && fradicioA<=22, `fradicio a ${fradicioA}s`);
+  assert.equal(salute.eMorto(),false,'una giornata intera di pioggia non deve uccidere');
+  assert.ok(salute.livelloCorrente()<0.5,'ma deve costare: restare sotto l’acqua non è gratis');
+});
+test('il bagnato morde solo da fradici, e non sale di gradino',()=>{
+  maltempo('pioggia');salute.reimposta();meteo.reimposta();
+  // Zuppo ma non fradicio: nessun danno, e nessun freddo dichiarato.
+  meteo.ripristina(0.6);
+  assert.equal(freddo.tipo(eroe),null);
+  simulazione.avanza(2,{eroe,alFreddo:()=>freddo.tipo(eroe)});
+  assert.equal(salute.livelloCorrente(),1);
+  // Fradicio: freddo "bagnato", e il moltiplicatore non sale mai.
+  meteo.ripristina(1);
+  assert.equal(freddo.tipo(eroe),'bagnato');
+  for(let s=0;s<60;s+=1) simulazione.avanza(1,{eroe,alFreddo:()=>freddo.tipo(eroe)});
+  assert.equal(salute.moltiplicatoreFreddo(false),1,'il bagnato non fa salire i gradini');
+  const perso=1-salute.livelloCorrente();
+  // Sessanta secondi fradici: a metà danno e senza gradini sono 60/450.
+  vicino(perso,60/450,1e-3);
+});
+test('sotto la chioma la pioggia bagna un quarto, e il falò si accende',()=>{
+  const giorno=maltempo('pioggia');
+  // Due alberi accanto al tassello davanti: una macchia, non un albero solo.
+  modifiche.imposta(tx+1,ty-1,{oggetto:OGGETTO.ALBERO});
+  modifiche.imposta(tx+1,ty+1,{oggetto:OGGETTO.ALBERO});
+  assert.equal(meteo.sottoLaChioma(tx+1,ty),true);
+  assert.equal(meteo.sottoLaChioma(tx-3,ty),false,'un prato non ripara');
+  // Il falò si posa sotto la chioma e non sul prato scoperto.
+  inventario.svuota();inventario.aggiungi('falo',2);
+  const sulPrato={...pos(tx-4,ty),guarda:'destra'};
+  assert.match(azioni.azionePossibile(sulPrato,'falo',0).impedito,/piove/);
+  const sottoIlBosco={...pos(tx,ty),guarda:'destra'};
+  assert.equal(azioni.azionePossibile(sottoIlBosco,'falo',0).impedito ?? null,null);
+  // E bagna un quarto: fradici in ottanta secondi invece che in venti.
+  meteo.reimposta();
+  const dentroLaMacchia={px:(tx+1.5)*16,py:(ty+0.75)*16,guarda:'destra'};
+  for(let s=0;s<40;s+=1) meteo.avanza(1,dentroLaMacchia);
+  vicino(meteo.livelloBagnato(),40/80,1e-6);
+  assert.equal(giorno>0,true);
 });
