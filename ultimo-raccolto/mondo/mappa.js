@@ -66,6 +66,22 @@ const CATALOGO_OGGETTI = {
   },
   [OGGETTO.FALO_SPENTO]: { sprite: coseArte.FALO_SPENTO, solido: false },
 
+  // Il focolare. Scalda come il falò — è lo stesso campo, e questo è tutto il
+  // lavoro che il freddo ha dovuto fare per accorgersene: "scalda" era già una
+  // domanda sul catalogo e non su un identificatore.
+  //
+  // Illumina un po' più in là del falò (ottanta contro sessantaquattro): una
+  // stanza intera, che è il posto dove sta.
+  [OGGETTO.FOCOLARE_ACCESO]: {
+    fotogrammi: coseArte.FOCOLARE_ACCESO,
+    solido: true,
+    luce: { raggio: 80, intensita: 1 },
+    scalda: true,
+  },
+  // Spento ferma lo stesso, e la cenere del falò no: quella è cenere, questo è
+  // un metro cubo di pietra che è rimasto dov'era.
+  [OGGETTO.FOCOLARE_SPENTO]: { sprite: coseArte.FOCOLARE_SPENTO, solido: true },
+
   // Non ferma: ci si deve poter camminare sopra per sdraiarcisi, e comunque
   // un materasso per terra non è un ostacolo.
   [OGGETTO.GIACIGLIO]: { sprite: coseArte.GIACIGLIO_STESO, solido: false },
@@ -309,6 +325,18 @@ export function scordaSettori() {
 // serve che sia una domanda sul mondo e non sull'inquadratura: lumiVisibili()
 // risponderebbe quasi sempre uguale e ogni tanto no, perché dipende da dove
 // sta la camera — cioè una regola di sopravvivenza decisa dal disegno.
+// C'è una fiamma accesa proprio su questo tassello?
+//
+// È la stessa domanda di fuocoVicino con raggio zero, e ha un nome suo perché
+// altrove se ne faceva una diversa: "è il falò acceso?". Finché il fuoco era
+// uno solo le due domande coincidevano; adesso che ce ne sono due, chi chiede
+// per nome resta indietro di un fuoco — ci si cucinava e ci si dormiva accanto
+// solo al falò, e il focolare sarebbe stato un fuoco su cui non si cucina.
+export function scaldaIn(tx, ty) {
+  const oggetto = oggettoDi(tx, ty);
+  return oggetto !== OGGETTO.NESSUNO && CATALOGO_OGGETTI[oggetto].scalda === true;
+}
+
 export function fuocoVicino(tx, ty, raggio) {
   for (let dy = -raggio; dy <= raggio; dy += 1) {
     for (let dx = -raggio; dx <= raggio; dx += 1) {

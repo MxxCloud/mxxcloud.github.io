@@ -82,6 +82,16 @@ export const OGGETTO = {
   CARRO: 23,
   POZZO: 24,
   TRONCO: 25,
+  // Il focolare, nei suoi due stati. Sono due oggetti e non uno con una
+  // bandierina per la ragione della porta e del giaciglio di pelli: quello che
+  // sta su un tassello è un identificatore, e la cottura dei settori guarda
+  // quello.
+  //
+  // La differenza col falò non è la durata, è cosa resta quando finisce: il
+  // falò acceso diventa cenere e la cenere non è più un fuoco, mentre del
+  // focolare la pietra resta dov'è e aspetta la legna.
+  FOCOLARE_ACCESO: 26,
+  FOCOLARE_SPENTO: 27,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati

@@ -72,7 +72,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.12.4";
+const VERSIONE = "M7.13";
 
 // --- elementi -------------------------------------------------------------
 
@@ -1012,6 +1012,9 @@ function leggiComandi() {
     avvisoRisveglio = esito.messaggio ?? `dormito ${(esito.secondi / riposo.ORA).toFixed(1)} ore: +${Math.round(esito.recuperata * 100)}% stamina`;
   }
 
+  // Il focolare che riparte è una cosa che si sente: è il gesto per cui si
+  // torna a casa, e senza una riga sarebbe l'unica azione muta del gioco.
+  if (esito.tipo === "riaccendi") { suono.suona(FATTO); annuncia(`focolare acceso: ${esito.legna} legna`, "#e0913a"); }
   if (esito.tipo === "cotto") { suono.suona(FATTO); annuncia(`sul fuoco: ${nomeDi(esito.diventa)}`, "#e0913a"); }
 
   if (esito.tipo === "porta") {

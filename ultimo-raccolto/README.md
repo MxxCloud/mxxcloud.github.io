@@ -12,6 +12,48 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.13 — il focolare
+
+Il crafting delle strutture era corto: muro, porta, cassa, banco, i due
+giacigli, il falò, la torcia. E il fuoco di casa aveva un difetto che si può
+misurare: **il falò dura due giorni, l'inverno ne dura quattro.** Tenere una
+casa calda per un inverno voleva dire due falò *ed esserci in mezzo alla
+stagione*, cioè la cosa che si scopre mentre si sta congelando.
+
+Il focolare è la risposta, e non è un falò migliore.
+
+**Costa dieci pietre e quattro legna, al banco.** Dieci pietre sono due muri di
+rovina abbattuti: la pietra è l'unica risorsa dichiarata finita della valle,
+quindi il focolare è la prima cosa che si paga davvero.
+
+**Brucia quattro giorni, due d'inverno.** È l'unica durata del gioco che cambia
+con la stagione, ed è la stessa frase della mappa di strada letta dall'altra
+parte: la stagione in cui serve di più è anche quella che chiede di tornare a
+casa a metà. Mezza stagione di autonomia contro una intera.
+
+**Quando finisce non si perde: resta la pietra.** Il falò acceso diventa
+cenere, e la cenere non è più un fuoco; il focolare diventa un focolare spento,
+cioè lo stesso metro cubo di pietra senza niente dentro. Con quattro legna in
+mano riparte. È quello che rende le dieci pietre un investimento invece di un
+affitto — e la domanda della sopravvivenza cambia da «ho falò?» a «ho legna in
+cassa?», che è una domanda che si fa prima, a casa, guardando la scorta.
+
+La regola scritta in `decadimento.js` regge, ed è quella che ha deciso il
+progetto: «un accampamento che non chiede niente a nessuno non è un
+accampamento, è un monumento». Il focolare chiede meno spesso, non niente.
+
+**Si posa solo dentro quattro mura.** È quello che gli impedisce di rendere il
+falò inutile: in viaggio, sotto un temporale, dentro una macchia di alberi, il
+falò resta l'unica risposta. In cambio, dove sta, la pioggia non lo tocca mai —
+e non è servita una riga per dirlo, perché la pioggia spegne i fuochi scoperti e
+lui scoperto non è per definizione.
+
+**Scalda, illumina, cuoce, e ci si dorme accanto.** Nessuna di queste quattro
+cose è costata una regola nuova: il calore era già una domanda al catalogo
+(`scalda`), e le altre tre chiedevano «è *il falò*?» dove avrebbero dovuto
+chiedere «è un fuoco?». Adesso lo chiedono, e domani varrà per qualunque altra
+fiamma.
+
 ## M7.12.4 — d'autunno le bestie non scappano
 
 M7.12.3 ha deciso **chi** incontri in ogni mese. Restava fermo **come si
@@ -702,7 +744,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.12**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.13**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -718,7 +760,9 @@ e carcasse da macellare; le azioni costano fatica, e a zero si sviene; fra una
 rovina e l'altra si incontrano carri rovesciati, pozzi e accampamenti bruciati.
 E l'inverno, che si annullava tenendo una torcia in tasca, adesso si attraversa
 solo con un fuoco vero, una stanza che ne contiene uno, o **una pelliccia
-addosso** — la prima cosa che questo gioco ti lascia indossare.
+addosso** — la prima cosa che questo gioco ti lascia indossare. E dentro una
+casa si costruisce **un focolare**: dura quattro giorni, due d'inverno, e
+quando finisce non si perde — si rimette legna.
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
 con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne
@@ -1385,7 +1429,8 @@ Da qui viene l'ordine, che non è quello immaginato all'inizio:
 | **M7.10** | La fatica | Le azioni costano stamina, il sonno rende in proporzione, e a zero si sviene. |
 | **M7.11** | I piccoli luoghi | Carri rovesciati, pozzi, accampamenti bruciati: le tracce di chi passava di qui. |
 | **M7.12** | La pelliccia addosso | Le pelli diventano qualcosa che si porta, e nasce l'addosso. *Qui il freddo diventa una distanza invece di un muro.* |
-| **M7.13** | Il morale | Quanto tieni al tuo posto — che a quel punto esiste. |
+| **M7.13** | Il focolare | Il fuoco che si costruisce dentro una casa: dura quattro giorni, due d'inverno, e quando finisce resta la pietra. *Qui il fuoco smette di essere una cosa che si rifà e diventa una cosa che si alimenta.* |
+| **M7.14** | Il morale | Quanto tieni al tuo posto — che a quel punto esiste. |
 | **M8** | Superstiti, abilità, rifinitura | |
 
 Le tappe con un numero in più — M7.5.1, M7.7.1, M7.8.1, M7.9.1, M7.9.2, M7.11.1 —
@@ -1416,7 +1461,7 @@ fuoco acceso, un orto curato, un letto — e quel posto comincia a esistere
 davvero con la costruzione. Un morale oggi sarebbe un quarto numero che dice
 "è notte e ti inseguono", cioè quello che schermo e orecchie dicono già.
 
-Il suo numero però è cambiato due volte: da M5 a M7.6, e da M7.6 a M7.13. Non
+Il suo numero però è cambiato più volte: da M5 a M7.6, a M7.13, a M7.14. Non
 perché slitti — ogni volta che toccava a lui è emerso qualcosa che aveva più
 bisogno di esistere, l'acqua, il cielo, l'usura, la caccia. Il numero non è una
 data, è una posizione in fila, e questa fila si è allungata dal di dentro.
