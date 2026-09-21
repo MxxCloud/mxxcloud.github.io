@@ -1797,3 +1797,82 @@ test('il temperamento arriva fino alla decisione, e si misura contando le carich
       `${specie} giorno ${giorno}: carica il ${(100*misurato).toFixed(1)}% invece del ${(100*atteso).toFixed(2)}%`);
   }
 });
+
+// --- M7.13: il focolare ----------------------------------------------------
+
+// Posare il focolare davanti all'eroe, saltando la regola delle quattro mura:
+// serve ai collaudi che parlano di durata e di calore, non di dove si può.
+function focolare(giorno=1) {
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FOCOLARE_ACCESO,posata:giorno});
+  return {tx:tx+1,ty};
+}
+test('il focolare si posa solo dentro quattro mura',()=>{
+  inventario.aggiungi('focolare',1);
+  assert.match(azioni.azionePossibile(eroe,'focolare',0).impedito,/quattro mura/);
+  assert.equal(azioni.agisci(eroe,'focolare',0),null);
+  assert.equal(inventario.quante('focolare'),1);
+  stanza();
+  assert.equal(azioni.azionePossibile(eroe,'focolare',0).impedito ?? null,null);
+  assert.equal(azioni.agisci(eroe,'focolare',0).tipo,'posa');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
+});
+test('il focolare scalda come il falò, accanto e per tutta la stanza',()=>{
+  tempo.impostaGiorno(9);tempo.impostaOra(23);
+  assert.equal(freddo.alFreddo(eroe),true);
+  focolare(9);riparo.reimposta();
+  assert.equal(freddo.alFreddo(eroe),false);
+  // E dall'altro capo di una stanza chiusa, cioè oltre i tre tasselli.
+  reset();tempo.impostaGiorno(9);tempo.impostaOra(23);stanza();
+  modifiche.imposta(tx+1,ty-1,{oggetto:OGGETTO.FOCOLARE_ACCESO,posata:9});
+  const lontano={px:(tx-1+0.5)*16,py:(ty+1+0.75)*16,guarda:'destra'};
+  riparo.reimposta();
+  assert.equal(freddo.alFreddo(lontano),false);
+});
+test('sul focolare si cucina e accanto si dorme',()=>{
+  const f=focolare();
+  inventario.aggiungi('carne_cruda',1);
+  assert.equal(azioni.azionePossibile(eroe,'carne_cruda',0).tipo,'cucina');
+  azioni.agisci(eroe,'carne_cruda',0);
+  assert.equal(inventario.quante('carne_arrostita'),1);
+  assert.equal(freddo.fuocoPerRiposo(pos(f.tx,f.ty+1)),true);
+});
+test('il focolare dura quattro albe, due d’inverno',()=>{
+  const spento=()=>mappa.oggettoDi(tx+1,ty)===OGGETTO.FOCOLARE_SPENTO;
+  focolare(1);
+  tempo.impostaGiorno(4);decadimento.nuovoGiorno();assert.equal(spento(),false);
+  tempo.impostaGiorno(5);decadimento.nuovoGiorno();assert.equal(spento(),true);
+  reset();focolare(9);
+  tempo.impostaGiorno(10);decadimento.nuovoGiorno();assert.equal(spento(),false);
+  tempo.impostaGiorno(11);decadimento.nuovoGiorno();assert.equal(spento(),true);
+});
+test('spento resta pietra: con quattro legna riparte, con tre non si tocca',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FOCOLARE_SPENTO});
+  inventario.aggiungi('legna',3);
+  assert.match(azioni.azionePossibile(eroe,'legna',0).impedito,/4 legna/);
+  assert.equal(azioni.agisci(eroe,'legna',0),null);
+  assert.equal(inventario.quante('legna'),3);
+  inventario.aggiungi('legna',1);tempo.impostaGiorno(5);
+  assert.equal(azioni.azionePossibile(eroe,'legna',0).verbo,'Riaccendi');
+  assert.equal(azioni.agisci(eroe,'legna',0).tipo,'riaccendi');
+  assert.equal(inventario.quante('legna'),0);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
+  // Il contatore riparte da oggi, se no si spegnerebbe subito.
+  assert.equal(modifiche.di(tx+1,ty).posata,5);
+  tempo.impostaGiorno(7);decadimento.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
+});
+test('smontare il focolare rende il focolare, acceso o spento',()=>{
+  for(const stato of [OGGETTO.FOCOLARE_ACCESO,OGGETTO.FOCOLARE_SPENTO]) {
+    reset();modifiche.imposta(tx+1,ty,{oggetto:stato});
+    assert.equal(azioni.azionePossibile(eroe,null,0).verbo,'Smonta');
+    azioni.agisci(eroe,null,0);azioni.agisci(eroe,null,0);
+    assert.equal(inventario.quante('focolare'),1);
+    assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.NESSUNO);
+  }
+});
+test('la pioggia non spegne il focolare: è il motivo per cui sta al chiuso',()=>{
+  const giorno=maltempo('pioggia');
+  focolare(giorno);
+  meteo.aggiornaMondo();
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
+});

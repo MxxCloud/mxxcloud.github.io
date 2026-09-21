@@ -40,6 +40,8 @@ const MARGINE = 6;
 // mondo.
 const SEGNAPOSTI = {
   [OGGETTO.FALO_ACCESO]: "#f2d06b",
+  [OGGETTO.FOCOLARE_ACCESO]: "#f2d06b",
+  [OGGETTO.FOCOLARE_SPENTO]: "#55534a",
   [OGGETTO.TORCIA_PIANTATA]: "#e0913a",
   [OGGETTO.FALO_SPENTO]: "#7b756a",
   // Gli stessi colori della mappa grande, per le stesse cose. Il cadavere

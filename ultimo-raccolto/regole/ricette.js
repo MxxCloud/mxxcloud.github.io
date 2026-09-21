@@ -86,6 +86,23 @@ export const RICETTE = [
       { cosa: "fibra", quante: 3 },
     ],
   },
+  // Il focolare. Al banco, e non per il gusto di mettere un cancello: è la
+  // cosa che prepara una stagione intera, e quello che prepara una stagione si
+  // fa dove hai deciso che è casa.
+  //
+  // Dieci pietre sono due muri di rovina abbattuti, ed è il costo che gli dà
+  // senso: la pietra è l'unica risorsa dichiarata finita della valle, quindi
+  // un focolare è la prima cosa che si paga davvero. Le quattro legne sono la
+  // prima carica — la stessa che vorrà ogni volta che si spegne.
+  {
+    id: "focolare",
+    banco: true,
+    produce: { cosa: "focolare", quante: 1 },
+    costo: [
+      { cosa: "pietra", quante: 10 },
+      { cosa: "legna", quante: 4 },
+    ],
+  },
   {
     id: "giaciglio_pelli",
     banco: true,

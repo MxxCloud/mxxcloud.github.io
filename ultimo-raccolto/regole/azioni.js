@@ -24,6 +24,7 @@ import * as entita from "../entita/entita.js";
 import * as meteo from "./meteo.js";
 import * as freddo from "./freddo.js";
 import * as pesca from "./pesca.js";
+import * as riparo from "./riparo.js";
 
 const { TASSELLO } = schermo;
 
@@ -48,6 +49,11 @@ export function bersaglio(eroe) {
 // Quanto ristora un sorso. Bastano un paio di volte al giorno, che è il
 // ritmo giusto perché bere sia un gesto e non un lavoro.
 const SORSO = 0.45;
+
+// Quanta legna vuole un focolare per ripartire. Quattro, cioè la stessa che
+// c'era nella ricetta: la prima carica e tutte le altre costano uguale, e
+// questo è il numero che il giocatore impara costruendolo.
+export const LEGNA_PER_RIACCENDERE = 4;
 
 const COLPI_DURI = new Set([OGGETTO.ALBERO, OGGETTO.SASSO, OGGETTO.MURO, OGGETTO.MURO_ROTTO, OGGETTO.BANCO, OGGETTO.CARRO, OGGETTO.TRONCO]);
 
@@ -217,9 +223,21 @@ function sulTassello(eroe, cosaInMano, indice) {
   // secchio alla riva: è la stessa regola scritta due volte in due punti, e
   // sta prima del catalogo della raccolta perché senza di essa il falò
   // acceso vincerebbe sempre con "Raccogli".
+  // "Scalda" e non "è il falò": un fuoco su cui non si cucina sarebbe un fuoco
+  // che il giocatore deve imparare a memoria invece che guardare.
   const cotto = cosaInMano && CATALOGO[cosaInMano]?.cuoce;
-  if (cotto && b.oggetto === OGGETTO.FALO_ACCESO) {
+  if (cotto && mappa.scaldaIn(b.tx, b.ty)) {
     return { tipo: "cucina", verbo: "Cucina", cosa: cosaInMano, diventa: cotto, bersaglio: b };
+  }
+
+  // Con la legna in mano, un focolare spento si riaccende invece di smontarsi.
+  // Sta qui sopra per la ragione del falò e della cassa: dopo, "Smonta"
+  // vincerebbe sempre, e il gesto normale — tornare a casa e rimettere legna —
+  // sarebbe l'unico che non si può fare.
+  if (cosaInMano === "legna" && b.oggetto === OGGETTO.FOCOLARE_SPENTO) {
+    return { tipo: "riaccendi", verbo: "Riaccendi", bersaglio: b,
+      impedito: inventario.quante("legna") < LEGNA_PER_RIACCENDERE
+        ? `servono ${LEGNA_PER_RIACCENDERE} legna` : null };
   }
 
   const raccolta = raccoltaDi(b.oggetto);
@@ -291,6 +309,13 @@ function sulTassello(eroe, cosaInMano, indice) {
     // reagisce invece di una cosa che si subisce.
     if (cosaInMano === "falo" && meteo.evento() === "pioggia" && !meteo.riparatoDallaPioggia(b.tx,b.ty))
       return { tipo: "posa", bersaglio: b, impedito: "piove: accendi il fuoco al chiuso o sotto gli alberi" };
+    // Il focolare vuole quattro mura, ed è quello che gli impedisce di essere
+    // soltanto un falò migliore: in viaggio, sotto un temporale, dentro una
+    // macchia, il falò resta l'unica risposta. In cambio, dove sta, la pioggia
+    // non lo tocca mai — non serve dirlo da nessuna parte, perché la pioggia
+    // spegne i fuochi scoperti e lui scoperto non è per definizione.
+    if (cosaInMano === "focolare" && riparo.stanzaDi(b.tx, b.ty) === null)
+      return { tipo: "posa", bersaglio: b, impedito: "il focolare vuole quattro mura" };
     return { tipo: "posa", verbo: "Posa", cosa: cosaInMano, bersaglio: b,
       impedito: (cosaInMano === "muro" || cosaInMano === "porta") && occupato(b.tx, b.ty, eroe) ? "passaggio occupato" : null };
   }
@@ -723,6 +748,17 @@ function esegui(eroe, cosaInMano, indice, azione) {
       return { tipo: "zainoPieno" };
     }
     return { tipo: "cotto", cosa: azione.cosa, diventa: azione.diventa };
+  }
+
+  if (azione.tipo === "riaccendi") {
+    if (!inventario.togli("legna", LEGNA_PER_RIACCENDERE)) return null;
+    // La data riparte da oggi: il contatore del fuoco è la data della posa, e
+    // riaccendere è posare di nuovo lo stesso fuoco.
+    mappa.cambiaTassello(tx, ty, {
+      oggetto: OGGETTO.FOCOLARE_ACCESO,
+      posata: tempo.giornoCorrente(),
+    });
+    return { tipo: "riaccendi", tx, ty, legna: LEGNA_PER_RIACCENDERE };
   }
 
   if (azione.tipo === "riempi") {

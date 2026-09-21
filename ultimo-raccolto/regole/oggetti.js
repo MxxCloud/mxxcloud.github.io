@@ -174,6 +174,11 @@ export const CATALOGO = {
     posa: OGGETTO.GIACIGLIO_PELLI,
   },
   falo: { nome: "Falò", icona: arte.FALO, pila: 5, posa: OGGETTO.FALO_ACCESO },
+  // Il focolare. Si impila a uno, meno della cassa e del banco, e la ragione è
+  // la stessa portata all'estremo: pesa dieci pietre, sta solo al chiuso, e di
+  // focolari in una casa ce n'è uno. Portarsene dietro due vorrebbe dire non
+  // aver capito che cos'è.
+  focolare: { nome: "Focolare", icona: arte.FOCOLARE, pila: 1, posa: OGGETTO.FOCOLARE_ACCESO },
   // La cassa è il primo posto tuo che non sia il terreno. Si impila a tre
   // perché portarsene dietro una scorta non ha senso: quello che conta di una
   // cassa è dove la metti, e una volta messa non la sposti più.
@@ -453,6 +458,25 @@ export const RACCOLTA = {
     colpi: 1,
     voce: "pietra",
     resa: [{ cosa: "falo", quante: 1 }],
+  },
+  // Il focolare si riprende intero da tutti e due gli stati, ed è la riga che
+  // rende le dieci pietre un investimento e non un affitto: si può cambiare
+  // casa senza perderle. Due colpi e non uno — smontare un focolare non è
+  // raccogliere un falò — ma nemmeno cinque: non è un muro da abbattere, è
+  // roba tua che si porta via.
+  [OGGETTO.FOCOLARE_ACCESO]: {
+    verbo: "Smonta",
+    colpi: 2,
+    voce: "pietra",
+    scheggie: ["e", "f", "d"],
+    resa: [{ cosa: "focolare", quante: 1 }],
+  },
+  [OGGETTO.FOCOLARE_SPENTO]: {
+    verbo: "Smonta",
+    colpi: 2,
+    voce: "pietra",
+    scheggie: ["e", "f", "d"],
+    resa: [{ cosa: "focolare", quante: 1 }],
   },
   // I muri di chi c'era prima si abbattono, e rendono pietra.
   //

@@ -168,6 +168,86 @@ export const FALO_SPENTO = [
   "................",
 ];
 
+// Il focolare: la stessa fiamma del falò, dentro la pietra.
+//
+// Il disegno dice da solo la differenza fra i due fuochi, e deve: un falò è
+// legna per terra, questo è una cosa costruita, con due montanti e un
+// architrave. Chi lo vede in una stanza capisce prima di leggere qualunque
+// verbo che quella casa è finita.
+export const FOCOLARE = [
+  "............",
+  "..ffffffff..",
+  "..feeeeeef..",
+  "..fedddcef..",
+  "..fedvdcef..",
+  "..fdvuvdef..",
+  "..fdvuvdef..",
+  "..fedvdcef..",
+  "..feeeeeef..",
+  "..dddddddd..",
+  "............",
+  "............",
+];
+
+// Posato è più grande e ancorato ai piedi, e la fiamma sta su due fotogrammi
+// come quella del falò: un fuoco fermo si legge come il disegno di un fuoco.
+// Il cuore del focolare è scuro anche da acceso — è l'interno di una cappa, e
+// se fosse trasparente ci si vedrebbe l'erba attraverso.
+export const FOCOLARE_ACCESO = [
+  [
+    "................",
+    "..ffffffffffff..",
+    "..feeeeeeeeeef..",
+    "..fedddddddddf..",
+    "..fedddvddddef..",
+    "..fedvuvdddeef..",
+    "..fdvuuuvddeef..",
+    "..fdvuuuvddeef..",
+    "..fedvuvdddeef..",
+    "..feddvdddddef..",
+    "..feeeeeeeeeef..",
+    "..dddddddddddd..",
+    "................",
+    "................",
+  ],
+  [
+    "................",
+    "..ffffffffffff..",
+    "..feeeeeeeeeef..",
+    "..fedddddddddf..",
+    "..feddddvdddef..",
+    "..feddvuvddeef..",
+    "..fedvuuuvdeef..",
+    "..fedvuuuvdeef..",
+    "..feddvuvddeef..",
+    "..fedddvddddef..",
+    "..feeeeeeeeeef..",
+    "..dddddddddddd..",
+    "................",
+    "................",
+  ],
+];
+
+// Spento resta in piedi: è pietra, non cenere. È la differenza che rende il
+// focolare un investimento invece di un affitto — quello che si è perso è la
+// legna, non le dieci pietre.
+export const FOCOLARE_SPENTO = [
+  "................",
+  "..ffffffffffff..",
+  "..feeeeeeeeeef..",
+  "..fedddddddddf..",
+  "..feddddddddef..",
+  "..feddddddddef..",
+  "..fedddddddeef..",
+  "..fedddddddeef..",
+  "..feddddddddef..",
+  "..feddddddddef..",
+  "..feeeeeeeeeef..",
+  "..dddddddddddd..",
+  "................",
+  "................",
+];
+
 export const ASCIA = [
   "............",
   "..eeee......",

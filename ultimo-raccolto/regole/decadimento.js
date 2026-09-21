@@ -33,6 +33,7 @@ import { OGGETTO } from "../mondo/generazione.js";
 import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
 import * as tempo from "./tempo.js";
+import * as stagioni from "./stagioni.js";
 import { CATALOGO } from "./oggetti.js";
 import * as inventario from "./inventario.js";
 import * as contenitori from "./contenitori.js";
@@ -41,10 +42,39 @@ import * as contenitori from "./contenitori.js";
 // Il falò lascia la cenere, che è un disegno che esiste dal primo giorno e non
 // è mai stato prodotto da niente: era lì ad aspettare questa tappa. La torcia
 // piantata non lascia niente, perché era un bastone.
+//
+// Il focolare è l'unico che non lascia niente di diverso da sé: quello che
+// diventa è il focolare spento, cioè la stessa pietra senza fuoco dentro. È
+// tutta la differenza fra una cosa che finisce e una cosa che ha fame.
+//
+// E ha una durata che cambia con la stagione, unico in questa tavola: quattro
+// giorni, due d'inverno. Non è una punizione, è la stessa frase di tutta la
+// mappa di strada letta dall'altra parte — d'inverno il fuoco lo tieni acceso
+// più forte, quindi la legna finisce prima, quindi la stagione in cui serve è
+// anche quella che chiede di tornare a casa a metà. Mezza stagione di
+// autonomia contro una intera.
+//
+// La durata può essere un numero o una funzione, e la funzione la si chiama
+// quando si guarda, cioè all'alba: conta la stagione in cui ci si sveglia, non
+// quella in cui si era acceso.
 const FUOCHI = {
   [OGGETTO.FALO_ACCESO]: { giorni: 2, diventa: OGGETTO.FALO_SPENTO },
   [OGGETTO.TORCIA_PIANTATA]: { giorni: 1, diventa: OGGETTO.NESSUNO },
+  [OGGETTO.FOCOLARE_ACCESO]: {
+    giorni: () => (stagioni.stagioneCorrente() === "inverno" ? 2 : 4),
+    diventa: OGGETTO.FOCOLARE_SPENTO,
+  },
 };
+
+// Quanto dura questo fuoco oggi. Una riga sola, perché ci sono due punti che
+// se lo chiedono e uno dei due è un collaudo: se la stagione la leggesse solo
+// il posto che spegne, misurare la durata vorrebbe dire far passare quattro
+// albe e guardare il mondo.
+export function giorniDiFuoco(oggetto) {
+  const fuoco = FUOCHI[oggetto];
+  if (fuoco === undefined) return undefined;
+  return typeof fuoco.giorni === "function" ? fuoco.giorni() : fuoco.giorni;
+}
 
 export function eFuoco(oggetto) {
   return FUOCHI[oggetto] !== undefined;
@@ -144,7 +174,7 @@ export function nuovoGiorno() {
       // fuoco che esisteva prima che i fuochi avessero una durata, e spegnerlo
       // subito sarebbe punire il giocatore per un cambiamento del gioco.
       const acceso = cambio.posata ?? giorno;
-      if (giorno - acceso >= fuoco.giorni) spenti.push({ tx, ty, diventa: fuoco.diventa });
+      if (giorno - acceso >= giorniDiFuoco(cambio.oggetto)) spenti.push({ tx, ty, diventa: fuoco.diventa });
       else if (cambio.posata === undefined) modifiche.imposta(tx, ty, { ...cambio, posata: giorno });
       return;
     }
