@@ -42,10 +42,24 @@ const RAGGIO_FUOCO = 3;
 // millisecondo, cioè un ottocentesimo di fotogramma, e per tre stagioni su
 // quattro nemmeno quello — le due righe qui sotto escludono tutto il resto
 // dell'anno prima di guardare un solo tassello.
-export function alFreddo(eroe) {
+// Che freddo è, oppure null.
+//
+// Erano due cose e adesso sono due cose con nomi diversi. Il GELO — la notte
+// d'inverno, la nevicata — è quello che sale di gradino e uccide in novanta
+// secondi: è una cosa che si sceglie di affrontare, e ha due risposte che ti
+// costruisci a casa. Il BAGNATO no: ti capita addosso dove sei, una volta a
+// stagione, e fino a qui entrava nella stessa macchina — dieci secondi per
+// bagnarsi, centouno per morire, misurati, senza aver fatto niente di
+// sbagliato e senza una risposta che non fosse una stanza costruita prima.
+//
+// Adesso è un freddo suo: morde a metà e non sale mai di gradino (vedi
+// salute.js), e comincia solo da fradici e non da zuppi. Resta una cosa di cui
+// tenere conto — sotto l'acqua non si guarisce e la salute cala — senza essere
+// una condanna per chi la prende lontano da casa.
+export function tipo(eroe) {
   const notteInvernale = stagioni.stagioneCorrente() === "inverno" && tempo.eNotte();
   const nevicata = meteo.evento() === "neve" && !meteo.alRiparo(eroe);
-  if (!notteInvernale && !nevicata && !meteo.zuppo()) return false;
+  if (!notteInvernale && !nevicata && !meteo.fradicio()) return null;
 
   // La torcia NON scalda, né in pugno né piantata. Una fiamma in punta a un
   // bastone illumina: non è un cappotto, e non lo era nemmeno prima — è che
@@ -62,7 +76,7 @@ export function alFreddo(eroe) {
   // chiusa che ne contiene uno.
   const tx = Math.floor(eroe.px / TASSELLO);
   const ty = Math.floor(eroe.py / TASSELLO);
-  if (mappa.fuocoVicino(tx, ty, RAGGIO_FUOCO)) return false;
+  if (mappa.fuocoVicino(tx, ty, RAGGIO_FUOCO)) return null;
 
   // Al chiuso il calore resta dentro: un fuoco acceso in un punto qualsiasi
   // della stanza la scalda tutta, invece di fermarsi a tre tasselli.
@@ -75,9 +89,15 @@ export function alFreddo(eroe) {
   // stanze.
   riparo.aggiorna(0, tx, ty);
   const stanza = riparo.stanza();
-  if (stanza && riparo.caldaDentro(stanza)) return false;
+  if (stanza && riparo.caldaDentro(stanza)) return null;
 
-  return true;
+  return notteInvernale || nevicata ? "gelo" : "bagnato";
+}
+
+// Il predicato di sempre, per chi deve solo sapere se si gela: l'indicatore
+// sulla barra, il messaggio, la guarigione che si ferma.
+export function alFreddo(eroe) {
+  return tipo(eroe) !== null;
 }
 
 // Il riposo richiede un falò acceso vicino al letto, non una torcia in mano.

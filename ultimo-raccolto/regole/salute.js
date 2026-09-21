@@ -31,6 +31,15 @@ const DANNO_VUOTO = 1 / (GIORNO * 2);
 // e per 3 dopo 30: il calore interrompe l'accumulo, il sonno no.
 const DANNO_FREDDO = 1 / (GIORNO * 0.75);
 
+// Quanto morde il freddo che viene soltanto dall'essere fradici. Metà, e senza
+// gradini (vedi freddo.js): sotto l'acqua si passa da novanta secondi di vita
+// a quattrocentocinquanta, cioè più di quanto duri una giornata intera di
+// pioggia — non si muore restando sotto un acquazzone, ci si arriva a sera
+// conciati. È la differenza fra una regola che punisce e
+// una che uccide: il gelo d'inverno resta quello di prima, perché quello lo
+// scegli, mentre la pioggia ti capita addosso dove sei.
+const FREDDO_MITE = 0.5;
+
 // Tre giorni per tornare pieni. Più lenta del danno di proposito: se
 // guarisse in fretta, arrivare a un passo dalla morte sarebbe un
 // inconveniente da risolvere mangiando una rapa. Così invece uno sbaglio si
@@ -173,11 +182,17 @@ export function moltiplicatoreFreddo(protetto = false) {
   return esposizioneFreddo >= 30 ? 3 : esposizioneFreddo >= 15 ? 2 : 1;
 }
 
-export function avanza(passo, { vuoti = [], alFreddo = false, protetto = false } = {}) {
+export function avanza(passo, { vuoti = [], alFreddo = false, protetto = false, mite = false } = {}) {
   if (morto || !Number.isFinite(passo) || passo <= 0) return null;
 
   for (const quale of vuoti) ferisci(quale, DANNO_VUOTO * passo);
-  if (alFreddo) {
+  if (alFreddo && mite) {
+    // Il bagnato non sale di gradino, e non fa salire nemmeno il contatore:
+    // altrimenti una giornata di pioggia si pagherebbe la notte dopo, cioè la
+    // condanna tornerebbe rimandata invece che tolta. Il contatore non si
+    // azzera però — chi era già al secondo gradino per il gelo se lo tiene.
+    ferisci("freddo", DANNO_FREDDO * FREDDO_MITE * passo);
+  } else if (alFreddo) {
     const fine = esposizioneFreddo + passo;
     // L'esposizione continua ad accumularsi anche protetti, ed è voluto: chi
     // si spoglia — o si bagna — dopo due minuti deve trovarsi i gradini già

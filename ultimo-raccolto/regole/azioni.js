@@ -284,8 +284,13 @@ function sulTassello(eroe, cosaInMano, indice) {
 
   const posa = cosaInMano && CATALOGO[cosaInMano]?.posa;
   if (posa !== undefined && posa !== null && posabile(b)) {
-    if (cosaInMano === "falo" && meteo.evento() === "pioggia" && !meteo.coperto(b.tx,b.ty))
-      return { tipo: "posa", bersaglio: b, impedito: "pioggia: accendi il fuoco al coperto" };
+    // Sotto un albero il falò si accende anche mentre piove, ed è la seconda
+    // metà del riparo debole: senza, la chioma rallentava l'acqua e non dava
+    // niente da fare. Con, il viaggiatore ha il suo ciclo — ti infili nella
+    // macchia, accendi, ti asciughi — e la pioggia diventa una cosa a cui si
+    // reagisce invece di una cosa che si subisce.
+    if (cosaInMano === "falo" && meteo.evento() === "pioggia" && !meteo.riparatoDallaPioggia(b.tx,b.ty))
+      return { tipo: "posa", bersaglio: b, impedito: "piove: accendi il fuoco al chiuso o sotto gli alberi" };
     return { tipo: "posa", verbo: "Posa", cosa: cosaInMano, bersaglio: b,
       impedito: (cosaInMano === "muro" || cosaInMano === "porta") && occupato(b.tx, b.ty, eroe) ? "passaggio occupato" : null };
   }
@@ -759,7 +764,7 @@ function esegui(eroe, cosaInMano, indice, azione) {
       dorme: true, eroe: letto,
       alFreddo: () => {
         riscaldato = freddo.fuocoPerRiposo(letto) && riscaldato;
-        return freddo.alFreddo(letto);
+        return freddo.tipo(letto);
       },
     });
     const pocoRiposato = inverno && !riscaldato;

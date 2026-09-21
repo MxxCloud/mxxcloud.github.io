@@ -72,7 +72,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.12.1";
+const VERSIONE = "M7.12.2";
 
 // --- elementi -------------------------------------------------------------
 
@@ -134,9 +134,10 @@ let mortoDi = null;
 // schermata della morte, che deve dire se c'è qualcosa da andare a
 // riprendere: è l'unica differenza fra un lutto e una spedizione.
 let corpo = null;
-// Se si sta gelando adesso. Calcolato una volta per passo e riusato dal
-// disegno: la regola non si interroga due volte per fotogramma.
-let gelando = false;
+// Che freddo si sta prendendo adesso — "gelo", "bagnato" o niente. Calcolato
+// una volta per passo e riusato dal disegno: la regola non si interroga due
+// volte per fotogramma. Era un sì/no finché i freddi erano uno solo.
+let gelando = null;
 // Quanto resta del lampo rosso di un morso preso. Sta qui e non nelle regole
 // perché è puro racconto: la ferita l'ha già applicata chi mordeva.
 let lampoDanno = 0;
@@ -232,7 +233,7 @@ function nuovoSuperstite() {
   bisogni.reimposta();
   chiasso.reimposta();
   udito.reimposta();
-  gelando = false;
+  gelando = null;
   lampoDanno = 0;
 
   // Prima di svuotare le entità, così il conto di chi inseguiva torna a zero
@@ -552,7 +553,7 @@ function riprendi(ripreso) {
   // la notte in cui si riprende, e ne arriveranno di nuovi se è buio.
   mortoDi = null;
   corpo = null;
-  gelando = false;
+  gelando = null;
   lampoDanno = 0;
   chiasso.reimposta();
 
@@ -1096,7 +1097,7 @@ function completaSvenimento() {
   const rimasto = riposo.secondiDiSonno();
   if (rimasto <= 0 || salute.eMorto()) return false;
   pesca.interrompi();
-  simulazione.avanza(rimasto, { eroe, alFreddo: () => freddo.alFreddo(eroe) });
+  simulazione.avanza(rimasto, { eroe, alFreddo: () => freddo.tipo(eroe) });
   return true;
 }
 
@@ -1142,19 +1143,26 @@ function aggiorna(passo) {
     simulazione.avanza(passo, {
       eroe,
       corre: eroe.correndo, siMuove: eroe.inMovimento,
-      alFreddo: () => freddo.alFreddo(eroe),
+      alFreddo: () => freddo.tipo(eroe),
     });
     haDormito = completaSvenimento() || haDormito;
     for (const vuoto of bisogni.vuoti()) {
       if (vuoto !== "stanchezza" && !primaVuoti.has(vuoto)) annuncia(AVVISI_BISOGNI[vuoto], "#c0705f");
     }
-    gelando = freddo.alFreddo(eroe);
-    if (gelando && !primaGelava) {
+    gelando = freddo.tipo(eroe);
+    if (gelando && gelando !== primaGelava) {
       suono.suona(GELO);
       // "Una fiamma" era vero finché bastava la torcia. Adesso scaldano solo
       // il fuoco per terra e la stanza che ne contiene uno, e un messaggio che
       // dice una cosa che non funziona più è peggio di nessun messaggio.
-      annuncia("stai gelando: serve un fuoco", "#8fa8d8");
+      //
+      // E i due freddi si dicono diversi, perché si risolvono diversi: dal
+      // gelo ci si ripara col fuoco, dal bagnato ci si asciuga — che è sempre
+      // un fuoco, ma prima bisogna smettere di prendere acqua.
+      annuncia(
+        gelando === "bagnato" ? "sei fradicio: asciugati" : "stai gelando: serve un fuoco",
+        "#8fa8d8"
+      );
     }
 
     // Il chiasso dopo il movimento, perché dipende da come ci si è appena
@@ -1404,7 +1412,7 @@ function disegnaInterfaccia() {
 
   hud.disegnaBisogni(p, {
     salute: salute.livelloCorrente(),
-    alFreddo: gelando,
+    alFreddo: Boolean(gelando),
     infetto: salute.eInfetto(),
     inseguito: infetti.inseguono() > 0 || fauna.tutte().some(e => e.stato === "aggressivo"),
   });
@@ -1416,7 +1424,12 @@ function disegnaInterfaccia() {
     giornoNellaStagione: stagioni.giornoNellaStagione(),
     giorniPerStagione: stagioni.GIORNI_PER_STAGIONE,
   });
-  hud.disegnaMeteo(p, { evento: meteo.evento(), domani: meteo.evento(tempo.giornoCorrente()+1), bagnato: meteo.livelloBagnato(), freddo: gelando ? salute.moltiplicatoreFreddo(Boolean(addosso.dati()?.gradiniFermi) && !meteo.zuppo()) : 0 });
+  // Il moltiplicatore è quello del gelo: il bagnato non ha gradini e resta a
+  // uno, e mostrargli la scala di un'altra regola sarebbe un numero che mente.
+  const scalaFreddo = gelando === "gelo"
+    ? salute.moltiplicatoreFreddo(Boolean(addosso.dati()?.gradiniFermi) && !meteo.zuppo())
+    : gelando ? 1 : 0;
+  hud.disegnaMeteo(p, { evento: meteo.evento(), domani: meteo.evento(tempo.giornoCorrente()+1), bagnato: meteo.livelloBagnato(), freddo: scalaFreddo });
   hud.disegnaAzione(p, azioneCorrente);
   const lenza = pesca.stato();
   if (lenza) {
@@ -1490,7 +1503,7 @@ function aggiornaDiagnostica() {
     `tassello ${tx}, ${ty}`,
     `terreno  ${NOMI_TERRENO[mappa.terrenoDi(tx, ty)]}`,
     `bisogni  ${bisogni.ELENCO.map((n) => n[0] + " " + bisogni.livello(n).toFixed(2)).join("  ")}  velocità ${bisogni.fattoreVelocita().toFixed(2)}`,
-    `salute   ${salute.livelloCorrente().toFixed(3)}  freddo ${gelando ? "sì" : "no"}  ${salute.eInfetto() ? "infetto" : "sano"}  ${mortoDi ? `morto ${mortoDi}` : "vivo"}`,
+    `salute   ${salute.livelloCorrente().toFixed(3)}  freddo ${gelando ?? "no"}  ${salute.eInfetto() ? "infetto" : "sano"}  ${mortoDi ? `morto ${mortoDi}` : "vivo"}`,
     `infetti  ${infetti.quanti()}  inseguono ${infetti.inseguono()}  chiasso ${chiasso.quanto()} (${Math.round(chiasso.raggio())}px)`,
     `ora      ${tempo.orologio()}  giorno ${tempo.giornoCorrente()}  luce ${tempo.luceAmbiente().toFixed(2)}`,
     `settori  ${mappa.settoriInMemoria()}  in piedi ${inPiedi.length}  lumi ${lumi.length}`,
@@ -1605,7 +1618,7 @@ function recuperaIlTempoPerso(secondiSaltati) {
   if (mondoFermo()) return;
   const secondi = simulazione.avanza(Math.min(secondiSaltati, ASSENZA_MASSIMA), {
     eroe,
-    alFreddo: () => freddo.alFreddo(eroe),
+    alFreddo: () => freddo.tipo(eroe),
   });
 
   // Si dice quanto è passato, perché tornare e trovare l'orto morto senza
@@ -1671,6 +1684,10 @@ if (parametri.has("diagnostica")) {
     bisogni,
     salute,
     freddo,
+    // Il meteo mancava, e serve: la pioggia è l'unica regola che si può solo
+    // aspettare, quindi è quella che dai tasti veri si prova peggio senza una
+    // maniglia per guardarla mentre succede.
+    meteo,
     infetti,
     fauna,
     addosso,

@@ -388,7 +388,12 @@ export function disegnaMeteo(p, { evento, domani, bagnato, freddo = 0 }) {
     const previsione = `DOMANI ${domani === "arido" ? "ARIDO" : domani.toUpperCase()}`;
     testo.disegnaConOmbra(p, previsione, schermo.LARGHEZZA-testo.larghezza(previsione)-7, 42, TENUE);
   }
-  if (bagnato > 0.01) testo.disegnaConOmbra(p, bagnato >= 0.5 ? "ZUPPO: CERCA CALORE" : "BAGNATO", 7, 63, "#91b9cc");
+  // Tre stati e tre frasi, perché adesso vogliono dire tre cose diverse:
+  // bagnato non costa niente, zuppo è l'avviso che manca poco, fradicio è il
+  // punto da cui la salute cala. Dirli tutti "cerca calore" sarebbe stato un
+  // allarme che grida sempre, cioè un allarme che non si ascolta più.
+  const stato = bagnato >= 1 ? "FRADICIO: ASCIUGATI" : bagnato >= 0.5 ? "ZUPPO: CERCA RIPARO" : "BAGNATO";
+  if (bagnato > 0.01) testo.disegnaConOmbra(p, stato, 7, 63, "#91b9cc");
 }
 
 export function disegnaAzione(p, azione) {

@@ -12,6 +12,59 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.12.2 — la pioggia si può attraversare
+
+Misurato, e la misura è il motivo di questa tappa: **fermi in un prato, in
+pieno giorno, senza aver fatto niente di sbagliato — zuppi in 10 secondi,
+morti in 101.** La catena era chiusa a chiave: non si poteva accendere un falò
+(impedito dalla pioggia, e comunque la pioggia spegne i fuochi scoperti), la
+torcia non scalda da M7.11.1, e asciugarsi all'aperto è otto volte più lento
+di quanto la pioggia bagni. L'unica risposta era una stanza chiusa già
+costruita, cioè una risposta che sta a casa mentre la pioggia ti prende dove
+sei.
+
+Il difetto sotto: **il bagnato era entrato nella macchina del gelo invernale
+senza portarsi dietro una via d'uscita propria.** La notte d'inverno ha due
+risposte che ti costruisci e che *scegli* di affrontare; la pioggia ti capita
+addosso, una volta a stagione, ovunque tu sia.
+
+**Gli alberi riparano.** Due alberi fra gli otto vicini — un albero solo in
+mezzo a un prato non è un riparo, una macchia sì — e la pioggia prende un
+quarto: **fradici in 80 secondi invece che in 20**. Misurato attorno alla
+fattoria: la macchia più vicina sta a tre tasselli, e il 16,6% della valle
+calpestabile ripara. Non è un tetto e non deve esserlo: dentro una stanza la
+pioggia si ferma, sotto gli alberi rallenta, e resta un motivo per costruirsi
+una casa.
+
+**Sotto la chioma il falò si accende, e non si spegne.** È la seconda metà del
+riparo debole: senza, gli alberi rallentavano l'acqua e non davano niente da
+fare. Con, il viaggiatore ha il suo ciclo — ti infili nella macchia, accendi,
+ti asciughi — e un fuoco asciuga più in fretta di quanto la chioma lasci
+passare.
+
+**E il bagnato è un freddo suo.** Morde **a metà** e **non sale mai di
+gradino**, e comincia **solo da fradici** e non da zuppi: fra i dieci secondi
+in cui ti bagni e i venti in cui sei fradicio c'è il tempo di accorgertene e di
+andare da qualche parte. Il gelo — notte d'inverno, nevicata — resta quello di
+prima, perché quello lo scegli.
+
+Una giornata intera di pioggia, dalla mezzanotte alla mezzanotte:
+
+| | fradicio | salute peggiore |
+| --- | --- | --- |
+| all'aperto | 20 s | **0,39 — vivo** |
+| sotto la chioma | 81 s | 0,52 |
+| sotto la chioma, con un falò | **mai** | **1,00** |
+| con un falò ma allo scoperto | 20 s | 0,39 — la pioggia lo spegne |
+
+Restare sotto l'acqua costa ancora più di mezza salute, e la guarigione è
+lenta: la pioggia si paga per giorni. Ma non uccide più chi la prende lontano
+da casa, e adesso c'è qualcosa da fare mentre cade.
+
+Il pannello lo dice in tre stati invece di due, perché adesso vogliono dire tre
+cose diverse: **bagnato** non costa niente, **zuppo** è l'avviso che manca
+poco, **fradicio** è il punto da cui la salute cala.
+
 ## M7.12.1 — la caccia impara che stagione è
 
 Tre correzioni alla caccia, e la prima è quella che conta.
@@ -448,9 +501,9 @@ I **falò scoperti si spengono**, quelli in una stanza chiusa restano accesi.
 La posa di un falò sotto la pioggia è impedita prima di consumare materiali.
 Una porta aperta o un muro sfondato espongono subito la stanza al maltempo.
 
-All'aperto la pioggia bagna progressivamente: dopo **10 secondi** si è zuppi
-e si soffre il freddo anche di giorno, dopo **20 secondi** completamente
-inzuppati. Entrare in una stanza ferma la pioggia ma non asciuga istantaneamente:
+All'aperto la pioggia bagna progressivamente: dopo **10 secondi** si è zuppi,
+dopo **20 secondi** fradici — ed è da lì, non da zuppi, che si soffre il
+freddo anche di giorno (vedi M7.12.2, che dà anche un riparo agli alberi). Entrare in una stanza ferma la pioggia ma non asciuga istantaneamente:
 da completamente bagnati servono **40 secondi al coperto**, **10 vicino a una
 fiamma o in una stanza riscaldata**, **80 all'aperto dopo la pioggia**. La torcia
 in mano protegge dal freddo ma non accelera l'asciugatura. Il bagnato resta
