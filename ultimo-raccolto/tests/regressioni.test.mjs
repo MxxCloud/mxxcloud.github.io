@@ -1737,11 +1737,18 @@ test('nessuna specie sparisce dal calendario, e l’inverno è il mese più peri
   assert.equal(fauna.PER_STAGIONE.inverno.frequenze.orso,40);
   for(const s of ['estate','autunno','primavera']) assert.equal(fauna.PER_STAGIONE[s].frequenze.orso,15);
   // Quanto è probabile che quello che incontri decida di attaccarti.
+  // Il rischio vero è quello temperato dalla stagione, non quello di catalogo.
   const pericolo=s=>Object.entries(fauna.PER_STAGIONE[s].frequenze)
-    .reduce((n,[id,peso])=>n+peso*fauna.SPECIE[id].rischio,0)/100;
+    .reduce((n,[id,peso])=>n+peso*fauna.rischioDi(id,s),0)/100;
   assert.ok(pericolo('inverno')>pericolo('autunno'),'inverno > autunno');
   assert.ok(pericolo('autunno')>pericolo('estate'),'autunno > estate');
   assert.ok(pericolo('estate')>pericolo('primavera'),'estate > primavera');
+  // E l'autunno deve arrivare a un soffio dall'inverno: sono i due mesi
+  // pericolosi, e lo sono per ragioni diverse — d'autunno è la preda che ti
+  // carica, d'inverno è il predatore che c'è. Se il divario si riapre, uno
+  // dei due ha smesso di fare il suo mestiere.
+  assert.ok(pericolo('inverno')-pericolo('autunno')<0.05,
+    `autunno ${pericolo('autunno').toFixed(3)} troppo lontano da inverno ${pericolo('inverno').toFixed(3)}`);
 });
 test('la stagione arriva fino alla nascita, non solo alla tabella',()=>{
   const nata=giorno=>{
@@ -1754,4 +1761,39 @@ test('la stagione arriva fino alla nascita, non solo alla tabella',()=>{
   const specie=[nata(1),nata(5),nata(9),nata(13)];
   for(const s of specie) assert.ok(s,'una bestia nasce in ogni stagione');
   assert.ok(new Set(specie).size>1,'la stagione non sta decidendo niente: '+specie.join(','));
+});
+
+test('il temperamento tocca solo chi tira davvero i dadi',()=>{
+  // Il cavallo ha rischio zero e l'orso uno: moltiplicarli non li sposta, e
+  // non serve un caso speciale scritto a mano per tenerli fuori.
+  for(const s of Object.keys(fauna.PER_STAGIONE)) {
+    assert.equal(fauna.rischioDi('cavallo',s),0,`il cavallo non carica mai (${s})`);
+    assert.equal(fauna.rischioDi('orso',s),1,`l'orso carica sempre (${s})`);
+  }
+  vicino(fauna.rischioDi('cervo','estate'),0.35);
+  vicino(fauna.rischioDi('bufalo','estate'),0.55);
+  vicino(fauna.rischioDi('cervo','autunno'),0.4375);
+  vicino(fauna.rischioDi('bufalo','autunno'),0.6875);
+  vicino(fauna.rischioDi('cervo','inverno'),0.28);
+  vicino(fauna.rischioDi('bufalo','inverno'),0.44);
+});
+test('il temperamento arriva fino alla decisione, e si misura contando le cariche',()=>{
+  const quanteCaricano=(specie,giorno,quante=3000)=>{
+    tempo.impostaGiorno(giorno);
+    let aggressive=0;
+    for(let i=1;i<=quante;i++) {
+      const e=fauna.crea(specie,eroe.px+32,eroe.py,Math.imul(i,2654435761));
+      fauna.percepisci(e,5,eroe);   // cinque secondi: la tolleranza scade e decide
+      if(e.stato==='aggressivo') aggressive++;
+    }
+    return aggressive/quante;
+  };
+  for(const [specie,giorno,atteso] of [
+    ['cervo',1,0.35],['cervo',5,0.4375],['cervo',9,0.28],
+    ['bufalo',1,0.55],['bufalo',5,0.6875],['bufalo',9,0.44],
+  ]) {
+    const misurato=quanteCaricano(specie,giorno);
+    assert.ok(Math.abs(misurato-atteso)<0.03,
+      `${specie} giorno ${giorno}: carica il ${(100*misurato).toFixed(1)}% invece del ${(100*atteso).toFixed(2)}%`);
+  }
 });

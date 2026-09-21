@@ -76,11 +76,30 @@ export const SPECIE = {
 // bufalo resiste com'era: non è una stagione con meno roba da mangiare, è una
 // stagione in cui quello che trovi ti guarda male. La primavera è la valle che
 // riparte, cioè prede facili e poca resa.
+//
+// E infine il temperamento: quanto è probabile che una bestia, messa alle
+// strette, carichi invece di scappare. È un moltiplicatore e non una tabella
+// per specie, e la differenza non è di comodità — è che un moltiplicatore si
+// applica da solo soltanto a chi tira i dadi. Il cavallo ha rischio zero, e
+// zero per qualunque cosa resta zero; l'orso ha rischio uno, e il risultato si
+// limita a uno. Restano cervo e bufalo, che sono esattamente i due che una
+// decisione la prendono davvero: nessun caso speciale da scrivere a mano.
+//
+// L'autunno è la foia. È già la stagione più fitta e più grossa, cioè quella
+// che dice "vieni a cacciare": il temperamento è la frase che risponde "con
+// prudenza", ed è la tensione che all'autunno mancava.
+//
+// L'inverno fa il contrario, e sembra un regalo ma non lo è. Cervi e bufali
+// affamati scappano di più, però il pericolo invernale viene dall'orso al
+// quaranta per cento, che i dadi non li tira mai: abbassare il temperamento
+// non lo tocca di un millimetro, sposta solo il resto degli incontri verso la
+// fuga. Il risultato è che la paura dell'inverno si concentra nell'orso, che è
+// la stessa storia che raccontano le frequenze.
 export const PER_STAGIONE = {
-  estate:    { massimi: 2, intervallo: 40, resa: 1,   frequenze: { cervo: 33, cavallo: 27, bufalo: 25, orso: 15 } },
-  autunno:   { massimi: 2, intervallo: 32, resa: 1,   frequenze: { cervo: 28, cavallo: 17, bufalo: 40, orso: 15 } },
-  inverno:   { massimi: 1, intervallo: 95, resa: 0.6, frequenze: { cervo: 20, cavallo: 15, bufalo: 25, orso: 40 } },
-  primavera: { massimi: 2, intervallo: 40, resa: 1,   frequenze: { cervo: 40, cavallo: 30, bufalo: 15, orso: 15 } },
+  estate:    { massimi: 2, intervallo: 40, resa: 1,   temperamento: 1,    frequenze: { cervo: 33, cavallo: 27, bufalo: 25, orso: 15 } },
+  autunno:   { massimi: 2, intervallo: 32, resa: 1,   temperamento: 1.25, frequenze: { cervo: 28, cavallo: 17, bufalo: 40, orso: 15 } },
+  inverno:   { massimi: 1, intervallo: 95, resa: 0.6, temperamento: 0.8,  frequenze: { cervo: 20, cavallo: 15, bufalo: 25, orso: 40 } },
+  primavera: { massimi: 2, intervallo: 40, resa: 1,   temperamento: 0.9,  frequenze: { cervo: 40, cavallo: 30, bufalo: 15, orso: 15 } },
 };
 const dellaStagione = () => PER_STAGIONE[stagioni.stagioneCorrente()] ?? PER_STAGIONE.estate;
 export const quanteNeVuole = () => dellaStagione().massimi;
@@ -96,6 +115,27 @@ export const ogniQuanto = () => dellaStagione().intervallo;
 // nascere l'ultima della fila. Oggi non succede — tutte e quattro le specie
 // hanno un peso in tutti e quattro i mesi, e c'è un collaudo che lo pretende —
 // ma è la risposta giusta alla domanda, e costa una riga.
+// Quanto è probabile che questa specie carichi, adesso. Si legge al momento
+// del tiro e non si scrive da nessuna parte: una bestia che ha già deciso
+// resta decisa, quindi nessun campo nuovo nel salvataggio e nessuna partita
+// vecchia da migrare.
+export function rischioDi(specie, stagione = stagioni.stagioneCorrente()) {
+  const base = SPECIE[specie].rischio;
+  // Chi non tira i dadi non ha temperamento. Il cavallo scappa sempre e l'orso
+  // carica sempre — percepisci() li smista prima di arrivare al tiro — e una
+  // stagione non può cambiare una certezza in una probabilità.
+  //
+  // Non è una rifinitura: moltiplicando e basta, un temperamento sotto l'uno
+  // portava l'orso invernale a 0,8. Nel gioco non si vedeva, perché quel tiro
+  // per l'orso non avviene mai; si vedeva nel conto di quanto è pericolosa una
+  // stagione, che diceva l'inverno più mite dell'autunno. Una funzione che
+  // risponde male a una domanda che nessuno fa oggi risponde male anche il
+  // giorno che qualcuno la farà.
+  if (base <= 0 || base >= 1) return base;
+  const temperamento = (PER_STAGIONE[stagione] ?? PER_STAGIONE.estate).temperamento ?? 1;
+  return Math.min(1, base * temperamento);
+}
+
 export function specieDi(tiro, stagione = stagioni.stagioneCorrente()) {
   const pesi = (PER_STAGIONE[stagione] ?? PER_STAGIONE.estate).frequenze;
   const specie = Object.keys(SPECIE);
@@ -204,7 +244,7 @@ export function percepisci(e, passo, eroe) {
   e.pressione+=passo;
   e.stato='allerta';
   if(e.pressione+1e-9>=TOLLERANZA) {
-    e.stato=caso(e)<s.rischio ? 'aggressivo' : 'fuga';
+    e.stato=caso(e)<rischioDi(e.specie) ? 'aggressivo' : 'fuga';
     e.memoria=6; e.pressione=0;
   }
 }

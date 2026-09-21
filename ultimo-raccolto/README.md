@@ -12,6 +12,48 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.12.4 — d'autunno le bestie non scappano
+
+M7.12.3 ha deciso **chi** incontri in ogni mese. Restava fermo **come si
+comporta**: un cervo era ugualmente coraggioso a marzo e a novembre.
+
+Cervo e bufalo, quando li avvicini, tengono duro cinque secondi e poi decidono
+— o caricano o scappano. Adesso quella decisione la pesa anche la stagione:
+
+| | Estate | Autunno | Inverno | Primavera |
+| --- | --- | --- | --- | --- |
+| Temperamento | 1 | **1,25** | **0,8** | 0,9 |
+| Il cervo carica | 35% | **44%** | 28% | 32% |
+| Il bufalo carica | 55% | **69%** | 44% | 50% |
+
+**L'autunno è la foia.** È già la stagione più fitta e la più grossa: le
+frequenze dicono *vieni a cacciare*, il temperamento risponde *con prudenza*.
+È la tensione che all'autunno mancava — finora era ricco e basta.
+
+**L'inverno fa il contrario, e sembra un regalo.** Non lo è: il pericolo
+invernale viene dall'orso al quaranta per cento, che i dadi non li tira mai.
+Cervi e bufali affamati scappano di più, quindi la paura dell'inverno si
+**concentra nell'orso** invece di spalmarsi. È la stessa storia che raccontano
+le frequenze, detta con un'altra voce.
+
+Quanto è probabile che quello che incontri ti attacchi:
+
+| | Estate | Autunno | Inverno | Primavera |
+| --- | --- | --- | --- | --- |
+| Prima | 0,40 | 0,47 | **0,61** | 0,37 |
+| Adesso | 0,40 | **0,55** | **0,57** | 0,35 |
+
+L'inverno resta il mese peggiore, ma di un soffio — e i due mesi pericolosi
+adesso lo sono **per ragioni diverse**: d'autunno è la preda che ti carica,
+d'inverno è il predatore che c'è.
+
+Il temperamento è un moltiplicatore e non una tabella per specie, e non è una
+scelta di comodità: si applica da solo soltanto a chi una decisione la prende
+davvero. Il cavallo scappa sempre, l'orso carica sempre, e **una stagione non
+può cambiare una certezza** — restano fuori senza un caso speciale scritto a
+mano. Niente di nuovo nel salvataggio: il temperamento si legge al momento del
+tiro, e una bestia che ha già deciso resta decisa.
+
 ## M7.12.3 — a ogni stagione la sua bestia
 
 M7.12.1 ha insegnato alla caccia **quante** bestie ci sono e **quanto** rendono.
