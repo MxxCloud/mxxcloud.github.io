@@ -12,6 +12,97 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.12.4 — d'autunno le bestie non scappano
+
+M7.12.3 ha deciso **chi** incontri in ogni mese. Restava fermo **come si
+comporta**: un cervo era ugualmente coraggioso a marzo e a novembre.
+
+Cervo e bufalo, quando li avvicini, tengono duro cinque secondi e poi decidono
+— o caricano o scappano. Adesso quella decisione la pesa anche la stagione:
+
+| | Estate | Autunno | Inverno | Primavera |
+| --- | --- | --- | --- | --- |
+| Temperamento | 1 | **1,25** | **0,8** | 0,9 |
+| Il cervo carica | 35% | **44%** | 28% | 32% |
+| Il bufalo carica | 55% | **69%** | 44% | 50% |
+
+**L'autunno è la foia.** È già la stagione più fitta e la più grossa: le
+frequenze dicono *vieni a cacciare*, il temperamento risponde *con prudenza*.
+È la tensione che all'autunno mancava — finora era ricco e basta.
+
+**L'inverno fa il contrario, e sembra un regalo.** Non lo è: il pericolo
+invernale viene dall'orso al quaranta per cento, che i dadi non li tira mai.
+Cervi e bufali affamati scappano di più, quindi la paura dell'inverno si
+**concentra nell'orso** invece di spalmarsi. È la stessa storia che raccontano
+le frequenze, detta con un'altra voce.
+
+Quanto è probabile che quello che incontri ti attacchi:
+
+| | Estate | Autunno | Inverno | Primavera |
+| --- | --- | --- | --- | --- |
+| Prima | 0,40 | 0,47 | **0,61** | 0,37 |
+| Adesso | 0,40 | **0,55** | **0,57** | 0,35 |
+
+L'inverno resta il mese peggiore, ma di un soffio — e i due mesi pericolosi
+adesso lo sono **per ragioni diverse**: d'autunno è la preda che ti carica,
+d'inverno è il predatore che c'è.
+
+Il temperamento è un moltiplicatore e non una tabella per specie, e non è una
+scelta di comodità: si applica da solo soltanto a chi una decisione la prende
+davvero. Il cavallo scappa sempre, l'orso carica sempre, e **una stagione non
+può cambiare una certezza** — restano fuori senza un caso speciale scritto a
+mano. Niente di nuovo nel salvataggio: il temperamento si legge al momento del
+tiro, e una bestia che ha già deciso resta decisa.
+
+## M7.12.3 — a ogni stagione la sua bestia
+
+M7.12.1 ha insegnato alla caccia **quante** bestie ci sono e **quanto** rendono.
+Restava fuori la domanda più semplice: **quali**. La scala era fissa tutto
+l'anno — 35 cervo, 30 cavallo, 25 bufalo, 10 orso — a gennaio come a luglio.
+
+Adesso la stagione decide anche chi incontri. I pesi stanno nella stessa
+tabella di `massimi`, `intervallo` e `resa`, perché *cosa fa questo mese alla
+caccia* deve leggersi in un posto solo:
+
+| | Estate | Autunno | Inverno | Primavera |
+| --- | --- | --- | --- | --- |
+| Cervo | 33 | 28 | 20 | **40** |
+| Cavallo | 27 | 17 | 15 | **30** |
+| Bufalo | 25 | **40** | 25 | 15 |
+| Orso | 15 | 15 | **40** | 15 |
+
+**L'autunno è la caccia grossa**: il bufalo sale a quaranta prima del freddo, e
+si somma alla stagione che arriva già più fitta (una bestia ogni 32 secondi).
+È il mese in cui si fa scorta, e adesso ha una ragione sua per esserlo.
+
+**L'inverno moltiplica l'orso e lascia stare il bufalo.** I venticinque punti
+che l'orso guadagna arrivano tutti da cervo e cavallo: la stagione dirada le
+bestie piccole e schive, e quello che resta o è grosso o è cattivo. Non è un
+mese con meno da mangiare — a quello pensano già il tetto a una bestia e la
+resa a sei decimi — è un mese **in cui quello che trovi ti guarda male**.
+
+**La primavera è la valle che riparte**: cervo e cavallo per sette incontri su
+dieci, cioè prede facili e poca resa.
+
+Il conto, per bestia incontrata:
+
+| | Estate | Autunno | Inverno | Primavera |
+| --- | --- | --- | --- | --- |
+| Carne | 3,78 | **4,33** | 4,40, cioè **2,64** con la resa invernale | 3,45 |
+| Pelli | 1,80 | 2,10 | **2,30** | 1,60 |
+| Probabilità che attacchi | 0,40 | 0,47 | **0,61** | 0,37 |
+
+Due cose che questi numeri dicono e che vale la pena scrivere. La prima: **non
+disfa M7.12.1.** D'inverno la bestia grezza vale di più di ogni altro mese,
+perché orso e bufalo pesano — ma la resa a sei decimi la riporta a 2,64, il
+minimo dell'anno, e resta una bestia sola ogni novantacinque secondi. La
+seconda: **d'inverno le pelli salgono**, ed è coerente con la scelta di
+M7.12.1 di lasciarle piene — la stagione per cui esiste la pelliccia è anche
+quella che ne dà di più, se si ha il fegato di andarsele a prendere.
+
+L'orso passa da dieci a quindici anche negli altri tre mesi: non è solo
+l'inverno a farsi più pericoloso, è tutto l'anno.
+
 ## M7.12.2 — la pioggia si può attraversare
 
 Misurato, e la misura è il motivo di questa tappa: **fermi in un prato, in
