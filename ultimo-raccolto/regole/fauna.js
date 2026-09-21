@@ -60,15 +60,54 @@ export const SPECIE = {
 // Le pelli no, restano quelle: una pelle è una pelle anche su una bestia
 // magra, e toglierle d'inverno vorrebbe dire rendere più cara la pelliccia
 // proprio nella stagione per cui esiste.
+//
+// E adesso la stagione decide anche CHI arriva, non solo quante e quanto
+// rendono. Le frequenze stanno qui dentro e non su SPECIE per una ragione
+// sola: "cosa fa questo mese alla caccia" deve leggersi in un posto solo, e
+// due tabelle stagionali in due punti diversi sono due cose da tenere
+// allineate a mano.
+//
+// Pesi relativi, non percentuali: si normalizzano da soli, quindi aggiungere
+// una quinta bestia non obbliga a rifare le altre quattro. Qui sommano a cento
+// perché così si leggono come percentuali, non perché debbano.
+//
+// L'autunno è la caccia grossa — il bufalo sale a quaranta prima del freddo.
+// L'inverno dirada le bestie piccole e schive e moltiplica l'orso, mentre il
+// bufalo resiste com'era: non è una stagione con meno roba da mangiare, è una
+// stagione in cui quello che trovi ti guarda male. La primavera è la valle che
+// riparte, cioè prede facili e poca resa.
 export const PER_STAGIONE = {
-  estate: { massimi: 2, intervallo: 40, resa: 1 },
-  autunno: { massimi: 2, intervallo: 32, resa: 1 },
-  inverno: { massimi: 1, intervallo: 95, resa: 0.6 },
-  primavera: { massimi: 2, intervallo: 40, resa: 1 },
+  estate:    { massimi: 2, intervallo: 40, resa: 1,   frequenze: { cervo: 33, cavallo: 27, bufalo: 25, orso: 15 } },
+  autunno:   { massimi: 2, intervallo: 32, resa: 1,   frequenze: { cervo: 28, cavallo: 17, bufalo: 40, orso: 15 } },
+  inverno:   { massimi: 1, intervallo: 95, resa: 0.6, frequenze: { cervo: 20, cavallo: 15, bufalo: 25, orso: 40 } },
+  primavera: { massimi: 2, intervallo: 40, resa: 1,   frequenze: { cervo: 40, cavallo: 30, bufalo: 15, orso: 15 } },
 };
 const dellaStagione = () => PER_STAGIONE[stagioni.stagioneCorrente()] ?? PER_STAGIONE.estate;
 export const quanteNeVuole = () => dellaStagione().massimi;
 export const ogniQuanto = () => dellaStagione().intervallo;
+
+// Quale bestia arriva, dato un tiro fra zero e uno.
+//
+// Si cammina sui pesi nell'ordine di SPECIE e non in quello scritto nella
+// stagione: così lo stesso tiro vale la stessa bestia in due stagioni che
+// hanno gli stessi pesi, e riordinare una tabella non cambia la valle.
+//
+// Una stagione che scrivesse zero ovunque non fa nascere niente invece di far
+// nascere l'ultima della fila. Oggi non succede — tutte e quattro le specie
+// hanno un peso in tutti e quattro i mesi, e c'è un collaudo che lo pretende —
+// ma è la risposta giusta alla domanda, e costa una riga.
+export function specieDi(tiro, stagione = stagioni.stagioneCorrente()) {
+  const pesi = (PER_STAGIONE[stagione] ?? PER_STAGIONE.estate).frequenze;
+  const specie = Object.keys(SPECIE);
+  const totale = specie.reduce((n, id) => n + (pesi[id] ?? 0), 0);
+  if (totale <= 0) return null;
+  let soglia = tiro * totale;
+  for (const id of specie) {
+    soglia -= pesi[id] ?? 0;
+    if (soglia < 0) return id;
+  }
+  return specie.at(-1);
+}
 
 // I due tetti che servono a controllare un salvataggio, e sono quelli di tutto
 // l'anno, non quelli di oggi. Un salvataggio scritto d'autunno con due bestie
@@ -129,8 +168,8 @@ function nasce(eroe) {
     const distanza = 260 + impronta(i,giro,seme ^ 0x431ab)*120;
     const px = eroe.px+Math.cos(angolo)*distanza, py = eroe.py+Math.sin(angolo)*distanza;
     if (!prateria(px,py) || animali.some(e=>Math.hypot(e.px-px,e.py-py)<80)) continue;
-    const tiro = impronta(giro,i,seme ^ 0x167ba);
-    const specie = tiro<0.35 ? 'cervo' : tiro<0.65 ? 'cavallo' : tiro<0.9 ? 'bufalo' : 'orso';
+    const specie = specieDi(impronta(giro,i,seme ^ 0x167ba));
+    if (!specie) return;
     animali.push(crea(specie,px,py,Math.floor(impronta(i,giro,seme)*4294967296)));
     break;
   }

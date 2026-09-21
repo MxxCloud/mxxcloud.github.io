@@ -1703,3 +1703,55 @@ test('sotto la chioma la pioggia bagna un quarto, e il falò si accende',()=>{
   vicino(meteo.livelloBagnato(),40/80,1e-6);
   assert.equal(giorno>0,true);
 });
+
+test('la stagione decide quale bestia arriva, e i pesi sono quelli dichiarati',()=>{
+  // Misurata, non dichiarata: si spazza il tiro da zero a uno e si conta dove
+  // cade. Uniforme e non casuale, così il conto è esatto e non ballerino.
+  const PASSI=10000;
+  for(const [stagione,pesi] of Object.entries({
+    estate:{cervo:33,cavallo:27,bufalo:25,orso:15},
+    autunno:{cervo:28,cavallo:17,bufalo:40,orso:15},
+    inverno:{cervo:20,cavallo:15,bufalo:25,orso:40},
+    primavera:{cervo:40,cavallo:30,bufalo:15,orso:15},
+  })) {
+    const conto={cervo:0,cavallo:0,bufalo:0,orso:0};
+    for(let i=0;i<PASSI;i++) conto[fauna.specieDi((i+0.5)/PASSI,stagione)]++;
+    for(const [specie,peso] of Object.entries(pesi)) {
+      const misurato=100*conto[specie]/PASSI;
+      assert.ok(Math.abs(misurato-peso)<0.5,`${stagione}/${specie}: ${misurato.toFixed(1)}% invece di ${peso}%`);
+    }
+  }
+});
+test('lo stesso tiro dà bestie diverse a seconda del mese',()=>{
+  assert.equal(fauna.specieDi(0.5,'estate'),'cervo');
+  assert.equal(fauna.specieDi(0.5,'inverno'),'bufalo');
+  // Il tiro che d'inverno è un orso e in ogni altra stagione è un bufalo: è
+  // tutta la tappa in una riga.
+  assert.equal(fauna.specieDi(0.7,'inverno'),'orso');
+  for(const s of ['estate','autunno','primavera']) assert.equal(fauna.specieDi(0.7,s),'bufalo');
+});
+test('nessuna specie sparisce dal calendario, e l’inverno è il mese più pericoloso',()=>{
+  for(const s of Object.keys(fauna.PER_STAGIONE))
+    for(const specie of Object.keys(fauna.SPECIE))
+      assert.ok(fauna.PER_STAGIONE[s].frequenze[specie]>0,`${specie} manca d'${s}`);
+  assert.equal(fauna.PER_STAGIONE.inverno.frequenze.orso,40);
+  for(const s of ['estate','autunno','primavera']) assert.equal(fauna.PER_STAGIONE[s].frequenze.orso,15);
+  // Quanto è probabile che quello che incontri decida di attaccarti.
+  const pericolo=s=>Object.entries(fauna.PER_STAGIONE[s].frequenze)
+    .reduce((n,[id,peso])=>n+peso*fauna.SPECIE[id].rischio,0)/100;
+  assert.ok(pericolo('inverno')>pericolo('autunno'),'inverno > autunno');
+  assert.ok(pericolo('autunno')>pericolo('estate'),'autunno > estate');
+  assert.ok(pericolo('estate')>pericolo('primavera'),'estate > primavera');
+});
+test('la stagione arriva fino alla nascita, non solo alla tabella',()=>{
+  const nata=giorno=>{
+    fauna.reimposta();tempo.impostaGiorno(giorno);
+    fauna.aggiorna(12,eroe);
+    return fauna.tutte()[0]?.specie;
+  };
+  // Stesso seme e stessa sequenza in tutte e quattro: se la bestia cambia, a
+  // deciderlo è stata la stagione e nient'altro.
+  const specie=[nata(1),nata(5),nata(9),nata(13)];
+  for(const s of specie) assert.ok(s,'una bestia nasce in ogni stagione');
+  assert.ok(new Set(specie).size>1,'la stagione non sta decidendo niente: '+specie.join(','));
+});

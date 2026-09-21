@@ -12,6 +12,55 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.12.3 — a ogni stagione la sua bestia
+
+M7.12.1 ha insegnato alla caccia **quante** bestie ci sono e **quanto** rendono.
+Restava fuori la domanda più semplice: **quali**. La scala era fissa tutto
+l'anno — 35 cervo, 30 cavallo, 25 bufalo, 10 orso — a gennaio come a luglio.
+
+Adesso la stagione decide anche chi incontri. I pesi stanno nella stessa
+tabella di `massimi`, `intervallo` e `resa`, perché *cosa fa questo mese alla
+caccia* deve leggersi in un posto solo:
+
+| | Estate | Autunno | Inverno | Primavera |
+| --- | --- | --- | --- | --- |
+| Cervo | 33 | 28 | 20 | **40** |
+| Cavallo | 27 | 17 | 15 | **30** |
+| Bufalo | 25 | **40** | 25 | 15 |
+| Orso | 15 | 15 | **40** | 15 |
+
+**L'autunno è la caccia grossa**: il bufalo sale a quaranta prima del freddo, e
+si somma alla stagione che arriva già più fitta (una bestia ogni 32 secondi).
+È il mese in cui si fa scorta, e adesso ha una ragione sua per esserlo.
+
+**L'inverno moltiplica l'orso e lascia stare il bufalo.** I venticinque punti
+che l'orso guadagna arrivano tutti da cervo e cavallo: la stagione dirada le
+bestie piccole e schive, e quello che resta o è grosso o è cattivo. Non è un
+mese con meno da mangiare — a quello pensano già il tetto a una bestia e la
+resa a sei decimi — è un mese **in cui quello che trovi ti guarda male**.
+
+**La primavera è la valle che riparte**: cervo e cavallo per sette incontri su
+dieci, cioè prede facili e poca resa.
+
+Il conto, per bestia incontrata:
+
+| | Estate | Autunno | Inverno | Primavera |
+| --- | --- | --- | --- | --- |
+| Carne | 3,78 | **4,33** | 4,40, cioè **2,64** con la resa invernale | 3,45 |
+| Pelli | 1,80 | 2,10 | **2,30** | 1,60 |
+| Probabilità che attacchi | 0,40 | 0,47 | **0,61** | 0,37 |
+
+Due cose che questi numeri dicono e che vale la pena scrivere. La prima: **non
+disfa M7.12.1.** D'inverno la bestia grezza vale di più di ogni altro mese,
+perché orso e bufalo pesano — ma la resa a sei decimi la riporta a 2,64, il
+minimo dell'anno, e resta una bestia sola ogni novantacinque secondi. La
+seconda: **d'inverno le pelli salgono**, ed è coerente con la scelta di
+M7.12.1 di lasciarle piene — la stagione per cui esiste la pelliccia è anche
+quella che ne dà di più, se si ha il fegato di andarsele a prendere.
+
+L'orso passa da dieci a quindici anche negli altri tre mesi: non è solo
+l'inverno a farsi più pericoloso, è tutto l'anno.
+
 ## M7.12.2 — la pioggia si può attraversare
 
 Misurato, e la misura è il motivo di questa tappa: **fermi in un prato, in
