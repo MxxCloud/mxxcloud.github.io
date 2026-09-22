@@ -12,6 +12,26 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.15.7 — il superstite non sta sotto l'orto
+
+Segnalato con una schermata: in piedi sul bordo di un campo zappato, **il
+superstite spariva sotto i solchi**.
+
+La profondità di questa vista dall'alto è una riga sola — chi ha i piedi più in
+basso è più vicino, quindi va disegnato per ultimo — ed è la regola giusta per
+un albero: se ce l'hai davanti, ti nasconde. Ma i solchi entravano in quella
+stessa fila, e un solco disegnato dopo di te ti copre.
+
+**L'orto non è una cosa che sta sul terreno: è il terreno.** Adesso i sei stadi
+del campo si cuociono dentro il settore insieme all'erba e alla sabbia, quindi
+stanno sotto tutto ciò che ci cammina sopra, sempre — e non costano più niente
+a fotogramma, perché non c'è più niente da ordinare.
+
+Misurato nel browser leggendo i pixel dello schermo, con il controllo
+all'indietro: **prima 120 pixel del superstite su 120 coperti dal campo, dopo
+zero.** Tolta la correzione, la misura torna a 120: la prova vede davvero il
+difetto che dice di vedere.
+
 ## M7.15.6 — d'inverno non si secca
 
 L'essiccatoio era l'unica cosa della valle che l'inverno non toccava. In una
@@ -1042,7 +1062,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.15.6**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.15.7**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

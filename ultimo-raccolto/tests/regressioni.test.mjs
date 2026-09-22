@@ -2520,3 +2520,33 @@ test('d’inverno il tasto lo dice prima, e il telaio carico spiega perché sta 
   assert.match(azioni.azionePossibile(eroe,null,0).impedito,/il pesce sta ancora seccando/);
   assert.equal(azioni.azionePossibile(eroe,'pesce_crudo',0).verbo,'Stendi (riparte il conto)');
 });
+
+// --- M7.15.7: l'orto è terreno, non una cosa che ci sta sopra ---------------
+
+test('l’orto è suolo e quello che sta in piedi no',()=>{
+  // Il difetto che questa riga chiude: i solchi entravano nella fila di quello
+  // che si ordina per i piedi, quindi un solco più in basso del superstite gli
+  // veniva disegnato sopra — e il personaggio spariva sotto il campo.
+  for(const stadio of ['TERRA_ZAPPATA','SEMINATO','GERMOGLIO','CRESCIUTA','MATURA','APPASSITA']) {
+    assert.equal(mappa.eSuolo(OGGETTO[stadio]),true,stadio);
+  }
+  // E tutto quello che sta in piedi resta in piedi: un albero davanti a te ti
+  // nasconde, ed è giusto così.
+  for(const dritto of ['ALBERO','SASSO','FALO_ACCESO','FALO_SPENTO','BANCO','CASSA','PORTA',
+    'ESSICCATOIO','ESSICCATOIO_CARICO','TORCIA_PIANTATA','MUCCHIO','GIACIGLIO','CADAVERE']) {
+    assert.equal(mappa.eSuolo(OGGETTO[dritto]),false,dritto);
+  }
+  assert.equal(mappa.eSuolo(OGGETTO.NESSUNO),false);
+});
+test('il suolo non illumina e non si anima: il disegno cotto lo ignorerebbe',()=>{
+  // La cottura del suolo guarda solo lo sprite fermo — niente fotogrammi e
+  // niente luce — quindi dare a una zolla una fiamma o un'animazione vorrebbe
+  // dire perderle senza che nessuno lo dica. Si legge dal catalogo vero.
+  const sorgente=readFileSync(new URL('../mondo/mappa.js',import.meta.url),'utf8');
+  const blocco=sorgente.slice(sorgente.indexOf('const CATALOGO_OGGETTI'),sorgente.indexOf('\n};',sorgente.indexOf('const CATALOGO_OGGETTI')));
+  for(const [,voce] of blocco.matchAll(/\[OGGETTO\.\w+\]:\s*\{([^}]*)\}/g)) {
+    if(!voce.includes('suolo: true')) continue;
+    assert.ok(!voce.includes('luce:'),'una zolla non illumina: '+voce.trim());
+    assert.ok(!voce.includes('fotogrammi:'),'una zolla non si anima: '+voce.trim());
+  }
+});
