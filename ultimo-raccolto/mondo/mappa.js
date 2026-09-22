@@ -103,16 +103,23 @@ const CATALOGO_OGGETTI = {
   // innaffiarlo. "Bagnabile" dice alla cottura di guardare se il tassello è
   // stato innaffiato e, in quel caso, di usare la tavolozza della terra
   // bagnata — stesso disegno, terreno più scuro.
-  [OGGETTO.TERRA_ZAPPATA]: { sprite: ortoArte.TERRA_ZAPPATA, solido: false, bagnabile: true },
-  [OGGETTO.SEMINATO]: { sprite: ortoArte.SEMINATO, solido: false, bagnabile: true },
-  [OGGETTO.GERMOGLIO]: { sprite: ortoArte.GERMOGLIO, solido: false, bagnabile: true },
-  [OGGETTO.CRESCIUTA]: { sprite: ortoArte.CRESCIUTA, solido: false, bagnabile: true },
-  [OGGETTO.MATURA]: { sprite: ortoArte.MATURA, solido: false, bagnabile: true },
+  //
+  // E "suolo": l'orto non è una cosa che sta sul terreno, è il terreno. Il
+  // disegno va cotto dentro il settore come l'erba e la sabbia, non messo in
+  // fila con quello che sta in piedi — se no un solco più in basso dei piedi
+  // del superstite gli viene disegnato sopra, e si vede il personaggio sotto
+  // il campo. Succedeva, ed è il difetto che questa riga chiude: l'ordine dei
+  // piedi è la profondità giusta per un albero, non per una zolla.
+  [OGGETTO.TERRA_ZAPPATA]: { sprite: ortoArte.TERRA_ZAPPATA, solido: false, bagnabile: true, suolo: true },
+  [OGGETTO.SEMINATO]: { sprite: ortoArte.SEMINATO, solido: false, bagnabile: true, suolo: true },
+  [OGGETTO.GERMOGLIO]: { sprite: ortoArte.GERMOGLIO, solido: false, bagnabile: true, suolo: true },
+  [OGGETTO.CRESCIUTA]: { sprite: ortoArte.CRESCIUTA, solido: false, bagnabile: true, suolo: true },
+  [OGGETTO.MATURA]: { sprite: ortoArte.MATURA, solido: false, bagnabile: true, suolo: true },
 
   // L'appassita non è bagnabile: innaffiare un morto non lo riporta indietro,
   // e lasciarla scurire come il resto dell'orto direbbe che si sta facendo
   // qualcosa di utile.
-  [OGGETTO.APPASSITA]: { sprite: ortoArte.APPASSITA, solido: false },
+  [OGGETTO.APPASSITA]: { sprite: ortoArte.APPASSITA, solido: false, suolo: true },
 
   // Non ferma, e non potrebbe: un mucchio si raccoglie standoci davanti, ma
   // uno lasciato in mezzo a un passaggio stretto diventerebbe un muro che ti
@@ -344,6 +351,14 @@ export function scordaSettori() {
 // uno solo le due domande coincidevano; adesso che ce ne sono due, chi chiede
 // per nome resta indietro di un fuoco — ci si cucinava e ci si dormiva accanto
 // solo al falò, e il focolare sarebbe stato un fuoco su cui non si cucina.
+// È suolo, cioè terreno lavorato e non una cosa che ci sta sopra? Serve a chi
+// disegna, ed è esportata perché è una domanda sul mondo come "è solido": chi
+// la fa non deve conoscere il catalogo, e un collaudo può pretendere che una
+// zolla resti suolo e un albero no.
+export function eSuolo(oggetto) {
+  return oggetto !== OGGETTO.NESSUNO && CATALOGO_OGGETTI[oggetto]?.suolo === true;
+}
+
 export function scaldaIn(tx, ty) {
   const oggetto = oggettoDi(tx, ty);
   return oggetto !== OGGETTO.NESSUNO && CATALOGO_OGGETTI[oggetto].scalda === true;
@@ -550,6 +565,14 @@ function cuociSettore(sx, sy) {
           fotogrammi[0] = cuoci(disegno, tavolozza);
         }
         const sprite = fotogrammi[0];
+        // Il suolo si dipinge qui e finisce lì: è terreno lavorato, quindi sta
+        // sotto tutto quello che ci cammina sopra, sempre. Niente luce e
+        // niente fotogrammi — un solco non brilla e non si muove — quindi non
+        // serve che resti nella fila di quelli che si ordinano per i piedi.
+        if (voce.suolo) {
+          pennello.drawImage(sprite, x * TASSELLO, (y + 1) * TASSELLO - sprite.height);
+          continue;
+        }
         oggetti.push({
           tipo: oggetto,
           tx,
