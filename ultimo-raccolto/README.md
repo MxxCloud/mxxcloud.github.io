@@ -12,6 +12,38 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.15.8 — una pubblicazione arriva tutta o non arriva
+
+Segnalato con una seconda schermata: con M7.15.7 già pubblicata, **il
+superstite spariva ancora sotto il campo**. La correzione era giusta — nel
+browser, con il codice di M7.15.7, i pixel coperti sono zero in ogni punto del
+campo, d'estate come d'inverno — e la schermata mostrava esattamente il disegno
+di prima: **gioco.js era nuovo, mondo/mappa.js no.**
+
+GitHub Pages tiene ogni file in cache per dieci minuti, e ognuno per conto suo.
+Nei minuti subito dopo una pubblicazione il browser può quindi ricevere una
+miscela, e il numero a schermo — che sta in gioco.js — diceva M7.15.7 mentre
+l'orto si disegnava ancora come in M7.15.6. Riprodotto con una finta cache che
+serve il vecchio mondo/mappa.js: esce la stessa schermata, testa e spalle
+sopra i solchi e il resto sotto, con **M7.15.7** in alto a destra.
+
+**Adesso index.html chiede ogni modulo con la versione nell'indirizzo** (una
+mappa degli import, `?v=M7.15.8`), e un indirizzo nuovo non sta in nessuna
+cache: arriva dall'origine insieme a tutti gli altri. Stessa finta cache,
+stesso mondo/mappa.js vecchio al vecchio indirizzo: zero pixel coperti. Anche
+il deposito offline si riempie da indirizzi nuovi, con il nome del deposito
+nella query, così la copia per il treno non può mescolare due versioni.
+
+Resta un caso, e ora si vede: una pagina vecchia che riceve gioco.js nuovo. Lì
+i due numeri non coincidono, e l'apertura dice **"M7.15.8 INCOMPLETA,
+RICARICA FRA POCO"** invece di promettere una versione che il resto dei moduli
+non è detto abbia.
+
+A ogni pubblicazione, d'ora in poi, la versione cambia in tre posti: VERSIONE
+in gioco.js, `?v=` in index.html (tutte le righe) e VERSIONE in sw.js. I
+collaudi pretendono che ogni modulo sia nella mappa degli import con la
+versione di gioco.js, quindi una riga dimenticata non passa.
+
 ## M7.15.7 — il superstite non sta sotto l'orto
 
 Segnalato con una schermata: in piedi sul bordo di un campo zappato, **il
@@ -1062,7 +1094,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.15.7**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.15.8**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

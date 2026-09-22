@@ -11,7 +11,7 @@
 // dimenticato non darebbe errore online, e si scoprirebbe solo la prima volta
 // che qualcuno prova a giocare in treno.
 
-const VERSIONE = "ultimo-raccolto-v58";
+const VERSIONE = "ultimo-raccolto-v59";
 
 const RISORSE = [
   "./arte/luoghi.js",
@@ -94,9 +94,15 @@ self.addEventListener("install", (evento) => {
   evento.waitUntil(
     caches
       .open(VERSIONE)
-      // "reload" salta la cache HTTP: senza, si precaricherebbero copie vecchie.
+      // "reload" salta la cache HTTP del browser, ma non quella di GitHub
+      // Pages, che tiene ogni file dieci minuti per conto suo: subito dopo una
+      // pubblicazione il deposito avrebbe preso gioco.js nuovo e un modulo
+      // vecchio, la stessa miscela di M7.15.7. Con "?v=" e il nome del
+      // deposito l'indirizzo non l'ha mai chiesto nessuno, quindi arriva
+      // dall'origine. Per questo più sotto le copie si cercano anche a
+      // prescindere dalla query.
       .then((deposito) =>
-        deposito.addAll(RISORSE.map((r) => new Request(r, { cache: "reload" })))
+        deposito.addAll(RISORSE.map((r) => new Request(`${r}?v=${VERSIONE}`, { cache: "reload" })))
       )
       .then(() => self.skipWaiting())
   );
@@ -134,10 +140,14 @@ self.addEventListener("fetch", (evento) => {
         return risposta;
       })
       .catch(async () => {
-        const salvata = await caches.match(richiesta);
+        // La pagina chiede i moduli con la sua versione (vedi index.html), il
+        // deposito li ha precaricati con la propria: se la copia con
+        // l'indirizzo esatto non c'è, va bene quella dello stesso file. Senza
+        // questo secondo tentativo, offline non partirebbe niente.
+        const salvata = (await caches.match(richiesta)) ?? (await caches.match(richiesta, { ignoreSearch: true }));
         if (salvata) return salvata;
         // Senza rete una navigazione qualsiasi deve comunque aprire il gioco.
-        if (richiesta.mode === "navigate") return caches.match("./index.html");
+        if (richiesta.mode === "navigate") return caches.match("./index.html", { ignoreSearch: true });
         return Response.error();
       })
   );

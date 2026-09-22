@@ -72,7 +72,20 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.15.7";
+const VERSIONE = "M7.15.8";
+
+// Il numero però sta in questo file soltanto, e da solo non bastava: in
+// M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
+// ancora dalla cache, vecchio. Da allora index.html chiede ogni modulo con
+// "?v=" e la versione, così una pagina nuova non può mescolare file vecchi.
+//
+// Resta un caso, e si riconosce da qui: una pagina vecchia che ha avuto
+// questo file nuovo. Allora i due numeri non coincidono, e lo schermo lo dice
+// invece di mostrare una versione che il resto dei moduli non è detto abbia.
+const VERSIONE_PAGINA = new URL(import.meta.url).searchParams.get("v");
+const VERSIONE_MOSTRATA = VERSIONE_PAGINA !== null && VERSIONE_PAGINA !== VERSIONE
+  ? `${VERSIONE} INCOMPLETA, RICARICA FRA POCO`
+  : VERSIONE;
 
 // --- elementi -------------------------------------------------------------
 
@@ -1501,7 +1514,7 @@ function disegnaInterfaccia() {
       },
     });
   }
-  if (aperturaVisibile) hud.disegnaApertura(p, VERSIONE);
+  if (aperturaVisibile) hud.disegnaApertura(p, VERSIONE_MOSTRATA);
   // Ultima di tutte: copre anche lo zaino e la minimappa, che a quel punto non
   // sono più cose su cui si possa agire.
   if (mortoDi !== null) {
@@ -1532,7 +1545,7 @@ function aggiornaDiagnostica() {
   diagnostica.textContent = [
     `fps      ${ciclo.fpsCorrenti()}  peggiore ${(ciclo.peggiorFotogramma() * 1000).toFixed(1)} ms`,
     `scala    ${schermo.scalaCorrente()}x  (${schermo.LARGHEZZA}x${schermo.ALTEZZA})`,
-    `versione ${VERSIONE}`,
+    `versione ${VERSIONE_MOSTRATA}`,
     `seme     ${SEME}`,
     `tassello ${tx}, ${ty}`,
     `terreno  ${NOMI_TERRENO[mappa.terrenoDi(tx, ty)]}`,
