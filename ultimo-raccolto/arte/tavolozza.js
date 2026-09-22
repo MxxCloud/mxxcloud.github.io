@@ -146,6 +146,17 @@ export const TAVOLOZZA_BAGNATA = {
   g: "#221a11",
 };
 
+// Le foglie di una pianta che ha passato un giorno senz'acqua. Non è una
+// tavolozza intera ma una correzione, da stendere sopra quella che c'è — la
+// asciutta o la bagnata, di qualunque stagione — perché una pianta assetata e
+// poi innaffiata ha la terra scura e le foglie ancora gialle fino a domani.
+// Tocca soltanto i due verdi dell'orto, che le stagioni non toccano mai: la
+// sete deve leggersi uguale in ogni mese, come lo stadio.
+export const FOGLIE_ASSETATE = {
+  x: "#6b6a2e",
+  y: "#94904a",
+};
+
 // --- gli infetti ----------------------------------------------------------
 
 // Gli infetti non hanno disegni propri: sono il superstite cotto con questa.

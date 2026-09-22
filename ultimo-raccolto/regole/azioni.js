@@ -482,6 +482,15 @@ function sulTassello(eroe, cosaInMano, indice) {
     return null;
   }
 
+  // Una pianta assetata lo dice a chi le sta davanti, con qualunque cosa in
+  // mano: le foglie gialle si vedono, ma "gialle" non dice se stanotte è
+  // morta, e da M7.16 può succedere.
+  const pianta = modifiche.di(b.tx, b.ty);
+  if (orto.eColtura(b.oggetto) && pianta?.secco > 0) {
+    const quanto = orto.seccaStanotte(pianta) ? "ha sete: stanotte secca" : "ha sete: senz'acqua non cresce";
+    return { tipo: "coltura", verbo: "Guarda", bersaglio: b, impedito: quanto };
+  }
+
   const posa = cosaInMano && CATALOGO[cosaInMano]?.posa;
   if (posa !== undefined && posa !== null && posabile(b)) {
     // Sotto un albero il falò si accende anche mentre piove, ed è la seconda

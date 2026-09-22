@@ -455,18 +455,30 @@ export const RACCOLTA = {
   },
   // Solo la coltura matura si raccoglie: strappare un germoglio darebbe
   // niente e toglierebbe il senso dell'aspettare. Gli stadi immaturi non
-  // stanno qui apposta, e azioni.js dice perché non si può.
+  // stanno qui apposta.
+  //
+  // Una rapa, e niente semi. Rendeva due rape e due semi, cioè ogni seme ne
+  // ridava due insieme al cibo: l'orto cresceva da solo come un interesse
+  // composto, e un tassello curato sfamava da solo — 0,67 di fame al giorno
+  // contro gli 0,56 che se ne consumano. Adesso il cibo e i semi sono due
+  // raccolti diversi dello stesso tassello, e bisogna scegliere.
   [OGGETTO.MATURA]: {
     verbo: "Raccogli",
     colpi: 1,
     voce: "erba",
     scheggie: ["y", "x", "5"],
-    resa: [
-      { cosa: "rapa", quante: 2 },
-      // Più semi di quanti ne siano serviti: un orto che non si ripaga i semi
-      // non è un orto, è una spesa.
-      { cosa: "semi", quante: 2 },
-    ],
+    resa: [{ cosa: "rapa", quante: 1 }],
+  },
+  // La matura lasciata andare a seme: niente da mangiare, la radice è
+  // diventata legno, ma tre semi — cioè tre tasselli per la prossima volta.
+  // Uno ogni tre va lasciato qui per tenere l'orto com'è, e ogni seme in più è
+  // un campo che si allarga.
+  [OGGETTO.A_SEME]: {
+    verbo: "Raccogli i semi",
+    colpi: 1,
+    voce: "erba",
+    scheggie: ["v", "x", "g"],
+    resa: [{ cosa: "semi", quante: 3 }],
   },
 
   // Un campo morto si ripulisce, e qualcosa rende: gli steli secchi sono

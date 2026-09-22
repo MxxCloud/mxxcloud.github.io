@@ -72,7 +72,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.15.8";
+const VERSIONE = "M7.16";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1302,7 +1302,7 @@ function aggiorna(passo) {
     if (messaggio.vita <= 0) messaggio = null;
   }
 
-  const { cresciute, appassite, spenti, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
+  const { cresciute, appassite, seccate, assetate, aSeme, spenti, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
 
   const arrivata = vestiLaValle();
 
@@ -1311,6 +1311,10 @@ function aggiorna(passo) {
   // L'ordine è quello di gravità, e la stagione che si porta via il campo si
   // dice in una frase sola invece che in due che si coprono.
   if (appassite > 0 && arrivata) annuncia(`${arrivata}: l'orto è morto`, "#c0705f");
+  // La sete prima del marcire: è l'unica delle due che si poteva evitare
+  // stamattina con un secchio, e sapere quale delle due è stata insegna cosa
+  // fare domani.
+  else if (seccate > 0) annuncia(`l'orto è seccato: ${seccate}`, "#c0705f");
   else if (appassite > 0) annuncia(`l'orto è marcito: ${appassite}`, "#c0705f");
   else if (arrivata) annuncia(ARRIVO[arrivata], "#c9b189");
   // Il cibo guasto viene prima del fuoco spento, e non è un ordine a caso: un
@@ -1322,7 +1326,13 @@ function aggiorna(passo) {
   // L'avviso prima del fatto, e dopo tutte le notizie di cose già successe:
   // è l'unico messaggio del giorno che parla di domani, e chi ha appena perso
   // un campo non ha bisogno di sapere anche che le bacche sono vecchie.
+  //
+  // Le piante assetate vengono prima del cibo in scadenza: tutte e due
+  // parlano di domani, ma il cibo si mangia oggi e la pianta no — senza un
+  // secchio stanotte è morta.
+  else if (assetate > 0) annuncia(`l'orto ha sete: ${assetate}`, "#c9b189");
   else if (inScadenza > 0) annuncia("del cibo sta per guastarsi", "#c9b189");
+  else if (aSeme > 0) annuncia(`l'orto è andato a seme: ${aSeme}`, "#c9b189");
   else if (cresciute > 0) annuncia("l'orto è cresciuto", "#9ec97e");
   // Ultima di tutte, perché è l'unica buona notizia che non riguarda una cosa
   // che il giocatore ha fatto: la valle si è rimessa a posto da sola.
