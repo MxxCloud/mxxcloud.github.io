@@ -173,7 +173,15 @@ export const CATALOGO = {
     pila: 2,
     posa: OGGETTO.GIACIGLIO_PELLI,
   },
-  falo: { nome: "Falò", icona: arte.FALO, pila: 5, posa: OGGETTO.FALO_ACCESO },
+  // Il falò. Si chiama "spento" e si posa spento, ed è la stessa frase del
+  // focolare detta per il fuoco da viaggio: quello che porti nello zaino è la
+  // fossa — tre pietre e due legni incrociati — e il fuoco lo accendi dove ti
+  // fermi, con la legna che hai addosso.
+  //
+  // Prima era il contrario, e il buco si vedeva a contarlo: si posava acceso,
+  // bruciava due giorni, lasciava cenere, e la cenere si raccoglieva ed era di
+  // nuovo un falò. Tre legna pagate una volta sola e fuoco per sempre.
+  falo: { nome: "Falò spento", icona: arte.FALO_ICONA_SPENTO, pila: 5, posa: OGGETTO.FALO_SPENTO },
   // Il focolare. Si impila a uno, meno della cassa e del banco, e la ragione è
   // la stessa portata all'estremo: pesa dieci pietre, sta solo al chiuso, e di
   // focolari in una casa ce n'è uno. Portarsene dietro due vorrebbe dire non
@@ -399,13 +407,6 @@ export const RACCOLTA = {
       },
     ],
   },
-  [OGGETTO.FALO_ACCESO]: {
-    verbo: "Raccogli",
-    colpi: 1,
-    voce: "fuoco",
-    scheggie: ["u", "v", "g"],
-    resa: [{ cosa: "falo", quante: 1 }],
-  },
   [OGGETTO.TORCIA_PIANTATA]: {
     verbo: "Raccogli",
     colpi: 1,
@@ -457,16 +458,10 @@ export const RACCOLTA = {
     scheggie: ["9", "a", "g"],
     resa: [{ cosa: "fibra", quante: 1 }],
   },
-  [OGGETTO.FALO_SPENTO]: {
-    verbo: "Raccogli",
-    colpi: 1,
-    voce: "pietra",
-    resa: [{ cosa: "falo", quante: 1 }],
-  },
-  // Il focolare non sta qui, e nemmeno il banco: quello che è tuo e si riprende
-  // intero non si abbatte a colpi, si smonta con la X. Questa tavola è il
-  // lavoro — alberi, sassi, muri di chi c'era prima — e smontare non è lavoro,
-  // è ripensarci.
+  // Il focolare non sta qui, e nemmeno il banco, e nemmeno il falò: quello che
+  // è tuo e si riprende intero non si abbatte a colpi, si prende con la X.
+  // Questa tavola è il lavoro — alberi, sassi, muri di chi c'era prima — e
+  // riprendersi una cosa propria non è lavoro, è ripensarci.
   //
   // I muri di chi c'era prima si abbattono, e rendono pietra.
   //

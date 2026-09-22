@@ -12,6 +12,45 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.14.2 — anche il falò si accende
+
+Il focolare aveva imparato ad avere fame, il falò no. E il falò era **fuoco
+gratis all'infinito**, a contarlo: si posava acceso, bruciava due giorni,
+lasciava la cenere — e la cenere si raccoglieva ed era di nuovo un falò da
+posare acceso. Tre legna pagate una volta sola, e poi bastava tornare a
+raccogliere la propria cenere.
+
+Adesso il falò è **la stessa cosa del focolare, in piccolo**:
+
+| | Focolare | Falò |
+| --- | --- | --- |
+| Dove | solo dentro quattro mura | dovunque |
+| Capienza | **4 legna** (o 8 rami) | **2 legna** (o 4 rami) |
+| Consumo | 1 al giorno, 2 d'inverno | uguale |
+| Autonomia | 4 giorni, 2 d'inverno | **2 giorni, 1 d'inverno** |
+
+Quello che porti nello zaino si chiama **Falò spento** e lo è davvero: è la
+fossa — tre pietre e due legni incrociati, e l'icona lo dice — e il fuoco lo
+accendi dove ti fermi, con la legna che hai addosso. Raccolto spento, torna
+spento; riposato, resta spento finché non lo carichi. **Acceso non si
+raccoglie**: `IL FALÒ È ACCESO: 1/2`. Si aspetta che finisca, come per il
+focolare, perché la legna che ci hai messo non si riprende cambiando idea.
+
+E si prende con la `X`, non più a colpi di barra: è dove stanno tutte le cose
+tue da M7.14. La barra, davanti a un fuoco, adesso fa l'altra cosa — carica, o
+dice quanto è carico.
+
+**La pioggia cambia punto, non regola.** Prima impediva di *posare* un falò
+allo scoperto; adesso impedisce di *accenderlo*, che è il gesto che l'acqua
+spegnerebbe la sera stessa. Posare una fossa fredda sotto il temporale non
+spreca niente, quindi non c'è ragione di vietarlo. E quando la pioggia spegne
+un fuoco scoperto, **la legna dentro se n'è andata in fumo**: è il prezzo che
+rende una chioma o un tetto una scelta invece di un dettaglio.
+
+Il conto della cenere delle rovine torna a favore del giocatore: un
+accampamento bruciato è una **fossa già fatta**, da riaccendere sul posto o da
+portarsi via.
+
 ## M7.14 — la legna nel focolare, e la X
 
 Due correzioni a M7.13, e la seconda è una regola che mancava a tutto il gioco.
@@ -707,8 +746,10 @@ sono cento secondi reali, anziché trecento: preparare acqua e secchi conta.
 La **pioggia innaffia automaticamente i campi scoperti**, compresi quelli
 seminati mentre piove. La crescita resta giornaliera: non accelera premendo
 tasti o ricaricando. Gli orti nelle stanze chiuse richiedono ancora il secchio.
-I **falò scoperti si spengono**, quelli in una stanza chiusa restano accesi.
-La posa di un falò sotto la pioggia è impedita prima di consumare materiali.
+I **falò scoperti si spengono** e la legna che avevano dentro se ne va con
+loro; quelli in una stanza chiusa o sotto la chioma restano accesi. Accendere
+un fuoco allo scoperto mentre piove è impedito prima di consumare la legna —
+posare la fossa fredda no, che quella l'acqua non la tocca.
 Una porta aperta o un muro sfondato espongono subito la stanza al maltempo.
 
 All'aperto la pioggia bagna progressivamente: dopo **10 secondi** si è zuppi,
@@ -821,7 +862,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.14**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.14.2**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -838,9 +879,11 @@ rovina e l'altra si incontrano carri rovesciati, pozzi e accampamenti bruciati.
 E l'inverno, che si annullava tenendo una torcia in tasca, adesso si attraversa
 solo con un fuoco vero, una stanza che ne contiene uno, o **una pelliccia
 addosso** — la prima cosa che questo gioco ti lascia indossare. E dentro una
-casa si costruisce **un focolare**: si posa spento, si carica una alla volta a
-legna o a rami — due rami per una legna — ne brucia una al giorno e due
-d'inverno, e quando finisce non si perde: resta la pietra e si rimette legna.
+casa si costruisce **un focolare**, e in viaggio si posa **un falò**: tutti e
+due si posano spenti e si caricano una alla volta a legna o a rami — due rami
+per una legna — ne bruciano una al giorno e due d'inverno, e quando finiscono
+non si perdono: resta la pietra o la fossa, e si rimette legna. Il camino di
+casa ne tiene quattro, il fuoco da viaggio due.
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
 con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne
@@ -989,9 +1032,10 @@ questo a trasformare il raccolto d'autunno da collezione a provvista.
 **Quello che lasci si degrada.** Una coltura matura non raccolta regge tre
 giorni e poi marcisce in piedi; un campo morto si ripulisce e rende un po' di
 fibra, così una stagione sbagliata non lascia un pezzo di valle bruciato. I
-fuochi si consumano: la torcia piantata dura un giorno, il falò due e lascia
-la cenere — che si raccoglie e si ripianta, perché a mancare è il posto
-acceso, non l'oggetto.
+fuochi si consumano: la torcia piantata dura un giorno e finisce, mentre falò
+e focolare bruciano la legna che ci metti dentro — una al giorno, due
+d'inverno — e quando finisce resta la fossa o la pietra, da ricaricare (vedi
+M7.14.2).
 
 Per sei tappe non si è degradato quello che stava in un mucchio per terra, e
 non per dimenticanza: finché non c'erano contenitori in cui mettere le cose al

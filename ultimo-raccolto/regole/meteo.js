@@ -93,8 +93,13 @@ export function aggiornaMondo() {
     if (orto.siPuoInnaffiare(c.oggetto) && !c.bagnato && !coperto(tx,ty)) {
       cambi.push({tx,ty,c:{...c,bagnato:true}});innaffiate++;
     }
+    // La pioggia spegne, e quello che c'era dentro se n'è andato in fumo: la
+    // legna non si riprende, altrimenti accendere sotto l'acqua costerebbe
+    // soltanto il fastidio di riaccendere. È il prezzo che rende una chioma o
+    // un tetto una scelta invece di un dettaglio.
     if (c.oggetto === OGGETTO.FALO_ACCESO && !fuocoCoperto(tx,ty)) {
-      cambi.push({tx,ty,c:{...c,oggetto:OGGETTO.FALO_SPENTO}});spenti++;
+      const {legna, ...resto} = c;
+      cambi.push({tx,ty,c:{...resto,oggetto:OGGETTO.FALO_SPENTO}});spenti++;
     }
   });
   for (const {tx,ty,c} of cambi) mappa.cambiaTassello(tx,ty,c);

@@ -206,11 +206,16 @@ function modificaValida(v) {
     if (!presente(v, k, positivo)) return false;
   }
   if (!presente(v, "bagnato", b => typeof b === "boolean")) return false;
-  // La legna dentro un focolare: fra una e il pieno. Zero no — un focolare a
-  // zero non è acceso, è spento, ed è un altro oggetto. Un salvataggio che
-  // dichiara un fuoco senza niente dentro è storto, e va rifiutato prima di
-  // toccare la partita.
-  if (!presente(v, "legna", n => intero(n) && n >= 1 && n <= decadimento.LEGNA_MASSIMA)) return false;
+  // La legna dentro un fuoco: fra una e la capienza di QUEL fuoco — quattro
+  // nel focolare, due nel falò. Zero no: un fuoco a zero non è acceso, è
+  // spento, ed è un altro oggetto. E su un tassello che non è un fuoco acceso
+  // la legna non ci va affatto. Un salvataggio storto si rifiuta prima di
+  // toccare la partita, non dopo.
+  if (v.legna !== undefined) {
+    const capienza = decadimento.capienzaDi(v.oggetto);
+    if (capienza === null || decadimento.accesoDi(v.oggetto) !== null) return false;
+    if (!intero(v.legna) || v.legna < 1 || v.legna > capienza) return false;
+  }
   if (v.oggetto === OGGETTO.MUCCHIO && (!Object.hasOwn(CATALOGO, v.cosa) || !positivo(v.quante) || !usiValidi(v) || (v.usi !== undefined && v.quante !== 1))) return false;
   if (!presente(v, "contenuto", a => filaValida(a, 12))) return false;
   // Un cadavere è un mucchio, non uno zaino: di suo non ha il limite di otto.

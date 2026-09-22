@@ -39,56 +39,85 @@ import * as inventario from "./inventario.js";
 import * as contenitori from "./contenitori.js";
 
 // Quanto dura un fuoco, in giorni, e in cosa si trasforma quando finisce.
-// Il falò lascia la cenere, che è un disegno che esiste dal primo giorno e non
-// è mai stato prodotto da niente: era lì ad aspettare questa tappa. La torcia
-// piantata non lascia niente, perché era un bastone.
 //
-// Il focolare non sta in questa tavola, e non è una dimenticanza: questi due
-// bruciano quello di cui sono fatti, quindi la loro durata è una data più un
-// numero di giorni. Il focolare invece brucia quello che ci metti dentro, e
-// una cosa che ha fame non si racconta con una scadenza — si racconta con
-// quanto le resta. Sta qui sotto, nella sezione sua.
+// È rimasta la torcia piantata sola, e non è una tavola svuotata per sbaglio:
+// la torcia brucia sé stessa — è un bastone, finisce e non lascia niente — e
+// una cosa che si consuma si racconta con una scadenza. I fuochi che bruciano
+// quello che ci metti dentro non si raccontano così: si raccontano con quanto
+// gli resta, e stanno qui sotto, nella sezione loro.
 const FUOCHI = {
-  [OGGETTO.FALO_ACCESO]: { giorni: 2, diventa: OGGETTO.FALO_SPENTO },
   [OGGETTO.TORCIA_PIANTATA]: { giorni: 1, diventa: OGGETTO.NESSUNO },
 };
 
-export function eFuoco(oggetto) {
-  return FUOCHI[oggetto] !== undefined;
-}
+// --- i fuochi che hanno fame ------------------------------------------------
 
-// --- la legna del focolare -------------------------------------------------
-
-// Quanta legna ci sta dentro, e quanta se ne brucia in un giorno.
+// Quanto ci sta dentro, e cosa resta quando finisce.
 //
-// Il focolare nasce spento e vuoto: le dieci pietre comprano il camino, non il
-// fuoco. Quello si compra ogni volta, una legna per volta, e questa è la
-// differenza fra la pietra che resta e la legna che se ne va.
+// Sono due, e la differenza fra loro è tutta qui: il focolare tiene quattro
+// legna, il falò due. Bruciano allo stesso ritmo — una legna al giorno, due
+// d'inverno — quindi il camino di casa dà quattro giorni d'autonomia e il
+// fuoco da viaggio due, uno solo d'inverno. È la stessa frase detta due volte:
+// quello che hai costruito dove hai deciso che è casa regge una stagione,
+// quello che ti porti dietro regge una notte.
 //
-// Quattro è il pieno, e d'inverno se ne bruciano due al giorno invece di una:
-// quattro giorni di autonomia contro due, cioè una stagione intera contro
-// mezza. È la stessa frase di tutta la mappa di strada letta dall'altra parte —
-// d'inverno il fuoco lo tieni acceso più forte, quindi la stagione in cui serve
-// è anche quella che chiede di tornare a casa a metà.
+// Nessuno dei due nasce acceso. Le dieci pietre comprano il camino e le tre
+// legna comprano la fossa del falò; il fuoco si compra ogni volta, una legna
+// alla volta, e questa è la differenza fra la pietra che resta e la legna che
+// se ne va.
+//
+// E per il falò è anche una toppa a un buco vecchio: si posava acceso, bruciava
+// due giorni, diventava cenere, e la cenere si raccoglieva ed era di nuovo un
+// falò da posare acceso. Tre legna pagate una volta sola e fuoco per sempre,
+// bastava tornare a raccogliere la propria cenere.
 //
 // La stagione si legge all'alba, cioè quando si brucia: conta quella in cui ci
 // si sveglia, non quella in cui si era caricato.
-export const LEGNA_MASSIMA = 4;
+const FOCOLAI = {
+  [OGGETTO.FOCOLARE_ACCESO]: { capienza: 4, spento: OGGETTO.FOCOLARE_SPENTO },
+  [OGGETTO.FALO_ACCESO]: { capienza: 2, spento: OGGETTO.FALO_SPENTO },
+};
+
+// Da spento ad acceso: la tavola di sopra letta dall'altro verso, costruita
+// qui invece di scritta a mano perché due elenchi che dicono la stessa cosa
+// prima o poi non la dicono più.
+const ACCESO_DI = Object.fromEntries(
+  Object.entries(FOCOLAI).map(([acceso, f]) => [f.spento, Number(acceso)])
+);
+
+// Quanto ci sta in questo fuoco, acceso o spento che sia, o null se quello che
+// c'è su questo tassello non è un fuoco che si carica.
+export function capienzaDi(oggetto) {
+  return FOCOLAI[oggetto]?.capienza ?? FOCOLAI[ACCESO_DI[oggetto]]?.capienza ?? null;
+}
+
+export function accesoDi(oggetto) {
+  return ACCESO_DI[oggetto] ?? null;
+}
+
+export function siCarica(oggetto) {
+  return capienzaDi(oggetto) !== null;
+}
 
 export function legnaAlGiorno() {
   return stagioni.stagioneCorrente() === "inverno" ? 2 : 1;
 }
 
-// Quanta ne ha dentro adesso, da 0 (spento) a LEGNA_MASSIMA.
+// Quanta ne ha dentro adesso, da 0 (spento) alla capienza.
 //
-// Un focolare acceso senza il conto è un focolare acceso prima che la legna si
-// contasse: si assume pieno, che è lo stesso riguardo che i fuochi hanno per
-// chi li aveva accesi prima che i fuochi durassero. Punire una partita vecchia
-// per un cambiamento del gioco è l'unica cosa che questo modulo non fa.
+// Un fuoco acceso senza il conto è un fuoco acceso prima che la legna si
+// contasse: si assume pieno, che è lo stesso riguardo che i fuochi hanno
+// sempre avuto per chi li aveva accesi prima che i fuochi durassero. Punire
+// una partita vecchia per un cambiamento del gioco è l'unica cosa che questo
+// modulo non fa.
+// Si chiede l'oggetto alla mappa e non alle modifiche, ed è la differenza fra
+// un falò posato da te e la cenere di un accampamento bruciato: quella la posa
+// la generazione, quindi nelle modifiche non c'è finché non la si tocca. Un
+// fuoco trovato si riaccende come il proprio.
 export function legnaNel(tx, ty) {
-  const cambio = modifiche.di(tx, ty);
-  if (cambio?.oggetto === OGGETTO.FOCOLARE_ACCESO) return cambio.legna ?? LEGNA_MASSIMA;
-  if (cambio?.oggetto === OGGETTO.FOCOLARE_SPENTO) return 0;
+  const oggetto = mappa.oggettoDi(tx, ty);
+  const fuoco = FOCOLAI[oggetto];
+  if (fuoco) return modifiche.di(tx, ty)?.legna ?? fuoco.capienza;
+  if (ACCESO_DI[oggetto] !== undefined) return 0;
   return null;
 }
 
@@ -191,13 +220,15 @@ export function nuovoGiorno() {
       return;
     }
 
-    // Il focolare mangia la sua legna, e quando finisce resta la pietra. Si
-    // scrive il resto invece di spegnere e basta: il giocatore che torna a
-    // casa vuole sapere quanto gli resta, non solo se è ancora acceso.
-    if (cambio.oggetto === OGGETTO.FOCOLARE_ACCESO) {
-      const resta = (cambio.legna ?? LEGNA_MASSIMA) - legnaAlGiorno();
+    // I fuochi che hanno fame mangiano la loro legna, e quando finisce resta
+    // quello che non brucia: la pietra del camino, la fossa del falò. Si scrive
+    // il resto invece di spegnere e basta — chi torna a casa vuole sapere
+    // quanto gliene resta, non solo se è ancora acceso.
+    const focolaio = FOCOLAI[cambio.oggetto];
+    if (focolaio) {
+      const resta = (cambio.legna ?? focolaio.capienza) - legnaAlGiorno();
       if (resta >= 1) modifiche.imposta(tx, ty, { ...cambio, legna: resta });
-      else spenti.push({ tx, ty, diventa: OGGETTO.FOCOLARE_SPENTO });
+      else spenti.push({ tx, ty, diventa: focolaio.spento });
       return;
     }
 
