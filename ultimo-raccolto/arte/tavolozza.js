@@ -19,7 +19,18 @@ export const TAVOLOZZA = {
   "3": "#4a8090",
 
   // Ghiaccio distinto dall'acqua profonda anche nella tavolozza invernale.
-  A: "#abcdd7",
+  //
+  // "G" e non "A", e la lettera è una correzione: per tutta la vita del gioco
+  // questa voce si chiamava A, e più in basso c'è un secondo A che è il sangue
+  // degli infetti. In un oggetto letterale vince l'ultimo, quindi il ghiaccio
+  // non è mai stato azzurro — gli stagni gelati si sono disegnati color sangue
+  // per ogni inverno giocato finora, e rileggendo non si vedeva perché le due
+  // voci stanno a settanta righe di distanza.
+  //
+  // Un collaudo adesso pretende che qui dentro non ci siano due chiavi uguali:
+  // è il genere di errore che non si trova leggendo e che una prova trova in
+  // un millesimo di secondo.
+  G: "#abcdd7",
   B: "#d9e8e8",
   C: "#7498ab",
 
