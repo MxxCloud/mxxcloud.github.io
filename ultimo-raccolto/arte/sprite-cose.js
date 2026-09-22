@@ -831,3 +831,10 @@ export const PESCE_ARROSTITO = [
  ".h.h55hqh...","..hh555hhh..",".h.hh5hhh...","....hhhh....",
  "......h.....","............","............","............",
 ];
+
+// Il pesce secco: lo stesso pesce nei toni della carne secca, ricolorato
+// invece che ridisegnato — è la stessa scelta di CARNE_SECCA in
+// sprite-fauna.js, e per la stessa ragione. Due icone che vengono dallo stesso
+// disegno si leggono come due stati di una cosa sola, che è quello che sono;
+// due disegni diversi si leggerebbero come due cose diverse.
+export const PESCE_SECCO = PESCE_CRUDO.map(r => r.replaceAll("3", "g").replaceAll("B", "A"));
