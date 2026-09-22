@@ -65,29 +65,33 @@ export function quanteSiStendono(disponibili) {
   return Math.min(CARICO_MASSIMO, Math.floor(disponibili / CARNI_PER_SECCA) * CARNI_PER_SECCA);
 }
 
-// Cosa brucia in un focolare, e quanto ne serve per una tacca.
+// Cosa brucia in un fuoco, e quanto ne serve per una tacca.
 //
-// IL CONTATORE CONTA IN LEGNA. Una tacca è una legna, e due rami valgono una
-// legna: il focolare non impara un'unità nuova, impara un cambio. È la ragione
-// per cui la tacca resta un intero e il messaggio resta "2/4 legna" anche
-// quando dentro ci sono andati dei rami.
+// IL CONTATORE CONTA IN LEGNA. Una tacca è una legna, e tutto il resto è un
+// cambio: due rami, dieci fibre. Il fuoco non impara unità nuove, impara
+// cambi — è la ragione per cui la tacca resta un intero e il messaggio resta
+// "2/4 legna" anche quando dentro ci è andata dell'erba secca.
 //
-// Due e non uno, e non tre, ed è misurato. Un albero rende tre legna e un ramo
-// solo: in legna vale tre tacche, in rami mezza — la legna scalda sei volte
-// tanto a parità di albero abbattuto. A uno i due materiali diventerebbero la
-// stessa cosa e la legna perderebbe il mestiere; a tre il ramo non varrebbe la
-// fatica di tenerlo. A due il ramo è quello che è: una riserva.
+// I RAMI, DUE PER UNA. Misurato: un albero rende tre legna e un ramo solo, cioè
+// tre tacche contro mezza — la legna scalda sei volte tanto a parità di albero
+// abbattuto. A uno i due materiali diventerebbero la stessa cosa e la legna
+// perderebbe il mestiere; a tre il ramo non varrebbe la fatica di tenerlo.
+// A due il ramo è quello che è: una riserva. E risolve quello che il ramo era
+// diventato — entrava da ogni albero e usciva da cinque ricette che si fanno
+// una volta sola, quindi si accumulava a quaranta per casella senza che niente
+// lo consumasse.
 //
-// E risolve quello che il ramo era diventato. Entrava da ogni albero e usciva
-// da cinque ricette che si fanno una volta sola — le riparazioni costano pietra
-// e fibra, non rami — quindi si accumulava a quaranta per casella senza che
-// niente lo consumasse. Adesso un anno di focolare sempre acceso sono venti
-// tacche, cioè venti legna oppure quaranta rami: la scorta ferma nello zaino
-// diventa una stagione di fuoco, e da lì in poi il ramo è un flusso come gli
-// altri.
+// LA FIBRA, DIECI PER UNA, ed è il fuoco di chi non ha un'ascia. Un cespuglio
+// dà due fibre con uno strappo a mani nude, quindi una tacca sono cinque
+// cespugli: cinque gesti contro i due terzi di colpo d'ascia che costa una
+// legna. Cara in fatica, gratis in attrezzi — e i cespugli stanno dappertutto,
+// anche dove non c'è un albero. È il combustibile del viandante rimasto a
+// secco, non quello con cui si tiene caldo un camino: chi ha la legna non
+// brucerà mai l'erba, perché quella serve a bende, corde e a mezzo catalogo.
 const COMBUSTIBILI = {
   legna: { quante: 1, tanti: "legna" },
   ramo: { quante: 2, tanti: "rami" },
+  fibra: { quante: 10, tanti: "fibra" },
 };
 
 // Come si chiama il fuoco che si ha davanti, per il verbo e per il messaggio.
