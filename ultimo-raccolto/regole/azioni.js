@@ -51,6 +51,20 @@ export function bersaglio(eroe) {
 // ritmo giusto perché bere sia un gesto e non un lavoro.
 const SORSO = 0.45;
 
+// L'essiccatoio: quante carni crude per una secca, e quante ne tiene in tutto.
+//
+// Tre a uno è il baratto della conserva, e il carico è un multiplo di tre —
+// quindi 3 o 6, mai 4 né 5. Prendere "quello che c'è" farebbe restare due carni
+// dentro a marcire senza che nessuno lo dica, e una regola che mangia due carni
+// in silenzio è una trappola, non una difficoltà.
+export const CARNI_PER_SECCA = 3;
+export const CARICO_MASSIMO = 6;
+
+// Quante carni entrano davvero, avendone tante in mano.
+export function quanteSiStendono(disponibili) {
+  return Math.min(CARICO_MASSIMO, Math.floor(disponibili / CARNI_PER_SECCA) * CARNI_PER_SECCA);
+}
+
 // Cosa brucia in un focolare, e quanto ne serve per una tacca.
 //
 // IL CONTATORE CONTA IN LEGNA. Una tacca è una legna, e due rami valgono una
@@ -306,6 +320,24 @@ function sulTassello(eroe, cosaInMano, indice) {
     return { tipo: "guarda", verbo: `Guarda il ${quale}`, bersaglio: b, legna, capienza, fuoco: quale };
   }
 
+  // L'essiccatoio, i due gesti che lo riguardano. Stanno sopra il catalogo
+  // della raccolta come il fuoco che si carica: sono l'unica cosa da fare a un
+  // telaio che si ha davanti, e la X resta libera di portarselo via.
+  if (cosaInMano === "carne_cruda" && b.oggetto === OGGETTO.ESSICCATOIO) {
+    const quante = quanteSiStendono(inventario.quante("carne_cruda"));
+    return { tipo: "stendi", verbo: "Stendi", quante, bersaglio: b,
+      impedito: quante === 0 ? `servono almeno ${CARNI_PER_SECCA} carni` : null };
+  }
+  if (b.oggetto === OGGETTO.ESSICCATOIO_PRONTO) {
+    return { tipo: "ritira", verbo: "Ritira", bersaglio: b };
+  }
+  // Carico non si tocca, e dirlo serve a una cosa sola: che chi ci sta davanti
+  // sappia che la carne è ancora lì dentro e non è andata persa.
+  if (b.oggetto === OGGETTO.ESSICCATOIO_CARICO) {
+    return { tipo: "essiccatoio", verbo: "Guarda l'essiccatoio", bersaglio: b,
+      impedito: "la carne sta ancora seccando" };
+  }
+
   const raccolta = raccoltaDi(b.oggetto);
   if (raccolta) {
     const dati = modifiche.di(b.tx, b.ty);
@@ -380,6 +412,11 @@ function sulTassello(eroe, cosaInMano, indice) {
     // spegne i fuochi scoperti e lui scoperto non è per definizione.
     if (cosaInMano === "focolare" && riparo.stanzaDi(b.tx, b.ty) === null)
       return { tipo: "posa", bersaglio: b, impedito: "il focolare vuole quattro mura" };
+    // E l'essiccatoio vuole l'esatto contrario: aria. I due insieme fanno le
+    // due metà di una fattoria — il fuoco dentro, la carne fuori — e sono la
+    // prima coppia di regole di posa che si spiegano a vicenda.
+    if (cosaInMano === "essiccatoio" && riparo.stanzaDi(b.tx, b.ty) !== null)
+      return { tipo: "posa", bersaglio: b, impedito: "l'essiccatoio vuole aria" };
     return { tipo: "posa", verbo: "Posa", cosa: cosaInMano, bersaglio: b,
       impedito: (cosaInMano === "muro" || cosaInMano === "porta") && occupato(b.tx, b.ty, eroe) ? "passaggio occupato" : null };
   }
@@ -521,7 +558,16 @@ const SMONTAGGI = {
   // fatta, e può portarsela via o riaccenderla.
   [OGGETTO.FALO_SPENTO]: { cosa: "falo", verbo: "Raccogli il falò", detto: "raccolto" },
   [OGGETTO.FALO_ACCESO]: { cosa: "falo", verbo: "Raccogli il falò", detto: "raccolto" },
+  // L'essiccatoio in tutti e tre gli stati. Carico e pronto compaiono qui
+  // apposta invece di restare fuori: la X deve poter dire PERCHÉ non si può,
+  // e una cosa che non risponde al tasto è indistinguibile da una dimenticata.
+  [OGGETTO.ESSICCATOIO]: { cosa: "essiccatoio", verbo: "Smonta l'essiccatoio" },
+  [OGGETTO.ESSICCATOIO_CARICO]: { cosa: "essiccatoio", verbo: "Smonta l'essiccatoio" },
+  [OGGETTO.ESSICCATOIO_PRONTO]: { cosa: "essiccatoio", verbo: "Smonta l'essiccatoio" },
 };
+
+// Gli stati dell'essiccatoio in cui c'è dentro della carne.
+const ESSICCATOIO_PIENO = new Set([OGGETTO.ESSICCATOIO_CARICO, OGGETTO.ESSICCATOIO_PRONTO]);
 
 // Un gesto e non un lavoro, quindi si paga in un colpo solo. Quanto un colpo
 // dato bene: smontare è più che sollevare e meno che abbattere.
@@ -558,6 +604,10 @@ export function smontaggioPossibile(eroe) {
 // aver pagato per tornare a prendersi la pietra.
 function perche(b, voce) {
   if (b.oggetto === OGGETTO.CASSA && !contenitori.eVuota(b.tx, b.ty)) return "prima svuotala";
+  // L'essiccatoio: è il terzo caso, e ha la stessa forma dei primi due. Dentro
+  // c'è roba tua, e smontare il telaio con la carne appesa vorrebbe dire farla
+  // sparire — di nuovo un ripostiglio travestito da struttura.
+  if (ESSICCATOIO_PIENO.has(b.oggetto)) return "prima ritira la carne";
   if (NOME_DEL_FUOCO[b.oggetto] && decadimento.legnaNel(b.tx, b.ty) > 0) {
     return `il ${NOME_DEL_FUOCO[b.oggetto]} è acceso: ${decadimento.legnaNel(b.tx, b.ty)}/${decadimento.capienzaDi(b.oggetto)}`;
   }
@@ -893,6 +943,31 @@ function esegui(eroe, cosaInMano, indice, azione) {
     urti.spingiFuori(eroe, dx, dy);
     return { tipo: "carica", tx, ty, legna, massimo: azione.capienza, fuoco: azione.fuoco,
       cosa: azione.cosa, quante: azione.quante };
+  }
+
+  if (azione.tipo === "stendi") {
+    if (azione.quante === 0 || !inventario.togli("carne_cruda", azione.quante)) return null;
+    // "dal" e non un contatore: quanti giorni asciutti siano passati lo sa il
+    // calendario, che è una funzione pura del giorno e del seme.
+    mappa.cambiaTassello(tx, ty, {
+      oggetto: OGGETTO.ESSICCATOIO_CARICO,
+      dal: tempo.giornoCorrente(),
+      quante: azione.quante,
+    });
+    return { tipo: "stendi", tx, ty, quante: azione.quante };
+  }
+
+  if (azione.tipo === "ritira") {
+    const quante = modifiche.di(tx, ty)?.quante ?? CARNI_PER_SECCA;
+    const secche = Math.floor(quante / CARNI_PER_SECCA);
+    // Si prende quello che ci sta e il resto resta appeso, come per i mucchi:
+    // far sparire una scorta di tre stagioni perché lo zaino era pieno sarebbe
+    // il difetto peggiore che questa tappa possa avere.
+    const resto = inventario.aggiungi("carne_secca", secche);
+    if (resto === secche) return { tipo: "zainoPieno" };
+    if (resto > 0) mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.ESSICCATOIO_PRONTO, quante: resto * CARNI_PER_SECCA });
+    else mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.ESSICCATOIO });
+    return { tipo: "ritira", tx, ty, secche: secche - resto };
   }
 
   if (azione.tipo === "riempi") {

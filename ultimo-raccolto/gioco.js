@@ -72,7 +72,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.14.2";
+const VERSIONE = "M7.15";
 
 // --- elementi -------------------------------------------------------------
 
@@ -1032,6 +1032,10 @@ function leggiComandi() {
       ? `${esito.fuoco}: ${esito.legna}/${esito.massimo} legna`
       : `${esito.fuoco} spento: caricalo con la legna`, esito.legna > 0 ? "#e0913a" : "#c9b189");
   }
+  // I due gesti dell'essiccatoio. Il secondo dice quante carni secche sono
+  // uscite, perché è il numero che si stava aspettando per tre giorni.
+  if (esito.tipo === "stendi") { suono.suona(FATTO); annuncia(`stese ${esito.quante} carni a seccare`, "#c9b189"); }
+  if (esito.tipo === "ritira") { suono.suona(FATTO); annuncia(`ritirate ${esito.secche} carni secche`, "#c9b189"); }
   if (esito.tipo === "cotto") { suono.suona(FATTO); annuncia(`sul fuoco: ${nomeDi(esito.diventa)}`, "#e0913a"); }
 
   if (esito.tipo === "porta") {

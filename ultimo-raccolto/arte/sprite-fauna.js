@@ -97,6 +97,12 @@ export const CARNE_CRUDA = [
   '....AAAAA...','............','............','............',
 ];
 export const CARNE_ARROSTITA = CARNE_CRUDA.map(r=>r.replaceAll('t','c').replaceAll('m','w').replaceAll('A','g'));
+// La carne seccata: la stessa forma di quella cruda, scurita e raggrinzita.
+// Derivata invece che ridisegnata, come l'arrostita: sono la stessa carne in
+// tre momenti, e tre disegni indipendenti l'avrebbero fatta sembrare tre
+// alimenti diversi.
+export const CARNE_SECCA = CARNE_CRUDA.map(r=>r.replaceAll('m','g').replaceAll('t','A').replaceAll('A','A'));
+
 export const PELLICCIA = [
   '............','...cccccc...','..cwwwwwwc..','.cwwwhhwwwc.',
   '.cwwwhhwwwc.','.cwwwhhwwwc.','.cwwwhhwwwc.','.cwwwhhwwwc.',

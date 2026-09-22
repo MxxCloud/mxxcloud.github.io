@@ -217,6 +217,11 @@ function modificaValida(v) {
     if (!intero(v.legna) || v.legna < 1 || v.legna > capienza) return false;
   }
   if (v.oggetto === OGGETTO.MUCCHIO && (!Object.hasOwn(CATALOGO, v.cosa) || !positivo(v.quante) || !usiValidi(v) || (v.usi !== undefined && v.quante !== 1))) return false;
+  // Il carico dell'essiccatoio. Un campo nuovo che nessuno controlla è un
+  // salvataggio che diventa illeggibile dopo — è la lezione della fila da nove
+  // di M7.12, e costa una riga pagarla subito.
+  const essiccatoio = v.oggetto === OGGETTO.ESSICCATOIO_CARICO || v.oggetto === OGGETTO.ESSICCATOIO_PRONTO;
+  if (essiccatoio && !(intero(v.quante) && v.quante >= 1 && v.quante <= 6)) return false;
   if (!presente(v, "contenuto", a => filaValida(a, 12))) return false;
   // Un cadavere è un mucchio, non uno zaino: di suo non ha il limite di otto.
   // Il posto in più è per quello che si porta addosso, che non sta in nessuna

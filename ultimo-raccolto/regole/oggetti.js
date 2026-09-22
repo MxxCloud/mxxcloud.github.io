@@ -23,6 +23,14 @@ export const CATALOGO = {
     commestibile: { fame: 0.15 }, cuoce: "carne_arrostita", dura: 2 },
   carne_arrostita: { nome: "Carne arrostita", icona: cacciaArte.CARNE_ARROSTITA, pila: 10,
     commestibile: { fame: 0.45 }, dura: 4 },
+  // La carne che aspetta. Nutre meno dell'arrostita e dura tre volte tanto, ed
+  // è lo stesso baratto della conserva di bacche: tre carni crude valgono 0,45
+  // e questa ne vale 0,35, cioè il 78% — esattamente la proporzione che sei
+  // bacche già perdono diventando due conserve. Non è il cibo con cui si mangia
+  // bene, è il cibo con cui si arriva a marzo, ed è il primo che viene dalla
+  // caccia invece che dall'orto.
+  carne_secca: { nome: "Carne secca", icona: cacciaArte.CARNE_SECCA, pila: 20,
+    commestibile: { fame: 0.35 }, dura: 12 },
   pelle: { nome: "Pelle", icona: cacciaArte.PELLE, pila: 20 },
   // Il capo, e non la spoglia. Sono due cose per una ragione che non è di
   // vocabolario ma di economia: la pelle è già una valuta — tre vanno nel
@@ -191,6 +199,10 @@ export const CATALOGO = {
   // pietra non arriva già accesa. Le dieci pietre comprano il posto dove sta
   // il fuoco; il fuoco si compra ogni volta, una legna alla volta.
   focolare: { nome: "Focolare", icona: arte.FOCOLARE, pila: 1, posa: OGGETTO.FOCOLARE_SPENTO },
+  // L'essiccatoio. Si impila a uno come il focolare, e per la stessa ragione:
+  // quello che conta è dove lo metti, e una fattoria ne ha uno. Si posa vuoto,
+  // che qui non è una scelta ma l'unico stato che abbia senso avere in mano.
+  essiccatoio: { nome: "Essiccatoio", icona: arte.ESSICCATOIO, pila: 1, posa: OGGETTO.ESSICCATOIO },
   // La cassa è il primo posto tuo che non sia il terreno. Si impila a tre
   // perché portarsene dietro una scorta non ha senso: quello che conta di una
   // cassa è dove la metti, e una volta messa non la sposti più.
