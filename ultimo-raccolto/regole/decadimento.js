@@ -37,6 +37,7 @@ import * as stagioni from "./stagioni.js";
 import { CATALOGO } from "./oggetti.js";
 import * as inventario from "./inventario.js";
 import * as contenitori from "./contenitori.js";
+import * as meteo from "./meteo.js";
 
 // Quanto dura un fuoco, in giorni, e in cosa si trasforma quando finisce.
 //
@@ -119,6 +120,29 @@ export function legnaNel(tx, ty) {
   if (fuoco) return modifiche.di(tx, ty)?.legna ?? fuoco.capienza;
   if (ACCESO_DI[oggetto] !== undefined) return 0;
   return null;
+}
+
+// --- l'essiccatoio --------------------------------------------------------
+
+// Quanti giorni asciutti servono perché la carne sia secca.
+export const GIORNI_DI_SECCA = 3;
+
+// Quanti giorni asciutti sono passati da quando è stata stesa.
+//
+// Si CONTANO i giorni buoni, non si sottraggono quelli piovosi da un totale:
+// meteo.evento(giorno) è una funzione pura del giorno e del seme, quindi la
+// risposta è la stessa che si guardi ogni alba o che si torni dopo una
+// settimana. Nessun contatore sul tassello, e niente che si possa disallineare.
+//
+// La pioggia FERMA, non rovina: la carne non si perde, ci mette solo di più. La
+// neve non ferma niente — d'inverno si secca al gelo, e mezza stagione di
+// attesa in più sarebbe una punizione che nessuno ha chiesto.
+export function giorniAsciutti(dal, a) {
+  let asciutti = 0;
+  for (let giorno = dal + 1; giorno <= a; giorno += 1) {
+    if (meteo.evento(giorno) !== "pioggia") asciutti += 1;
+  }
+  return asciutti;
 }
 
 // --- il guasto ------------------------------------------------------------
@@ -206,6 +230,7 @@ export function nuovoGiorno() {
   // cambiamenti, e cambiarla mentre la si scorre è il modo più corto per
   // saltarne metà.
   const spenti = [];
+  const seccati = [];
   const svuotati = [];
   const casse = [];
   modifiche.perOgnuno((tx, ty, cambio) => {
@@ -229,6 +254,19 @@ export function nuovoGiorno() {
       const resta = (cambio.legna ?? focolaio.capienza) - legnaAlGiorno();
       if (resta >= 1) modifiche.imposta(tx, ty, { ...cambio, legna: resta });
       else spenti.push({ tx, ty, diventa: focolaio.spento });
+      return;
+    }
+
+    // La carne stesa, che diventa secca quando ha avuto i suoi giorni di sole.
+    // Il disegno cambia, ed è l'unica cosa che lo dice: da lontano si vede se
+    // vale la pena tornare.
+    if (cambio.oggetto === OGGETTO.ESSICCATOIO_CARICO) {
+      const dal = cambio.dal ?? giorno;
+      if (giorniAsciutti(dal, giorno) >= GIORNI_DI_SECCA) {
+        seccati.push({ tx, ty, quante: cambio.quante });
+      } else if (cambio.dal === undefined) {
+        modifiche.imposta(tx, ty, { ...cambio, dal: giorno });
+      }
       return;
     }
 
@@ -262,6 +300,10 @@ export function nuovoGiorno() {
     contenitori.scrivi(tx, ty, fila);
   }
 
+  for (const { tx, ty, quante } of seccati) {
+    mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.ESSICCATOIO_PRONTO, quante });
+  }
+
   for (const { tx, ty, diventa } of spenti) {
     mappa.cambiaTassello(tx, ty, { oggetto: diventa });
   }
@@ -269,5 +311,5 @@ export function nuovoGiorno() {
     mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
   }
 
-  return { fuochi: spenti.length, guaste, inScadenza };
+  return { fuochi: spenti.length, guaste, inScadenza, seccati: seccati.length };
 }

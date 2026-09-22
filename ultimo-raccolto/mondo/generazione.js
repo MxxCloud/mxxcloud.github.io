@@ -92,6 +92,13 @@ export const OGGETTO = {
   // focolare la pietra resta dov'è e aspetta la legna.
   FOCOLARE_ACCESO: 26,
   FOCOLARE_SPENTO: 27,
+  // L'essiccatoio, nei suoi tre stati: vuoto, carico, pronto. Tre e non uno
+  // con un contatore, per la ragione già scritta qui sopra — ma qui conta il
+  // doppio: carico e pronto devono vedersi da lontano, se no si torna a casa
+  // per niente.
+  ESSICCATOIO: 28,
+  ESSICCATOIO_CARICO: 29,
+  ESSICCATOIO_PRONTO: 30,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati

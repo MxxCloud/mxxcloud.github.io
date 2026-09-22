@@ -12,6 +12,52 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.15 — l'essiccatoio
+
+Da M7.9 la valle dà carne, e da M7.12.3 l'autunno ne dà parecchia. Ma **la carne
+non arriva a marzo**: cruda dura 2 giorni, arrostita 4 — esattamente una
+stagione. L'unico cibo che aspettava davvero era la conserva, che si fa con le
+bacche. Quattro tappe di caccia avevano aperto un surplus senza dispensa.
+
+L'essiccatoio è la via della carne verso la dispensa, ed è **la prima cosa del
+gioco che lavora mentre non ci sei**: non si preme un tasto e si ottiene, si
+stende e si torna.
+
+**Tre carni crude fanno una carne secca**, che nutre 0,35 e dura 12 giorni — 36
+in cassa. Lo 0,35 non è a occhio: sei bacche (1,8) danno due conserve (1,4),
+cioè il 78% del valore, e 0,35 è il 78% delle tre carni crude da cui viene. **È
+lo stesso baratto che fa ogni conserva vera**, applicato alla carne.
+
+**Si carica a 3 o a 6, mai a 4 né a 5.** Prendere "quello che c'è" lascerebbe
+due carni dentro a marcire senza dirlo, e una regola che mangia due carni in
+silenzio è una trappola, non una difficoltà. Sei carni sono un bufalo intero:
+una battuta di caccia entra tutta in un carico e rende tre stagioni di scorta.
+
+**Tre giorni asciutti, e la pioggia ferma il conto.** Non lo rovina: la carne non
+si perde, ci mette solo di più. I giorni buoni si **contano** invece di
+sottrarre quelli piovosi da un totale, perché `meteo.evento(giorno)` è una
+funzione pura del giorno e del seme — quindi non c'è nessun contatore sul
+tassello da tenere allineato, e tornare dopo una settimana dà la stessa risposta
+che guardare ogni alba. La neve non ferma niente: d'inverno si secca al gelo.
+
+**Si posa solo all'aperto.** È l'esatto contrario del focolare, e i due insieme
+fanno le due metà di una fattoria: **il fuoco dentro, la carne fuori**. Sono la
+prima coppia di regole di posa che si spiegano a vicenda.
+
+**Tre stati, tre disegni.** Vuoto sono corde nude, carico sono strisce rosse,
+pronto sono strisce scure e raggrinzite. Non è decorazione: il disegno è l'unica
+cosa che dice se vale la pena tornare, e si deve leggere da una schermata di
+distanza — che è dove si sta quando si decide.
+
+Con la carne dentro, **la X non se lo porta via**: dice «prima ritira la carne».
+È il terzo caso della stessa regola che M7.14 ha scritto per la cassa da svuotare
+e per il focolare acceso — dentro c'è roba tua, e una struttura che la fa sparire
+cambiando idea è un ripostiglio travestito.
+
+Questa tappa era scritta prima di M7.14 ed è stata riappoggiata sopra: lo
+smontaggio, che nella prima stesura si faceva a colpi di barra, è passato alla X
+— cioè ha trovato una casa migliore di quella che aveva.
+
 ## M7.14.2 — anche il falò si accende
 
 Il focolare aveva imparato ad avere fame, il falò no. E il falò era **fuoco
@@ -862,7 +908,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.14.2**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.15**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -883,7 +929,9 @@ casa si costruisce **un focolare**, e in viaggio si posa **un falò**: tutti e
 due si posano spenti e si caricano una alla volta a legna o a rami — due rami
 per una legna — ne bruciano una al giorno e due d'inverno, e quando finiscono
 non si perdono: resta la pietra o la fossa, e si rimette legna. Il camino di
-casa ne tiene quattro, il fuoco da viaggio due.
+casa ne tiene quattro, il fuoco da viaggio due. E fuori, all'aria, si costruisce
+**un essiccatoio**: tre carni crude stese per tre giorni di sole fanno una carne
+secca che dura dodici giorni. Il fuoco dentro, la carne fuori.
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
 con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne
@@ -1552,7 +1600,9 @@ Da qui viene l'ordine, che non è quello immaginato all'inizio:
 | **M7.11** | I piccoli luoghi | Carri rovesciati, pozzi, accampamenti bruciati: le tracce di chi passava di qui. |
 | **M7.12** | La pelliccia addosso | Le pelli diventano qualcosa che si porta, e nasce l'addosso. *Qui il freddo diventa una distanza invece di un muro.* |
 | **M7.13** | Il focolare | Il fuoco che si costruisce dentro una casa: dura quattro giorni, due d'inverno, e quando finisce resta la pietra. *Qui il fuoco smette di essere una cosa che si rifà e diventa una cosa che si alimenta.* |
-| **M7.14** | Il morale | Quanto tieni al tuo posto — che a quel punto esiste. |
+| **M7.14** | La legna nel fuoco | Focolare e falò si posano spenti e si caricano: il fuoco si compra ogni volta. E la X: quello che è tuo si smonta con un gesto solo. |
+| **M7.15** | L'essiccatoio | La carne impara ad aspettare: tre giorni di sole e tre stagioni di scorta. *Qui una struttura comincia a lavorare mentre non ci sei.* |
+| **M7.16** | Il morale | Quanto tieni al tuo posto — che a quel punto esiste. |
 | **M8** | Superstiti, abilità, rifinitura | |
 
 Le tappe con un numero in più — M7.5.1, M7.7.1, M7.8.1, M7.9.1, M7.9.2, M7.11.1 —
@@ -1583,7 +1633,7 @@ fuoco acceso, un orto curato, un letto — e quel posto comincia a esistere
 davvero con la costruzione. Un morale oggi sarebbe un quarto numero che dice
 "è notte e ti inseguono", cioè quello che schermo e orecchie dicono già.
 
-Il suo numero però è cambiato più volte: da M5 a M7.6, a M7.13, a M7.14. Non
+Il suo numero però è cambiato più volte: da M5 a M7.6, a M7.13, a M7.16. Non
 perché slitti — ogni volta che toccava a lui è emerso qualcosa che aveva più
 bisogno di esistere, l'acqua, il cielo, l'usura, la caccia. Il numero non è una
 data, è una posizione in fila, e questa fila si è allungata dal di dentro.
