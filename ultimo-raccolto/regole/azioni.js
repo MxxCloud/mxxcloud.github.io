@@ -181,7 +181,7 @@ function scopoDi(azione) {
   if (!azione) return null;
   if (azione.tipo === "combatti") return "combatti";
   if (azione.tipo === "macella") return "macella";
-  if (azione.tipo === "zappa") return "zappa";
+  if (azione.tipo === "zappa" || azione.tipo === "interra") return "zappa";
   if (azione.tipo === "pesca") return "pesca";
   if (azione.tipo === "raccogli" && COLPI_DURI.has(azione.bersaglio.oggetto)) return "raccolta";
   return null;
@@ -368,6 +368,13 @@ function sulTassello(eroe, cosaInMano, indice) {
           : meteo.evento() === "pioggia" && !meteo.riparatoDallaPioggia(b.tx, b.ty)
             ? "piove: accendi il fuoco al chiuso o sotto gli alberi" : null };
     }
+    // A mani vuote, se c'è della cenere, la si prende: è quello che resta
+    // della legna bruciata, e sul campo è concime (vedi decadimento.js).
+    const cenere = decadimento.cenereNel(b.tx, b.ty);
+    if (!cosaInMano && cenere > 0) {
+      return { tipo: "cenere", verbo: `Prendi la cenere (${cenere})`, bersaglio: b, quante: cenere,
+        impedito: inventario.spazioPer("cenere") < cenere ? "zaino pieno: getta qualcosa con G" : null };
+    }
     return { tipo: "guarda", verbo: `Guarda il ${quale}`, bersaglio: b, legna, capienza, fuoco: quale };
   }
 
@@ -427,6 +434,14 @@ function sulTassello(eroe, cosaInMano, indice) {
     return { tipo: "essiccatoio", verbo: "Guarda l'essiccatoio", bersaglio: b, impedito: fermo };
   }
 
+  // Con la zappa in mano una pianta morta non si ripulisce: si interra. Niente
+  // fibra, ma la terra ne esce più grassa — è il compost, ed è la scelta fra
+  // una benda domani e un raccolto migliore la prossima volta.
+  if (b.oggetto === OGGETTO.APPASSITA && ATTREZZI[strumento(cosaInMano, indice, "zappa")]?.zappa) {
+    const piena = orto.fertilitaDi(modifiche.di(b.tx, b.ty)) >= orto.FERTILITA_MASSIMA;
+    return { tipo: "interra", verbo: "Interra", bersaglio: b, impedito: piena ? "la terra è già grassa" : null };
+  }
+
   const raccolta = raccoltaIn(b.oggetto, b.tx, b.ty);
   if (raccolta) {
     const dati = modifiche.di(b.tx, b.ty);
@@ -475,7 +490,12 @@ function sulTassello(eroe, cosaInMano, indice) {
   const semina = colture.dalSeme(cosaInMano);
   if (semina && b.oggetto === OGGETTO.TERRA_ZAPPATA) {
     const coltura = colture.di(semina);
-    const gesto = { tipo: "semina", verbo: coltura.verbo, coltura: semina, bersaglio: b };
+    // La terra si dice sul tasto, quando non è quella di sempre: grassa rende
+    // di più, stanca di meno, e sfinita accetta solo i fagioli — che è anche
+    // il rimedio, scritto dove serve.
+    const f = orto.fertilitaDi(modifiche.di(b.tx, b.ty));
+    const nota = f >= orto.FERTILITA_MASSIMA ? " (terra grassa)" : f === 1 ? " (terra stanca)" : f === 0 ? " (terra sfinita)" : "";
+    const gesto = { tipo: "semina", verbo: coltura.verbo + nota, coltura: semina, bersaglio: b };
     // Zappare d'inverno resta permesso — preparare il campo per la primavera è
     // una cosa sensata da fare — ma seminare no: il seme morirebbe la notte
     // stessa, e farglielo scoprire dopo sarebbe una trappola travestita da
@@ -483,7 +503,16 @@ function sulTassello(eroe, cosaInMano, indice) {
     // fagiolo seminato in autunno non vedrebbe l'estate.
     if (!stagioni.siColtiva()) return { ...gesto, impedito: "d'inverno non germoglia" };
     if (!coltura.stagioni.includes(stagioni.stagioneCorrente())) return { ...gesto, impedito: coltura.quando };
+    if (f === 0 && !coltura.ingrassa) return { ...gesto, impedito: "terra sfinita: solo fagioli, cenere o riposo" };
     return gesto;
+  }
+
+  // La cenere si sparge sulla terra del campo, vuota o già seminata: è
+  // concime, e il concime si dà anche a quello che cresce. Sulla terra già
+  // grassa non serve, e lo si dice prima di sprecarla.
+  if (cosaInMano === "cenere" && (b.oggetto === OGGETTO.TERRA_ZAPPATA || orto.eColtura(b.oggetto))) {
+    const piena = orto.fertilitaDi(modifiche.di(b.tx, b.ty)) >= orto.FERTILITA_MASSIMA;
+    return { tipo: "spargi", verbo: "Spargi la cenere", bersaglio: b, impedito: piena ? "la terra è già grassa" : null };
   }
 
   if (cosaInMano === "secchio_pieno" && orto.siPuoInnaffiare(b.oggetto)) {
@@ -667,6 +696,7 @@ const SMONTAGGI = {
   [OGGETTO.ESSICCATOIO]: { cosa: "essiccatoio", verbo: "Smonta l'essiccatoio" },
   [OGGETTO.ESSICCATOIO_CARICO]: { cosa: "essiccatoio", verbo: "Smonta l'essiccatoio" },
   [OGGETTO.ESSICCATOIO_PRONTO]: { cosa: "essiccatoio", verbo: "Smonta l'essiccatoio" },
+  [OGGETTO.SPAVENTAPASSERI]: { cosa: "spaventapasseri", verbo: "Smonta lo spaventapasseri" },
 };
 
 // Gli stati dell'essiccatoio in cui c'è dentro della carne.
@@ -817,7 +847,7 @@ export function lasciaIlCadavere(eroe, giorno) {
 function raccoltaIn(oggetto, tx, ty) {
   const base = raccoltaDi(oggetto);
   if (!base || !orto.eColtura(oggetto)) return base;
-  return colture.raccolta(base, oggetto, modifiche.di(tx, ty));
+  return orto.raccolta(base, oggetto, modifiche.di(tx, ty));
 }
 
 // L'esito della raccolta è deciso dalle coordinate, non dal caso del momento:
@@ -934,11 +964,11 @@ export function agisci(eroe, cosaInMano, indice) {
   // Si paga il gesto compiuto, anche a mani nude, non un tentativo rifiutato.
   const costo = esito?.lavorato ? 0.02
     : esito?.tipo === "combattuto" ? 0.02
-    : esito?.tipo === "zappa" ? 0.02
+    : esito?.tipo === "zappa" || esito?.tipo === "interra" ? 0.02
     : ["colpo", "raccolto"].includes(esito?.tipo) ? (scopo === "raccolta" ? 0.015 : 0.005)
-    : ({ semina: 0.005, innaffia: 0.005, posa: 0.01, cotto: 0.005, riempi: 0.005 }[esito?.tipo] ?? 0);
+    : ({ semina: 0.005, innaffia: 0.005, spargi: 0.005, posa: 0.01, cotto: 0.005, riempi: 0.005 }[esito?.tipo] ?? 0);
   if (costo) bisogni.consuma("stanchezza", costo);
-  if (esito && attrezzo && (["combattuto", "colpo", "raccolto", "zappa"].includes(esito.tipo) || esito.lavorato)) {
+  if (esito && attrezzo && (["combattuto", "colpo", "raccolto", "zappa", "interra"].includes(esito.tipo) || esito.lavorato)) {
     const avviso = inventario.usura(attrezzo);
     if (avviso) esito.usura = avviso;
   }
@@ -1046,7 +1076,12 @@ function esegui(eroe, cosaInMano, indice, azione) {
     // dentro era il conto di prima e la data di un fuoco che si misurava a
     // giorni. Un campo che nessuno legge più è un campo che qualcuno un giorno
     // leggerà.
-    mappa.cambiaTassello(tx, ty, { oggetto: decadimento.accesoDi(azione.bersaglio.oggetto) ?? azione.bersaglio.oggetto, legna });
+    //
+    // La cenere no: è quello che è rimasto delle cariche di prima, e sta sul
+    // fondo del camino finché qualcuno non la prende.
+    const cenere = decadimento.cenereNel(tx, ty);
+    mappa.cambiaTassello(tx, ty, { oggetto: decadimento.accesoDi(azione.bersaglio.oggetto) ?? azione.bersaglio.oggetto, legna,
+      ...(cenere > 0 ? { cenere } : {}) });
     // E ci si fa da parte, per la stessa ragione di quando si posa: accendere
     // un falò lo rende solido — la fossa fredda non lo era — e il riquadro
     // d'urto sborda spesso nel tassello davanti. Senza questa riga si accende
@@ -1106,12 +1141,32 @@ function esegui(eroe, cosaInMano, indice, azione) {
     return { tipo: "zappa" };
   }
 
+  if (azione.tipo === "interra") {
+    mappa.cambiaTassello(tx, ty, orto.concimata(orto.dopoIlRaccolto(OGGETTO.APPASSITA, modifiche.di(tx, ty))));
+    return { tipo: "interra" };
+  }
+
+  if (azione.tipo === "spargi") {
+    if (!inventario.togli("cenere", 1)) return null;
+    mappa.cambiaTassello(tx, ty, orto.concimata(modifiche.di(tx, ty) ?? { oggetto: azione.bersaglio.oggetto }));
+    return { tipo: "spargi" };
+  }
+
+  if (azione.tipo === "cenere") {
+    const quante = decadimento.prendiCenere(tx, ty);
+    if (quante > 0) inventario.aggiungi("cenere", quante);
+    return { tipo: "cenere", quante };
+  }
+
   if (azione.tipo === "semina") {
     const seme = colture.di(azione.coltura).seme;
     if (!inventario.togli(seme, 1)) return null;
     // La rapa non scrive la sua coltura, com'è sempre stato: un campo di rape
-    // resta scritto uguale a quello di un salvataggio di prima.
+    // resta scritto uguale a quello di un salvataggio di prima. La terra sì,
+    // se ne ha una sua: è la stessa terra, con dentro un seme.
     const cambio = { oggetto: OGGETTO.SEMINATO };
+    const terra = modifiche.di(tx, ty)?.fertilita;
+    if (terra !== undefined) cambio.fertilita = terra;
     if (azione.coltura !== colture.RAPA) {
       cambio.coltura = azione.coltura;
       cambio.passo = 0;
@@ -1226,7 +1281,12 @@ function esegui(eroe, cosaInMano, indice, azione) {
   // stessa data che i fuochi chiamano "posata" e le colture "maturata" — e
   // come loro, chi la trova mancante assume adesso e la scrive, così i
   // salvataggi di prima non restano spogli per sempre.
-  mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO, svuotata: tempo.giornoCorrente() });
+  //
+  // Il campo no: lì resta la terra zappata, con la fertilità che il raccolto
+  // le ha lasciato (vedi orto.js).
+  mappa.cambiaTassello(tx, ty, orto.eDelCampo(oggetto)
+    ? orto.dopoIlRaccolto(oggetto, precedente)
+    : { oggetto: OGGETTO.NESSUNO, svuotata: tempo.giornoCorrente() });
 
   // Quello che non ci sta resta per terra invece di sparire. Prima spariva, e
   // "zaino pieno, perso qualcosa" era un messaggio che annunciava un danno

@@ -245,6 +245,17 @@ export const RICETTE = [
       { cosa: "fibra", quante: 2 },
     ],
   },
+  // Lo spaventapasseri, a mani nude: due rami in croce e la fibra per farne
+  // un sacco. Costa poco di proposito — l'orto che protegge vale molto di più
+  // — ma costa, e va rifatto per ogni campo lontano dall'altro.
+  {
+    id: "spaventapasseri",
+    produce: { cosa: "spaventapasseri", quante: 1 },
+    costo: [
+      { cosa: "ramo", quante: 2 },
+      { cosa: "fibra", quante: 4 },
+    ],
+  },
   // La zuppa, ed è la prima ricetta che vuole un fuoco invece del banco: si
   // cuoce, non si costruisce. Due scodelle da una verdura, un cavolo e un
   // secchio d'acqua, e il secchio torna vuoto — un contenitore si svuota,

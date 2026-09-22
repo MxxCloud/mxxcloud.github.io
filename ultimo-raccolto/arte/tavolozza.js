@@ -163,6 +163,21 @@ export const FOGLIE_ASSETATE = {
   E: "#a8a46a",
 };
 
+// La terra stanca e quella sfinita (vedi orto.js): la stessa correzione della
+// sete, stesa sulla terra asciutta. Più chiara e più grigia a ogni punto che
+// perde, come la terra vera che non tiene più niente — e sulla terra bagnata
+// non si stende, perché il bagnato è la risposta a una domanda più urgente.
+// La terra grassa non ha un colore suo: più scura si confonderebbe proprio
+// con quella bagnata, e lo dice il tasto quando si semina.
+export const TERRA_STANCA = {
+  b: "#66513d",
+  c: "#836a50",
+};
+export const TERRA_SFINITA = {
+  b: "#706656",
+  c: "#8c8170",
+};
+
 // --- gli infetti ----------------------------------------------------------
 
 // Gli infetti non hanno disegni propri: sono il superstite cotto con questa.

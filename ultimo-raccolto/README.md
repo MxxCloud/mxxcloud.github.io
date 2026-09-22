@@ -12,6 +12,58 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18 — la terra si stanca
+
+Fino a qui un tassello dava lo stesso raccolto per sempre: il campo migliore
+era quello che c'era già, e ci si ripiantava la stessa cosa. Adesso **la terra
+si ricorda quanto le si è chiesto**.
+
+**Ogni tassello del campo ha una fertilità, da zero a tre**, e un prato appena
+zappato parte da due. Ogni raccolto ne toglie uno — anche quello a seme —, e
+**i fagioli ne ridanno uno invece di toglierlo**: le leguminose ingrassano la
+terra, ed è la rotazione, che non serve spiegare perché si vede nel raccolto.
+A tre, una pianta che non ha mai patito la sete rende uno di più; a uno, uno di
+meno, mai sotto uno; **a zero la terra è sfinita e ci attecchiscono solo i
+fagioli**. Il tasto lo dice prima di seminare — *Semina (terra grassa)*,
+*(terra stanca)*, e da sfinita *solo fagioli, cenere o riposo* — e la terra
+stanca e quella sfinita schiariscono, più grigie a ogni punto perso.
+
+Il raccolto non lascia più un prato: **resta la terra zappata**, con la
+fertilità che le rimane. La zappa serve una volta, e quello che costa è la
+terra — un gesto ripetuto in meno, una scelta in più.
+
+Tre modi di ridarle forza:
+
+- **un inverno a riposo**: la terra vuota, o con una pianta morta, esce
+  dall'inverno con un punto in più. Chi ci ha tenuto un cavolo ha avuto il
+  cavolo;
+- **interrare**: con la zappa in mano una pianta morta non si ripulisce, si
+  interra — niente fibra, un punto di terra. Una benda domani o un raccolto
+  migliore la prossima volta;
+- **la cenere**: ogni giorno che un fuoco brucia ne lascia un po' sul fondo,
+  fino a tre, e resta anche da spento e ricaricandolo. Si prende a mani vuote e
+  si sparge sul campo, vuoto o già seminato. È il primo filo che lega il
+  focolare all'orto.
+
+**Le bestie di notte.** In primavera e d'autunno — le stagioni in cui la fauna
+cammina di più — una notte su due una bestia viene a mangiare una pianta, e
+resta la terra. La tiene lontana **uno spaventapasseri** a tre tasselli (due
+rami e quattro fibre, a mani nude; si posa, e si smonta con la X), **un fuoco
+acceso** a tre tasselli, o **dei muri**: un orto dentro una stanza chiusa non lo
+raggiunge nessuno. Il seme nella terra e la pianta andata a seme non li
+mangiano, e d'estate e d'inverno le bestie restano nella prateria. Il mattino lo
+dice: *le bestie hanno mangiato l'orto*.
+
+**Misurato**: le stesse sei file per due anni, cura perfetta dell'acqua.
+
+| Come si usa il campo | Fame al giorno per tassello | La terra alla fine |
+|---|---|---|
+| Sempre rape | 0,05 | sfinita dappertutto |
+| Rape, e d'estate fagioli | 0,08 | grassa dappertutto |
+
+La rotazione quasi raddoppia il raccolto e lascia la terra meglio di come la si
+è trovata; interrare e spargere cenere si sommano a questo.
+
 ## M7.17 — cinque colture
 
 L'orto sapeva fare una cosa sola, la rapa. Adesso ne fa cinque, e **nessuna è
@@ -1188,7 +1240,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.17**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -1341,7 +1393,9 @@ La matura rende una rapa e niente semi. Lasciata sul campo, dopo due giorni
 da mangiare; dopo altri due si secca. Mangiare adesso o seminare domani è la
 scelta di ogni tassello (vedi M7.16). E la rapa è una delle cinque colture:
 patata, fagioli, cavolo e lino hanno stagioni, sete e raccolti loro (vedi
-M7.17).
+M7.17). Dopo il raccolto resta la terra zappata, un po' più stanca: la terra
+del campo si consuma, e si cura con i fagioli, l'inverno, il compost e la
+cenere (vedi M7.18).
 
 Dormire porta all'alba, quindi anche l'orto va avanti: è il modo di
 comprimere l'attesa senza toglierla.
