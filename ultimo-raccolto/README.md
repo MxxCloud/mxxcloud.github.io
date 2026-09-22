@@ -12,7 +12,64 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.14 — la legna nel focolare, e la X
+
+Due correzioni a M7.13, e la seconda è una regola che mancava a tutto il gioco.
+
+### Il focolare si carica
+
+Il focolare di M7.13 nasceva acceso e bruciava a tempo: una data di posa e
+quattro albe da aspettare. Era un fuoco che si comprava una volta, e dentro una
+casa non c'era più niente da fare.
+
+Adesso **si posa spento** — le dieci pietre comprano il camino, non il fuoco —
+e **si carica una legna alla volta, fino a quattro**. Ogni alba ne brucia una,
+**due d'inverno**: il pieno dura quattro giorni, due nella stagione che conta,
+esattamente come prima. Quello che cambia non è quanto dura, è che **adesso è
+un gesto**: si torna a casa, si mette legna, si guarda quanta ne resta.
+
+**Guardare è un'azione vera**, ed è l'unica del gioco che non cambia niente. La
+fiamma è identica con una legna e con quattro, quindi il conto va chiesto: con
+le mani libere davanti al camino, la barra risponde `FOCOLARE: 2/4 LEGNA`. Un
+dato che decide se stanotte si dorme al caldo e che non si vede sarebbe una
+trappola, e questo gioco le scadenze le annuncia.
+
+E **finché è acceso non si smonta**. Non è realismo: senza quella riga la legna
+dentro si potrebbe riavere indietro cambiando idea, cioè il focolare sarebbe un
+ripostiglio per la legna travestito da fuoco. Si aspetta che finisca — o si
+paga di nuovo per tornare a prendersi la pietra.
+
+### La X smonta, sempre
+
+**Quello che è tuo si smonta, quello che è del mondo si abbatte.** È una regola
+sola, e fino a qui stava su tre tasti: la porta e il giaciglio si toglievano
+con la X, la cassa dal pannello della cassa, il banco e il focolare a colpi di
+barra come un albero. Tre gesti per una cosa sola, e nessuno dei tre si poteva
+indovinare dagli altri — che è il modo più sicuro di avere un gioco che si
+impara a memoria invece che guardandolo.
+
+Adesso: davanti a una cosa che hai costruito, **X**. Porta, giaciglio,
+giaciglio di pelli, banco, cassa, focolare — un gesto solo, e torna in mano
+intera. Il promemoria accanto allo zaino dice ogni volta cosa toglierebbe
+(`X SMONTA IL BANCO`), e quando non si può dice perché: `PRIMA SVUOTALA` per
+una cassa con dentro qualcosa, `IL FOCOLARE È ACCESO: 2/4` per un fuoco vivo.
+
+Il muro resta fuori di proposito: un muro non si smonta, si demolisce — cinque
+colpi, e rende le pietre che è costato. E la barra resta libera di fare
+l'altra cosa, che è la ragione per cui i due tasti sono due: apre la cassa,
+apre la porta, ci si dorme sopra e ci si cucina. **È il tasto che si preme di
+notte con qualcuno alle calcagna, e non deve poter portare via la porta.**
+
+Il banco e il focolare, che prima costavano due colpi, adesso costano un gesto:
+non è uno sconto ma un cambio di categoria — smontare non è lavoro, è
+ripensarci. Il lavoro resta dov'era, su alberi, sassi, muri e carri.
+
 ## M7.13 — il focolare
+
+> Di questa tappa **M7.14 ha cambiato due cose**: il focolare non nasce più
+> acceso — si posa spento e si carica una legna alla volta — e non si smonta a
+> colpi di barra ma con la `X`, come tutto il resto di quello che costruisci.
+> La durata è la stessa: quattro giorni di pieno, due d'inverno.
 
 Il crafting delle strutture era corto: muro, porta, cassa, banco, i due
 giacigli, il falò, la torcia. E il fuoco di casa aveva un difetto che si può
@@ -389,12 +446,13 @@ I costi sono punti percentuali della barra, addebitati soltanto a gesto riuscito
 | Gesto | Stamina |
 | --- | --- |
 | Colpo in combattimento, anche a mani nude | 2% |
-| Colpo su albero, pietra, muro o banco, compreso quello finale | 1,5% |
+| Colpo su albero, pietra, muro o carro, compreso quello finale | 1,5% |
 | Taglio di macellazione (tre per carcassa) | 2% |
 | Zappare | 2% |
 | Costruire o riparare una ricetta | 2% |
 | Raccogliere risorse leggere, seminare, innaffiare, cucinare, riempire secchi | 0,5% |
-| Posare una costruzione, smontare un giaciglio, catturare un pesce | 1% |
+| Posare una costruzione, catturare un pesce | 1% |
+| Smontare con `X` quello che hai costruito | 2% |
 
 Aprire porte e casse, recuperare bottino già macellato e tentativi rifiutati
 non consumano stamina. A zero si può ancora lavorare e difendersi, ma restano
@@ -744,7 +802,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.13**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.14**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -761,8 +819,9 @@ rovina e l'altra si incontrano carri rovesciati, pozzi e accampamenti bruciati.
 E l'inverno, che si annullava tenendo una torcia in tasca, adesso si attraversa
 solo con un fuoco vero, una stanza che ne contiene uno, o **una pelliccia
 addosso** — la prima cosa che questo gioco ti lascia indossare. E dentro una
-casa si costruisce **un focolare**: dura quattro giorni, due d'inverno, e
-quando finisce non si perde — si rimette legna.
+casa si costruisce **un focolare**: si posa spento, si carica a legna una alla
+volta, ne brucia una al giorno e due d'inverno, e quando finisce non si perde —
+resta la pietra e si rimette legna.
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
 con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne
@@ -1514,7 +1573,7 @@ e un posto con dentro una cassa e niente altro è ancora un accampamento.
 | `E` | mangiare, fasciarsi con una benda, o indossare quello che hai in mano; a mani vuote, togliere quello che hai addosso |
 | `G` | posare per terra la casella scelta, davanti ai piedi |
 | `C` | aprire e chiudere le costruzioni, e chiudere la cassa |
-| `X` | staccare la porta che si ha davanti, e smontare la cassa aperta |
+| `X` | smontare quello che hai davanti e che hai costruito tu: porta, giaciglio, banco, cassa, focolare. Anche la cassa aperta, dal suo pannello |
 | `frecce` | dentro le costruzioni e la cassa: scegliere |
 | `M` | accendere e spegnere la minimappa |
 | `TAB` | la mappa di quello che hai visto |

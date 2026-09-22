@@ -25,6 +25,7 @@ import * as meteo from "./meteo.js";
 import * as freddo from "./freddo.js";
 import * as pesca from "./pesca.js";
 import * as riparo from "./riparo.js";
+import * as decadimento from "./decadimento.js";
 
 const { TASSELLO } = schermo;
 
@@ -50,12 +51,7 @@ export function bersaglio(eroe) {
 // ritmo giusto perché bere sia un gesto e non un lavoro.
 const SORSO = 0.45;
 
-// Quanta legna vuole un focolare per ripartire. Quattro, cioè la stessa che
-// c'era nella ricetta: la prima carica e tutte le altre costano uguale, e
-// questo è il numero che il giocatore impara costruendolo.
-export const LEGNA_PER_RIACCENDERE = 4;
-
-const COLPI_DURI = new Set([OGGETTO.ALBERO, OGGETTO.SASSO, OGGETTO.MURO, OGGETTO.MURO_ROTTO, OGGETTO.BANCO, OGGETTO.CARRO, OGGETTO.TRONCO]);
+const COLPI_DURI = new Set([OGGETTO.ALBERO, OGGETTO.SASSO, OGGETTO.MURO, OGGETTO.MURO_ROTTO, OGGETTO.CARRO, OGGETTO.TRONCO]);
 
 // Su cosa si dorme, e quanto rende. Due letti e due condizioni: scritto come
 // ternario annidato — `inverno ? (fuoco ? x : y) : z` — reggeva finché il letto
@@ -230,14 +226,25 @@ function sulTassello(eroe, cosaInMano, indice) {
     return { tipo: "cucina", verbo: "Cucina", cosa: cosaInMano, diventa: cotto, bersaglio: b };
   }
 
-  // Con la legna in mano, un focolare spento si riaccende invece di smontarsi.
-  // Sta qui sopra per la ragione del falò e della cassa: dopo, "Smonta"
-  // vincerebbe sempre, e il gesto normale — tornare a casa e rimettere legna —
-  // sarebbe l'unico che non si può fare.
-  if (cosaInMano === "legna" && b.oggetto === OGGETTO.FOCOLARE_SPENTO) {
-    return { tipo: "riaccendi", verbo: "Riaccendi", bersaglio: b,
-      impedito: inventario.quante("legna") < LEGNA_PER_RIACCENDERE
-        ? `servono ${LEGNA_PER_RIACCENDERE} legna` : null };
+  // Il focolare: con la legna in mano lo si carica, altrimenti lo si guarda.
+  //
+  // Guardare è un'azione vera e non un ripiego, ed è l'unica del gioco che non
+  // cambia niente: quanta legna ha dentro un camino è la cosa che decide se
+  // stanotte si dorme al caldo, e non si vede — la fiamma è la stessa con una
+  // legna e con quattro. Un dato che decide e non si vede è una trappola, e
+  // questo gioco le scadenze le annuncia.
+  //
+  // Una legna per volta, come si cuoce una carne per volta: il focolare è il
+  // posto in cui si torna, e tornarci con la legna è il gesto. Farlo fare al
+  // tasto una volta sola, per quattro giorni, vorrebbe dire una casa che non
+  // chiede niente — cioè un monumento, che è quello che decadimento.js dice di
+  // non voler costruire.
+  if (b.oggetto === OGGETTO.FOCOLARE_ACCESO || b.oggetto === OGGETTO.FOCOLARE_SPENTO) {
+    const legna = decadimento.legnaNel(b.tx, b.ty);
+    if (cosaInMano === "legna" && legna < decadimento.LEGNA_MASSIMA) {
+      return { tipo: "carica", verbo: "Carica il focolare", bersaglio: b, legna };
+    }
+    return { tipo: "guarda", verbo: "Guarda il focolare", bersaglio: b, legna };
   }
 
   const raccolta = raccoltaDi(b.oggetto);
@@ -423,45 +430,94 @@ export function getta(eroe, indice) {
   return { tipo: "gettato", cosa: casella.cosa, quante: casella.quantita, tx, ty };
 }
 
-// --- smontare una cassa ---------------------------------------------------
+// --- smontare: la X -------------------------------------------------------
 
-// Solo da vuota, e il motivo non è il realismo: una cassa piena sollevabile
-// sarebbe uno zaino da dodici caselle da portarsi dietro, e il limite dello
-// zaino è una delle poche cose che in un survival costringono a scegliere.
-// Vuota invece si sposta, perché sbagliare dove costruire deve costare la
-// fatica di svuotarla e non la cassa.
-// La porta si stacca intera, come si smonta una cassa: è un infisso, si toglie
-// dai cardini e te la porti via. Il muro no — quello si abbatte a colpi e rende
-// tutte e tre le pietre che è costato; spostarlo richiede comunque lavoro.
-// Sono due gesti diversi perché sono due cose diverse, e il gioco lo dice con
-// quello che torna in mano.
+// QUELLO CHE È TUO SI SMONTA, QUELLO CHE È DEL MONDO SI ABBATTE.
 //
-// Sta sullo stesso tasto con cui si smonta una cassa, e non sulla barra: la
-// barra apre e chiude, ed è il tasto che si preme di notte con qualcuno alle
-// calcagna. Non deve poter portare via la porta.
+// È una regola sola e sta su un tasto solo. Fino a M7.13 non era così: la
+// porta e il giaciglio si toglievano con la X, la cassa dal suo pannello, il
+// banco e il focolare a colpi di barra come un albero. Tre gesti per una cosa
+// sola, e nessuno dei tre si poteva indovinare dall'altro — che è il modo più
+// sicuro di avere un gioco che si impara a memoria invece che guardandolo.
+//
+// Adesso: davanti a una cosa che hai costruito, X. Un gesto solo, e torna in
+// mano intera. Il muro resta fuori di proposito — quello si abbatte a colpi e
+// rende le pietre che è costato — perché un muro non si smonta, si demolisce.
+//
+// E la barra resta libera di fare l'altra cosa, che è la ragione per cui i due
+// tasti sono due: la barra apre la cassa, apre la porta, ci si dorme sopra e ci
+// si cucina, ed è il tasto che si preme di notte con qualcuno alle calcagna.
+// Non deve poter portare via la porta.
+const SMONTAGGI = {
+  [OGGETTO.PORTA]: { cosa: "porta", verbo: "Stacca la porta" },
+  [OGGETTO.PORTA_APERTA]: { cosa: "porta", verbo: "Stacca la porta" },
+  [OGGETTO.GIACIGLIO]: { cosa: "giaciglio", verbo: "Smonta il giaciglio" },
+  [OGGETTO.GIACIGLIO_PELLI]: { cosa: "giaciglio_pelli", verbo: "Smonta il giaciglio" },
+  [OGGETTO.BANCO]: { cosa: "banco", verbo: "Smonta il banco" },
+  [OGGETTO.CASSA]: { cosa: "cassa", verbo: "Smonta la cassa" },
+  [OGGETTO.FOCOLARE_SPENTO]: { cosa: "focolare", verbo: "Smonta il focolare" },
+  [OGGETTO.FOCOLARE_ACCESO]: { cosa: "focolare", verbo: "Smonta il focolare" },
+};
+
+// Un gesto e non un lavoro, quindi si paga in un colpo solo. Quanto un colpo
+// dato bene: smontare è più che sollevare e meno che abbattere.
+const FATICA_SMONTAGGIO = 0.02;
+
+// Cosa farebbe la X adesso, o null. Serve all'interfaccia, che deve poterlo
+// dire prima invece di lasciare indovinare: è lo stesso patto di
+// azionePossibile(), e per la stessa ragione il perché di un rifiuto si dice
+// qui e non dopo aver premuto.
 //
 // Prende l'eroe e non due coordinate perché è un gesto su quello che si ha
 // davanti, come getta(): chi chiama non deve sapere cos'è un tassello.
-export function staccaLaPorta(eroe) {
-  const { tx, ty, oggetto } = bersaglio(eroe);
-  if (oggetto !== OGGETTO.PORTA && oggetto !== OGGETTO.PORTA_APERTA) return null;
-  if (inventario.spazioPer("porta") < 1) return { tipo: "zainoPieno" };
-  inventario.aggiungi("porta", 1);
-  mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
-  return { tipo: "staccata", tx, ty };
+export function smontaggioPossibile(eroe) {
+  const b = bersaglio(eroe);
+  const voce = SMONTAGGI[b.oggetto];
+  if (!voce) return null;
+  return { tipo: "smonta", verbo: voce.verbo, cosa: voce.cosa, bersaglio: b, impedito: perche(b, voce) };
 }
 
-export function smontaIlLetto(eroe) {
-  const { tx, ty, oggetto } = bersaglio(eroe);
-  if (!LETTI.has(oggetto)) return null;
-  const cosa = oggetto === OGGETTO.GIACIGLIO_PELLI ? "giaciglio_pelli" : "giaciglio";
-  if (inventario.spazioPer(cosa) < 1) return { tipo: "zainoPieno" };
-  inventario.aggiungi(cosa, 1);
-  mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
-  bisogni.consuma("stanchezza", 0.01);
-  return { tipo: "lettoSmontato" };
+// Le due cose che si smontano solo da vuote, e i due motivi sono diversi.
+//
+// La cassa: una cassa piena sollevabile sarebbe uno zaino da dodici caselle da
+// portarsi dietro, e il limite dello zaino è una delle poche cose che in un
+// survival costringono a scegliere. Vuota invece si sposta, perché sbagliare
+// dove costruire deve costare la fatica di svuotarla e non la cassa.
+//
+// Il focolare: dentro c'è un fuoco acceso. Smontare un camino mentre brucia
+// vorrebbe dire metterselo in tasca acceso, e soprattutto vorrebbe dire che la
+// legna dentro si può riavere indietro cambiando idea — cioè un ripostiglio
+// per la legna travestito da fuoco. Si aspetta che finisca, o si aspetta di
+// aver pagato per tornare a prendersi la pietra.
+function perche(b, voce) {
+  if (b.oggetto === OGGETTO.CASSA && !contenitori.eVuota(b.tx, b.ty)) return "prima svuotala";
+  if (b.oggetto === OGGETTO.FOCOLARE_ACCESO) {
+    return `il focolare è acceso: ${decadimento.legnaNel(b.tx, b.ty)}/${decadimento.LEGNA_MASSIMA}`;
+  }
+  // Il messaggio è quello finito e non una parola d'ordine da tradurre altrove:
+  // chi lo riceve lo mostra e basta, e il rimedio sta dentro la frase perché
+  // è lì che serve saperlo.
+  if (inventario.spazioPer(voce.cosa) < 1) return "zaino pieno: getta qualcosa con G";
+  return null;
 }
 
+// Il gesto vero. Restituisce cosa è successo, come agisci(): un rifiuto non è
+// il silenzio, è una frase da far leggere.
+export function smontaDavanti(eroe) {
+  const azione = smontaggioPossibile(eroe);
+  if (!azione) return null;
+  if (azione.impedito) return { tipo: "impedito", messaggio: azione.impedito };
+
+  const { tx, ty } = azione.bersaglio;
+  inventario.aggiungi(azione.cosa, 1);
+  mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
+  bisogni.consuma("stanchezza", FATICA_SMONTAGGIO);
+  return { tipo: "smontato", cosa: azione.cosa, tx, ty };
+}
+
+// La stessa cosa dal pannello della cassa, dove non si ha un "davanti" ma due
+// coordinate. Resta perché la cassa è l'unica che si smonta anche da aperta —
+// ed è lì che si scopre di averla svuotata.
 export function smonta(tx, ty) {
   if (mappa.oggettoDi(tx, ty) !== OGGETTO.CASSA) return null;
   if (!contenitori.eVuota(tx, ty)) return { tipo: "nonEVuota" };
@@ -750,15 +806,19 @@ function esegui(eroe, cosaInMano, indice, azione) {
     return { tipo: "cotto", cosa: azione.cosa, diventa: azione.diventa };
   }
 
-  if (azione.tipo === "riaccendi") {
-    if (!inventario.togli("legna", LEGNA_PER_RIACCENDERE)) return null;
-    // La data riparte da oggi: il contatore del fuoco è la data della posa, e
-    // riaccendere è posare di nuovo lo stesso fuoco.
-    mappa.cambiaTassello(tx, ty, {
-      oggetto: OGGETTO.FOCOLARE_ACCESO,
-      posata: tempo.giornoCorrente(),
-    });
-    return { tipo: "riaccendi", tx, ty, legna: LEGNA_PER_RIACCENDERE };
+  if (azione.tipo === "guarda") {
+    return { tipo: "guardato", tx, ty, legna: azione.legna, massimo: decadimento.LEGNA_MASSIMA };
+  }
+
+  if (azione.tipo === "carica") {
+    if (!inventario.togli("legna", 1)) return null;
+    const legna = Math.min(decadimento.LEGNA_MASSIMA, azione.legna + 1);
+    // Il tassello si riscrive da zero e non si aggiorna: quello che c'era
+    // dentro era il conto di prima e la data di un fuoco che si misurava a
+    // giorni. Un campo che nessuno legge più è un campo che qualcuno un giorno
+    // leggerà.
+    mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.FOCOLARE_ACCESO, legna });
+    return { tipo: "carica", tx, ty, legna, massimo: decadimento.LEGNA_MASSIMA };
   }
 
   if (azione.tipo === "riempi") {

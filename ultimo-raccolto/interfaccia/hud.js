@@ -545,7 +545,7 @@ export function disegnaRicette(p, { scelta, alBanco }) {
 // versione: chi raccoglieva legna non aveva modo di scoprire che serviva a
 // costruire, perché niente sullo schermo nominava il tasto. Un sistema che
 // non si trova è come se non ci fosse.
-export function disegnaPromemoria(p, barra, cosaInMano, allaPorta = false, indice, alLetto = false) {
+export function disegnaPromemoria(p, barra, cosaInMano, indice, smontaggio = null) {
   const righe = ["C  COSTRUIRE"];
   const attrezzo = inventario.attrezzo(cosaInMano, indice);
   if (attrezzo) {
@@ -584,12 +584,14 @@ export function disegnaPromemoria(p, barra, cosaInMano, allaPorta = false, indic
   // venti minuti prima.
   if (inventario.pieno()) righe.push("G  GETTA PER TERRA");
 
-  // E stessa regola per la porta: il tasto che la stacca si nomina davanti a
-  // una porta e in nessun altro momento. Senza, sarebbe una riga fissa per un
-  // gesto che si fa due volte in una partita; con, è la risposta alla domanda
-  // che uno si fa proprio lì — e adesso come la tolgo?
-  if (allaPorta) righe.push("X  STACCA LA PORTA");
-  if (alLetto) righe.push("X  SMONTA GIACIGLIO");
+  // E stessa regola per la X: il tasto che smonta si nomina davanti a una cosa
+  // che si smonta e in nessun altro momento. Senza, sarebbe una riga fissa per
+  // un gesto che si fa due volte in una partita; con, è la risposta alla
+  // domanda che uno si fa proprio lì — e adesso come la tolgo?
+  //
+  // Il verbo arriva da azioni.js e non si costruisce qui: chi decide cosa fa
+  // un tasto deve essere uno solo, e non è il disegno.
+  if (smontaggio) righe.push(`X  ${smontaggio.verbo.toUpperCase()}`);
 
   let y = barra.y + 7 - (righe.length - 1) * 7;
   for (const scritta of righe) {
@@ -608,7 +610,7 @@ const COMANDI = [
   ["C", "COSTRUIRE"],
   ["E", "MANGIARE, FASCIARTI, VESTIRTI"],
   ["G", "POSARE PER TERRA CIÒ CHE HAI IN MANO"],
-  ["X", "SMONTARE PORTA O GIACIGLIO"],
+  ["X", "SMONTARE CIÒ CHE HAI COSTRUITO"],
   ["M", "MINIMAPPA"],
   ["TAB", "LA MAPPA DI QUELLO CHE HAI VISTO"],
   ["V", "IL VOLUME: MUTO, PIANO, FORTE"],
