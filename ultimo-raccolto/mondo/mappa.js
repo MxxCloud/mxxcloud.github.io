@@ -85,9 +85,14 @@ const CATALOGO_OGGETTI = {
   // L'essiccatoio, nei suoi tre stati. Ferma come il banco e la cassa: è un
   // mobile, e un mobile ingombra. Non scalda e non illumina — è l'unica
   // struttura che non fa niente per chi ci sta accanto, e tutto per chi torna.
-  [OGGETTO.ESSICCATOIO]: { sprite: coseArte.ESSICCATOIO_VUOTO, solido: true },
-  [OGGETTO.ESSICCATOIO_CARICO]: { sprite: coseArte.ESSICCATOIO_CARICO, solido: true },
-  [OGGETTO.ESSICCATOIO_PRONTO]: { sprite: coseArte.ESSICCATOIO_PRONTO, solido: true },
+  // I tre stati dell'essiccatoio non sono tre disegni ma lo stesso telaio con
+  // sopra quello che ci pende davvero: "steso" dice alla cottura di comporlo
+  // leggendo il tassello — quanti pezzi, e se sono carne o pesce — come già fa
+  // il mucchio con l'icona di quello che contiene. Lo sprite qui è il telaio
+  // nudo, e serve da misura: è alto uguale in tutti e tre i casi.
+  [OGGETTO.ESSICCATOIO]: { sprite: coseArte.ESSICCATOIO_VUOTO, solido: true, steso: "vuoto" },
+  [OGGETTO.ESSICCATOIO_CARICO]: { sprite: coseArte.ESSICCATOIO_VUOTO, solido: true, steso: "fresco" },
+  [OGGETTO.ESSICCATOIO_PRONTO]: { sprite: coseArte.ESSICCATOIO_VUOTO, solido: true, steso: "secco" },
 
   // Non ferma: ci si deve poter camminare sopra per sdraiarcisi, e comunque
   // un materasso per terra non è un ostacolo.
@@ -534,6 +539,15 @@ function cuociSettore(sx, sy) {
         if (voce.mucchio) {
           const icona = iconeMucchio[modifiche.di(tx, ty)?.cosa];
           if (icona) fotogrammi[0] = sovrapposto(fotogrammi[0], cuoci(icona), ...SCARTO_ICONA);
+        }
+        // E l'essiccatoio è il telaio più quello che ci pende: tre pezzi
+        // disegnano tre strisce, sei ne disegnano sei. Un telaio mezzo carico
+        // che si disegna pieno è la stessa bugia del falò che nell'icona
+        // aveva la fiamma dentro pur posandosi spento.
+        if (voce.steso && voce.steso !== "vuoto") {
+          const dati = modifiche.di(tx, ty);
+          const disegno = coseArte.essiccatoioSteso(dati?.quante ?? 0, dati?.cosa, voce.steso === "secco");
+          fotogrammi[0] = cuoci(disegno, tavolozza);
         }
         const sprite = fotogrammi[0];
         oggetti.push({

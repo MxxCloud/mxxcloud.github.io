@@ -72,7 +72,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.15.2";
+const VERSIONE = "M7.15.3";
 
 // --- elementi -------------------------------------------------------------
 
@@ -1037,7 +1037,10 @@ function leggiComandi() {
   // Le parole al plurale arrivano da azioni.js insieme al gesto: "3 carni" e
   // "3 pesci" non si costruiscono da un identificatore senza scrivere prima o
   // poi "3 pesci secche".
-  if (esito.tipo === "stendi") { suono.suona(FATTO); annuncia(`a seccare: ${esito.quante} ${esito.tanti}`, "#c9b189"); }
+  // Quanti ne ha appesi in tutto e non solo quanti ne sono entrati adesso: il
+  // telaio si carica a file, e quello che si vuole sapere dopo il gesto è a
+  // che punto è il telaio.
+  if (esito.tipo === "stendi") { suono.suona(FATTO); annuncia(`a seccare: ${esito.appesi} ${esito.tanti}`, "#c9b189"); }
   if (esito.tipo === "ritira") { suono.suona(FATTO); annuncia(`ritirato: ${esito.dette}`, "#c9b189"); }
   if (esito.tipo === "cotto") { suono.suona(FATTO); annuncia(`sul fuoco: ${nomeDi(esito.diventa)}`, "#e0913a"); }
 

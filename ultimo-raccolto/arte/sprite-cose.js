@@ -294,43 +294,53 @@ export const ESSICCATOIO_VUOTO = [
   "................",
 ];
 
-// Carico: le strisce crude, larghe e rosse, che pendono da ogni traversa.
-export const ESSICCATOIO_CARICO = [
-  "................",
-  "..hh........hh..",
-  "..hhgggggggghh..",
-  "..hhtt.tt.tthh..",
-  "..hhtt.tt.tthh..",
-  "..hhgggggggghh..",
-  "..hhtt.tt.tthh..",
-  "..hhtt.tt.tthh..",
-  "..hhgggggggghh..",
-  "..hh........hh..",
-  "..hh........hh..",
-  "..gg........gg..",
-  ".ggg........ggg.",
-  "................",
+// Quello che pende, e dove.
+//
+// Tre posti per traversa e due traverse: sei pezzi, che è il carico massimo.
+// Si riempiono in ordine — prima la fila di sopra, poi quella di sotto — così
+// un telaio a metà si legge a colpo d'occhio come un telaio a metà, e non come
+// un telaio pieno di roba rada.
+const POSTI = [
+  { riga: 3, colonna: 4 }, { riga: 3, colonna: 7 }, { riga: 3, colonna: 10 },
+  { riga: 6, colonna: 4 }, { riga: 6, colonna: 7 }, { riga: 6, colonna: 10 },
 ];
 
-// Pronto: le stesse strisce raggrinzite — più corte, più strette, e di un
-// colore che non è più carne. È il modo in cui il disegno dice "adesso".
-export const ESSICCATOIO_PRONTO = [
-  "................",
-  "..hh........hh..",
-  "..hhgggggggghh..",
-  "..hhAA.AA.AAhh..",
-  "..hh.A..A..A.h..",
-  "..hhgggggggghh..",
-  "..hhAA.AA.AAhh..",
-  "..hh.A..A..A.h..",
-  "..hhgggggggghh..",
-  "..hh........hh..",
-  "..hh........hh..",
-  "..gg........gg..",
-  ".ggg........ggg.",
-  "................",
-];
+// Di che colore è quello che pende. La carne è quella delle bacche appassite,
+// il pesce è l'azzurro dell'acqua da cui viene — lo stesso "3" dell'icona nello
+// zaino, perché un pesce steso e un pesce in mano devono essere la stessa cosa
+// vista da due distanze. Seccati, tutti e due sbiadiscono nella loro metà di
+// tavolozza: la carne in "A", il pesce in "D".
+const TINTE_STESE = {
+  carne_cruda: { fresco: "t", secco: "A" },
+  pesce_crudo: { fresco: "3", secco: "D" },
+};
 
+// Il telaio con sopra quello che c'è davvero.
+//
+// Una funzione e non tre disegni fissi, ed è il punto di questa tappa: quanti
+// pezzi pendono è l'informazione su cui il giocatore decide se tornare, e
+// disegnare sempre sei strisce per un carico da tre sarebbe la stessa bugia
+// che il falò acceso raccontava dall'icona dello zaino.
+//
+// Fresco pende largo e pieno, secco pende stretto e storto: è la differenza
+// che si vede da lontano, ed è l'unica che serve vedere.
+export function essiccatoioSteso(quante = 0, cosa = "carne_cruda", secco = false) {
+  const righe = ESSICCATOIO_VUOTO.map((r) => r.split(""));
+  const tinta = (TINTE_STESE[cosa] ?? TINTE_STESE.carne_cruda)[secco ? "secco" : "fresco"];
+  for (const { riga, colonna } of POSTI.slice(0, Math.max(0, Math.min(POSTI.length, quante)))) {
+    if (secco) {
+      righe[riga][colonna] = tinta;
+      righe[riga][colonna + 1] = tinta;
+      righe[riga + 1][colonna + 1] = tinta;
+    } else {
+      righe[riga][colonna] = tinta;
+      righe[riga][colonna + 1] = tinta;
+      righe[riga + 1][colonna] = tinta;
+      righe[riga + 1][colonna + 1] = tinta;
+    }
+  }
+  return righe.map((r) => r.join(""));
+}
 export const ASCIA = [
   "............",
   "..eeee......",
@@ -832,9 +842,13 @@ export const PESCE_ARROSTITO = [
  "......h.....","............","............","............",
 ];
 
-// Il pesce secco: lo stesso pesce nei toni della carne secca, ricolorato
-// invece che ridisegnato — è la stessa scelta di CARNE_SECCA in
-// sprite-fauna.js, e per la stessa ragione. Due icone che vengono dallo stesso
-// disegno si leggono come due stati di una cosa sola, che è quello che sono;
-// due disegni diversi si leggerebbero come due cose diverse.
-export const PESCE_SECCO = PESCE_CRUDO.map(r => r.replaceAll("3", "g").replaceAll("B", "A"));
+// Il pesce secco: lo stesso pesce ricolorato invece che ridisegnato — è la
+// stessa scelta di CARNE_SECCA in sprite-fauna.js, e per la stessa ragione.
+// Due icone che vengono dallo stesso disegno si leggono come due stati di una
+// cosa sola, che è quello che sono; due disegni diversi si leggerebbero come
+// due cose diverse.
+//
+// Blu che vira al grigio e non bruno: un pesce seccato resta un pesce, e la
+// prima stesura lo faceva marrone come la carne secca — cioè toglieva l'unica
+// cosa che nella casella dello zaino lo distingue da lei.
+export const PESCE_SECCO = PESCE_CRUDO.map(r => r.replaceAll("3", "D").replaceAll("B", "s"));
