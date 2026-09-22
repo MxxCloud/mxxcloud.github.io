@@ -394,8 +394,15 @@ function sulTassello(eroe, cosaInMano, indice) {
     const quante = quanteSiStendono(inventario.quante(cosaInMano), gia);
     const riparte = gia > 0 && (dati?.dal ?? tempo.giornoCorrente()) < tempo.giornoCorrente();
     if (quante > 0 || gia === 0) {
-      return { tipo: "stendi", verbo: riparte ? "Stendi (riparte il conto)" : "Stendi",
-        quante, gia, riparte, cosa: cosaInMano, bersaglio: b,
+      // D'inverno si può stendere lo stesso — la roba aspetta, e in primavera
+      // riparte da sola — ma il tasto lo dice prima, se no un telaio che per
+      // una stagione intera non cambia disegno si legge come un telaio rotto.
+      // L'inverno passa davanti al conto che riparte: fra due avvisi si dà
+      // quello che il giocatore non può indovinare da solo.
+      const dInverno = stagioni.stagioneCorrente() === "inverno";
+      const nota = dInverno ? " (d'inverno non secca)" : riparte ? " (riparte il conto)" : "";
+      return { tipo: "stendi", verbo: `Stendi${nota}`,
+        quante, gia, riparte, dInverno, cosa: cosaInMano, bersaglio: b,
         impedito: quante === 0 ? `servono almeno ${PEZZI_PER_RAZIONE} ${daSeccare.tanti}` : null };
     }
   }
@@ -405,8 +412,14 @@ function sulTassello(eroe, cosaInMano, indice) {
   // Carico non si tocca, e dirlo serve a una cosa sola: che chi ci sta davanti
   // sappia che la carne è ancora lì dentro e non è andata persa.
   if (b.oggetto === OGGETTO.ESSICCATOIO_CARICO) {
-    return { tipo: "essiccatoio", verbo: "Guarda l'essiccatoio", bersaglio: b,
-      impedito: `${SECCABILI[stesoIn(b.tx, b.ty)].quello} sta ancora seccando` };
+    // Perché non è ancora pronto, e non solo che non lo è: d'inverno il conto
+    // sta fermo fino a primavera, e un telaio che non si muove per quattro
+    // giorni senza che nessuno dica niente è un telaio che sembra guasto.
+    const quello = SECCABILI[stesoIn(b.tx, b.ty)].quello;
+    const fermo = stagioni.stagioneCorrente() === "inverno"
+      ? `d'inverno ${quello} non secca`
+      : `${quello} sta ancora seccando`;
+    return { tipo: "essiccatoio", verbo: "Guarda l'essiccatoio", bersaglio: b, impedito: fermo };
   }
 
   const raccolta = raccoltaDi(b.oggetto);

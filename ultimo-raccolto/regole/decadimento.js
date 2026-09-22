@@ -129,20 +129,40 @@ export const GIORNI_DI_SECCA = 3;
 
 // Quanti giorni asciutti sono passati da quando è stata stesa.
 //
-// Si CONTANO i giorni buoni, non si sottraggono quelli piovosi da un totale:
-// meteo.evento(giorno) è una funzione pura del giorno e del seme, quindi la
-// risposta è la stessa che si guardi ogni alba o che si torni dopo una
-// settimana. Nessun contatore sul tassello, e niente che si possa disallineare.
+// Si CONTANO i giorni buoni, non si sottraggono quelli cattivi da un totale:
+// meteo.evento(giorno) e la stagione sono funzioni pure del giorno e del seme,
+// quindi la risposta è la stessa che si guardi ogni alba o che si torni dopo
+// una settimana. Nessun contatore sul tassello, e niente che si possa
+// disallineare.
 //
-// La pioggia FERMA, non rovina: la carne non si perde, ci mette solo di più. La
-// neve non ferma niente — d'inverno si secca al gelo, e mezza stagione di
-// attesa in più sarebbe una punizione che nessuno ha chiesto.
+// DUE COSE FERMANO IL CONTO, e nessuna delle due rovina quello che pende: la
+// roba non si perde, ci mette solo di più.
+//
+// La pioggia, un giorno per stagione: si bagna quello che è steso, e quel
+// giorno non conta.
+//
+// E L'INVERNO INTERO, a prescindere dalla neve. Non è il maltempo, è la
+// stagione: al freddo l'aria non tira via niente, e un telaio caricato in
+// novembre resta un telaio carico fino a marzo. Prima d'inverno si seccava
+// come d'estate — la neve non fermava niente — ed era l'unica cosa della valle
+// che l'inverno non toccava, in un gioco dove l'inverno raddoppia la fame,
+// gela l'acqua, dirada la caccia e brucia il doppio della legna. Adesso la
+// scorta per marzo va preparata prima che arrivi marzo, che è tutto il punto
+// di una scorta.
 export function giorniAsciutti(dal, a) {
   let asciutti = 0;
   for (let giorno = dal + 1; giorno <= a; giorno += 1) {
-    if (meteo.evento(giorno) !== "pioggia") asciutti += 1;
+    if (meteo.evento(giorno) === "pioggia") continue;
+    if (stagioni.stagioneDi(giorno) === "inverno") continue;
+    asciutti += 1;
   }
   return asciutti;
+}
+
+// Si secca oggi? Serve all'interfaccia, che deve poterlo dire prima invece di
+// lasciar credere che il telaio sia rotto.
+export function siSeccaOggi() {
+  return stagioni.stagioneCorrente() !== "inverno" && meteo.evento() !== "pioggia";
 }
 
 // --- il guasto ------------------------------------------------------------
