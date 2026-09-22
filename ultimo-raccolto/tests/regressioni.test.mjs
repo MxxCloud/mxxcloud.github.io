@@ -2214,3 +2214,41 @@ test('un carico fuori scala rende il salvataggio non valido',()=>{
     assert.equal(salvataggio.valido(stato),false,String(storto));
   }
 });
+
+// --- M7.15.1: la fibra brucia ----------------------------------------------
+
+test('dieci fibra valgono una legna, e con nove il tasto lo dice prima',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FOCOLARE_SPENTO});
+  inventario.aggiungi('fibra',9);
+  const scarsa=azioni.azionePossibile(eroe,'fibra',0);
+  assert.equal(scarsa.tipo,'carica');
+  assert.match(scarsa.verbo,/10 fibra/);
+  assert.equal(scarsa.impedito,'servono 10 fibra');
+  assert.equal(azioni.agisci(eroe,'fibra',0),null);
+  assert.equal(inventario.quante('fibra'),9);
+  inventario.aggiungi('fibra',11);
+  const esito=azioni.agisci(eroe,'fibra',0);
+  assert.equal(esito.tipo,'carica');assert.equal(esito.legna,1);
+  assert.equal(inventario.quante('fibra'),10);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
+  // E vale anche per il falò, che è lo stesso fuoco più piccolo.
+  reset();modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FALO_SPENTO});
+  inventario.aggiungi('fibra',10);
+  assert.equal(azioni.agisci(eroe,'fibra',0).legna,1);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FALO_ACCESO);
+  assert.equal(inventario.quante('fibra'),0);
+});
+test('la legna resta il combustibile migliore, qualunque cosa si aggiunga',()=>{
+  // L'invariante, non i numeri: la tacca si misura in legna, quindi nessun
+  // altro combustibile può costarne meno di una unità. Il giorno che qualcuno
+  // ne aggiunge uno a buon mercato, il fuoco smetterebbe di chiedere legna.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FOCOLARE_SPENTO});
+  const costo=c=>{
+    inventario.svuota();inventario.aggiungi(c,CATALOGO[c].pila);
+    return azioni.azionePossibile(eroe,c,0)?.quante ?? null;
+  };
+  assert.equal(costo('legna'),1);
+  for(const c of ['ramo','fibra']) assert.ok(costo(c)>costo('legna'),c);
+  // E quello che non è combustibile non entra: la pietra non brucia.
+  assert.equal(costo('pietra'),null);
+});

@@ -12,6 +12,26 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.15.1 — brucia anche la fibra
+
+Terzo combustibile, e chiude la tavola: **10 fibra valgono una legna**, nel
+focolare come nel falò.
+
+| Combustibile | Per una tacca | Quanto costa raccoglierla |
+| --- | --- | --- |
+| Legna | **1** | ⅔ di colpo d'ascia (un albero ne dà 3) |
+| Rami | **2** | 2 alberi, ma è roba che hai già: ne cade uno per albero |
+| Fibra | **10** | 5 cespugli, uno strappo l'uno, **a mani nude** |
+
+È il fuoco di chi non ha un'ascia. Cinque gesti per una tacca è caro in fatica
+e gratis in attrezzi, e i cespugli stanno dappertutto — anche dove non c'è un
+albero. Chi ha la legna non brucerà mai l'erba, perché quella serve a bende,
+corde e mezzo catalogo: la fibra è il combustibile del viandante rimasto a
+secco, non quello con cui si tiene caldo un camino.
+
+Il contatore continua a contare in legna, e il costo sta scritto sul tasto:
+`CARICA IL FOCOLARE (10 FIBRA)`.
+
 ## M7.15 — l'essiccatoio
 
 Da M7.9 la valle dà carne, e da M7.12.3 l'autunno ne dà parecchia. Ma **la carne
@@ -57,7 +77,6 @@ cambiando idea è un ripostiglio travestito.
 Questa tappa era scritta prima di M7.14 ed è stata riappoggiata sopra: lo
 smontaggio, che nella prima stesura si faceva a colpi di barra, è passato alla X
 — cioè ha trovato una casa migliore di quella che aveva.
-
 ## M7.14.2 — anche il falò si accende
 
 Il focolare aveva imparato ad avere fame, il falò no. E il falò era **fuoco
@@ -908,7 +927,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.15**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.15.1**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -926,9 +945,10 @@ E l'inverno, che si annullava tenendo una torcia in tasca, adesso si attraversa
 solo con un fuoco vero, una stanza che ne contiene uno, o **una pelliccia
 addosso** — la prima cosa che questo gioco ti lascia indossare. E dentro una
 casa si costruisce **un focolare**, e in viaggio si posa **un falò**: tutti e
-due si posano spenti e si caricano una alla volta a legna o a rami — due rami
-per una legna — ne bruciano una al giorno e due d'inverno, e quando finiscono
-non si perdono: resta la pietra o la fossa, e si rimette legna. Il camino di
+due si posano spenti e si caricano una tacca alla volta — a legna, a rami (due
+per una) o a fibra (dieci per una) — e ne bruciano una al giorno, due
+d'inverno; quando finiscono non si perdono: resta la pietra o la fossa, e si
+rimette legna. Il camino di
 casa ne tiene quattro, il fuoco da viaggio due. E fuori, all'aria, si costruisce
 **un essiccatoio**: tre carni crude stese per tre giorni di sole fanno una carne
 secca che dura dodici giorni. Il fuoco dentro, la carne fuori.
