@@ -12,6 +12,23 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.15.4 — rabboccare fa ripartire il conto
+
+Un telaio con tre pezzi appesi da due giorni, e tu che ne appendi altri tre: la
+prima stesura li faceva seccare tutti insieme con la data della prima fila,
+cioè **i tre nuovi asciugavano in un'alba invece che in tre**. Si barava
+aspettando.
+
+Adesso il conto riparte da oggi per tutto quello che pende. Fra due regole, in
+un gioco sulla sopravvivenza, si tiene la più severa — e questa si spiega anche
+in meno parole: **il telaio secca quello che ha, da quando ce l'ha tutto.**
+
+Il costo sta scritto sul tasto come per i rami del focolare, e **solo quando
+c'è**: rabboccando lo stesso giorno il conto riparte da dov'era già, quindi chi
+riempie il telaio con due pressioni di seguito legge `STENDI` e non paga
+niente. Chi torna domani legge `STENDI (RIPARTE IL CONTO)` prima di premere —
+la regola si impara dal tasto, non dai tre giorni che non tornano più.
+
 ## M7.15.3 — il telaio mostra quello che ha
 
 Tre correzioni all'essiccatoio, e la prima è una regola che vale per tutto il
@@ -21,9 +38,9 @@ gioco: **il disegno non deve promettere quello che il tassello non ha.**
 pressioni della barra: appendi una fila, guardi il telaio, appendi l'altra. Un
 tasto solo che svuotava mezza scorta in un fotogramma era un gesto che il
 giocatore scopriva dopo averlo fatto. Il carico massimo resta sei, quindi il
-secondo gesto è anche l'ultimo, e **rabboccare non fa ripartire il conto**: il
-telaio finisce tutto insieme, con la data della prima fila. Si rabbocca solo
-con la stessa roba — due file di pesce o due di carne, mai una per una.
+secondo gesto è anche l'ultimo, e si rabbocca solo con la stessa roba — due
+file di pesce o due di carne, mai una per una. (Il conto dei giorni riparte
+rabboccando: vedi M7.15.4.)
 
 **Il telaio disegna i pezzi che ha davvero**: tre pezzi sono tre strisce sulla
 traversa di sopra, sei sono sei. Prima ne disegnava sempre sei, e da lontano un
@@ -978,7 +995,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.15.3**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.15.4**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
