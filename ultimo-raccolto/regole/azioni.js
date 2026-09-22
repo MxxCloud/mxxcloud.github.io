@@ -51,6 +51,31 @@ export function bersaglio(eroe) {
 // ritmo giusto perché bere sia un gesto e non un lavoro.
 const SORSO = 0.45;
 
+// Cosa brucia in un focolare, e quanto ne serve per una tacca.
+//
+// IL CONTATORE CONTA IN LEGNA. Una tacca è una legna, e due rami valgono una
+// legna: il focolare non impara un'unità nuova, impara un cambio. È la ragione
+// per cui la tacca resta un intero e il messaggio resta "2/4 legna" anche
+// quando dentro ci sono andati dei rami.
+//
+// Due e non uno, e non tre, ed è misurato. Un albero rende tre legna e un ramo
+// solo: in legna vale tre tacche, in rami mezza — la legna scalda sei volte
+// tanto a parità di albero abbattuto. A uno i due materiali diventerebbero la
+// stessa cosa e la legna perderebbe il mestiere; a tre il ramo non varrebbe la
+// fatica di tenerlo. A due il ramo è quello che è: una riserva.
+//
+// E risolve quello che il ramo era diventato. Entrava da ogni albero e usciva
+// da cinque ricette che si fanno una volta sola — le riparazioni costano pietra
+// e fibra, non rami — quindi si accumulava a quaranta per casella senza che
+// niente lo consumasse. Adesso un anno di focolare sempre acceso sono venti
+// tacche, cioè venti legna oppure quaranta rami: la scorta ferma nello zaino
+// diventa una stagione di fuoco, e da lì in poi il ramo è un flusso come gli
+// altri.
+const COMBUSTIBILI = {
+  legna: { quante: 1, tanti: "legna" },
+  ramo: { quante: 2, tanti: "rami" },
+};
+
 const COLPI_DURI = new Set([OGGETTO.ALBERO, OGGETTO.SASSO, OGGETTO.MURO, OGGETTO.MURO_ROTTO, OGGETTO.CARRO, OGGETTO.TRONCO]);
 
 // Su cosa si dorme, e quanto rende. Due letti e due condizioni: scritto come
@@ -226,7 +251,8 @@ function sulTassello(eroe, cosaInMano, indice) {
     return { tipo: "cucina", verbo: "Cucina", cosa: cosaInMano, diventa: cotto, bersaglio: b };
   }
 
-  // Il focolare: con la legna in mano lo si carica, altrimenti lo si guarda.
+  // Il focolare: con del combustibile in mano lo si carica, altrimenti lo si
+  // guarda.
   //
   // Guardare è un'azione vera e non un ripiego, ed è l'unica del gioco che non
   // cambia niente: quanta legna ha dentro un camino è la cosa che decide se
@@ -234,15 +260,25 @@ function sulTassello(eroe, cosaInMano, indice) {
   // legna e con quattro. Un dato che decide e non si vede è una trappola, e
   // questo gioco le scadenze le annuncia.
   //
-  // Una legna per volta, come si cuoce una carne per volta: il focolare è il
+  // Una carica per volta, come si cuoce una carne per volta: il focolare è il
   // posto in cui si torna, e tornarci con la legna è il gesto. Farlo fare al
   // tasto una volta sola, per quattro giorni, vorrebbe dire una casa che non
   // chiede niente — cioè un monumento, che è quello che decadimento.js dice di
   // non voler costruire.
   if (b.oggetto === OGGETTO.FOCOLARE_ACCESO || b.oggetto === OGGETTO.FOCOLARE_SPENTO) {
     const legna = decadimento.legnaNel(b.tx, b.ty);
-    if (cosaInMano === "legna" && legna < decadimento.LEGNA_MASSIMA) {
-      return { tipo: "carica", verbo: "Carica il focolare", bersaglio: b, legna };
+    const fascina = COMBUSTIBILI[cosaInMano];
+    if (fascina && legna < decadimento.LEGNA_MASSIMA) {
+      // Il cambio sta scritto sul tasto quando non è uno, e non in un messaggio
+      // dopo: quanto costa una tacca è la cosa che si vuole sapere prima di
+      // darla, e un giocatore che lo scopre contando i rami spariti dallo zaino
+      // l'ha imparato nel modo sbagliato.
+      return { tipo: "carica", bersaglio: b, legna, cosa: cosaInMano, quante: fascina.quante,
+        verbo: fascina.quante > 1
+          ? `Carica il focolare (${fascina.quante} ${fascina.tanti})`
+          : "Carica il focolare",
+        impedito: inventario.quante(cosaInMano) < fascina.quante
+          ? `servono ${fascina.quante} ${fascina.tanti}` : null };
     }
     return { tipo: "guarda", verbo: "Guarda il focolare", bersaglio: b, legna };
   }
@@ -811,14 +847,15 @@ function esegui(eroe, cosaInMano, indice, azione) {
   }
 
   if (azione.tipo === "carica") {
-    if (!inventario.togli("legna", 1)) return null;
+    if (!inventario.togli(azione.cosa, azione.quante)) return null;
     const legna = Math.min(decadimento.LEGNA_MASSIMA, azione.legna + 1);
     // Il tassello si riscrive da zero e non si aggiorna: quello che c'era
     // dentro era il conto di prima e la data di un fuoco che si misurava a
     // giorni. Un campo che nessuno legge più è un campo che qualcuno un giorno
     // leggerà.
     mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.FOCOLARE_ACCESO, legna });
-    return { tipo: "carica", tx, ty, legna, massimo: decadimento.LEGNA_MASSIMA };
+    return { tipo: "carica", tx, ty, legna, massimo: decadimento.LEGNA_MASSIMA,
+      cosa: azione.cosa, quante: azione.quante };
   }
 
   if (azione.tipo === "riempi") {

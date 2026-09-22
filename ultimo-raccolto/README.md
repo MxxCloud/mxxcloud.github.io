@@ -28,6 +28,25 @@ e **si carica una legna alla volta, fino a quattro**. Ogni alba ne brucia una,
 esattamente come prima. Quello che cambia non è quanto dura, è che **adesso è
 un gesto**: si torna a casa, si mette legna, si guarda quanta ne resta.
 
+**E brucia anche i rami, due per una legna.** Il contatore conta in legna — una
+tacca è una legna — e il ramo è un cambio, non un'unità nuova: il tasto lo dice
+prima di prendere, `CARICA IL FOCOLARE (2 RAMI)`.
+
+Due e non uno, ed è misurato. Un albero rende **tre legna e un ramo solo**: in
+legna vale tre tacche, in rami mezza, cioè **la legna scalda sei volte tanto a
+parità di albero abbattuto**. A uno i due materiali sarebbero la stessa cosa e
+la legna perderebbe il mestiere; a tre il ramo non varrebbe la fatica di
+tenerlo. A due il ramo è quello che è: **una riserva**.
+
+Ed è la risposta a un difetto che si poteva contare. Il ramo entrava da ogni
+albero e usciva da cinque ricette che si fanno una volta sola — le riparazioni
+costano pietra e fibra, non rami — quindi si accumulava fino a quaranta per
+casella senza che niente lo consumasse: in una vita d'ascia se ne producono
+**147 e se ne spende 1**. Adesso un anno di focolare sempre acceso sono venti
+tacche, cioè venti legna **oppure quaranta rami**: la pila ferma nello zaino
+diventa una stagione di fuoco, e da lì in poi il ramo è un flusso come gli
+altri.
+
 **Guardare è un'azione vera**, ed è l'unica del gioco che non cambia niente. La
 fiamma è identica con una legna e con quattro, quindi il conto va chiesto: con
 le mani libere davanti al camino, la barra risponde `FOCOLARE: 2/4 LEGNA`. Un
@@ -819,9 +838,9 @@ rovina e l'altra si incontrano carri rovesciati, pozzi e accampamenti bruciati.
 E l'inverno, che si annullava tenendo una torcia in tasca, adesso si attraversa
 solo con un fuoco vero, una stanza che ne contiene uno, o **una pelliccia
 addosso** — la prima cosa che questo gioco ti lascia indossare. E dentro una
-casa si costruisce **un focolare**: si posa spento, si carica a legna una alla
-volta, ne brucia una al giorno e due d'inverno, e quando finisce non si perde —
-resta la pietra e si rimette legna.
+casa si costruisce **un focolare**: si posa spento, si carica una alla volta a
+legna o a rami — due rami per una legna — ne brucia una al giorno e due
+d'inverno, e quando finisce non si perde: resta la pietra e si rimette legna.
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
 con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne

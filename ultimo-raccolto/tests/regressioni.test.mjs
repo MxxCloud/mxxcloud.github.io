@@ -38,7 +38,7 @@ import * as infetti from '../regole/infetti.js';
 import * as entita from '../entita/entita.js';
 import * as decadimento from '../regole/decadimento.js';
 import { OGGETTO, TERRENO } from '../mondo/generazione.js';
-import { CATALOGO } from '../regole/oggetti.js';
+import { CATALOGO, RACCOLTA } from '../regole/oggetti.js';
 import { vistaLibera, fattoreSuono } from '../mondo/ostacoli.js';
 import * as sprite from '../arte/sprite-cose.js';
 import { TAVOLOZZA } from '../arte/tavolozza.js';
@@ -1858,6 +1858,47 @@ test('una legna per volta fino al pieno, e la prima accende',()=>{
   assert.equal(azioni.azionePossibile(eroe,'legna',0).verbo,'Guarda il focolare');
   assert.equal(azioni.agisci(eroe,'legna',0).tipo,'guardato');
   assert.equal(inventario.quante('legna'),2);
+});
+test('due rami valgono una legna, e con uno solo il tasto lo dice prima',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FOCOLARE_SPENTO});
+  inventario.aggiungi('ramo',1);
+  const scarso=azioni.azionePossibile(eroe,'ramo',0);
+  assert.equal(scarso.tipo,'carica');
+  assert.match(scarso.verbo,/2 rami/);
+  assert.equal(scarso.impedito,'servono 2 rami');
+  assert.equal(azioni.agisci(eroe,'ramo',0),null);
+  assert.equal(inventario.quante('ramo'),1);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_SPENTO);
+  // Con due, una tacca sola: il contatore conta in legna, i rami si cambiano.
+  inventario.aggiungi('ramo',5);
+  const esito=azioni.agisci(eroe,'ramo',0);
+  assert.equal(esito.tipo,'carica');assert.equal(esito.legna,1);
+  assert.equal(inventario.quante('ramo'),4);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
+  // E si alterna: quattro rami e una legna riempiono un focolare a quattro.
+  azioni.agisci(eroe,'ramo',0);azioni.agisci(eroe,'ramo',0);
+  assert.equal(decadimento.legnaNel(tx+1,ty),3);
+  assert.equal(inventario.quante('ramo'),0);
+  inventario.aggiungi('legna',1);
+  assert.equal(azioni.azionePossibile(eroe,'legna',1).verbo,'Carica il focolare');
+  azioni.agisci(eroe,'legna',1);
+  assert.equal(decadimento.legnaNel(tx+1,ty),decadimento.LEGNA_MASSIMA);
+});
+test('un albero scalda sei volte tanto in legna che in rami',()=>{
+  // Non è una ripetizione del collaudo qui sopra: quello prova il cambio,
+  // questo prova che il cambio non rende i due materiali la stessa cosa. Un
+  // albero rende tre legna e un ramo solo — tre tacche contro mezza — e il
+  // giorno che qualcuno tocca la resa dell'albero o il cambio, il ramo può
+  // diventare combustibile migliore della legna senza che nessuno se ne
+  // accorga giocando.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FOCOLARE_SPENTO});
+  const resa=RACCOLTA[OGGETTO.ALBERO].resa;
+  const perAlbero=c=>resa.find(v=>v.cosa===c)?.quante ?? 0;
+  // Il costo di una tacca si chiede al gioco invece di leggerlo da una
+  // costante: quello che conta è quanto ne toglie davvero il gesto.
+  const perTacca=c=>{inventario.svuota();inventario.aggiungi(c,9);return azioni.azionePossibile(eroe,c,0).quante;};
+  const tacche=c=>perAlbero(c)/perTacca(c);
+  assert.equal(tacche('legna')/tacche('ramo'),6);
 });
 test('guardare il focolare dice quanto è carico, e non cambia niente',()=>{
   modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FOCOLARE_SPENTO});
