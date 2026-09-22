@@ -37,6 +37,7 @@ import * as arteFauna from '../arte/sprite-fauna.js';
 import * as infetti from '../regole/infetti.js';
 import * as entita from '../entita/entita.js';
 import * as decadimento from '../regole/decadimento.js';
+import * as stagioni from '../regole/stagioni.js';
 import { OGGETTO, TERRENO } from '../mondo/generazione.js';
 import { CATALOGO, RACCOLTA } from '../regole/oggetti.js';
 import { vistaLibera, fattoreSuono } from '../mondo/ostacoli.js';
@@ -2168,7 +2169,16 @@ test('la carne secca vuole tre albe asciutte: due non bastano',()=>{
   assert.equal(modifiche.di(tx+1,ty).quante,6);
 });
 test('la pioggia ferma il conto senza rovinare la carne',()=>{
-  const pioggia=maltempo('pioggia');
+  // Un acquazzone che non abbia l'inverno nei tre giorni dopo: l'inverno ferma
+  // il conto per conto suo (vedi M7.15.6), e mescolare le due regole in una
+  // prova sola vorrebbe dire non provarne bene nessuna delle due.
+  let pioggia=0;
+  for(let d=1;d<=32 && !pioggia;d++) {
+    if(meteo.evento(d)!=='pioggia') continue;
+    if([1,2,3].every(i=>stagioni.stagioneDi(d+i)!=='inverno')) pioggia=d;
+  }
+  assert.ok(pioggia,'un acquazzone fuori dall inverno');
+  tempo.impostaGiorno(pioggia);
   // Si stende il giorno prima dell'acquazzone: quel giorno non conta, quindi
   // ce ne vogliono quattro invece di tre.
   const dal=pioggia-1;
@@ -2461,4 +2471,52 @@ test('il ghiaccio si disegna azzurro, da vicino e da lontano',async()=>{
     const [rr,,bb]=[1,3,5].map(i=>parseInt(TAVOLOZZA[lettera].slice(i,i+2),16));
     assert.ok(bb>=rr,`la tinta ${lettera} del ghiaccio non è calda`);
   }
+});
+
+// --- M7.15.6: d'inverno non si secca ----------------------------------------
+
+test('l’inverno ferma il conto per intero, neve o sereno che sia',()=>{
+  // Non è il maltempo, è la stagione: nessuno dei quattro giorni conta, e non
+  // importa che tiri neve o che sia sereno.
+  const inverno=[9,10,11,12];
+  for(const g of inverno) assert.equal(stagioni.stagioneDi(g),'inverno');
+  assert.ok(inverno.some(g=>meteo.evento(g)!=='neve'),'e fra quei giorni ce n’è di sereni');
+  assert.equal(decadimento.giorniAsciutti(8,12),0,'da fine autunno a fine inverno: zero soli buoni');
+  tempo.impostaGiorno(10);
+  assert.equal(decadimento.siSeccaOggi(),false,'a gennaio il telaio non lavora');
+  tempo.impostaGiorno(14);
+  assert.equal(decadimento.siSeccaOggi(),meteo.evento()!=='pioggia','e fuori dall’inverno decide la pioggia');
+});
+test('la carne stesa in autunno aspetta la primavera',()=>{
+  tempo.impostaGiorno(8);
+  essiccatoio();inventario.aggiungi('carne_cruda',3);
+  assert.equal(azioni.agisci(eroe,'carne_cruda',0).quante,3);
+  // Tutto l'inverno a telaio fermo: il disegno non cambia e la roba non si
+  // perde. Quattro albe invernali e non succede niente.
+  for(const giorno of [9,10,11,12]) {
+    tempo.impostaGiorno(giorno);decadimento.nuovoGiorno();
+    assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.ESSICCATOIO_CARICO,`giorno ${giorno}`);
+    assert.equal(modifiche.di(tx+1,ty).quante,3,'la carne è ancora lì');
+  }
+  // In primavera riparte da sola, senza che il giocatore tocchi niente.
+  let pronto=13; while(decadimento.giorniAsciutti(8,pronto)<decadimento.GIORNI_DI_SECCA) pronto+=1;
+  assert.ok(pronto>=15,'e i tre soli buoni arrivano solo a primavera inoltrata');
+  tempo.impostaGiorno(pronto);decadimento.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.ESSICCATOIO_PRONTO);
+  assert.equal(azioni.agisci(eroe,null,0).secche,1);
+});
+test('d’inverno il tasto lo dice prima, e il telaio carico spiega perché sta fermo',()=>{
+  tempo.impostaGiorno(10);
+  essiccatoio();inventario.aggiungi('pesce_crudo',6);
+  const azione=azioni.azionePossibile(eroe,'pesce_crudo',0);
+  assert.equal(azione.verbo,"Stendi (d'inverno non secca)");
+  assert.equal(azione.dInverno,true);
+  // Si stende lo stesso: la roba aspetta la primavera invece di marcire in
+  // mano, e il gioco non toglie un gesto — dice cosa comporta.
+  assert.equal(azioni.agisci(eroe,'pesce_crudo',0).quante,3);
+  assert.match(azioni.azionePossibile(eroe,null,0).impedito,/d'inverno il pesce non secca/);
+  // In primavera la stessa domanda ha l'altra risposta.
+  tempo.impostaGiorno(13);
+  assert.match(azioni.azionePossibile(eroe,null,0).impedito,/il pesce sta ancora seccando/);
+  assert.equal(azioni.azionePossibile(eroe,'pesce_crudo',0).verbo,'Stendi (riparte il conto)');
 });

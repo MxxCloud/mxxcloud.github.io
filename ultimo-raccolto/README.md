@@ -12,6 +12,35 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.15.6 — d'inverno non si secca
+
+L'essiccatoio era l'unica cosa della valle che l'inverno non toccava. In una
+stagione che raddoppia la fame, gela l'acqua, dirada la caccia e fa bruciare il
+doppio della legna, il telaio continuava a lavorare come a luglio — la neve non
+fermava niente.
+
+Adesso **l'inverno ferma il conto per intero, a prescindere dalla neve**: non è
+il maltempo, è la stagione. Al freddo l'aria non tira via niente, e un telaio
+caricato in novembre resta un telaio carico fino a marzo.
+
+| Quando stendi | Pronto | In tempo vero |
+| --- | --- | --- |
+| Inizio estate | 3 giorni | 15 minuti |
+| Metà autunno | 7 giorni | 35 minuti |
+| Fine autunno | 8 giorni | **40 minuti** |
+| In pieno inverno | fino a primavera inoltrata | — |
+
+**La scorta per marzo va preparata prima che arrivi marzo**, che è tutto il
+punto di una scorta.
+
+Due cose restano come sono, di proposito. La roba stesa **non si perde**: la
+pioggia e l'inverno fermano il conto, non rovinano niente, e in primavera il
+telaio riparte da solo senza che il giocatore tocchi nulla. E **stendere
+d'inverno resta permesso** — non si toglie un gesto, si dice cosa comporta: il
+tasto legge `STENDI (D'INVERNO NON SECCA)`, e un telaio carico che per quattro
+giorni non cambia disegno risponde `D'INVERNO LA CARNE NON SECCA` invece di
+lasciar credere che sia rotto.
+
 ## M7.15.5 — il ghiaccio non è color sangue
 
 Trovato guardando un'altra cosa, e vecchio quanto il gelo: **gli stagni
@@ -1013,7 +1042,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.15.5**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.15.6**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -1036,7 +1065,8 @@ per una) o a fibra (dieci per una) — e ne bruciano una al giorno, due
 d'inverno; quando finiscono non si perdono: resta la pietra o la fossa, e si
 rimette legna. Il camino di casa ne tiene quattro, il fuoco da viaggio due. E
 fuori, all'aria, si costruisce **un essiccatoio**: tre carni crude — o tre
-pesci — stesi per tre giorni di sole fanno una razione che dura dodici giorni.
+pesci — stesi per tre giorni di sole fanno una razione che dura dodici giorni,
+e d'inverno il telaio non lavora.
 Il fuoco dentro, quello che aspetta fuori.
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
