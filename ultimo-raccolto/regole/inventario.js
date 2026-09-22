@@ -192,11 +192,15 @@ export function ripristina(salvate) {
 
 
 // Valuta una trasformazione senza alterare le pile originali se fallisce.
+// Il prodotto può essere più d'uno — la zuppa rende anche il secchio vuoto —
+// e allora ci devono stare tutti: metà ricetta fatta sarebbe roba sparita.
 export function trasforma(costi, prodotto) {
   const copia = caselle.map(c => c ? { ...c } : null);
   for (const voce of costi) if (!togliDa(copia, voce.cosa, voce.quante)) return false;
-  if (spazioIn(copia, prodotto.cosa) < prodotto.quante) return false;
-  mettiIn(copia, prodotto.cosa, prodotto.quante);
+  for (const voce of Array.isArray(prodotto) ? prodotto : [prodotto]) {
+    if (spazioIn(copia, voce.cosa) < voce.quante) return false;
+    mettiIn(copia, voce.cosa, voce.quante);
+  }
   for (let i = 0; i < CASELLE; i++) caselle[i] = copia[i];
   return true;
 }

@@ -109,6 +109,11 @@ export const TAVOLOZZA = {
   // risponde a una domanda, non descrive la luce.
   x: "#355a26",
   y: "#48742f",
+  // Il verde del cavolo, più chiaro e più freddo dei due qui sopra: una testa
+  // di cavolo è una palla di foglie cerose, e a sedici pixel si riconosce dal
+  // colore prima che dalla forma. Come loro non cambia con la stagione, ed è
+  // il cavolo, fra tutte, quello che si guarda d'inverno.
+  E: "#8aa57a",
 
   // Il sangue degli infetti. Scuro e smorto, non il rosso delle bacche: le
   // bacche sono uno dei due colori che il giocatore deve trovare da solo, e
@@ -150,11 +155,12 @@ export const TAVOLOZZA_BAGNATA = {
 // tavolozza intera ma una correzione, da stendere sopra quella che c'è — la
 // asciutta o la bagnata, di qualunque stagione — perché una pianta assetata e
 // poi innaffiata ha la terra scura e le foglie ancora gialle fino a domani.
-// Tocca soltanto i due verdi dell'orto, che le stagioni non toccano mai: la
+// Tocca soltanto i verdi dell'orto, che le stagioni non toccano mai: la
 // sete deve leggersi uguale in ogni mese, come lo stadio.
 export const FOGLIE_ASSETATE = {
   x: "#6b6a2e",
   y: "#94904a",
+  E: "#a8a46a",
 };
 
 // --- gli infetti ----------------------------------------------------------

@@ -129,7 +129,10 @@ export const CATALOGO = {
     commestibile: { sete: 0.5 },
     diventa: "secchio",
   },
-  semi: { nome: "Semi", icona: arte.SEMI, pila: 40 },
+  // I semi della rapa. L'identificatore resta "semi" perché è quello scritto
+  // in ogni salvataggio da M3 in poi; il nome è cambiato perché adesso di semi
+  // ce ne sono tre, e "Semi" non diceva più quali.
+  semi: { nome: "Semi di rapa", icona: arte.SEMI, pila: 40 },
   // Sfama il doppio delle bacche: è il senso dell'orto, e senza questo
   // divario coltivare sarebbe un passatempo invece di una risposta alla fame.
   rapa: {
@@ -161,6 +164,83 @@ export const CATALOGO = {
     icona: arte.RAPA_ARROSTITA,
     pila: 20,
     commestibile: { fame: 1 },
+    dura: 2,
+  },
+  // --- le colture di M7.17 ------------------------------------------------
+  //
+  // La patata è la scorta: cruda sfama poco — è una patata cruda — e dura due
+  // settimane, cioè attraversa l'inverno intero in fondo allo zaino. Ed è
+  // anche il suo seme: una patata piantata ne rende tre, quindi ogni patata
+  // mangiata è una pianta in meno.
+  //
+  // Cotta vale sei decimi, e il numero è misurato. A sette, su sei tasselli e
+  // un anno di stagioni buone, la patata rendeva 0,23 di fame al giorno per
+  // tassello contro gli 0,17 della rapa, e durando il doppio: sarebbe stata
+  // meglio in tutto, cioè l'unica scelta. A sei rende 0,2 — un po' più della
+  // rapa, perché è più lenta e non si semina d'autunno — e resta la scorta.
+  patata: {
+    nome: "Patata",
+    icona: arte.PATATA,
+    pila: 20,
+    commestibile: { fame: 0.3 },
+    cuoce: "patata_arrostita",
+    dura: 14,
+  },
+  patata_arrostita: {
+    nome: "Patata arrostita",
+    icona: arte.PATATA_ARROSTITA,
+    pila: 20,
+    commestibile: { fame: 0.6 },
+    dura: 2,
+  },
+  // I fagioli crudi non sono un pasto, e dirlo col numero basta: un quarto di
+  // una rapa. Cotti valgono la metà di un pasto l'uno, e tre per pianta fanno
+  // la coltura che rende di più. Seccati all'essiccatoio fanno quello che fa
+  // la carne: tre diventano una manciata che dura un anno e sfama meno, lo
+  // stesso settantotto per cento che la carne perde seccando.
+  fagioli: {
+    nome: "Fagioli",
+    icona: arte.FAGIOLI,
+    pila: 30,
+    commestibile: { fame: 0.15 },
+    cuoce: "fagioli_cotti",
+    dura: 6,
+  },
+  fagioli_cotti: {
+    nome: "Fagioli cotti",
+    icona: arte.FAGIOLI_COTTI,
+    pila: 20,
+    commestibile: { fame: 0.5 },
+    dura: 2,
+  },
+  fagioli_secchi: {
+    nome: "Fagioli secchi",
+    icona: arte.FAGIOLI_SECCHI,
+    pila: 20,
+    commestibile: { fame: 0.35 },
+    dura: 16,
+  },
+  // Il cavolo non si cuoce da solo: si mangia crudo, o va nella zuppa. Dura
+  // più della rapa perché è una testa di foglie strette, e il suo mestiere è
+  // un altro — d'inverno non muore nel campo (vedi colture.js).
+  cavolo: {
+    nome: "Cavolo",
+    icona: arte.CAVOLO,
+    pila: 10,
+    commestibile: { fame: 0.6 },
+    dura: 8,
+  },
+  semi_cavolo: { nome: "Semi di cavolo", icona: arte.SEMI_CAVOLO, pila: 40 },
+  semi_lino: { nome: "Semi di lino", icona: arte.SEMI_LINO, pila: 40 },
+  // La zuppa: due scodelle da una verdura, un cavolo e un secchio d'acqua,
+  // sul fuoco (vedi ricette.js). Sfama più di quanto sfamerebbero i due
+  // ingredienti cotti ciascuno per conto suo, e toglie anche un po' di sete:
+  // è acqua. Non si tiene — due giorni, come ogni cosa cotta.
+  zuppa: {
+    nome: "Zuppa",
+    icona: arte.ZUPPA,
+    pila: 10,
+    commestibile: { fame: 0.9, sete: 0.25 },
     dura: 2,
   },
   // Seccare invece è conservare, ed è l'unica cosa nel gioco che dura più di

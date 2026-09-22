@@ -15,9 +15,12 @@ import * as modifiche from "../mondo/modifiche.js";
 import * as tempo from "./tempo.js";
 import * as stagioni from "./stagioni.js";
 import * as meteo from "./meteo.js";
+import * as colture from "./colture.js";
 
 // In ordine di crescita: ogni giorno innaffiato avanza di uno. Quattro stadi,
-// quindi tre innaffiature dalla semina al raccolto.
+// quindi tre innaffiature dalla semina al raccolto. È la fila della rapa, ed è
+// anche l'elenco degli stadi che ogni coltura attraversa: le altre ne ripetono
+// qualcuno per crescere più piano (vedi colture.js).
 //
 // Il germoglio era stato tolto quando l'orto rendeva poco e un'innaffiatura
 // saltata costava soltanto un giorno: allora il margine serviva a non perdere
@@ -46,22 +49,23 @@ const RITIRATI = {};
 export const GIORNI_DI_MATURITA = 2;
 export const GIORNI_A_SEME = 2;
 
-// Quanta sete uccide. Un giorno senz'acqua ferma la pianta e le ingiallisce le
-// foglie; il terzo di fila la secca. D'estate l'aria è arida e un giorno
-// senz'acqua conta due, quindi basta il secondo: la stagione che asseta il
+// Quanta sete uccide lo dice la coltura (vedi colture.js): un giorno
+// senz'acqua ferma la pianta e le ingiallisce le foglie, e a un certo numero
+// di giorni asciutti di fila la secca — tre per la rapa. D'estate l'aria è
+// arida e un giorno senz'acqua conta due: la stagione che asseta il
 // superstite asseta anche il campo.
 //
-// Prima un'innaffiatura saltata costava un giorno e basta, quindi l'orto non
-// chiedeva niente: si poteva seminare e tornare quando capitava. È la metà del
-// pilastro che si riprende le cose, applicata a quella che le si dà da bere.
-//
-// E non due, che era la prima idea: con due, d'estate un giorno dimenticato
-// seccava il campo intero, e l'orto diventava un obbligo di ogni cinque minuti
-// invece di una cosa da curare. Misurato su sei tasselli e un anno di stagioni
-// buone: saltando un giorno su quattro, con due si raccoglieva un settimo di
-// quanto rende la cura perfetta, con tre la metà. Un giorno perso deve costare
-// un giorno — che in una stagione di quattro è già molto — non tutto.
-export const SETE_MORTALE = 3;
+// Prima di M7.16 un'innaffiatura saltata costava un giorno e basta, quindi
+// l'orto non chiedeva niente. E la soglia della rapa è tre e non due, che era
+// la prima idea: con due, d'estate un giorno dimenticato seccava il campo
+// intero, e l'orto diventava un obbligo di ogni cinque minuti invece di una
+// cosa da curare. Misurato su sei tasselli e un anno di stagioni buone:
+// saltando un giorno su quattro, con due si raccoglieva un settimo di quanto
+// rende la cura perfetta, con tre la metà. Un giorno perso deve costare un
+// giorno — che in una stagione di quattro è già molto — non tutto.
+function sogliaDi(cambio) {
+  return colture.di(cambio?.coltura).sete;
+}
 
 // Quanta sete fa patire il giorno dato a chi non beve.
 function seteDi(giorno) {
@@ -71,19 +75,25 @@ function seteDi(giorno) {
 // Una pianta assetata secca stanotte se nessuno la innaffia oggi? Serve a chi
 // la guarda: "ha sete" e "stanotte è morta" chiedono due fretta diverse.
 export function seccaStanotte(cambio, giorno = tempo.giornoCorrente()) {
-  return (cambio?.secco ?? 0) + seteDi(giorno) >= SETE_MORTALE;
+  return (cambio?.secco ?? 0) + seteDi(giorno) >= sogliaDi(cambio);
 }
 
 export function eColtura(oggetto) {
   return CRESCITA.includes(oggetto) || oggetto in RITIRATI || oggetto === OGGETTO.A_SEME;
 }
 
-// Lo stadio dopo, o niente se è l'ultimo. Passa dai ritirati, così una coltura
-// di un salvataggio vecchio rientra nella catena nuova al primo giorno
-// innaffiato.
-function prossimoStadio(oggetto) {
-  if (oggetto in RITIRATI) return RITIRATI[oggetto];
-  return CRESCITA[CRESCITA.indexOf(oggetto) + 1];
+// Lo stadio dopo nella fila della sua coltura, con il passo a cui arriva, o
+// niente se è l'ultimo. Passa dai ritirati, così una coltura di un salvataggio
+// vecchio rientra nella catena nuova al primo giorno innaffiato.
+function prossimoStadio(cambio) {
+  if (cambio.oggetto in RITIRATI) {
+    const oggetto = RITIRATI[cambio.oggetto];
+    return { oggetto, passo: colture.di(cambio.coltura).stadi.indexOf(oggetto) };
+  }
+  const stadi = colture.di(cambio.coltura).stadi;
+  const passo = colture.passoDi(cambio) + 1;
+  if (passo >= stadi.length) return undefined;
+  return { oggetto: stadi[passo], passo };
 }
 
 export function eMatura(oggetto) {
@@ -137,14 +147,22 @@ export function nuovoGiorno() {
   const assetate = [];
   const daCrescere = [];
   const daDatare = [];
+  const fermi = [];
   modifiche.perOgnuno((tx, ty, cambio) => {
     if (!eColtura(cambio.oggetto)) return;
+    const coltura = colture.di(cambio.coltura);
     // D'inverno muore tutto quello che era piantato, maturo e a seme
     // compresi: è la scadenza, ed è la ragione per cui esiste una stagione
     // buona. Si guarda prima di far crescere, perché crescere e morire lo
     // stesso giorno sarebbe una crescita che nessuno ha visto.
+    //
+    // Tranne chi regge il gelo: il cavolo d'inverno non muore, si ferma. Non
+    // cresce, non ha sete, e l'orologio di quello maturo sta fermo con lui —
+    // se no un cavolo maturato a novembre andrebbe a seme a dicembre, e il
+    // fresco di gennaio sarebbe una promessa che l'inverno non mantiene.
     if (!siColtiva) {
-      appassite.push({ tx, ty });
+      if (!coltura.gelo) appassite.push({ tx, ty });
+      else if (cambio.maturata !== undefined) fermi.push({ tx, ty, cambio });
       return;
     }
     if (!inCrescita(cambio.oggetto)) {
@@ -157,10 +175,12 @@ export function nuovoGiorno() {
         daDatare.push({ tx, ty, cambio });
         return;
       }
+      // Chi non va a seme — la patata, i fagioli — resta matura per tutti e
+      // quattro i giorni e poi marcisce: il suo seme è il raccolto stesso.
       const eta = giorno - cambio.maturata;
-      if (cambio.oggetto === OGGETTO.A_SEME && eta >= GIORNI_DI_MATURITA + GIORNI_A_SEME) {
+      if (eta >= GIORNI_DI_MATURITA + GIORNI_A_SEME) {
         appassite.push({ tx, ty });
-      } else if (eMatura(cambio.oggetto) && eta >= GIORNI_DI_MATURITA) {
+      } else if (eMatura(cambio.oggetto) && eta >= GIORNI_DI_MATURITA && coltura.aSeme) {
         aSeme.push({ tx, ty, cambio });
       }
       return;
@@ -171,12 +191,18 @@ export function nuovoGiorno() {
     }
     if (!spuntata(cambio.oggetto)) return;
     const secco = (cambio.secco ?? 0) + sete;
-    if (secco >= SETE_MORTALE) seccate.push({ tx, ty });
+    if (secco >= coltura.sete) seccate.push({ tx, ty });
     else assetate.push({ tx, ty, cambio: { ...cambio, secco } });
   });
 
   for (const { tx, ty, cambio } of daDatare) {
     modifiche.imposta(tx, ty, { ...cambio, maturata: giorno });
+  }
+  // Fermo vuol dire che il giorno d'inverno non conta: la data della
+  // maturazione avanza con il calendario, e l'età resta quella di ieri. Il
+  // disegno non cambia, quindi basta annotarlo.
+  for (const { tx, ty, cambio } of fermi) {
+    modifiche.imposta(tx, ty, { ...cambio, maturata: cambio.maturata + 1 });
   }
   for (const { tx, ty } of [...appassite, ...seccate]) {
     mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.APPASSITA });
@@ -190,13 +216,16 @@ export function nuovoGiorno() {
 
   let cresciute = 0;
   for (const { tx, ty, cambio } of daCrescere) {
-    const prossimo = prossimoStadio(cambio.oggetto);
+    const prossimo = prossimoStadio(cambio);
     if (prossimo === undefined) continue;
     // Crescere asciuga e toglie la sete, e chi arriva a maturo si porta
-    // dietro la data: da lì parte il conto dei giorni buoni.
-    const { bagnato, secco, ...resto } = cambio;
-    const nuovo = { ...resto, oggetto: prossimo };
-    if (eMatura(prossimo)) nuovo.maturata = giorno;
+    // dietro la data: da lì parte il conto dei giorni buoni. Il passo si
+    // scrive solo per le colture che non sono la rapa: la sua fila non ripete
+    // stadi, e un campo di rape resta scritto come prima.
+    const { bagnato, secco, passo, ...resto } = cambio;
+    const nuovo = { ...resto, oggetto: prossimo.oggetto };
+    if (cambio.coltura !== undefined) nuovo.passo = prossimo.passo;
+    if (eMatura(prossimo.oggetto)) nuovo.maturata = giorno;
     mappa.cambiaTassello(tx, ty, nuovo);
     cresciute += 1;
   }

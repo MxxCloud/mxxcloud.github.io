@@ -313,6 +313,8 @@ const POSTI = [
 const TINTE_STESE = {
   carne_cruda: { fresco: "t", secco: "A" },
   pesce_crudo: { fresco: "3", secco: "D" },
+  // I baccelli verdi, e i fagioli bruni quando il baccello si è seccato.
+  fagioli: { fresco: "x", secco: "l" },
 };
 
 // Il telaio con sopra quello che c'è davvero.
@@ -852,3 +854,151 @@ export const PESCE_ARROSTITO = [
 // prima stesura lo faceva marrone come la carne secca — cioè toglieva l'unica
 // cosa che nella casella dello zaino lo distingue da lei.
 export const PESCE_SECCO = PESCE_CRUDO.map(r => r.replaceAll("3", "D").replaceAll("B", "s"));
+
+// --- le colture di M7.17 ---------------------------------------------------
+//
+// Quello che si raccoglie e quello che si semina, uno per coltura. I semi si
+// distinguono dal colore e dalla forma prima che dal nome: quelli della rapa
+// sono i bruni di sempre, quelli del cavolo piccoli e quasi neri, quelli del
+// lino piatti e dorati — che è com'è il seme di lino davvero.
+
+export const PATATA = [
+  "............",
+  "............",
+  "...4444.....",
+  "..444444....",
+  "..44w444....",
+  "..444444w...",
+  "...44444444.",
+  "....w444444.",
+  ".....44w444.",
+  "......4444..",
+  "............",
+  "............",
+];
+
+export const PATATA_ARROSTITA = [
+  "............",
+  "............",
+  "...wwww.....",
+  "..wwhwww....",
+  "..wwwwwh....",
+  "..whwwwwww..",
+  "...wwwwhwww.",
+  "....wwwwwww.",
+  ".....whwwww.",
+  "......wwww..",
+  "............",
+  "............",
+];
+
+// Borlotti: il rosso bruno con le macchie chiare, che si riconosce anche da
+// chi non ha mai sgranato un baccello.
+export const FAGIOLI = [
+  "............",
+  "............",
+  "...ll...ll..",
+  "..llzl.lzll.",
+  "..lzll.llzl.",
+  "...ll...ll..",
+  ".....ll.....",
+  "....lzll....",
+  "....llzl....",
+  ".....ll.....",
+  "............",
+  "............",
+];
+
+export const FAGIOLI_COTTI = [
+  "............",
+  "............",
+  "............",
+  "..llmllmll..",
+  ".hlmllmllmh.",
+  ".hhhhhhhhhh.",
+  "..hhhhhhhh..",
+  "...hhhhhh...",
+  "....gggg....",
+  "............",
+  "............",
+  "............",
+];
+
+// Il sacchetto: i fagioli secchi non pendono dal telaio come la carne, ma
+// ne escono per finire qui dentro, e il sacchetto dice che durano.
+export const FAGIOLI_SECCHI = [
+  "............",
+  ".....gg.....",
+  "....wggw....",
+  "...wwwwww...",
+  "..wlwllwlw..",
+  "..wwlwwlww..",
+  "..wlwllwlw..",
+  "..wwwwwwww..",
+  "...wwwwww...",
+  "............",
+  "............",
+  "............",
+];
+
+export const CAVOLO = [
+  "............",
+  "....EEEE....",
+  "..EExEEEE...",
+  ".EEEExEEEE..",
+  ".ExEEExExE..",
+  ".EExEExEEE..",
+  ".EEExEEExE..",
+  "..EEEExEE...",
+  "...EEEEE....",
+  ".....x......",
+  "............",
+  "............",
+];
+
+export const SEMI_CAVOLO = [
+  "............",
+  "............",
+  "...qq..qq...",
+  "..qnnq.qnq..",
+  "..qnnq..q...",
+  "...qq.......",
+  ".....qq.qq..",
+  "....qnnq.q..",
+  "....qnnq....",
+  ".....qq.....",
+  "............",
+  "............",
+];
+
+export const SEMI_LINO = [
+  "............",
+  "............",
+  "...44...44..",
+  "..4554.4554.",
+  "...44...44..",
+  "............",
+  ".....44.....",
+  "....4554....",
+  ".....44.....",
+  "............",
+  "............",
+  "............",
+];
+
+// La zuppa: la stessa ciotola dei fagioli, e il vapore che dice che è calda
+// — cioè che è passata da un fuoco.
+export const ZUPPA = [
+  "....z..z....",
+  ".....z..z...",
+  "....z..z....",
+  "..44u44u44..",
+  ".h4uu44uu4h.",
+  ".hhhhhhhhhh.",
+  "..hhhhhhhh..",
+  "...hhhhhh...",
+  "....gggg....",
+  "............",
+  "............",
+  "............",
+];

@@ -17,6 +17,7 @@ import * as infetti from "./infetti.js";
 import * as urti from "../entita/urti.js";
 import * as chiasso from "./chiasso.js";
 import * as orto from "./orto.js";
+import * as colture from "./colture.js";
 import * as contenitori from "./contenitori.js";
 import * as stagioni from "./stagioni.js";
 import * as simulazione from "./simulazione.js";
@@ -89,6 +90,10 @@ export const SECCABILI = {
     uno: "carne secca", molti: "carni secche" },
   pesce_crudo: { secca: "pesce_secco", tanti: "pesci", quello: "il pesce",
     uno: "pesce secco", molti: "pesci secchi" },
+  // I fagioli sono i primi al plurale, e il telaio lo deve dire bene: "il
+  // pesce sta seccando", ma "i fagioli stanno".
+  fagioli: { secca: "fagioli_secchi", tanti: "fagioli", quello: "i fagioli", plurale: true,
+    uno: "manciata di fagioli secchi", molti: "manciate di fagioli secchi" },
 };
 
 // Quante ne sono, dette come si dicono. Una riga per non scrivere mai
@@ -415,14 +420,14 @@ function sulTassello(eroe, cosaInMano, indice) {
     // Perché non è ancora pronto, e non solo che non lo è: d'inverno il conto
     // sta fermo fino a primavera, e un telaio che non si muove per quattro
     // giorni senza che nessuno dica niente è un telaio che sembra guasto.
-    const quello = SECCABILI[stesoIn(b.tx, b.ty)].quello;
+    const { quello, plurale } = SECCABILI[stesoIn(b.tx, b.ty)];
     const fermo = stagioni.stagioneCorrente() === "inverno"
-      ? `d'inverno ${quello} non secca`
-      : `${quello} sta ancora seccando`;
+      ? `d'inverno ${quello} non ${plurale ? "seccano" : "secca"}`
+      : `${quello} ${plurale ? "stanno" : "sta"} ancora seccando`;
     return { tipo: "essiccatoio", verbo: "Guarda l'essiccatoio", bersaglio: b, impedito: fermo };
   }
 
-  const raccolta = raccoltaDi(b.oggetto);
+  const raccolta = raccoltaIn(b.oggetto, b.tx, b.ty);
   if (raccolta) {
     const dati = modifiche.di(b.tx, b.ty);
     const gia = dati?.colpi ?? 0;
@@ -465,15 +470,20 @@ function sulTassello(eroe, cosaInMano, indice) {
     return { tipo: "zappa", verbo: "Zappa", bersaglio: b };
   }
 
-  if (cosaInMano === "semi" && b.oggetto === OGGETTO.TERRA_ZAPPATA) {
+  // Il seme che si ha in mano decide la coltura: sono tre semi, una patata e
+  // un fagiolo, e ognuno pianta la sua.
+  const semina = colture.dalSeme(cosaInMano);
+  if (semina && b.oggetto === OGGETTO.TERRA_ZAPPATA) {
+    const coltura = colture.di(semina);
+    const gesto = { tipo: "semina", verbo: coltura.verbo, coltura: semina, bersaglio: b };
     // Zappare d'inverno resta permesso — preparare il campo per la primavera è
     // una cosa sensata da fare — ma seminare no: il seme morirebbe la notte
     // stessa, e farglielo scoprire dopo sarebbe una trappola travestita da
-    // regola.
-    if (!stagioni.siColtiva()) {
-      return { tipo: "semina", verbo: "Semina", impedito: "d'inverno non germoglia", bersaglio: b };
-    }
-    return { tipo: "semina", verbo: "Semina", bersaglio: b };
+    // regola. Fuori dalla sua stagione vale lo stesso, e si dice quale è: un
+    // fagiolo seminato in autunno non vedrebbe l'estate.
+    if (!stagioni.siColtiva()) return { ...gesto, impedito: "d'inverno non germoglia" };
+    if (!coltura.stagioni.includes(stagioni.stagioneCorrente())) return { ...gesto, impedito: coltura.quando };
+    return gesto;
   }
 
   if (cosaInMano === "secchio_pieno" && orto.siPuoInnaffiare(b.oggetto)) {
@@ -801,6 +811,15 @@ export function lasciaIlCadavere(eroe, giorno) {
   return { ...posto, quante: roba.length };
 }
 
+// La voce della raccolta per quello che sta su questo tassello. È quella della
+// tavola in oggetti.js, tranne per l'orto: lì la matura e quella a seme rendono
+// quello della loro coltura, che il tassello si ricorda (vedi colture.js).
+function raccoltaIn(oggetto, tx, ty) {
+  const base = raccoltaDi(oggetto);
+  if (!base || !orto.eColtura(oggetto)) return base;
+  return colture.raccolta(base, oggetto, modifiche.di(tx, ty));
+}
+
 // L'esito della raccolta è deciso dalle coordinate, non dal caso del momento:
 // lo stesso cespuglio ha le bacche o non le ha, sempre. Oltre a rispettare la
 // regola che qui Math.random non esiste, rende il mondo una cosa che si può
@@ -1088,9 +1107,17 @@ function esegui(eroe, cosaInMano, indice, azione) {
   }
 
   if (azione.tipo === "semina") {
-    if (!inventario.togli("semi", 1)) return null;
-    mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.SEMINATO });
-    return { tipo: "semina" };
+    const seme = colture.di(azione.coltura).seme;
+    if (!inventario.togli(seme, 1)) return null;
+    // La rapa non scrive la sua coltura, com'è sempre stato: un campo di rape
+    // resta scritto uguale a quello di un salvataggio di prima.
+    const cambio = { oggetto: OGGETTO.SEMINATO };
+    if (azione.coltura !== colture.RAPA) {
+      cambio.coltura = azione.coltura;
+      cambio.passo = 0;
+    }
+    mappa.cambiaTassello(tx, ty, cambio);
+    return { tipo: "semina", coltura: azione.coltura };
   }
 
   if (azione.tipo === "innaffia") {
@@ -1162,7 +1189,7 @@ function esegui(eroe, cosaInMano, indice, azione) {
   }
 
   const oggetto = azione.bersaglio.oggetto;
-  const raccolta = raccoltaDi(oggetto);
+  const raccolta = raccoltaIn(oggetto, tx, ty);
   const precedente = modifiche.di(tx, ty) ?? {};
   const colpi = (precedente.colpi ?? 0) + 1;
   const necessari = colpiNecessari(

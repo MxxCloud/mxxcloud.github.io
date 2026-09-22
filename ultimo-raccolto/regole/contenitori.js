@@ -59,6 +59,10 @@ const BOTTINO = [
   { cosa: "fibra", da: 2, a: 6, peso: 3 },
   { cosa: "legna", da: 2, a: 5, peso: 3 },
   { cosa: "semi", da: 2, a: 4, peso: 2 },
+  // Da M7.17 le case sono il posto dove si trovano i semi che i cespugli non
+  // danno: il cavolo e il lino erano dell'orto di qualcuno, non della valle.
+  { cosa: "semi_cavolo", da: 2, a: 3, peso: 2 },
+  { cosa: "semi_lino", da: 2, a: 3, peso: 2 },
   { cosa: "benda", da: 1, a: 2, peso: 2 },
   { cosa: "bacche_secche", da: 2, a: 5, peso: 2 },
   { cosa: "torcia", da: 1, a: 2, peso: 2 },
@@ -79,10 +83,15 @@ const BOTTINO = [
 // I semi sì, e sono il regalo vero: davanti alla fattoria c'è il campo di
 // qualcun altro, già terra battuta, e i semi lo rendono un campo tuo prima
 // ancora di aver trovato una zappa.
+//
+// E le patate, che in una fattoria si tengono in cantina: sono la coltura che
+// si ripianta dal raccolto, quindi chi le trova qui ha già il suo orto di
+// scorta — se non se le mangia.
 const BOTTINO_FATTORIA = [
   { cosa: "fibra", da: 2, a: 5, peso: 3 },
   { cosa: "legna", da: 2, a: 4, peso: 3 },
   { cosa: "semi", da: 2, a: 4, peso: 3 },
+  { cosa: "patata", da: 2, a: 3, peso: 3 },
   { cosa: "pietra", da: 1, a: 3, peso: 2 },
   { cosa: "bacche_secche", da: 1, a: 3, peso: 1 },
 ];
@@ -90,9 +99,12 @@ const BOTTINO_FATTORIA = [
 // Scorte piccole e legate al posto, non altre casse ricche come quelle delle
 // case. Nessuna carne fresca dimenticata da anni, attrezzi sempre già usati.
 const BOTTINO_LUOGHI = {
+  // I fagioli sono il cibo di chi viaggia — secchi, leggeri, durano — e si
+  // trovano dove viaggiava qualcuno: nel carro e nell'accampamento.
   carro: [
     { cosa: "fibra", da: 2, a: 4, peso: 3 },
     { cosa: "legna", da: 1, a: 3, peso: 3 },
+    { cosa: "fagioli", da: 2, a: 3, peso: 2 },
     { cosa: "benda", da: 1, a: 1, peso: 1 },
   ],
   pozzo: [
@@ -103,6 +115,7 @@ const BOTTINO_LUOGHI = {
   bruciato: [
     { cosa: "fibra", da: 1, a: 3, peso: 3 },
     { cosa: "benda", da: 1, a: 1, peso: 2 },
+    { cosa: "fagioli", da: 1, a: 2, peso: 2 },
     { cosa: "conserva", da: 1, a: 1, peso: 1 },
   ],
   boscaioli: [
@@ -110,8 +123,12 @@ const BOTTINO_LUOGHI = {
     { cosa: "ramo", da: 2, a: 3, peso: 3 },
     { cosa: "ascia", da: 1, a: 1, peso: 1 },
   ],
+  // L'orto abbandonato ha i semi di chi lo coltivava: la rapa, e ogni tanto
+  // un cavolo o qualche patata.
   orto: [
     { cosa: "semi", da: 2, a: 4, peso: 4 },
+    { cosa: "semi_cavolo", da: 2, a: 3, peso: 2 },
+    { cosa: "patata", da: 1, a: 2, peso: 2 },
     { cosa: "fibra", da: 2, a: 3, peso: 2 },
     { cosa: "zappa", da: 1, a: 1, peso: 1 },
   ],
