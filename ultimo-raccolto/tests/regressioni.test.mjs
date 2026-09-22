@@ -38,6 +38,7 @@ import * as infetti from '../regole/infetti.js';
 import * as entita from '../entita/entita.js';
 import * as decadimento from '../regole/decadimento.js';
 import * as stagioni from '../regole/stagioni.js';
+import * as orto from '../regole/orto.js';
 import { OGGETTO, TERRENO } from '../mondo/generazione.js';
 import { CATALOGO, RACCOLTA } from '../regole/oggetti.js';
 import { vistaLibera, fattoreSuono } from '../mondo/ostacoli.js';
@@ -349,7 +350,8 @@ test('sonno: la sete fa danno solo dopo essersi esaurita, non lo sfinimento',()=
 test('coltura bagnata cresce una sola volta per mezzanotte',()=>{
   tempo.impostaOra(23);modifiche.imposta(tx,ty,{oggetto:OGGETTO.SEMINATO,bagnato:true});
   simulazione.avanza(26);
-  assert.equal(modifiche.di(tx,ty).oggetto,OGGETTO.CRESCIUTA);
+  // Il germoglio, da M7.16: è tornato nella fila, quindi il seme passa di lì.
+  assert.equal(modifiche.di(tx,ty).oggetto,OGGETTO.GERMOGLIO);
   assert.equal(simulazione.resoconto().cresciute,1);
   assert.equal(simulazione.resoconto().cresciute,0);
 });
@@ -746,7 +748,7 @@ test('colture seminate dopo l’inizio della pioggia ricevono acqua',()=>{
 test('la pioggia durante un’assenza fa crescere l’orto alla mezzanotte giusta',()=>{
   const giorno=maltempo('pioggia');tempo.impostaOra(23);
   modifiche.imposta(tx,ty,{oggetto:OGGETTO.SEMINATO});simulazione.avanza(13);
-  assert.equal(tempo.giornoCorrente(),giorno+1);assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.CRESCIUTA);
+  assert.equal(tempo.giornoCorrente(),giorno+1);assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.GERMOGLIO);
   assert.equal(modifiche.di(tx,ty).bagnato,undefined);
 });
 test('pioggia inzuppa in venti secondi e raffredda anche di giorno',()=>{
@@ -2527,7 +2529,7 @@ test('l’orto è suolo e quello che sta in piedi no',()=>{
   // Il difetto che questa riga chiude: i solchi entravano nella fila di quello
   // che si ordina per i piedi, quindi un solco più in basso del superstite gli
   // veniva disegnato sopra — e il personaggio spariva sotto il campo.
-  for(const stadio of ['TERRA_ZAPPATA','SEMINATO','GERMOGLIO','CRESCIUTA','MATURA','APPASSITA']) {
+  for(const stadio of ['TERRA_ZAPPATA','SEMINATO','GERMOGLIO','CRESCIUTA','MATURA','A_SEME','APPASSITA']) {
     assert.equal(mappa.eSuolo(OGGETTO[stadio]),true,stadio);
   }
   // E tutto quello che sta in piedi resta in piedi: un albero davanti a te ti
@@ -2610,4 +2612,131 @@ test('offline la navigazione trova la pagina precaricata con la versione',async(
     caches:{match:async(r,opzioni)=>opzioni?.ignoreSearch&&(r.url??r).endsWith('index.html')?'pagina':undefined}});
   handlers.fetch({request:{method:'GET',url:'https://valle.test/ultimo-raccolto/?diagnostica',mode:'navigate'},respondWith:p=>risposta=p});
   assert.equal(await risposta,'pagina');
+});
+
+// --- M7.16: l'orto si paga -------------------------------------------------
+
+// Mezzanotte fra ieri e questo giorno: è tutto quello che l'orto guarda.
+function notte(giorno) { tempo.impostaGiorno(giorno); return orto.nuovoGiorno(); }
+
+test('la matura dà una rapa e niente semi, quella a seme tre semi e niente da mangiare',()=>{
+  // Rendeva due rape e due semi: ogni seme ne ridava due insieme al cibo, e
+  // l'orto cresceva da solo come un interesse composto.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.MATURA,maturata:1});
+  assert.equal(azioni.agisci(eroe,null).tipo,'raccolto');
+  assert.equal(inventario.quante('rapa'),1);assert.equal(inventario.quante('semi'),0);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.A_SEME,maturata:1});
+  assert.equal(azioni.azionePossibile(eroe,null).verbo,'Raccogli i semi');
+  assert.equal(azioni.agisci(eroe,null).tipo,'raccolto');
+  assert.equal(inventario.quante('semi'),3);assert.equal(inventario.quante('rapa'),1);
+});
+test('la matura lasciata lì va a seme in due giorni, e in altri due si secca',()=>{
+  tempo.impostaGiorno(13);modifiche.imposta(tx,ty,{oggetto:OGGETTO.MATURA,maturata:13});
+  assert.equal(notte(14).aSeme,0);assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.MATURA);
+  assert.equal(notte(15).aSeme,1);assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.A_SEME);
+  assert.equal(modifiche.di(tx,ty).maturata,13,'la data resta: è da lì che si conta');
+  notte(16);assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.A_SEME);
+  assert.equal(notte(17).appassite,1);assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.APPASSITA);
+});
+test('un giorno senz’acqua ingiallisce e ferma, e l’acqua rompe la fila',()=>{
+  // In autunno, dove non è arido.
+  for(const giorno of [5,6,7])assert.notEqual(meteo.evento(giorno),'arido');
+  tempo.impostaGiorno(5);modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GERMOGLIO});
+  const primo=notte(6);
+  assert.equal(primo.assetate,1);assert.equal(primo.seccate,0);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.GERMOGLIO,'assetata non cresce');
+  assert.equal(modifiche.di(tx+1,ty).secco,1);
+  // Davanti lo dice, con qualunque cosa in mano — e dice quanto è grave.
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,"ha sete: senz'acqua non cresce");
+  assert.match(azioni.azionePossibile(eroe,'semi').impedito,/ha sete/);
+  // Il secchio viene prima dell'avviso, e toglie la sete subito.
+  inventario.aggiungi('secchio_pieno',1);
+  assert.equal(azioni.agisci(eroe,'secchio_pieno',0).tipo,'innaffia');
+  assert.equal(modifiche.di(tx+1,ty).secco,undefined);assert.equal(modifiche.di(tx+1,ty).bagnato,true);
+  notte(7);assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.CRESCIUTA);
+  assert.equal(modifiche.di(tx+1,ty).secco,undefined);
+  // Asciutta di nuovo, la fila riparte da uno.
+  notte(8);assert.equal(modifiche.di(tx+1,ty).secco,1);
+  // E d'inverno si muore di gelo, non di sete: la notizia è un'altra.
+  const inverno=notte(9);assert.equal(inverno.seccate,0);assert.equal(inverno.appassite,1);
+});
+test('tre giorni asciutti di fila seccano, e il secondo lo dice',()=>{
+  tempo.impostaGiorno(13);modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GERMOGLIO});
+  for(const giorno of [13,14,15])assert.notEqual(meteo.evento(giorno),'arido');
+  notte(14);notte(15);assert.equal(modifiche.di(tx+1,ty).secco,2);
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,'ha sete: stanotte secca');
+  assert.equal(notte(16).seccate,1);assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.APPASSITA);
+});
+test('d’estate un giorno senz’acqua conta due',()=>{
+  assert.equal(meteo.evento(2),'arido');assert.equal(meteo.evento(3),'arido');
+  tempo.impostaGiorno(2);modifiche.imposta(tx,ty,{oggetto:OGGETTO.CRESCIUTA});
+  assert.equal(notte(3).seccate,0);assert.equal(modifiche.di(tx,ty).secco,2);
+  assert.equal(notte(4).seccate,1);assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.APPASSITA);
+});
+test('il seme nella terra asciutta aspetta, anche d’estate',()=>{
+  tempo.impostaGiorno(1);modifiche.imposta(tx,ty,{oggetto:OGGETTO.SEMINATO});
+  for(const giorno of [2,3,4]) {
+    const esito=notte(giorno);assert.equal(esito.seccate+esito.assetate,0);
+    assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.SEMINATO);assert.equal(modifiche.di(tx,ty).secco,undefined);
+  }
+});
+test('la pioggia toglie la sete come il secchio',()=>{
+  maltempo('pioggia');modifiche.imposta(tx,ty,{oggetto:OGGETTO.GERMOGLIO,secco:1});
+  assert.equal(meteo.aggiornaMondo().innaffiate,1);
+  assert.equal(modifiche.di(tx,ty).secco,undefined);assert.equal(modifiche.di(tx,ty).bagnato,true);
+});
+test('la sete si salva solo su una coltura e solo sotto la soglia',()=>{
+  const stato=salvataggio.istantanea(eroe,0);
+  stato.modifiche=[{tx:tx+1,ty,oggetto:OGGETTO.GERMOGLIO,secco:1},{tx:tx+2,ty,oggetto:OGGETTO.A_SEME,maturata:3}];
+  assert.ok(salvataggio.valido(stato));
+  stato.modifiche=[{tx:tx+1,ty,oggetto:OGGETTO.GERMOGLIO,secco:2}];
+  assert.ok(salvataggio.valido(stato),'due è l’ultimo giorno prima di seccare');
+  for(const storto of [3,0,-1,1.5,'uno']) {
+    stato.modifiche=[{tx:tx+1,ty,oggetto:OGGETTO.GERMOGLIO,secco:storto}];
+    assert.equal(salvataggio.valido(stato),false,String(storto));
+  }
+  stato.modifiche=[{tx:tx+1,ty,oggetto:OGGETTO.ALBERO,secco:1}];
+  assert.equal(salvataggio.valido(stato),false,'una sete su un albero');
+});
+
+// Un anno di stagioni buone — primavera, estate, autunno — su sei tasselli,
+// con un giardiniere che fa sempre la stessa cosa: raccoglie la matura se ha
+// almeno `riserva` semi da parte, altrimenti la lascia andare a seme; semina
+// dove è vuoto; innaffia nei giorni in cui `cura` dice sì. Rende la fame
+// cotta prodotta per tassello e per giorno.
+function rendita(cura, riserva) {
+  const campi=[0,1,2,3,4,5].map(i=>({x:tx-2+i,y:ty+3}));
+  for(const {x,y} of campi)modifiche.imposta(x,y,{oggetto:OGGETTO.NESSUNO});
+  const resa=(o,cosa)=>RACCOLTA[o].resa.filter(v=>v.cosa===cosa).reduce((a,v)=>a+v.quante,0);
+  const valore=CATALOGO[CATALOGO.rapa.cuoce].commestibile.fame;
+  let semi=campi.length,fame=0;
+  for(let giorno=13;giorno<25;giorno++) {
+    tempo.impostaGiorno(giorno);
+    for(const {x,y} of campi) {
+      const o=modifiche.di(x,y).oggetto;
+      if(o===OGGETTO.MATURA&&semi>=riserva){fame+=resa(o,'rapa')*valore;modifiche.imposta(x,y,{oggetto:OGGETTO.NESSUNO});}
+      else if(o===OGGETTO.A_SEME){semi+=resa(o,'semi');modifiche.imposta(x,y,{oggetto:OGGETTO.NESSUNO});}
+      else if(o===OGGETTO.APPASSITA)modifiche.imposta(x,y,{oggetto:OGGETTO.NESSUNO});
+      if(modifiche.di(x,y).oggetto===OGGETTO.NESSUNO&&semi>0){semi--;modifiche.imposta(x,y,{oggetto:OGGETTO.SEMINATO});}
+      const ora=modifiche.di(x,y).oggetto;
+      if(cura(giorno)&&orto.siPuoInnaffiare(ora))orto.innaffia(x,y,ora);
+    }
+    notte(giorno+1);
+  }
+  return fame/(campi.length*12);
+}
+test('l’orto rende, ma un tassello non sfama più da solo',()=>{
+  // Prima un tassello curato dava 0,67 di fame al giorno, e se ne consumano
+  // 0,56: bastava un tassello. Adesso con la cura perfetta e i semi tenuti
+  // da parte ne servono tre o quattro per mangiare, e di più per l'inverno.
+  const perfetta=rendita(()=>true,1);
+  assert.ok(perfetta>0.12&&perfetta<0.2,`cura perfetta: ${perfetta.toFixed(3)} per tassello al giorno`);
+  assert.ok(0.56/perfetta>3,'un tassello non sfama più da solo');
+  // Raccogliere tutto e non tenere mai semi rende meno: i semi sono un
+  // raccolto, non un regalo.
+  const ingordo=rendita(()=>true,0);
+  assert.ok(ingordo<perfetta*0.7,`senza semi da parte: ${ingordo.toFixed(3)}`);
+  // Un giorno saltato ogni quattro costa, ma non tutto il campo.
+  const distratta=rendita(giorno=>giorno%4!==0,1);
+  assert.ok(distratta>perfetta*0.3&&distratta<perfetta*0.7,`un giorno su quattro senz'acqua: ${distratta.toFixed(3)}`);
 });

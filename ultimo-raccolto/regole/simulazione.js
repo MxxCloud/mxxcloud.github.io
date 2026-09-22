@@ -10,7 +10,7 @@ import * as orto from "./orto.js";
 import * as decadimento from "./decadimento.js";
 import * as ricrescita from "./ricrescita.js";
 
-const vuoto = () => ({ cresciute: 0, appassite: 0, spenti: 0, guaste: 0, inScadenza: 0, tornati: 0, risvegliForzati: 0 });
+const vuoto = () => ({ cresciute: 0, appassite: 0, seccate: 0, assetate: 0, aSeme: 0, spenti: 0, guaste: 0, inScadenza: 0, tornati: 0, risvegliForzati: 0 });
 let eventi = vuoto();
 
 export function resoconto() {
@@ -67,6 +67,12 @@ export function avanza(secondi, { eroe = null, dorme = false, corre = false, siM
       const lasciato = decadimento.nuovoGiorno();
       eventi.cresciute += orti.cresciute;
       eventi.appassite += orti.appassite;
+      eventi.seccate += orti.seccate;
+      eventi.aSeme += orti.aSeme;
+      // Come "in scadenza": è lo stato di stamattina, non una somma. Dopo
+      // due notti d'assenza le assetate di ieri sono le seccate di oggi, e
+      // contarle due volte direbbe un orto più grande di quello che c'è.
+      eventi.assetate = orti.assetate;
       eventi.spenti += lasciato.fuochi;
       eventi.guaste += lasciato.guaste;
       eventi.inScadenza = lasciato.inScadenza;

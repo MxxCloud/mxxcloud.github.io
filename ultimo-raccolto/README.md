@@ -12,6 +12,55 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.16 — l'orto si paga
+
+Segnalato giocando: l'orto era **semplice, ripetitivo e fin troppo
+redditizio**. Lo era con i numeri: una matura rendeva due rape e due semi,
+quindi ogni seme ne ridava due insieme al cibo e il campo cresceva da solo come
+un interesse composto. Un tassello curato dava **0,67 di fame al giorno**,
+cotta, e se ne consumano 0,56: **bastava un tassello per mangiare**. Saltare
+l'acqua non costava niente — la pianta si fermava e aspettava.
+
+Tre regole, e nessuna nuova da imparare a memoria:
+
+- **I semi sono un raccolto, non un regalo.** La matura rende una rapa e basta.
+  Lasciata sul campo, dopo due giorni **va a seme** — lo stelo si alza e
+  fiorisce giallo, l'unico giallo dell'orto — e rende tre semi e niente da
+  mangiare; dopo altri due si secca. Ogni tassello chiede di scegliere fra
+  mangiare adesso e seminare domani: per tenere il campo com'è ne va lasciato
+  andare a seme uno ogni tre. I cespugli continuano a dare qualche seme di
+  stagione.
+- **Le piante hanno sete.** Un giorno senz'acqua la pianta si ferma e le foglie
+  ingialliscono; al terzo giorno asciutto di fila secca. D'estate l'aria è
+  arida e un giorno senz'acqua conta due, quindi basta il secondo. Il seme
+  nella terra asciutta invece aspetta. Il secchio o la pioggia rompono la fila
+  e le foglie tornano verdi subito; davanti a una pianta assetata il gioco dice
+  se stanotte muore o se si è soltanto fermata.
+- **Torna il germoglio**: quattro stadi, tre innaffiature. Chi semina il primo
+  giorno d'autunno raccoglie l'ultimo; chi semina il secondo lo lascia
+  all'inverno.
+
+Il mattino lo racconta: *l'orto è seccato*, *l'orto ha sete*, *l'orto è andato
+a seme*.
+
+**Misurato, non stimato**, su sei tasselli e un anno di stagioni buone
+(primavera, estate, autunno), con un giardiniere che fa sempre le stesse
+cose:
+
+| Come si cura | Fame al giorno per tassello |
+|---|---|
+| Prima di M7.16, cura perfetta | 0,67 (circa) |
+| Cura perfetta, un seme sempre da parte | **0,17** |
+| Cura perfetta, ma si raccoglie tutto e i semi non si tengono | 0,08 |
+| Un giorno senz'acqua ogni quattro | 0,08 |
+
+Adesso **per mangiare servono tre o quattro tasselli curati bene**, e di più
+per arrivare a marzo. La soglia della sete è tre giorni e non due per una
+ragione misurata: con due, d'estate un giorno dimenticato seccava il campo
+intero, e un giorno saltato su quattro lasciava un settimo del raccolto — che
+avrebbe fatto dell'orto un obbligo di ogni cinque minuti invece di una cosa da
+curare. Con tre ne lascia la metà: un giorno perso costa un giorno, non tutto.
+
 ## M7.15.8 — una pubblicazione arriva tutta o non arriva
 
 Segnalato con una seconda schermata: con M7.15.7 già pubblicata, **il
@@ -1094,7 +1143,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.15.8**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.16**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -1236,11 +1285,16 @@ il genere di assurdità che si nota solo giocando.
 
 **L'orto** è la prima cosa tua. Con una zappa si lavora la terra, si semina
 quello che si è strappato dai cespugli, si innaffia con un secchio riempito al
-lago e si torna dopo giorni a raccogliere. Tre stadi, cioè due innaffiature
-dalla semina al raccolto: saltare un giorno non uccide la coltura, la ferma,
-e con la stagione da quattro giorni resta un giorno di margine — che è la
-differenza fra una scadenza e una trappola. I solchi bagnati si riconoscono
-dal terreno più scuro.
+lago e si torna dopo giorni a raccogliere. Quattro stadi, cioè tre
+innaffiature dalla semina al raccolto. Saltare un giorno ferma la pianta e le
+ingiallisce le foglie; il terzo giorno asciutto di fila la secca, e d'estate —
+che è arida — basta il secondo. Il seme nella terra asciutta invece aspetta. I
+solchi bagnati si riconoscono dal terreno più scuro.
+
+La matura rende una rapa e niente semi. Lasciata sul campo, dopo due giorni
+**va a seme** — lo stelo si alza e fiorisce giallo — e rende tre semi e niente
+da mangiare; dopo altri due si secca. Mangiare adesso o seminare domani è la
+scelta di ogni tassello (vedi M7.16).
 
 Dormire porta all'alba, quindi anche l'orto va avanti: è il modo di
 comprimere l'attesa senza toglierla.
@@ -1265,8 +1319,8 @@ muore, maturo compreso. Zappare resta permesso: preparare il campo per la
 primavera è una cosa sensata da fare. D'inverno viene anche fame prima, ed è
 questo a trasformare il raccolto d'autunno da collezione a provvista.
 
-**Quello che lasci si degrada.** Una coltura matura non raccolta regge tre
-giorni e poi marcisce in piedi; un campo morto si ripulisce e rende un po' di
+**Quello che lasci si degrada.** Una coltura matura non raccolta va a seme
+dopo due giorni e si secca dopo altri due; un campo morto si ripulisce e rende un po' di
 fibra, così una stagione sbagliata non lascia un pezzo di valle bruciato. I
 fuochi si consumano: la torcia piantata dura un giorno e finisce, mentre falò
 e focolare bruciano la legna che ci metti dentro — una al giorno, due
@@ -1790,7 +1844,10 @@ Da qui viene l'ordine, che non è quello immaginato all'inizio:
 | **M7.13** | Il focolare | Il fuoco che si costruisce dentro una casa: dura quattro giorni, due d'inverno, e quando finisce resta la pietra. *Qui il fuoco smette di essere una cosa che si rifà e diventa una cosa che si alimenta.* |
 | **M7.14** | La legna nel fuoco | Focolare e falò si posano spenti e si caricano: il fuoco si compra ogni volta. E la X: quello che è tuo si smonta con un gesto solo. |
 | **M7.15** | L'essiccatoio | La carne impara ad aspettare: tre giorni di sole e tre stagioni di scorta. *Qui una struttura comincia a lavorare mentre non ci sei.* |
-| **M7.16** | Il morale | Quanto tieni al tuo posto — che a quel punto esiste. |
+| **M7.16** | L'orto si paga | I semi si guadagnano lasciando andare a seme, le piante hanno sete, un tassello non sfama più da solo. *Qui l'orto smette di essere una rendita.* |
+| **M7.17** | Cinque colture | Rapa, patata, fagioli, cavolo e lino: stagioni, rese e mestieri diversi, e semi da cercare nelle rovine. |
+| **M7.18** | La terra si stanca | La fertilità del tassello, la rotazione, il compost e la cenere, e le bestie che di notte mangiano l'orto. |
+| **M7.19** | Il morale | Quanto tieni al tuo posto — che a quel punto esiste. |
 | **M8** | Superstiti, abilità, rifinitura | |
 
 Le tappe con un numero in più — M7.5.1, M7.7.1, M7.8.1, M7.9.1, M7.9.2, M7.11.1 —
@@ -1821,9 +1878,10 @@ fuoco acceso, un orto curato, un letto — e quel posto comincia a esistere
 davvero con la costruzione. Un morale oggi sarebbe un quarto numero che dice
 "è notte e ti inseguono", cioè quello che schermo e orecchie dicono già.
 
-Il suo numero però è cambiato più volte: da M5 a M7.6, a M7.13, a M7.16. Non
-perché slitti — ogni volta che toccava a lui è emerso qualcosa che aveva più
-bisogno di esistere, l'acqua, il cielo, l'usura, la caccia. Il numero non è una
+Il suo numero però è cambiato più volte: da M5 a M7.6, a M7.13, a M7.16, a
+M7.19. Non perché slitti — ogni volta che toccava a lui è emerso qualcosa che
+aveva più bisogno di esistere, l'acqua, il cielo, l'usura, la caccia, e un orto
+che rendeva troppo per essere una cosa da curare. Il numero non è una
 data, è una posizione in fila, e questa fila si è allungata dal di dentro.
 
 **Il salvataggio stava fuori da questa scala** e si è incastrato qui, dopo le

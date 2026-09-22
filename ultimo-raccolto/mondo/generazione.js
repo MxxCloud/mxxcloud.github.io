@@ -99,6 +99,10 @@ export const OGGETTO = {
   ESSICCATOIO: 28,
   ESSICCATOIO_CARICO: 29,
   ESSICCATOIO_PRONTO: 30,
+  // La coltura matura lasciata sul campo, che invece di marcire va a seme. È
+  // l'unica strada per i semi da M7.16: raccogliere per mangiare o aspettare
+  // per riseminare, e un tassello non fa tutte e due le cose.
+  A_SEME: 31,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati

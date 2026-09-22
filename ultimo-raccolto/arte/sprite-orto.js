@@ -104,6 +104,29 @@ export const MATURA = [
 ];
 
 
+// La matura lasciata lì che è andata a seme: la rapa è parente del cavolo, e
+// fiorisce gialla su uno stelo alto. Si legge da lontano come l'unico
+// stadio col giallo, ed è quello che serve — è l'unico da cui escono semi, e
+// dopo due giorni si secca.
+export const A_SEME = [
+  "bbvbbbbvbbbbvbbb",
+  "bvxvbcvxvccvxvcb",
+  "bcxbbccxbccbxccb",
+  "bbxbbbbxbbbbxbbb",
+  "bcxbbccxbccbxccb",
+  "bvybbcvybccvyccb",
+  "bvxvbbvxvbbvxvbb",
+  "bcxbbccxbccbxccb",
+  "bcxbbccxbccbxccb",
+  "bbybbbbybbbbybbb",
+  "bvxvbcvxvccvxvcb",
+  "bcxbbccxbccbxccb",
+  "bbxbbbbxbbbbxbbb",
+  "bcybbccybccbyccb",
+  "bccbbccbbccbbccb",
+  "bbbbbbbbbbbbbbbb",
+];
+
 // Quello che resta di una coltura che nessuno ha raccolto in tempo, o che
 // l'inverno ha preso. Stessi solchi, stesso passo delle piantine vive: si
 // riconosce che era un orto, ed è il punto — un campo morto deve somigliare a

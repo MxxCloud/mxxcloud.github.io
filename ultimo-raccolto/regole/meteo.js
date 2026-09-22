@@ -91,7 +91,7 @@ export function aggiornaMondo() {
   let innaffiate = 0, spenti = 0;
   modifiche.perOgnuno((tx, ty, c) => {
     if (orto.siPuoInnaffiare(c.oggetto) && !c.bagnato && !coperto(tx,ty)) {
-      cambi.push({tx,ty,c:{...c,bagnato:true}});innaffiate++;
+      cambi.push({tx,ty,c:orto.bagna(c)});innaffiate++;
     }
     // La pioggia spegne, e quello che c'era dentro se n'è andato in fumo: la
     // legna non si riprende, altrimenti accendere sotto l'acqua costerebbe

@@ -17,7 +17,7 @@ import * as ortoArte from "../arte/sprite-orto.js";
 import * as transizioniArte from "../arte/sprite-transizioni.js";
 import { TERRENO, OGGETTO, terrenoIn, oggettoIn, preparaRovine } from "./generazione.js";
 import * as modifiche from "./modifiche.js";
-import { TAVOLOZZA, TAVOLOZZA_BAGNATA } from "../arte/tavolozza.js";
+import { TAVOLOZZA, TAVOLOZZA_BAGNATA, FOGLIE_ASSETATE } from "../arte/tavolozza.js";
 
 const { TASSELLO } = schermo;
 export const SETTORE = 16;
@@ -115,6 +115,9 @@ const CATALOGO_OGGETTI = {
   [OGGETTO.GERMOGLIO]: { sprite: ortoArte.GERMOGLIO, solido: false, bagnabile: true, suolo: true },
   [OGGETTO.CRESCIUTA]: { sprite: ortoArte.CRESCIUTA, solido: false, bagnabile: true, suolo: true },
   [OGGETTO.MATURA]: { sprite: ortoArte.MATURA, solido: false, bagnabile: true, suolo: true },
+  // Andata a seme non beve più: è una pianta che ha finito, e innaffiarla
+  // sarebbe un gesto che non cambia niente.
+  [OGGETTO.A_SEME]: { sprite: ortoArte.A_SEME, solido: false, suolo: true },
 
   // L'appassita non è bagnabile: innaffiare un morto non lo riporta indietro,
   // e lasciarla scurire come il resto dell'orto direbbe che si sta facendo
@@ -503,6 +506,19 @@ function mascheraAngolo(tx, ty, quarti) {
   return ruotato(cuoci(forme[scelta], transizioniArte.TAVOLOZZA_MASCHERA), quarti);
 }
 
+// La tavolozza della sete sopra una tavolozza data, una sola per ciascuna: la
+// cottura mette in cache per identità della tavolozza (vedi tavolozza.js), e
+// una nuova a ogni pianta assetata rifarebbe il disegno ogni volta.
+const assetate = new Map();
+function assetataDi(tavolozza) {
+  let fatta = assetate.get(tavolozza);
+  if (!fatta) {
+    fatta = { ...tavolozza, ...FOGLIE_ASSETATE };
+    assetate.set(tavolozza, fatta);
+  }
+  return fatta;
+}
+
 // Riusati a ogni tassello invece di essere riallocati: la cottura di un settore
 // ne farebbe cinquecento oggetti usa e getta.
 const viciniForti = new Set();
@@ -544,7 +560,13 @@ function cuociSettore(sx, sy) {
         // Un tassello innaffiato si disegna con la terra scura: è la stessa
         // immagine cotta con un'altra tavolozza, non un secondo disegno.
         const bagnato = voce.bagnabile && modifiche.di(tx, ty)?.bagnato === true;
-        const tavolozza = bagnato ? tavolozzaMondoBagnata : tavolozzaMondo;
+        // E una pianta che ha passato un giorno senz'acqua ha le foglie
+        // gialle: è l'avviso che domani, senza acqua, secca. Si stende sopra
+        // la terra asciutta o bagnata che sia, per la ragione scritta accanto
+        // a FOGLIE_ASSETATE.
+        const assetata = voce.bagnabile && modifiche.di(tx, ty)?.secco > 0;
+        const terra = bagnato ? tavolozzaMondoBagnata : tavolozzaMondo;
+        const tavolozza = assetata ? assetataDi(terra) : terra;
         const fotogrammi = voce.fotogrammi
           ? voce.fotogrammi.map((f) => cuoci(f, tavolozza))
           : [cuoci(voce.sprite, tavolozza)];
