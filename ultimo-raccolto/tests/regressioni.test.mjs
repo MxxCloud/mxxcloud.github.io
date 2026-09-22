@@ -241,7 +241,7 @@ test('dormire non sottrae stamina già posseduta oltre il limite invernale',()=>
 test('lo smontaggio con zaino pieno lascia intatto il giaciglio e non stanca',()=>{
   modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GIACIGLIO});
   inventario.aggiungi('pietra',CATALOGO.pietra.pila*inventario.CASELLE);
-  assert.equal(azioni.smontaIlLetto(eroe).tipo,'zainoPieno');
+  assert.match(azioni.smontaDavanti(eroe).messaggio,/zaino pieno/);
   assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.GIACIGLIO);vicino(bisogni.livello('stanchezza'),1);
 });
 test('si sviene dopo un’ora a zero; due ore dopo ci si sveglia al 25%',()=>{
@@ -1366,7 +1366,7 @@ test('il giaciglio di pelli si posa e si riprende, e torna sé stesso',()=>{
   assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.GIACIGLIO_PELLI);
   assert.equal(mappa.solidoIn(tx+1,ty),false);
   tempo.impostaOra(12);
-  assert.equal(azioni.smontaIlLetto(eroe).tipo,'lettoSmontato');
+  assert.equal(azioni.smontaDavanti(eroe).tipo,'smontato');
   assert.equal(inventario.quante('giaciglio_pelli'),1);assert.equal(inventario.quante('giaciglio'),0);
 });
 test('sulle pelli si dorme sia di giorno sia di notte',()=>{
@@ -1801,12 +1801,12 @@ test('il temperamento arriva fino alla decisione, e si misura contando le carich
 // --- M7.13: il focolare ----------------------------------------------------
 
 // Posare il focolare davanti all'eroe, saltando la regola delle quattro mura:
-// serve ai collaudi che parlano di durata e di calore, non di dove si può.
-function focolare(giorno=1) {
-  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FOCOLARE_ACCESO,posata:giorno});
+// serve ai collaudi che parlano di legna e di calore, non di dove si può.
+function focolare(legna=decadimento.LEGNA_MASSIMA) {
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FOCOLARE_ACCESO,legna});
   return {tx:tx+1,ty};
 }
-test('il focolare si posa solo dentro quattro mura',()=>{
+test('il focolare si posa solo dentro quattro mura, e si posa spento',()=>{
   inventario.aggiungi('focolare',1);
   assert.match(azioni.azionePossibile(eroe,'focolare',0).impedito,/quattro mura/);
   assert.equal(azioni.agisci(eroe,'focolare',0),null);
@@ -1814,16 +1814,19 @@ test('il focolare si posa solo dentro quattro mura',()=>{
   stanza();
   assert.equal(azioni.azionePossibile(eroe,'focolare',0).impedito ?? null,null);
   assert.equal(azioni.agisci(eroe,'focolare',0).tipo,'posa');
-  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
+  // Le dieci pietre comprano il camino, non il fuoco: arriva freddo.
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_SPENTO);
+  assert.equal(decadimento.legnaNel(tx+1,ty),0);
+  assert.equal(freddo.fuocoPerRiposo(pos(tx+1,ty+1)),false);
 });
 test('il focolare scalda come il falò, accanto e per tutta la stanza',()=>{
   tempo.impostaGiorno(9);tempo.impostaOra(23);
   assert.equal(freddo.alFreddo(eroe),true);
-  focolare(9);riparo.reimposta();
+  focolare();riparo.reimposta();
   assert.equal(freddo.alFreddo(eroe),false);
   // E dall'altro capo di una stanza chiusa, cioè oltre i tre tasselli.
   reset();tempo.impostaGiorno(9);tempo.impostaOra(23);stanza();
-  modifiche.imposta(tx+1,ty-1,{oggetto:OGGETTO.FOCOLARE_ACCESO,posata:9});
+  modifiche.imposta(tx+1,ty-1,{oggetto:OGGETTO.FOCOLARE_ACCESO,legna:1});
   const lontano={px:(tx-1+0.5)*16,py:(ty+1+0.75)*16,guarda:'destra'};
   riparo.reimposta();
   assert.equal(freddo.alFreddo(lontano),false);
@@ -1836,38 +1839,127 @@ test('sul focolare si cucina e accanto si dorme',()=>{
   assert.equal(inventario.quante('carne_arrostita'),1);
   assert.equal(freddo.fuocoPerRiposo(pos(f.tx,f.ty+1)),true);
 });
-test('il focolare dura quattro albe, due d’inverno',()=>{
-  const spento=()=>mappa.oggettoDi(tx+1,ty)===OGGETTO.FOCOLARE_SPENTO;
-  focolare(1);
-  tempo.impostaGiorno(4);decadimento.nuovoGiorno();assert.equal(spento(),false);
-  tempo.impostaGiorno(5);decadimento.nuovoGiorno();assert.equal(spento(),true);
-  reset();focolare(9);
-  tempo.impostaGiorno(10);decadimento.nuovoGiorno();assert.equal(spento(),false);
-  tempo.impostaGiorno(11);decadimento.nuovoGiorno();assert.equal(spento(),true);
-});
-test('spento resta pietra: con quattro legna riparte, con tre non si tocca',()=>{
+// --- M7.14: la legna del focolare, e la X -----------------------------------
+
+test('una legna per volta fino al pieno, e la prima accende',()=>{
   modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FOCOLARE_SPENTO});
-  inventario.aggiungi('legna',3);
-  assert.match(azioni.azionePossibile(eroe,'legna',0).impedito,/4 legna/);
-  assert.equal(azioni.agisci(eroe,'legna',0),null);
-  assert.equal(inventario.quante('legna'),3);
-  inventario.aggiungi('legna',1);tempo.impostaGiorno(5);
-  assert.equal(azioni.azionePossibile(eroe,'legna',0).verbo,'Riaccendi');
-  assert.equal(azioni.agisci(eroe,'legna',0).tipo,'riaccendi');
-  assert.equal(inventario.quante('legna'),0);
-  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
-  // Il contatore riparte da oggi, se no si spegnerebbe subito.
-  assert.equal(modifiche.di(tx+1,ty).posata,5);
-  tempo.impostaGiorno(7);decadimento.nuovoGiorno();
-  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
+  inventario.aggiungi('legna',6);
+  for(let attesa=1;attesa<=decadimento.LEGNA_MASSIMA;attesa++) {
+    assert.equal(azioni.azionePossibile(eroe,'legna',0).verbo,'Carica il focolare');
+    const esito=azioni.agisci(eroe,'legna',0);
+    assert.equal(esito.tipo,'carica');assert.equal(esito.legna,attesa);
+    assert.equal(decadimento.legnaNel(tx+1,ty),attesa);
+    // La prima legna accende, e da lì in poi scalda: è la differenza che si
+    // vede dal letto accanto.
+    assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
+  }
+  // Pieno: la legna in mano non entra più, e il tasto lo dice prima.
+  assert.equal(inventario.quante('legna'),2);
+  assert.equal(azioni.azionePossibile(eroe,'legna',0).verbo,'Guarda il focolare');
+  assert.equal(azioni.agisci(eroe,'legna',0).tipo,'guardato');
+  assert.equal(inventario.quante('legna'),2);
 });
-test('smontare il focolare rende il focolare, acceso o spento',()=>{
-  for(const stato of [OGGETTO.FOCOLARE_ACCESO,OGGETTO.FOCOLARE_SPENTO]) {
-    reset();modifiche.imposta(tx+1,ty,{oggetto:stato});
-    assert.equal(azioni.azionePossibile(eroe,null,0).verbo,'Smonta');
-    azioni.agisci(eroe,null,0);azioni.agisci(eroe,null,0);
-    assert.equal(inventario.quante('focolare'),1);
-    assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.NESSUNO);
+test('guardare il focolare dice quanto è carico, e non cambia niente',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FOCOLARE_SPENTO});
+  let esito=azioni.agisci(eroe,null,0);
+  assert.equal(esito.tipo,'guardato');assert.equal(esito.legna,0);
+  assert.equal(esito.massimo,decadimento.LEGNA_MASSIMA);
+  focolare(2);
+  esito=azioni.agisci(eroe,null,0);
+  assert.equal(esito.legna,2);
+  vicino(bisogni.livello('stanchezza'),1);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
+  assert.equal(decadimento.legnaNel(tx+1,ty),2);
+});
+test('una legna al giorno, due d’inverno, e poi resta la pietra',()=>{
+  const legna=()=>decadimento.legnaNel(tx+1,ty);
+  focolare();
+  // Giorni 1-4: estate. Una al giorno, e il pieno dura quattro albe.
+  for(const [giorno,resta] of [[2,3],[3,2],[4,1]]) {
+    tempo.impostaGiorno(giorno);decadimento.nuovoGiorno();
+    assert.equal(legna(),resta,`giorno ${giorno}`);
+    assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
+  }
+  tempo.impostaGiorno(5);decadimento.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_SPENTO);
+  assert.equal(legna(),0);
+  // Giorni 9-12: inverno. Due al giorno, cioè mezza stagione di autonomia.
+  reset();focolare();tempo.impostaGiorno(9);
+  tempo.impostaGiorno(10);decadimento.nuovoGiorno();assert.equal(legna(),2);
+  tempo.impostaGiorno(11);decadimento.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_SPENTO);
+});
+test('un focolare acceso di una partita vecchia vale pieno, non spento',()=>{
+  // Senza il conto della legna: è il salvataggio scritto quando il focolare si
+  // misurava a giorni, e spegnerlo subito sarebbe punirlo per un cambiamento
+  // del gioco.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FOCOLARE_ACCESO,posata:1});
+  assert.equal(decadimento.legnaNel(tx+1,ty),decadimento.LEGNA_MASSIMA);
+  tempo.impostaGiorno(2);decadimento.nuovoGiorno();
+  assert.equal(decadimento.legnaNel(tx+1,ty),decadimento.LEGNA_MASSIMA-1);
+});
+test('il focolare carico non si smonta: prima deve finire la legna',()=>{
+  focolare(1);
+  const impedito=azioni.smontaggioPossibile(eroe).impedito;
+  assert.match(impedito,/acceso: 1\/4/);
+  assert.equal(azioni.smontaDavanti(eroe).tipo,'impedito');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
+  assert.equal(inventario.quante('focolare'),0);
+  // Finita la legna la pietra torna in mano, tutta: le dieci pietre sono un
+  // investimento e non un affitto.
+  tempo.impostaGiorno(2);decadimento.nuovoGiorno();
+  assert.equal(azioni.smontaggioPossibile(eroe).impedito,null);
+  assert.equal(azioni.smontaDavanti(eroe).tipo,'smontato');
+  assert.equal(inventario.quante('focolare'),1);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.NESSUNO);
+});
+test('la X smonta in un gesto tutto quello che hai costruito',()=>{
+  const roba=[
+    [OGGETTO.PORTA,'porta'],[OGGETTO.PORTA_APERTA,'porta'],
+    [OGGETTO.GIACIGLIO,'giaciglio'],[OGGETTO.GIACIGLIO_PELLI,'giaciglio_pelli'],
+    [OGGETTO.BANCO,'banco'],[OGGETTO.CASSA,'cassa'],[OGGETTO.FOCOLARE_SPENTO,'focolare'],
+  ];
+  for(const [oggetto,cosa] of roba) {
+    reset();modifiche.imposta(tx+1,ty,{oggetto});
+    assert.equal(azioni.smontaggioPossibile(eroe).cosa,cosa,cosa);
+    const esito=azioni.smontaDavanti(eroe);
+    assert.equal(esito.tipo,'smontato',cosa);
+    assert.equal(inventario.quante(cosa),1,cosa);
+    assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.NESSUNO,cosa);
+    assert.ok(bisogni.livello('stanchezza')<1,cosa);
+  }
+  // E quello che è del mondo no: il muro si abbatte, non si smonta.
+  reset();modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.MURO});
+  assert.equal(azioni.smontaggioPossibile(eroe),null);
+  assert.equal(azioni.azionePossibile(eroe,null,0).verbo,'Abbatti');
+});
+test('la barra non smonta più: banco e focolare non sono roba da colpire',()=>{
+  for(const oggetto of [OGGETTO.BANCO,OGGETTO.FOCOLARE_SPENTO,OGGETTO.FOCOLARE_ACCESO]) {
+    reset();modifiche.imposta(tx+1,ty,{oggetto,legna:1});
+    const azione=azioni.azionePossibile(eroe,null,0);
+    assert.notEqual(azione?.tipo,'raccogli',String(oggetto));
+    for(let i=0;i<5;i++) azioni.agisci(eroe,null,0);
+    assert.equal(mappa.oggettoDi(tx+1,ty),oggetto,String(oggetto));
+    assert.equal(inventario.quante('banco')+inventario.quante('focolare'),0);
+  }
+});
+test('la cassa piena non si smonta nemmeno con la X',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CASSA,contenuto:[{cosa:'legna',quantita:1}]});
+  assert.equal(azioni.smontaggioPossibile(eroe).impedito,'prima svuotala');
+  assert.equal(azioni.smontaDavanti(eroe).messaggio,'prima svuotala');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.CASSA);
+});
+test('un salvataggio con un focolare carico si rilegge con la sua legna',()=>{
+  focolare(3);
+  const stato=salvataggio.istantanea(eroe,0);
+  assert.equal(salvataggio.valido(stato),true);
+  reset();assert.ok(salvataggio.applica(stato));
+  assert.equal(decadimento.legnaNel(tx+1,ty),3);
+  // Fuori scala si rifiuta prima di toccare la partita: zero non è un fuoco.
+  for(const legna of [0,decadimento.LEGNA_MASSIMA+1,1.5]) {
+    const storto=JSON.parse(JSON.stringify(stato));
+    storto.modifiche.find(m=>m.oggetto===OGGETTO.FOCOLARE_ACCESO).legna=legna;
+    assert.equal(salvataggio.valido(storto),false,String(legna));
   }
 });
 test('la pioggia non spegne il focolare: è il motivo per cui sta al chiuso',()=>{

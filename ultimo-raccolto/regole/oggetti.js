@@ -178,7 +178,11 @@ export const CATALOGO = {
   // la stessa portata all'estremo: pesa dieci pietre, sta solo al chiuso, e di
   // focolari in una casa ce n'è uno. Portarsene dietro due vorrebbe dire non
   // aver capito che cos'è.
-  focolare: { nome: "Focolare", icona: arte.FOCOLARE, pila: 1, posa: OGGETTO.FOCOLARE_ACCESO },
+  //
+  // Si posa SPENTO, ed è la riga che dice cos'è: un camino è pietra, e la
+  // pietra non arriva già accesa. Le dieci pietre comprano il posto dove sta
+  // il fuoco; il fuoco si compra ogni volta, una legna alla volta.
+  focolare: { nome: "Focolare", icona: arte.FOCOLARE, pila: 1, posa: OGGETTO.FOCOLARE_SPENTO },
   // La cassa è il primo posto tuo che non sia il terreno. Si impila a tre
   // perché portarsene dietro una scorta non ha senso: quello che conta di una
   // cassa è dove la metti, e una volta messa non la sposti più.
@@ -459,25 +463,11 @@ export const RACCOLTA = {
     voce: "pietra",
     resa: [{ cosa: "falo", quante: 1 }],
   },
-  // Il focolare si riprende intero da tutti e due gli stati, ed è la riga che
-  // rende le dieci pietre un investimento e non un affitto: si può cambiare
-  // casa senza perderle. Due colpi e non uno — smontare un focolare non è
-  // raccogliere un falò — ma nemmeno cinque: non è un muro da abbattere, è
-  // roba tua che si porta via.
-  [OGGETTO.FOCOLARE_ACCESO]: {
-    verbo: "Smonta",
-    colpi: 2,
-    voce: "pietra",
-    scheggie: ["e", "f", "d"],
-    resa: [{ cosa: "focolare", quante: 1 }],
-  },
-  [OGGETTO.FOCOLARE_SPENTO]: {
-    verbo: "Smonta",
-    colpi: 2,
-    voce: "pietra",
-    scheggie: ["e", "f", "d"],
-    resa: [{ cosa: "focolare", quante: 1 }],
-  },
+  // Il focolare non sta qui, e nemmeno il banco: quello che è tuo e si riprende
+  // intero non si abbatte a colpi, si smonta con la X. Questa tavola è il
+  // lavoro — alberi, sassi, muri di chi c'era prima — e smontare non è lavoro,
+  // è ripensarci.
+  //
   // I muri di chi c'era prima si abbattono, e rendono pietra.
   //
   // Cinque colpi, più di un albero: un muro è la cosa più solida della valle e
@@ -504,17 +494,6 @@ export const RACCOLTA = {
     voce: "pietra",
     scheggie: ["e", "d"],
     resa: [{ cosa: "pietra", quante: 1 }],
-  },
-
-  // Il banco si riprende sempre: non contiene niente, quindi non c'è niente
-  // da svuotare prima. Due colpi perché è legno inchiodato e non un mobile
-  // che si solleva.
-  [OGGETTO.BANCO]: {
-    verbo: "Smonta",
-    colpi: 2,
-    voce: "legno",
-    scheggie: ["w", "c", "h"],
-    resa: [{ cosa: "banco", quante: 1 }],
   },
 
   // Una cassa si riprende, ma solo vuota, e a dirlo è azioni.js. Il motivo è

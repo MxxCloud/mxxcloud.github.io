@@ -92,8 +92,10 @@ export const RICETTE = [
   //
   // Dieci pietre sono due muri di rovina abbattuti, ed è il costo che gli dà
   // senso: la pietra è l'unica risorsa dichiarata finita della valle, quindi
-  // un focolare è la prima cosa che si paga davvero. Le quattro legne sono la
-  // prima carica — la stessa che vorrà ogni volta che si spegne.
+  // un focolare è la prima cosa che si paga davvero. Le quattro legne sono il
+  // camino — i montanti e l'architrave che si vedono nel disegno — e non il
+  // fuoco: quello si compra dopo, una legna alla volta, e il focolare arriva
+  // freddo come arriva fredda la pietra.
   {
     id: "focolare",
     banco: true,

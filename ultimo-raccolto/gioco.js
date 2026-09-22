@@ -72,7 +72,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.13";
+const VERSIONE = "M7.14";
 
 // --- elementi -------------------------------------------------------------
 
@@ -97,6 +97,7 @@ let ricettaScelta = 0;
 // di mondo generati sessanta volte al secondo per sapere una cosa sola.
 let alBanco = false;
 let azioneCorrente = null;
+let smontaggioCorrente = null;
 let messaggio = null;
 let avvisoRisveglio = null;
 let luogoAttuale = null;
@@ -942,18 +943,20 @@ function leggiComandi() {
     }
   }
 
-  // X smonta porte e giacigli; Spazio li usa. Le casse si smontano dal loro pannello.
+  // X smonta quello che hai davanti e che hai costruito tu; Spazio lo usa. È
+  // un tasto solo per una regola sola, e il promemoria accanto allo zaino dice
+  // di volta in volta cosa toglierebbe.
   if (comandi.appenaPremuto("spegni")) {
-    const esito = azioni.smontaIlLetto(eroe) ?? azioni.staccaLaPorta(eroe);
-    if (esito?.tipo === "lettoSmontato") {
-      suono.suona(POSA);
-      annuncia("giaciglio smontato", "#9ec97e");
-    } else if (esito?.tipo === "staccata") {
-      suono.suona(POSA, { tono: 0.85 });
-      annuncia("porta staccata", "#9ec97e");
-    } else if (esito?.tipo === "zainoPieno") {
+    const esito = azioni.smontaDavanti(eroe);
+    if (esito?.tipo === "smontato") {
+      suono.suona(POSA, { tono: esito.cosa === "porta" ? 0.85 : 1 });
+      // "Smontato: cassa" e non "cassa smontata": è la stessa forma di
+      // "posato:" e di "fatto:", e per di più non deve accordarsi con niente —
+      // una porta smontato sarebbe italiano sbagliato scritto dal gioco.
+      annuncia(`smontato: ${nomeDi(esito.cosa)}`, "#9ec97e");
+    } else if (esito?.tipo === "impedito") {
       suono.suona(NEGATO);
-      annuncia("zaino pieno: getta qualcosa con G", "#c0705f");
+      annuncia(esito.messaggio, "#c0705f");
     }
   }
 
@@ -1012,9 +1015,23 @@ function leggiComandi() {
     avvisoRisveglio = esito.messaggio ?? `dormito ${(esito.secondi / riposo.ORA).toFixed(1)} ore: +${Math.round(esito.recuperata * 100)}% stamina`;
   }
 
-  // Il focolare che riparte è una cosa che si sente: è il gesto per cui si
+  // Il focolare che si carica è una cosa che si sente: è il gesto per cui si
   // torna a casa, e senza una riga sarebbe l'unica azione muta del gioco.
-  if (esito.tipo === "riaccendi") { suono.suona(FATTO); annuncia(`focolare acceso: ${esito.legna} legna`, "#e0913a"); }
+  //
+  // La prima legna accende, le altre tre allungano, e il messaggio è lo stesso
+  // per tutte e quattro: quello che conta saperlo è quanto ne ha dentro adesso.
+  if (esito.tipo === "carica") {
+    suono.suona(FATTO);
+    annuncia(`focolare: ${esito.legna}/${esito.massimo} legna`, "#e0913a");
+  }
+  // Guardare è l'unica azione che non cambia niente, e serve a questo: la
+  // fiamma è uguale con una legna e con quattro, quindi il conto va chiesto.
+  if (esito.tipo === "guardato") {
+    suono.suona(SCELTA);
+    annuncia(esito.legna > 0
+      ? `focolare: ${esito.legna}/${esito.massimo} legna`
+      : "focolare spento: caricalo con la legna", esito.legna > 0 ? "#e0913a" : "#c9b189");
+  }
   if (esito.tipo === "cotto") { suono.suona(FATTO); annuncia(`sul fuoco: ${nomeDi(esito.diventa)}`, "#e0913a"); }
 
   if (esito.tipo === "porta") {
@@ -1252,6 +1269,10 @@ function aggiorna(passo) {
 
   if (!haDormito) leggiComandi();
   azioneCorrente = mondoFermo() ? null : azioni.azionePossibile(eroe, cosaInMano(), casellaScelta);
+  // Quello che farebbe la X, chiesto dove si chiede quello che farebbe la
+  // barra: sono due tasti che guardano lo stesso tassello, e tenerli in due
+  // momenti diversi del fotogramma vorrebbe dire due risposte diverse.
+  smontaggioCorrente = mondoFermo() ? null : azioni.smontaggioPossibile(eroe);
 
   if (messaggio) {
     messaggio.vita -= passo / 2.2;
@@ -1445,7 +1466,7 @@ function disegnaInterfaccia() {
   // Il promemoria dice "C COSTRUIRE", e con la cassa aperta "C" chiude: un
   // cartello che indica la porta sbagliata è peggio di nessun cartello.
   if (!cassaAperta) {
-    hud.disegnaPromemoria(p, barra, cosaInMano(), azioneCorrente?.tipo === "porta", casellaScelta, azioneCorrente?.tipo === "dormi");
+    hud.disegnaPromemoria(p, barra, cosaInMano(), casellaScelta, smontaggioCorrente);
   }
   hud.disegnaMessaggio(p, messaggio);
   if (minimappaVisibile && !aperturaVisibile) minimappa.disegna(p);
