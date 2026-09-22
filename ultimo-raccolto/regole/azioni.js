@@ -371,18 +371,31 @@ function sulTassello(eroe, cosaInMano, indice) {
   // telaio che si ha davanti, e la X resta libera di portarselo via.
   // Si stende su un telaio vuoto e su uno già carico che abbia ancora posto,
   // purché sia la stessa roba: due file di pesce o due file di carne, mai una
-  // per una. Il conto dei giorni non riparte — resta quello della prima fila,
-  // quindi chi torna dopo con altri tre pezzi non allunga l'attesa a chi
-  // aspettava già, e chi vuole il telaio pieno subito lo riempie con due
-  // pressioni di seguito, che è il gesto per cui questa regola esiste.
+  // per una.
+  //
+  // E IL CONTO RIPARTE DA OGGI, per tutto quello che pende. Non è una
+  // punizione gratuita: senza, appendere tre pezzi il giorno prima che il
+  // telaio sia pronto li faceva seccare in un giorno invece di tre, cioè si
+  // barava aspettando. Qui la scelta è quella di sempre — in un gioco sulla
+  // sopravvivenza, fra due regole si tiene la più severa — e la riga che ne
+  // esce è anche più corta da spiegare: il telaio secca quello che ha, da
+  // quando ce l'ha tutto.
+  //
+  // Il costo sta scritto sul tasto, come per i rami del focolare, e solo
+  // quando c'è: rabboccando lo stesso giorno il conto riparte da oggi, che è
+  // dov'era già. Chi riempie il telaio con due pressioni di seguito non paga
+  // niente, e chi torna domani lo sa prima di premere.
   const daSeccare = SECCABILI[cosaInMano];
   const siStende = b.oggetto === OGGETTO.ESSICCATOIO
     || (b.oggetto === OGGETTO.ESSICCATOIO_CARICO && stesoIn(b.tx, b.ty) === cosaInMano);
   if (daSeccare && siStende) {
-    const gia = b.oggetto === OGGETTO.ESSICCATOIO ? 0 : (modifiche.di(b.tx, b.ty)?.quante ?? 0);
+    const dati = b.oggetto === OGGETTO.ESSICCATOIO ? null : modifiche.di(b.tx, b.ty);
+    const gia = dati?.quante ?? 0;
     const quante = quanteSiStendono(inventario.quante(cosaInMano), gia);
+    const riparte = gia > 0 && (dati?.dal ?? tempo.giornoCorrente()) < tempo.giornoCorrente();
     if (quante > 0 || gia === 0) {
-      return { tipo: "stendi", verbo: "Stendi", quante, gia, cosa: cosaInMano, bersaglio: b,
+      return { tipo: "stendi", verbo: riparte ? "Stendi (riparte il conto)" : "Stendi",
+        quante, gia, riparte, cosa: cosaInMano, bersaglio: b,
         impedito: quante === 0 ? `servono almeno ${PEZZI_PER_RAZIONE} ${daSeccare.tanti}` : null };
     }
   }
@@ -1006,17 +1019,17 @@ function esegui(eroe, cosaInMano, indice, azione) {
   if (azione.tipo === "stendi") {
     if (azione.quante === 0 || !inventario.togli(azione.cosa, azione.quante)) return null;
     // "dal" e non un contatore: quanti giorni asciutti siano passati lo sa il
-    // calendario, che è una funzione pura del giorno e del seme. Rabboccando
-    // si tiene quello della prima fila, e il telaio finisce tutto insieme.
-    const prima = modifiche.di(tx, ty);
+    // calendario, che è una funzione pura del giorno e del seme. E riparte da
+    // oggi anche rabboccando: il telaio secca quello che ha, da quando ce l'ha
+    // tutto — vedi il commento sull'azione.
     mappa.cambiaTassello(tx, ty, {
       oggetto: OGGETTO.ESSICCATOIO_CARICO,
-      dal: azione.gia > 0 ? (prima?.dal ?? tempo.giornoCorrente()) : tempo.giornoCorrente(),
+      dal: tempo.giornoCorrente(),
       quante: azione.gia + azione.quante,
       cosa: azione.cosa,
     });
     return { tipo: "stendi", tx, ty, quante: azione.quante, appesi: azione.gia + azione.quante,
-      cosa: azione.cosa, tanti: SECCABILI[azione.cosa].tanti };
+      riparte: azione.riparte, cosa: azione.cosa, tanti: SECCABILI[azione.cosa].tanti };
   }
 
   if (azione.tipo === "ritira") {

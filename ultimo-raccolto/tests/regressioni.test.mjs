@@ -2330,19 +2330,25 @@ test('una razione sola non si dice al plurale',()=>{
 
 // --- M7.15.3: il telaio mostra quello che ha, e si carica a file ------------
 
-test('sei pezzi in mano vogliono due gesti, e il conto non riparte',()=>{
+test('sei pezzi in mano vogliono due gesti, e rabboccare fa ripartire il conto',()=>{
   tempo.impostaGiorno(1);
   essiccatoio();inventario.aggiungi('carne_cruda',6);
+  // Lo stesso giorno il conto riparte da dov'era: riempire con due pressioni
+  // di seguito non costa niente, e il tasto non promette un costo che non c'è.
+  assert.equal(azioni.azionePossibile(eroe,'carne_cruda',0).verbo,'Stendi');
   assert.equal(azioni.agisci(eroe,'carne_cruda',0).quante,3);
   assert.equal(inventario.quante('carne_cruda'),3,'la prima fila ne prende tre');
   assert.equal(modifiche.di(tx+1,ty).quante,3);
-  // Il secondo gesto rabbocca: stesso telaio, stessa data.
+  // Domani invece costa, e lo dice prima di prendere la carne.
   tempo.impostaGiorno(2);
+  const azione=azioni.azionePossibile(eroe,'carne_cruda',0);
+  assert.equal(azione.verbo,'Stendi (riparte il conto)');
+  assert.equal(azione.riparte,true);
   const secondo=azioni.agisci(eroe,'carne_cruda',0);
   assert.equal(secondo.quante,3);assert.equal(secondo.appesi,6);
   assert.equal(inventario.quante('carne_cruda'),0);
   assert.equal(modifiche.di(tx+1,ty).quante,6);
-  assert.equal(modifiche.di(tx+1,ty).dal,1,'il conto resta quello della prima fila');
+  assert.equal(modifiche.di(tx+1,ty).dal,2,'il conto riparte da oggi, per tutto quello che pende');
   // Pieno: il terzo gesto non entra.
   inventario.aggiungi('carne_cruda',3);
   assert.notEqual(azioni.azionePossibile(eroe,'carne_cruda',0)?.tipo,'stendi');
@@ -2392,4 +2398,27 @@ test('il pesce secco è blu grigiastro, non bruno come la carne',()=>{
   const [r,v,b]=canali(blu);
   assert.ok(b>r,'tende al blu');
   assert.ok(b-r<canali(acqua)[2]-canali(acqua)[0],'ma meno del pesce crudo: è sbiadito');
+});
+test('rabboccando non si secca in un giorno: il conto riparte per tutti',()=>{
+  // Il modo di barare che la regola chiude: tre pezzi il giorno prima che il
+  // telaio sia pronto, e li si portava a casa dopo un'alba invece che dopo
+  // tre. Adesso aspettano tutti, e aspettano da oggi.
+  tempo.impostaGiorno(1);
+  essiccatoio();inventario.aggiungi('pesce_crudo',6);
+  azioni.agisci(eroe,'pesce_crudo',0);
+  tempo.impostaGiorno(3);
+  azioni.agisci(eroe,'pesce_crudo',0);
+  assert.equal(modifiche.di(tx+1,ty).quante,6);
+  // I giorni buoni li conta il calendario e non questo collaudo: si chiede a
+  // lui quando sarebbe stata pronta la prima fila e quando lo è il telaio
+  // rabboccato, e si pretende che il secondo giorno venga dopo il primo.
+  const quando=dal=>{let g=dal;while(decadimento.giorniAsciutti(dal,g)<decadimento.GIORNI_DI_SECCA)g+=1;return g;};
+  const senzaRabbocco=quando(1), conRabbocco=quando(3);
+  assert.ok(conRabbocco>senzaRabbocco,'rabboccare costa giorni');
+  tempo.impostaGiorno(senzaRabbocco);decadimento.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.ESSICCATOIO_CARICO,'il giorno della prima fila non basta più');
+  tempo.impostaGiorno(conRabbocco);decadimento.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.ESSICCATOIO_PRONTO,'tre soli dopo il rabbocco');
+  assert.equal(azioni.agisci(eroe,null,0).secche,2);
+  assert.equal(inventario.quante('pesce_secco'),2);
 });
