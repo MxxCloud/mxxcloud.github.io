@@ -72,7 +72,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.17";
+const VERSIONE = "M7.18";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1031,6 +1031,9 @@ function leggiComandi() {
   if (esito.tipo === "zappa") { suono.suona(ZAPPA); annuncia("terra zappata", "#9ec97e"); }
   if (esito.tipo === "semina") { suono.suona(SEMINA); annuncia("seminato", "#9ec97e"); }
   if (esito.tipo === "innaffia") { suono.suona(ACQUA); annuncia("innaffiato", "#8fb8d8"); }
+  if (esito.tipo === "interra") { suono.suona(ZAPPA); annuncia("interrata: la terra è più grassa", "#9ec97e"); }
+  if (esito.tipo === "spargi") { suono.suona(SEMINA); annuncia("cenere sparsa: la terra è più grassa", "#9ec97e"); }
+  if (esito.tipo === "cenere") { suono.suona(PRESO); annuncia(`+${esito.quante} cenere`, "#c9b189"); }
   // Dormire non ha voce, ed è l'unico gesto che non ne ha: fra il tasto e il
   // risveglio passano ore di gioco, e un suono attaccato a quel momento
   // racconterebbe il tasto invece della notte.
@@ -1312,7 +1315,7 @@ function aggiorna(passo) {
     if (messaggio.vita <= 0) messaggio = null;
   }
 
-  const { cresciute, appassite, seccate, assetate, aSeme, spenti, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
+  const { cresciute, appassite, seccate, assetate, aSeme, mangiate, spenti, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
 
   const arrivata = vestiLaValle();
 
@@ -1325,6 +1328,9 @@ function aggiorna(passo) {
   // stamattina con un secchio, e sapere quale delle due è stata insegna cosa
   // fare domani.
   else if (seccate > 0) annuncia(`l'orto è seccato: ${seccate}`, "#c0705f");
+  // Le bestie dopo la sete e prima del marcire, per la stessa ragione: si
+  // poteva evitare, e sapere come — uno spaventapasseri — è la notizia.
+  else if (mangiate > 0) annuncia(`le bestie hanno mangiato l'orto: ${mangiate}`, "#c0705f");
   else if (appassite > 0) annuncia(`l'orto è marcito: ${appassite}`, "#c0705f");
   else if (arrivata) annuncia(ARRIVO[arrivata], "#c9b189");
   // Il cibo guasto viene prima del fuoco spento, e non è un ordine a caso: un

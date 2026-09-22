@@ -231,6 +231,12 @@ export const CATALOGO = {
     dura: 8,
   },
   semi_cavolo: { nome: "Semi di cavolo", icona: arte.SEMI_CAVOLO, pila: 40 },
+  // La cenere dei fuochi, che sul campo è concime (vedi orto.js). Non si
+  // guasta: è già quello che resta quando qualcosa ha finito di guastarsi.
+  cenere: { nome: "Cenere", icona: arte.CENERE, pila: 20 },
+  // Lo spaventapasseri si posa accanto all'orto, e di notte le bestie non si
+  // avvicinano a tre tasselli da lui (vedi orto.js).
+  spaventapasseri: { nome: "Spaventapasseri", icona: arte.SPAVENTAPASSERI_ICONA, pila: 2, posa: OGGETTO.SPAVENTAPASSERI },
   semi_lino: { nome: "Semi di lino", icona: arte.SEMI_LINO, pila: 40 },
   // La zuppa: due scodelle da una verdura, un cavolo e un secchio d'acqua,
   // sul fuoco (vedi ricette.js). Sfama più di quanto sfamerebbero i due

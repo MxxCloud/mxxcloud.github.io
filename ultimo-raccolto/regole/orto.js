@@ -16,6 +16,7 @@ import * as tempo from "./tempo.js";
 import * as stagioni from "./stagioni.js";
 import * as meteo from "./meteo.js";
 import * as colture from "./colture.js";
+import { impronta } from "../motore/casuale.js";
 
 // In ordine di crescita: ogni giorno innaffiato avanza di uno. Quattro stadi,
 // quindi tre innaffiature dalla semina al raccolto. È la fila della rapa, ed è
@@ -76,6 +77,80 @@ function seteDi(giorno) {
 // la guarda: "ha sete" e "stanotte è morta" chiedono due fretta diverse.
 export function seccaStanotte(cambio, giorno = tempo.giornoCorrente()) {
   return (cambio?.secco ?? 0) + seteDi(giorno) >= sogliaDi(cambio);
+}
+
+// --- la terra ---------------------------------------------------------------
+//
+// La terra dell'orto si ricorda quanto le si è chiesto. Fino a M7.17 un
+// tassello dava lo stesso raccolto per sempre, quindi il campo migliore era
+// quello che c'era già e non si pensava mai a cosa piantarci dopo: si
+// ripiantava la stessa cosa. Adesso ogni tassello ha una fertilità, da zero a
+// tre, e un prato appena zappato parte da due.
+//
+// - Ogni raccolto ne toglie uno — anche quello a seme, che è la pianta che
+//   finisce il suo lavoro.
+// - I fagioli ne ridanno uno invece di toglierlo: le leguminose ingrassano la
+//   terra, ed è la ragione per cui si seminano dopo il resto. È la rotazione,
+//   e non serve spiegarla: la si vede nel raccolto.
+// - Un inverno a riposo ne ridà uno, a chi non ha niente di piantato.
+// - Interrare una pianta morta ne ridà uno, e anche la cenere (vedi azioni.js).
+//
+// Quanto conta: a tre, una pianta che non ha mai patito la sete rende uno di
+// più; a uno, uno di meno — mai sotto uno; a zero la terra è sfinita, e ci
+// attecchiscono solo i fagioli. Non un raccolto dimezzato a sorpresa: una
+// regola che si legge prima di seminare, e che dice anche cosa fare.
+export const FERTILITA_INIZIALE = 2;
+export const FERTILITA_MASSIMA = 3;
+
+export function fertilitaDi(cambio) {
+  return Number.isInteger(cambio?.fertilita) ? cambio.fertilita : FERTILITA_INIZIALE;
+}
+
+// Un tassello del campo: la terra zappata, quello che ci cresce, e quello che
+// ci è morto. È dove la fertilità ha un senso, e dove il salvataggio la accetta.
+export function eDelCampo(oggetto) {
+  return oggetto === OGGETTO.TERRA_ZAPPATA || eColtura(oggetto) || oggetto === OGGETTO.APPASSITA;
+}
+
+// Un tassello nuovo che si porta dietro la terra del vecchio. Tutti i passaggi
+// del campo che riscrivono il tassello da capo — la pianta che muore, quella
+// raccolta, quella mangiata — passano di qui, se no la fertilità si
+// perderebbe proprio nei momenti in cui cambia.
+function conLaTerra(vecchio, nuovo) {
+  if (vecchio?.fertilita !== undefined) nuovo.fertilita = vecchio.fertilita;
+  return nuovo;
+}
+
+const limitata = (n) => Math.max(0, Math.min(FERTILITA_MASSIMA, n));
+
+// La terra dopo aver ricevuto qualcosa: la cenere, una pianta interrata.
+export function concimata(cambio) {
+  return { ...cambio, fertilita: limitata(fertilitaDi(cambio) + 1) };
+}
+
+// Che cosa resta sul tassello dopo averci raccolto: la terra zappata, con la
+// fertilità che il raccolto le ha tolto — o, per i fagioli, restituito. Prima
+// il raccolto lasciava un prato, e il campo andava zappato da capo ogni volta:
+// un gesto in più che non chiedeva di scegliere niente. Adesso la zappa serve
+// una volta, e quello che costa è la terra.
+export function dopoIlRaccolto(oggetto, cambio) {
+  const f = fertilitaDi(cambio);
+  if (oggetto === OGGETTO.APPASSITA) return conLaTerra(cambio, { oggetto: OGGETTO.TERRA_ZAPPATA });
+  const ingrassa = oggetto === OGGETTO.MATURA && colture.di(cambio?.coltura).ingrassa;
+  return { oggetto: OGGETTO.TERRA_ZAPPATA, fertilita: limitata(f + (ingrassa ? 1 : -1)) };
+}
+
+// La raccolta di questo tassello, con la terra che conta: la voce della sua
+// coltura (vedi colture.js), e il raccolto principale di uno in più o in meno
+// secondo la fertilità.
+export function raccolta(base, oggetto, cambio) {
+  const voce = colture.raccolta(base, oggetto, cambio);
+  if (oggetto !== OGGETTO.MATURA) return voce;
+  const f = fertilitaDi(cambio);
+  const scarto = f >= FERTILITA_MASSIMA && !cambio?.patito ? 1 : f <= 1 ? -1 : 0;
+  if (scarto === 0) return voce;
+  const [primo, ...resto] = voce.resa;
+  return { ...voce, resa: [{ ...primo, quante: Math.max(1, primo.quante + scarto) }, ...resto] };
 }
 
 export function eColtura(oggetto) {
@@ -161,7 +236,7 @@ export function nuovoGiorno() {
     // se no un cavolo maturato a novembre andrebbe a seme a dicembre, e il
     // fresco di gennaio sarebbe una promessa che l'inverno non mantiene.
     if (!siColtiva) {
-      if (!coltura.gelo) appassite.push({ tx, ty });
+      if (!coltura.gelo) appassite.push({ tx, ty, cambio });
       else if (cambio.maturata !== undefined) fermi.push({ tx, ty, cambio });
       return;
     }
@@ -179,7 +254,7 @@ export function nuovoGiorno() {
       // quattro i giorni e poi marcisce: il suo seme è il raccolto stesso.
       const eta = giorno - cambio.maturata;
       if (eta >= GIORNI_DI_MATURITA + GIORNI_A_SEME) {
-        appassite.push({ tx, ty });
+        appassite.push({ tx, ty, cambio });
       } else if (eMatura(cambio.oggetto) && eta >= GIORNI_DI_MATURITA && coltura.aSeme) {
         aSeme.push({ tx, ty, cambio });
       }
@@ -191,8 +266,10 @@ export function nuovoGiorno() {
     }
     if (!spuntata(cambio.oggetto)) return;
     const secco = (cambio.secco ?? 0) + sete;
-    if (secco >= coltura.sete) seccate.push({ tx, ty });
-    else assetate.push({ tx, ty, cambio: { ...cambio, secco } });
+    // "Patito" resta scritto fino al raccolto: una pianta che ha avuto sete
+    // non rende di più nemmeno su una terra grassa.
+    if (secco >= coltura.sete) seccate.push({ tx, ty, cambio });
+    else assetate.push({ tx, ty, cambio: { ...cambio, secco, patito: true } });
   });
 
   for (const { tx, ty, cambio } of daDatare) {
@@ -204,8 +281,8 @@ export function nuovoGiorno() {
   for (const { tx, ty, cambio } of fermi) {
     modifiche.imposta(tx, ty, { ...cambio, maturata: cambio.maturata + 1 });
   }
-  for (const { tx, ty } of [...appassite, ...seccate]) {
-    mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.APPASSITA });
+  for (const { tx, ty, cambio } of [...appassite, ...seccate]) {
+    mappa.cambiaTassello(tx, ty, conLaTerra(cambio, { oggetto: OGGETTO.APPASSITA }));
   }
   for (const { tx, ty, cambio } of aSeme) {
     mappa.cambiaTassello(tx, ty, { ...cambio, oggetto: OGGETTO.A_SEME });
@@ -230,6 +307,9 @@ export function nuovoGiorno() {
     cresciute += 1;
   }
 
+  const mangiate = bestie(giorno);
+  const riposate = riposo(giorno);
+
   // Anche la terra zappata e lasciata lì si asciuga: innaffiare in anticipo
   // non deve valere come innaffiare al momento giusto.
   const daAsciugare = [];
@@ -247,7 +327,89 @@ export function nuovoGiorno() {
     seccate: seccate.length,
     assetate: assetate.length,
     aSeme: aSeme.length,
+    mangiate,
+    riposate,
   };
+}
+
+// L'inverno a riposo: il primo giorno di primavera, la terra che non aveva
+// niente di piantato ne esce con un punto in più. Chi ha tenuto un cavolo
+// sotto la neve ha avuto il cavolo; la terra riposa solo se la si lascia.
+function riposo(giorno) {
+  if (stagioni.stagioneDi(giorno) !== "primavera" || stagioni.giornoNellaStagione(giorno) !== 1) return 0;
+  const riposati = [];
+  modifiche.perOgnuno((tx, ty, cambio) => {
+    if (cambio.oggetto !== OGGETTO.TERRA_ZAPPATA && cambio.oggetto !== OGGETTO.APPASSITA) return;
+    if (fertilitaDi(cambio) >= FERTILITA_MASSIMA) return;
+    riposati.push({ tx, ty, cambio });
+  });
+  for (const { tx, ty, cambio } of riposati) mappa.cambiaTassello(tx, ty, concimata(cambio));
+  return riposati.length;
+}
+
+// --- le bestie ----------------------------------------------------------------
+//
+// Di notte, in primavera e d'autunno, le bestie vengono a mangiare l'orto: una
+// notte su due una pianta non protetta sparisce, e resta la terra. Sono le due
+// stagioni in cui la fauna cammina di più per la valle (vedi fauna.js), e
+// l'estate e l'inverno restano tranquilli per una ragione ciascuno — d'estate
+// la prateria dà abbastanza, d'inverno nel campo non c'è niente.
+//
+// Non è una bestia che cammina davvero fino al campo, ed è una scelta: una
+// pianta mangiata mentre dormi è la stessa cosa sia che l'abbia mangiata un
+// cervo disegnato sia uno contato, e contarlo costa una riga invece di un
+// comportamento. Il tiro è delle coordinate e del giorno, come tutto il resto
+// del mondo: la stessa notte nello stesso orto va sempre allo stesso modo.
+//
+// Protegge l'orto una di tre cose: uno spaventapasseri a tre tasselli, un
+// fuoco acceso a tre tasselli, o dei muri — un orto dentro una stanza chiusa
+// non lo raggiunge nessuno.
+export const PROBABILITA_BESTIE = 0.5;
+
+// Si possono spegnere, e lo fanno soltanto i collaudi: una prova sulla sete
+// o sulla semina che fallisce perché stanotte è passato un cervo è una prova
+// che non dice niente. Lo stesso motivo per cui il gelo si imposta da fuori.
+let bestieAttive = true;
+export function impostaBestie(attive) {
+  bestieAttive = attive;
+}
+export const RAGGIO_SPAVENTAPASSERI = 3;
+
+const PRELIBATE = new Set([OGGETTO.GERMOGLIO, OGGETTO.CRESCIUTA, OGGETTO.MATURA]);
+
+export function protetta(tx, ty) {
+  const r = RAGGIO_SPAVENTAPASSERI;
+  for (let dy = -r; dy <= r; dy += 1) {
+    for (let dx = -r; dx <= r; dx += 1) {
+      if (mappa.oggettoDi(tx + dx, ty + dy) === OGGETTO.SPAVENTAPASSERI) return true;
+    }
+  }
+  return mappa.fuocoVicino(tx, ty, r) || meteo.coperto(tx, ty);
+}
+
+function bestie(giorno) {
+  if (!bestieAttive) return 0;
+  const stagione = stagioni.stagioneDi(giorno - 1);
+  if (stagione !== "primavera" && stagione !== "autunno") return 0;
+  const seme = mappa.semeCorrente().valore;
+  if (impronta(giorno, 0, seme ^ 0x6c0b2a5d) >= PROBABILITA_BESTIE) return 0;
+  let scelta = null;
+  let punteggio = Infinity;
+  modifiche.perOgnuno((tx, ty, cambio) => {
+    if (!PRELIBATE.has(cambio.oggetto)) return;
+    const p = impronta(tx + giorno * 7, ty - giorno * 13, seme ^ 0x1f3d5b79);
+    if (p < punteggio) {
+      punteggio = p;
+      scelta = { tx, ty, cambio };
+    }
+  });
+  // Si sceglie fra tutte e poi si guarda se era protetta: la bestia è venuta
+  // per quella, e se c'era lo spaventapasseri se n'è andata. Scegliere solo
+  // fra le scoperte vorrebbe dire che proteggere metà orto sposta la bestia
+  // sull'altra metà — vero, forse, ma una regola che non si vede.
+  if (!scelta || protetta(scelta.tx, scelta.ty)) return 0;
+  mappa.cambiaTassello(scelta.tx, scelta.ty, conLaTerra(scelta.cambio, { oggetto: OGGETTO.TERRA_ZAPPATA }));
+  return 1;
 }
 
 export function innaffia(tx, ty, oggetto) {

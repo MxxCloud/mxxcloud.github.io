@@ -17,7 +17,7 @@ import * as ortoArte from "../arte/sprite-orto.js";
 import * as transizioniArte from "../arte/sprite-transizioni.js";
 import { TERRENO, OGGETTO, terrenoIn, oggettoIn, preparaRovine } from "./generazione.js";
 import * as modifiche from "./modifiche.js";
-import { TAVOLOZZA, TAVOLOZZA_BAGNATA, FOGLIE_ASSETATE } from "../arte/tavolozza.js";
+import { TAVOLOZZA, TAVOLOZZA_BAGNATA, FOGLIE_ASSETATE, TERRA_STANCA, TERRA_SFINITA } from "../arte/tavolozza.js";
 
 const { TASSELLO } = schermo;
 export const SETTORE = 16;
@@ -122,6 +122,11 @@ const CATALOGO_OGGETTI = {
   // Andata a seme non beve più: è una pianta che ha finito, e innaffiarla
   // sarebbe un gesto che non cambia niente.
   [OGGETTO.A_SEME]: { sprite: ortoArte.A_SEME, stadio: "A_SEME", solido: false, suolo: true },
+
+  // Lo spaventapasseri non ferma: sta in mezzo al campo, e fra le file ci si
+  // deve poter passare. Ma sta in piedi, quindi niente "suolo": un superstite
+  // che gli passa dietro gli sta dietro davvero.
+  [OGGETTO.SPAVENTAPASSERI]: { sprite: coseArte.SPAVENTAPASSERI, solido: false },
 
   // L'appassita non è bagnabile: innaffiare un morto non lo riporta indietro,
   // e lasciarla scurire come il resto dell'orto direbbe che si sta facendo
@@ -510,15 +515,21 @@ function mascheraAngolo(tx, ty, quarti) {
   return ruotato(cuoci(forme[scelta], transizioniArte.TAVOLOZZA_MASCHERA), quarti);
 }
 
-// La tavolozza della sete sopra una tavolozza data, una sola per ciascuna: la
-// cottura mette in cache per identità della tavolozza (vedi tavolozza.js), e
-// una nuova a ogni pianta assetata rifarebbe il disegno ogni volta.
-const assetate = new Map();
-function assetataDi(tavolozza) {
-  let fatta = assetate.get(tavolozza);
+// Una correzione — la sete, la terra stanca — sopra una tavolozza data, una
+// sola per ciascuna coppia: la cottura mette in cache per identità della
+// tavolozza (vedi tavolozza.js), e una nuova a ogni tassello rifarebbe il
+// disegno ogni volta.
+const corrette = new Map();
+function correttaDi(tavolozza, correzione) {
+  let perQuesta = corrette.get(correzione);
+  if (!perQuesta) {
+    perQuesta = new Map();
+    corrette.set(correzione, perQuesta);
+  }
+  let fatta = perQuesta.get(tavolozza);
   if (!fatta) {
-    fatta = { ...tavolozza, ...FOGLIE_ASSETATE };
-    assetate.set(tavolozza, fatta);
+    fatta = { ...tavolozza, ...correzione };
+    perQuesta.set(tavolozza, fatta);
   }
   return fatta;
 }
@@ -569,8 +580,15 @@ function cuociSettore(sx, sy) {
         // la terra asciutta o bagnata che sia, per la ragione scritta accanto
         // a FOGLIE_ASSETATE.
         const assetata = voce.bagnabile && modifiche.di(tx, ty)?.secco > 0;
-        const terra = bagnato ? tavolozzaMondoBagnata : tavolozzaMondo;
-        const tavolozza = assetata ? assetataDi(terra) : terra;
+        // E la terra del campo che si stanca schiarisce, se è asciutta: la
+        // fertilità è scritta sul tassello (vedi orto.js), e senza è quella di
+        // un prato appena zappato.
+        const fertilita = voce.suolo ? (modifiche.di(tx, ty)?.fertilita ?? 2) : 2;
+        const terra = bagnato ? tavolozzaMondoBagnata
+          : fertilita <= 0 ? correttaDi(tavolozzaMondo, TERRA_SFINITA)
+          : fertilita === 1 ? correttaDi(tavolozzaMondo, TERRA_STANCA)
+          : tavolozzaMondo;
+        const tavolozza = assetata ? correttaDi(terra, FOGLIE_ASSETATE) : terra;
         const disegno = voce.stadio ? ortoArte.disegnoDi(modifiche.di(tx, ty)?.coltura, voce.stadio) : voce.sprite;
         const fotogrammi = voce.fotogrammi
           ? voce.fotogrammi.map((f) => cuoci(f, tavolozza))

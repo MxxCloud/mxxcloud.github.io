@@ -36,7 +36,8 @@ const { SEMINATO: S, GERMOGLIO: G, CRESCIUTA: C, MATURA: M } = OGGETTO;
 // - raccolto: cosa rende la matura;
 // - aSeme: cosa rende andata a seme, o null se non ci va: una patata lasciata
 //   nella terra non fa semi, marcisce;
-// - gelo: se d'inverno si ferma invece di morire.
+// - gelo: se d'inverno si ferma invece di morire;
+// - ingrassa: se il raccolto ridà fertilità alla terra invece di toglierla.
 export const COLTURE = {
   rapa: {
     nome: "rapa", seme: "semi", verbo: "Semina",
@@ -72,6 +73,9 @@ export const COLTURE = {
     raccolto: [{ cosa: "fagioli", quante: 3 }],
     aSeme: null,
     gelo: false,
+    // E ridanno alla terra invece di toglierle (vedi orto.js): sono la
+    // coltura che si semina dopo le altre.
+    ingrassa: true,
     quando: "i fagioli si seminano d'estate",
   },
   cavolo: {

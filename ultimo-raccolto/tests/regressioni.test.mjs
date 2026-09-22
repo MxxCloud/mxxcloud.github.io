@@ -54,7 +54,7 @@ function reset() {
   addosso.reimposta();
   fauna.reimposta();
   meteo.reimposta();
-  pesca.interrompi(); mappa.impostaGelo(false);
+  pesca.interrompi(); mappa.impostaGelo(false); orto.impostaBestie(false);
   riparo.reimposta(); tempo.reimposta(); bisogni.reimposta(); salute.reimposta();
   inventario.svuota(); modifiche.svuota(); entita.svuota(); simulazione.resoconto();
   mappa.inizializza('review');
@@ -2912,4 +2912,173 @@ test('le cose nuove hanno un’icona di dodici per dodici e un nome',()=>{
     assert.ok(CATALOGO[c.seme],`${id}: seme ${c.seme}`);
     for(const v of [...c.raccolto,...(c.aSeme??[])])assert.ok(CATALOGO[v.cosa],`${id}: ${v.cosa}`);
   }
+});
+
+// --- M7.18: la terra si stanca ----------------------------------------------
+
+test('il raccolto lascia la terra zappata e le toglie un punto; i fagioli glielo ridanno',()=>{
+  tempo.impostaGiorno(13);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.MATURA,maturata:13});
+  assert.equal(azioni.agisci(eroe,null).tipo,'raccolto');
+  assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.TERRA_ZAPPATA,fertilita:1},'niente prato: la terra resta, più stanca');
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.MATURA,coltura:'fagioli',passo:4,maturata:13,fertilita:1});
+  azioni.agisci(eroe,null);assert.equal(modifiche.di(tx+1,ty).fertilita,2,'i fagioli ingrassano');
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.A_SEME,maturata:11,fertilita:2});
+  azioni.agisci(eroe,null);assert.equal(modifiche.di(tx+1,ty).fertilita,1,'anche andare a seme stanca');
+  // Una pianta morta ripulita a mano rende la fibra e lascia la terra com'era.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.APPASSITA,fertilita:1});
+  azioni.agisci(eroe,null);
+  assert.equal(inventario.quante('fibra'),1);assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.TERRA_ZAPPATA,fertilita:1});
+  // E non scende sotto zero: la sfinita resta sfinita.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.MATURA,maturata:13,fertilita:0});
+  azioni.agisci(eroe,null);assert.equal(modifiche.di(tx+1,ty).fertilita,0);
+});
+test('la terra grassa rende uno in più a chi non ha patito, la stanca uno in meno, mai sotto uno',()=>{
+  const patate=(extra)=>{
+    inventario.svuota();modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.MATURA,coltura:'patata',passo:5,maturata:13,...extra});
+    azioni.agisci(eroe,null);return inventario.quante('patata');
+  };
+  tempo.impostaGiorno(13);
+  assert.equal(patate({fertilita:3}),4);
+  assert.equal(patate({fertilita:3,patito:true}),3,'la sete di un giorno se la ricorda');
+  assert.equal(patate({}),3,'la terra di un prato appena zappato');
+  assert.equal(patate({fertilita:1}),2);
+  inventario.svuota();modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.MATURA,maturata:13,fertilita:1});
+  azioni.agisci(eroe,null);assert.equal(inventario.quante('rapa'),1,'mai sotto uno');
+});
+test('a terra sfinita attecchiscono solo i fagioli, e il tasto dice com’è la terra',()=>{
+  inventario.aggiungi('semi',3);inventario.aggiungi('fagioli',3);
+  const verbo=(fertilita,cosa,indice)=>{modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.TERRA_ZAPPATA,fertilita});return azioni.azionePossibile(eroe,cosa,indice);};
+  tempo.impostaGiorno(2);
+  assert.equal(verbo(3,'semi',0).verbo,'Semina (terra grassa)');
+  assert.equal(verbo(2,'semi',0).verbo,'Semina');
+  assert.equal(verbo(1,'semi',0).verbo,'Semina (terra stanca)');
+  assert.equal(verbo(0,'semi',0).impedito,'terra sfinita: solo fagioli, cenere o riposo');
+  const fagioli=verbo(0,'fagioli',1);assert.equal(fagioli.verbo,'Semina (terra sfinita)');assert.equal(fagioli.impedito??null,null);
+  // Seminando la terra resta quella che era.
+  assert.equal(azioni.agisci(eroe,'fagioli',1).tipo,'semina');
+  assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.SEMINATO,coltura:'fagioli',passo:0,fertilita:0});
+});
+test('la terra accompagna la pianta fino in fondo, anche quando muore',()=>{
+  tempo.impostaGiorno(5);
+  modifiche.imposta(tx,ty,{oggetto:OGGETTO.SEMINATO,fertilita:3});
+  unGiorno(tx,ty,6);assert.equal(modifiche.di(tx,ty).fertilita,3);
+  notte(7);assert.equal(modifiche.di(tx,ty).fertilita,3);assert.equal(modifiche.di(tx,ty).patito,true);
+  // L'inverno la uccide, e la terra resta scritta sull'appassita.
+  notte(8);notte(9);
+  assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.APPASSITA);assert.equal(modifiche.di(tx,ty).fertilita,3);
+});
+test('con la zappa una pianta morta si interra: niente fibra, terra più grassa',()=>{
+  inventario.aggiungi('zappa',1);const usi=inventario.attrezzo('zappa',0).usi;
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.APPASSITA,fertilita:1});
+  assert.equal(azioni.azionePossibile(eroe,'zappa',0).verbo,'Interra');
+  assert.equal(azioni.agisci(eroe,'zappa',0).tipo,'interra');
+  assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.TERRA_ZAPPATA,fertilita:2});
+  assert.equal(inventario.quante('fibra'),0);
+  assert.equal(inventario.attrezzo('zappa',0).usi,usi-1,'è un colpo di zappa');
+  vicino(bisogni.livello('stanchezza'),0.98);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.APPASSITA,fertilita:3});
+  assert.equal(azioni.azionePossibile(eroe,'zappa',0).impedito,'la terra è già grassa');
+});
+test('il fuoco che brucia lascia cenere, e la cenere ingrassa la terra',()=>{
+  // D'estate, che non piove: sotto la pioggia il falò non si riaccende.
+  tempo.impostaGiorno(1);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FALO_ACCESO,legna:2});
+  tempo.impostaGiorno(2);decadimento.nuovoGiorno();
+  assert.equal(modifiche.di(tx+1,ty).cenere,1);assert.equal(modifiche.di(tx+1,ty).legna,1);
+  tempo.impostaGiorno(3);decadimento.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FALO_SPENTO);assert.equal(modifiche.di(tx+1,ty).cenere,2,'anche l’ultima legna');
+  // Ricaricandolo la cenere resta sul fondo.
+  inventario.aggiungi('legna',1);
+  assert.equal(azioni.agisci(eroe,'legna',0).tipo,'carica');assert.equal(modifiche.di(tx+1,ty).cenere,2);
+  // A mani vuote la si prende tutta.
+  assert.equal(azioni.azionePossibile(eroe,null).verbo,'Prendi la cenere (2)');
+  assert.equal(azioni.agisci(eroe,null).tipo,'cenere');
+  assert.equal(inventario.quante('cenere'),2);assert.equal(modifiche.di(tx+1,ty).cenere,undefined);
+  assert.equal(azioni.azionePossibile(eroe,null).verbo,'Guarda il falò');
+  // E sul campo è concime: sulla terra vuota e su quella che cresce, non su quella già grassa.
+  const indice=inventario.contenuto().findIndex(c=>c?.cosa==='cenere');
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GERMOGLIO,fertilita:1});
+  assert.equal(azioni.agisci(eroe,'cenere',indice).tipo,'spargi');
+  assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.GERMOGLIO,fertilita:2});
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.TERRA_ZAPPATA,fertilita:3});
+  assert.equal(azioni.azionePossibile(eroe,'cenere',indice).impedito,'la terra è già grassa');
+  assert.equal(inventario.quante('cenere'),1);
+});
+test('un inverno a riposo ridà un punto alla terra vuota, non a quella che ha tenuto un cavolo',()=>{
+  tempo.impostaGiorno(12);
+  modifiche.imposta(tx,ty,{oggetto:OGGETTO.TERRA_ZAPPATA,fertilita:0});
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.APPASSITA,fertilita:1});
+  modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.MATURA,coltura:'cavolo',passo:4,maturata:12,fertilita:1});
+  modifiche.imposta(tx+3,ty,{oggetto:OGGETTO.TERRA_ZAPPATA,fertilita:3});
+  assert.equal(notte(13).riposate,2);
+  assert.equal(modifiche.di(tx,ty).fertilita,1);assert.equal(modifiche.di(tx+1,ty).fertilita,2);
+  assert.equal(modifiche.di(tx+2,ty).fertilita,1);assert.equal(modifiche.di(tx+3,ty).fertilita,3);
+  assert.equal(notte(14).riposate,0,'una volta per inverno');
+});
+test('di notte, in primavera e d’autunno, le bestie mangiano una pianta non protetta',()=>{
+  orto.impostaBestie(true);
+  // Le notti in cui una bestia arriva, per questo seme: si cercano, non si
+  // indovinano, e ce ne devono essere.
+  const pianta=()=>modifiche.imposta(tx,ty,{oggetto:OGGETTO.CRESCIUTA,fertilita:3});
+  const notti=[];
+  for(const giorno of [6,7,8,14,15,16]){pianta();tempo.impostaGiorno(giorno-1);if(notte(giorno).mangiate===1)notti.push(giorno);}
+  assert.ok(notti.length>=1,'nessuna bestia in due stagioni');
+  const giorno=notti[0];
+  pianta();tempo.impostaGiorno(giorno-1);assert.equal(notte(giorno).mangiate,1);
+  assert.deepEqual(modifiche.di(tx,ty),{oggetto:OGGETTO.TERRA_ZAPPATA,fertilita:3},'resta la terra, con la sua fertilità');
+  // Uno spaventapasseri a tre tasselli la protegge; a quattro no.
+  pianta();modifiche.imposta(tx+3,ty+3,{oggetto:OGGETTO.SPAVENTAPASSERI});
+  assert.equal(notte(giorno).mangiate,0);assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.CRESCIUTA);
+  modifiche.imposta(tx+3,ty+3,{oggetto:OGGETTO.NESSUNO});modifiche.imposta(tx+4,ty,{oggetto:OGGETTO.SPAVENTAPASSERI});
+  assert.equal(notte(giorno).mangiate,1);
+  // Anche un fuoco acceso, e dei muri.
+  modifiche.imposta(tx+4,ty,{oggetto:OGGETTO.NESSUNO});
+  pianta();modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.FALO_ACCESO,legna:2});
+  assert.equal(notte(giorno).mangiate,0);
+  modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.NESSUNO});
+  stanza();pianta();assert.equal(notte(giorno).mangiate,0,'dentro una stanza chiusa');
+});
+test('d’estate e d’inverno le bestie restano nella prateria, e il seme non lo mangiano',()=>{
+  orto.impostaBestie(true);
+  for(const giorno of [2,3,4,5,10,11,12,13]){
+    modifiche.imposta(tx,ty,{oggetto:OGGETTO.MATURA,maturata:giorno-1});
+    modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.MATURA,coltura:'cavolo',passo:4,maturata:giorno-1});
+    assert.equal(notte(giorno).mangiate,0,`notte del giorno ${giorno}`);
+  }
+  for(const giorno of [6,7,8,14,15,16]){
+    modifiche.imposta(tx,ty,{oggetto:OGGETTO.SEMINATO});modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.A_SEME,maturata:giorno-1});
+    assert.equal(notte(giorno).mangiate,0,`seme e fiori, notte del giorno ${giorno}`);
+  }
+});
+test('lo spaventapasseri si fa a mani nude, si posa, sta in piedi e si smonta',()=>{
+  const ricetta=ricette.RICETTE.find(r=>r.id==='spaventapasseri');
+  assert.equal(ricetta.banco,undefined);
+  inventario.aggiungi('ramo',2);inventario.aggiungi('fibra',4);
+  assert.ok(ricette.fai(ricetta).fatto);assert.equal(inventario.quante('spaventapasseri'),1);
+  const indice=inventario.contenuto().findIndex(c=>c?.cosa==='spaventapasseri');
+  assert.equal(azioni.agisci(eroe,'spaventapasseri',indice).tipo,'posa');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.SPAVENTAPASSERI);
+  assert.equal(mappa.eSuolo(OGGETTO.SPAVENTAPASSERI),false,'sta in piedi');
+  assert.equal(mappa.solidoIn(tx+1,ty),false,'fra le file ci si passa');
+  assert.equal(azioni.smontaggioPossibile(eroe).verbo,'Smonta lo spaventapasseri');
+  assert.equal(azioni.smontaDavanti(eroe).tipo,'smontato');assert.equal(inventario.quante('spaventapasseri'),1);
+  for(const n of ['SPAVENTAPASSERI','SPAVENTAPASSERI_ICONA','CENERE']){
+    const r=arteCose[n];assert.ok(r.every(x=>x.length===r[0].length),n);
+    for(const c of r.join(''))assert.ok(c==='.'||Object.hasOwn(TAVOLOZZA,c),`${n}: ${c}`);
+  }
+});
+test('fertilità, sete patita e cenere si salvano solo dove hanno senso',()=>{
+  const stato=salvataggio.istantanea(eroe,0);
+  const valida=m=>{stato.modifiche=[{tx:tx+1,ty,...m}];return salvataggio.valido(stato);};
+  assert.ok(valida({oggetto:OGGETTO.TERRA_ZAPPATA,fertilita:0}));
+  assert.ok(valida({oggetto:OGGETTO.APPASSITA,fertilita:3}));
+  assert.ok(valida({oggetto:OGGETTO.CRESCIUTA,fertilita:1,patito:true,secco:1}));
+  assert.ok(valida({oggetto:OGGETTO.FALO_SPENTO,cenere:3}));
+  for(const storto of [4,-1,1.5,'due'])assert.equal(valida({oggetto:OGGETTO.TERRA_ZAPPATA,fertilita:storto}),false,String(storto));
+  assert.equal(valida({oggetto:OGGETTO.ALBERO,fertilita:2}),false,'una fertilità su un albero');
+  assert.equal(valida({oggetto:OGGETTO.TERRA_ZAPPATA,patito:true}),false,'patita senza pianta');
+  assert.equal(valida({oggetto:OGGETTO.CRESCIUTA,patito:false}),false);
+  assert.equal(valida({oggetto:OGGETTO.FALO_SPENTO,cenere:4}),false);
+  assert.equal(valida({oggetto:OGGETTO.CASSA,cenere:1}),false,'cenere fuori da un fuoco');
 });

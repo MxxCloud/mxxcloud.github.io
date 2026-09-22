@@ -1002,3 +1002,63 @@ export const ZUPPA = [
   "............",
   "............",
 ];
+
+// --- la terra che si stanca (M7.18) ------------------------------------------
+
+// Lo spaventapasseri: un sacco di paglia su un palo, con il cappello e una
+// camicia vecchia. Sta in piedi fra le file come un albero, e come un albero
+// si disegna in fila con quello che ha i piedi più in basso.
+export const SPAVENTAPASSERI = [
+  "................",
+  "......hhhh......",
+  ".....hhhhhh.....",
+  "...gggggggggg...",
+  "......5555......",
+  "......5g5g......",
+  "......5555......",
+  "......5gg5......",
+  "..4.oooooooo.4..",
+  ".44oooooooooo44.",
+  "4...oooooooo...4",
+  "....oooooooo....",
+  "....oooooooo....",
+  ".....oooooo.....",
+  "......4..4......",
+  ".......gh.......",
+  ".......gh.......",
+  ".......gh.......",
+  ".......gh.......",
+  "......dghd......",
+];
+
+export const SPAVENTAPASSERI_ICONA = [
+  "....hhhh....",
+  "..gggggggg..",
+  "....5555....",
+  "....5g5g....",
+  "....5555....",
+  "4.oooooooo.4",
+  ".44oooooo44.",
+  "...oooooo...",
+  "....oooo....",
+  ".....gh.....",
+  ".....gh.....",
+  "....dghd....",
+];
+
+// La cenere: un mucchietto grigio. Grigia come la roccia, e non per caso — è
+// quello che resta quando la legna ha finito di essere legna.
+export const CENERE = [
+  "............",
+  "............",
+  "............",
+  "............",
+  ".....ff.....",
+  "....fsff....",
+  "...ffffsf...",
+  "..fsfffffe..",
+  ".efffsffffe.",
+  ".eeeeeeeeee.",
+  "............",
+  "............",
+];

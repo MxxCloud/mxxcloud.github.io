@@ -122,6 +122,29 @@ export function legnaNel(tx, ty) {
   return null;
 }
 
+// --- la cenere -------------------------------------------------------------
+//
+// Ogni giorno che un fuoco brucia lascia un po' di cenere sul fondo, fino a
+// tre, e resta anche quando il fuoco si spegne. Si prende a mani vuote e sul
+// campo è concime (vedi orto.js): è il primo filo che lega il fuoco all'orto,
+// e la ragione per cui un focolare acceso tutto l'inverno vale qualcosa anche
+// a primavera.
+export const CENERE_MASSIMA = 3;
+
+export function cenereNel(tx, ty) {
+  if (!siCarica(mappa.oggettoDi(tx, ty))) return 0;
+  return modifiche.di(tx, ty)?.cenere ?? 0;
+}
+
+// La si prende tutta, e il fuoco resta com'era.
+export function prendiCenere(tx, ty) {
+  const quante = cenereNel(tx, ty);
+  if (quante === 0) return 0;
+  const { cenere, ...resto } = modifiche.di(tx, ty);
+  modifiche.imposta(tx, ty, resto);
+  return quante;
+}
+
 // --- l'essiccatoio --------------------------------------------------------
 
 // Quanti giorni asciutti servono perché la carne sia secca.
@@ -272,8 +295,11 @@ export function nuovoGiorno() {
     const focolaio = FOCOLAI[cambio.oggetto];
     if (focolaio) {
       const resta = (cambio.legna ?? focolaio.capienza) - legnaAlGiorno();
-      if (resta >= 1) modifiche.imposta(tx, ty, { ...cambio, legna: resta });
-      else spenti.push({ tx, ty, diventa: focolaio.spento });
+      // Un giorno di fuoco, un po' di cenere: la si scrive prima di sapere se
+      // il fuoco regge un altro giorno, perché anche l'ultima legna brucia.
+      const cenere = Math.min(CENERE_MASSIMA, (cambio.cenere ?? 0) + 1);
+      if (resta >= 1) modifiche.imposta(tx, ty, { ...cambio, legna: resta, cenere });
+      else spenti.push({ tx, ty, diventa: focolaio.spento, cenere });
       return;
     }
 
@@ -327,8 +353,8 @@ export function nuovoGiorno() {
     mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.ESSICCATOIO_PRONTO, quante, cosa });
   }
 
-  for (const { tx, ty, diventa } of spenti) {
-    mappa.cambiaTassello(tx, ty, { oggetto: diventa });
+  for (const { tx, ty, diventa, cenere } of spenti) {
+    mappa.cambiaTassello(tx, ty, cenere ? { oggetto: diventa, cenere } : { oggetto: diventa });
   }
   for (const { tx, ty } of svuotati) {
     mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
