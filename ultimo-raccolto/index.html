@@ -11,12 +11,100 @@
   <link rel="icon" href="icona-192.png" type="image/png">
   <link rel="apple-touch-icon" href="icona-192.png">
   <link rel="stylesheet" href="style.css">
+  <!--
+    Ogni modulo si chiede con la versione nell'indirizzo, e una pubblicazione
+    diventa tutta o niente.
+
+    GitHub Pages tiene ogni file in cache per dieci minuti, e ognuno per conto
+    suo: nei minuti dopo una pubblicazione il browser può ricevere gioco.js
+    nuovo e mondo/mappa.js vecchio. Il numero a schermo sta in gioco.js, quindi
+    diceva M7.15.7 mentre l'orto si disegnava ancora come in M7.15.6 — ed è
+    così che una correzione giusta è sembrata non funzionare.
+
+    Con "?v=" un indirizzo nuovo non sta in nessuna cache, quindi arriva
+    dall'origine insieme a tutti gli altri. La versione è quella di VERSIONE in
+    gioco.js, e il collaudo pretende che qui ci sia ogni modulo e che portino
+    tutti quella.
+  -->
+  <script type="importmap">
+  {
+    "imports": {
+      "./arte/atmosfera.js": "./arte/atmosfera.js?v=M7.15.8",
+      "./arte/luoghi.js": "./arte/luoghi.js?v=M7.15.8",
+      "./arte/piante.js": "./arte/piante.js?v=M7.15.8",
+      "./arte/sprite-cose.js": "./arte/sprite-cose.js?v=M7.15.8",
+      "./arte/sprite-fauna.js": "./arte/sprite-fauna.js?v=M7.15.8",
+      "./arte/sprite-fiori.js": "./arte/sprite-fiori.js?v=M7.15.8",
+      "./arte/sprite-impugnati.js": "./arte/sprite-impugnati.js?v=M7.15.8",
+      "./arte/sprite-indicatori.js": "./arte/sprite-indicatori.js?v=M7.15.8",
+      "./arte/sprite-luoghi.js": "./arte/sprite-luoghi.js?v=M7.15.8",
+      "./arte/sprite-oggetti.js": "./arte/sprite-oggetti.js?v=M7.15.8",
+      "./arte/sprite-orto.js": "./arte/sprite-orto.js?v=M7.15.8",
+      "./arte/sprite-personaggi.js": "./arte/sprite-personaggi.js?v=M7.15.8",
+      "./arte/sprite-terreno.js": "./arte/sprite-terreno.js?v=M7.15.8",
+      "./arte/sprite-testo.js": "./arte/sprite-testo.js?v=M7.15.8",
+      "./arte/sprite-transizioni.js": "./arte/sprite-transizioni.js?v=M7.15.8",
+      "./arte/sprite.js": "./arte/sprite.js?v=M7.15.8",
+      "./arte/tavolozza.js": "./arte/tavolozza.js?v=M7.15.8",
+      "./arte/testo.js": "./arte/testo.js?v=M7.15.8",
+      "./arte/voci.js": "./arte/voci.js?v=M7.15.8",
+      "./entita/entita.js": "./entita/entita.js?v=M7.15.8",
+      "./entita/giocatore.js": "./entita/giocatore.js?v=M7.15.8",
+      "./entita/infetto.js": "./entita/infetto.js?v=M7.15.8",
+      "./entita/urti.js": "./entita/urti.js?v=M7.15.8",
+      "./interfaccia/hud.js": "./interfaccia/hud.js?v=M7.15.8",
+      "./interfaccia/mappa.js": "./interfaccia/mappa.js?v=M7.15.8",
+      "./interfaccia/minimappa.js": "./interfaccia/minimappa.js?v=M7.15.8",
+      "./interfaccia/tinte.js": "./interfaccia/tinte.js?v=M7.15.8",
+      "./mondo/generazione.js": "./mondo/generazione.js?v=M7.15.8",
+      "./mondo/mappa.js": "./mondo/mappa.js?v=M7.15.8",
+      "./mondo/modifiche.js": "./mondo/modifiche.js?v=M7.15.8",
+      "./mondo/ostacoli.js": "./mondo/ostacoli.js?v=M7.15.8",
+      "./mondo/rovine.js": "./mondo/rovine.js?v=M7.15.8",
+      "./motore/casuale.js": "./motore/casuale.js?v=M7.15.8",
+      "./motore/ciclo.js": "./motore/ciclo.js?v=M7.15.8",
+      "./motore/comandi.js": "./motore/comandi.js?v=M7.15.8",
+      "./motore/oscurita.js": "./motore/oscurita.js?v=M7.15.8",
+      "./motore/scheggie.js": "./motore/scheggie.js?v=M7.15.8",
+      "./motore/schermo.js": "./motore/schermo.js?v=M7.15.8",
+      "./motore/suono.js": "./motore/suono.js?v=M7.15.8",
+      "./regole/acqua.js": "./regole/acqua.js?v=M7.15.8",
+      "./regole/addosso.js": "./regole/addosso.js?v=M7.15.8",
+      "./regole/azioni.js": "./regole/azioni.js?v=M7.15.8",
+      "./regole/bisogni.js": "./regole/bisogni.js?v=M7.15.8",
+      "./regole/chiasso.js": "./regole/chiasso.js?v=M7.15.8",
+      "./regole/contenitori.js": "./regole/contenitori.js?v=M7.15.8",
+      "./regole/decadimento.js": "./regole/decadimento.js?v=M7.15.8",
+      "./regole/esplorato.js": "./regole/esplorato.js?v=M7.15.8",
+      "./regole/fauna.js": "./regole/fauna.js?v=M7.15.8",
+      "./regole/fiamma.js": "./regole/fiamma.js?v=M7.15.8",
+      "./regole/freddo.js": "./regole/freddo.js?v=M7.15.8",
+      "./regole/infetti.js": "./regole/infetti.js?v=M7.15.8",
+      "./regole/inventario.js": "./regole/inventario.js?v=M7.15.8",
+      "./regole/meteo.js": "./regole/meteo.js?v=M7.15.8",
+      "./regole/oggetti.js": "./regole/oggetti.js?v=M7.15.8",
+      "./regole/orto.js": "./regole/orto.js?v=M7.15.8",
+      "./regole/pesca.js": "./regole/pesca.js?v=M7.15.8",
+      "./regole/ricette.js": "./regole/ricette.js?v=M7.15.8",
+      "./regole/ricrescita.js": "./regole/ricrescita.js?v=M7.15.8",
+      "./regole/riparo.js": "./regole/riparo.js?v=M7.15.8",
+      "./regole/riposo.js": "./regole/riposo.js?v=M7.15.8",
+      "./regole/salute.js": "./regole/salute.js?v=M7.15.8",
+      "./regole/salvataggio.js": "./regole/salvataggio.js?v=M7.15.8",
+      "./regole/simulazione.js": "./regole/simulazione.js?v=M7.15.8",
+      "./regole/sincronia.js": "./regole/sincronia.js?v=M7.15.8",
+      "./regole/stagioni.js": "./regole/stagioni.js?v=M7.15.8",
+      "./regole/tempo.js": "./regole/tempo.js?v=M7.15.8",
+      "./regole/udito.js": "./regole/udito.js?v=M7.15.8"
+    }
+  }
+  </script>
 </head>
 <body>
   <main id="scena">
     <canvas id="quadro" aria-label="Area di gioco di Ultimo raccolto"></canvas>
     <pre id="diagnostica" hidden></pre>
   </main>
-  <script type="module" src="gioco.js"></script>
+  <script type="module" src="gioco.js?v=M7.15.8"></script>
 </body>
 </html>

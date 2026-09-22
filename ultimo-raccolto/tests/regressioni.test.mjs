@@ -2550,3 +2550,64 @@ test('il suolo non illumina e non si anima: il disegno cotto lo ignorerebbe',()=
     assert.ok(!voce.includes('fotogrammi:'),'una zolla non si anima: '+voce.trim());
   }
 });
+
+// --- M7.15.8: una pubblicazione arriva tutta o non arriva ------------------
+
+test('ogni modulo si chiede con la versione del gioco',()=>{
+  // Il difetto che questa riga chiude: GitHub Pages tiene ogni file in cache
+  // dieci minuti, ciascuno per conto suo, e subito dopo M7.15.7 il browser ha
+  // avuto gioco.js nuovo — con il numero nuovo a schermo — e mondo/mappa.js
+  // vecchio, con l'orto ancora sopra il superstite. Un indirizzo con "?v="
+  // nuovo non sta in nessuna cache: arriva dall'origine insieme agli altri.
+  const root=new URL('../',import.meta.url);
+  const pagina=readFileSync(new URL('index.html',root),'utf8');
+  const versione=readFileSync(new URL('gioco.js',root),'utf8').match(/const VERSIONE = "([^"]+)"/)[1];
+  const imports=JSON.parse(pagina.match(/<script type="importmap">([\s\S]*?)<\/script>/)[1]).imports;
+  const moduli=[];
+  for(const dir of ['arte','mondo','motore','regole','entita','interfaccia'])
+    for(const p of readdirSync(new URL(dir+'/',root)))if(p.endsWith('.js'))moduli.push(`./${dir}/${p}`);
+  for(const m of moduli)assert.equal(imports[m],`${m}?v=${versione}`,m);
+  // E niente di più: una voce per un file che non c'è più resterebbe lì a
+  // sembrare una garanzia.
+  assert.deepEqual(Object.keys(imports).sort(),moduli.sort());
+  // L'ingresso non passa dalla mappa degli import, che vale solo per gli
+  // import: la versione se la porta scritta da sé.
+  assert.ok(pagina.includes(`<script type="module" src="gioco.js?v=${versione}"></script>`),'gioco.js con la versione');
+  // Prima di qualunque modulo: una mappa che arriva dopo non vale più.
+  assert.ok(pagina.indexOf('type="importmap"')<pagina.indexOf('type="module"'));
+});
+test('offline il modulo chiesto con la versione si trova lo stesso',async()=>{
+  // Il deposito precarica gli indirizzi senza "?v=", la pagina li chiede con:
+  // senza il secondo tentativo, offline si aprirebbe la pagina e basta.
+  const handlers={},chiesti=[];let risposta;
+  const source=readFileSync(new URL('../sw.js',import.meta.url),'utf8');
+  runInNewContext(source,{URL,self:{addEventListener:(k,v)=>handlers[k]=v,location:{origin:'https://valle.test'}},
+    fetch:()=>Promise.reject(new TypeError('offline')),
+    caches:{match:async(r,opzioni)=>{chiesti.push(opzioni?.ignoreSearch===true);return opzioni?.ignoreSearch?'mappa.js':undefined;}}});
+  handlers.fetch({request:{method:'GET',url:'https://valle.test/ultimo-raccolto/mondo/mappa.js?v=M7.15.8',mode:'cors'},respondWith:p=>risposta=p});
+  assert.equal(await risposta,'mappa.js');
+  assert.deepEqual(chiesti,[false,true]);
+});
+test('il precarico chiede indirizzi che nessuna cache ha mai visto',async()=>{
+  // Anche la copia offline si faceva dagli indirizzi senza versione, cioè
+  // dalla stessa cache di GitHub Pages che ha mescolato M7.15.7.
+  const handlers={};let chiesti,fatto;
+  const source=readFileSync(new URL('../sw.js',import.meta.url),'utf8');
+  const versione=source.match(/const VERSIONE = "([^"]+)"/)[1];
+  runInNewContext(source,{self:{addEventListener:(k,v)=>handlers[k]=v,skipWaiting:async()=>{}},
+    Request:class{constructor(url,opzioni){this.url=url;this.cache=opzioni.cache;}},
+    caches:{open:async()=>({addAll:async r=>{chiesti=r;}})}});
+  handlers.install({waitUntil:p=>fatto=p});await fatto;
+  assert.ok(chiesti.length>60);
+  for(const r of chiesti){assert.match(r.url,new RegExp(`^\\./[^?]*\\?v=${versione}$`));assert.equal(r.cache,'reload');}
+  assert.ok(chiesti.some(r=>r.url===`./mondo/mappa.js?v=${versione}`));
+});
+test('offline la navigazione trova la pagina precaricata con la versione',async()=>{
+  const handlers={};let risposta;
+  const source=readFileSync(new URL('../sw.js',import.meta.url),'utf8');
+  runInNewContext(source,{URL,self:{addEventListener:(k,v)=>handlers[k]=v,location:{origin:'https://valle.test'}},
+    fetch:()=>Promise.reject(new TypeError('offline')),
+    caches:{match:async(r,opzioni)=>opzioni?.ignoreSearch&&(r.url??r).endsWith('index.html')?'pagina':undefined}});
+  handlers.fetch({request:{method:'GET',url:'https://valle.test/ultimo-raccolto/?diagnostica',mode:'navigate'},respondWith:p=>risposta=p});
+  assert.equal(await risposta,'pagina');
+});
