@@ -110,14 +110,18 @@ const CATALOGO_OGGETTI = {
   // del superstite gli viene disegnato sopra, e si vede il personaggio sotto
   // il campo. Succedeva, ed è il difetto che questa riga chiude: l'ordine dei
   // piedi è la profondità giusta per un albero, non per una zolla.
+  //
+  // E "stadio": da M7.17 lo stesso stadio ha un disegno per coltura, e quale
+  // coltura sia lo sa il tassello, non l'oggetto. La cottura chiede il disegno
+  // a sprite-orto.js con il nome dello stadio e la coltura scritta lì.
   [OGGETTO.TERRA_ZAPPATA]: { sprite: ortoArte.TERRA_ZAPPATA, solido: false, bagnabile: true, suolo: true },
-  [OGGETTO.SEMINATO]: { sprite: ortoArte.SEMINATO, solido: false, bagnabile: true, suolo: true },
-  [OGGETTO.GERMOGLIO]: { sprite: ortoArte.GERMOGLIO, solido: false, bagnabile: true, suolo: true },
-  [OGGETTO.CRESCIUTA]: { sprite: ortoArte.CRESCIUTA, solido: false, bagnabile: true, suolo: true },
-  [OGGETTO.MATURA]: { sprite: ortoArte.MATURA, solido: false, bagnabile: true, suolo: true },
+  [OGGETTO.SEMINATO]: { sprite: ortoArte.SEMINATO, stadio: "SEMINATO", solido: false, bagnabile: true, suolo: true },
+  [OGGETTO.GERMOGLIO]: { sprite: ortoArte.GERMOGLIO, stadio: "GERMOGLIO", solido: false, bagnabile: true, suolo: true },
+  [OGGETTO.CRESCIUTA]: { sprite: ortoArte.CRESCIUTA, stadio: "CRESCIUTA", solido: false, bagnabile: true, suolo: true },
+  [OGGETTO.MATURA]: { sprite: ortoArte.MATURA, stadio: "MATURA", solido: false, bagnabile: true, suolo: true },
   // Andata a seme non beve più: è una pianta che ha finito, e innaffiarla
   // sarebbe un gesto che non cambia niente.
-  [OGGETTO.A_SEME]: { sprite: ortoArte.A_SEME, solido: false, suolo: true },
+  [OGGETTO.A_SEME]: { sprite: ortoArte.A_SEME, stadio: "A_SEME", solido: false, suolo: true },
 
   // L'appassita non è bagnabile: innaffiare un morto non lo riporta indietro,
   // e lasciarla scurire come il resto dell'orto direbbe che si sta facendo
@@ -567,9 +571,10 @@ function cuociSettore(sx, sy) {
         const assetata = voce.bagnabile && modifiche.di(tx, ty)?.secco > 0;
         const terra = bagnato ? tavolozzaMondoBagnata : tavolozzaMondo;
         const tavolozza = assetata ? assetataDi(terra) : terra;
+        const disegno = voce.stadio ? ortoArte.disegnoDi(modifiche.di(tx, ty)?.coltura, voce.stadio) : voce.sprite;
         const fotogrammi = voce.fotogrammi
           ? voce.fotogrammi.map((f) => cuoci(f, tavolozza))
-          : [cuoci(voce.sprite, tavolozza)];
+          : [cuoci(disegno, tavolozza)];
         // Un mucchio è il sacco più l'icona di quello che contiene. Se
         // l'icona manca resta il sacco: un mucchio senza disegno si vede e si
         // raccoglie lo stesso, mentre un errore qui lo farebbe sparire.

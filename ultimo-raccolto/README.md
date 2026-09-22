@@ -12,6 +12,51 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.17 — cinque colture
+
+L'orto sapeva fare una cosa sola, la rapa. Adesso ne fa cinque, e **nessuna è
+una rapa con un altro nome**: ognuna risponde a una domanda diversa, ed è per
+questo che vale la pena scegliere che cosa piantare dove.
+
+| Coltura | Si semina | Stadi | Rende | Il suo mestiere |
+|---|---|---|---|---|
+| **Rapa** | primavera, estate, autunno | 4 | 1 rapa, o 3 semi a seme | la tuttofare |
+| **Patata** | primavera, estate | 6 | 3 patate | la scorta: dura quattordici giorni, si ripianta una patata, e la sete la regge meglio di tutte |
+| **Fagioli** | estate | 5 | 3 fagioli | rendono di più, e si ripiantano da sé; ma bevono tanto che un giorno d'estate senz'acqua li secca |
+| **Cavolo** | primavera, autunno | 5 | 1 cavolo, o 3 semi a seme | regge il gelo: d'inverno si ferma invece di morire, e quello maturo è l'unico fresco di gennaio |
+| **Lino** | primavera, estate | 5 | 4 fibra, o 3 semi a seme | non si mangia: fa bende e giacigli, e contende al cibo lo spazio dell'orto |
+
+**Il seme in mano decide la coltura.** Fuori stagione il tasto dice quando si
+semina ("i fagioli si seminano d'estate"), come già diceva che d'inverno non
+germoglia niente. Stadi e disegni sono gli stessi per tutte — seminato,
+germoglio, cresciuta, matura, a seme — e cambia la pianta: le patate fioriscono
+bianco, i fagioli salgono su un paletto, il cavolo chiude una testa chiara, il
+lino fa fiori azzurri e poi capsule dorate. Il tassello si ricorda la coltura e
+il passo a cui è arrivato; un campo di rape resta scritto com'era, e i
+salvataggi di prima si caricano uguali.
+
+**Patata e fagioli non vanno a seme**: il loro seme è il raccolto stesso, e
+ogni patata mangiata è una pianta in meno. Lasciati maturi, dopo quattro
+giorni marciscono. **I fagioli si seccano all'essiccatoio**, tre per una
+manciata che dura un anno.
+
+**I semi si cercano.** I cespugli continuano a dare quelli della rapa; le
+patate stanno nelle casse della fattoria da cui si comincia; i fagioli nei
+carri rovesciati e negli accampamenti bruciati, che erano di chi viaggiava; il
+cavolo e il lino nelle case, che erano l'orto di qualcuno.
+
+**La zuppa** è la prima ricetta che vuole un fuoco acceso vicino invece del
+banco: una verdura — rapa o patata —, un cavolo e un secchio d'acqua fanno due
+scodelle, e il secchio torna vuoto. Sfama più di quanto sfamerebbero i due
+ingredienti cotti ciascuno per conto suo, e toglie anche un po' di sete. Il
+pannello delle ricette si è allargato per farci stare i tre ingredienti.
+
+**Misurato**: la patata cotta vale sei decimi e non sette. A sette, su sei
+tasselli e un anno di stagioni buone, rendeva 0,23 di fame al giorno per
+tassello contro gli 0,17 della rapa, durando il doppio — sarebbe stata meglio in
+tutto, cioè l'unica scelta. A sei rende 0,20: un po' più della rapa, perché è
+più lenta e d'autunno non si pianta, e resta la scorta.
+
 ## M7.16 — l'orto si paga
 
 Segnalato giocando: l'orto era **semplice, ripetitivo e fin troppo
@@ -1143,7 +1188,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.16**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.17**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -1294,7 +1339,9 @@ solchi bagnati si riconoscono dal terreno più scuro.
 La matura rende una rapa e niente semi. Lasciata sul campo, dopo due giorni
 **va a seme** — lo stelo si alza e fiorisce giallo — e rende tre semi e niente
 da mangiare; dopo altri due si secca. Mangiare adesso o seminare domani è la
-scelta di ogni tassello (vedi M7.16).
+scelta di ogni tassello (vedi M7.16). E la rapa è una delle cinque colture:
+patata, fagioli, cavolo e lino hanno stagioni, sete e raccolti loro (vedi
+M7.17).
 
 Dormire porta all'alba, quindi anche l'orto va avanti: è il modo di
 comprimere l'attesa senza toglierla.

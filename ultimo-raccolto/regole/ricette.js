@@ -245,6 +245,34 @@ export const RICETTE = [
       { cosa: "fibra", quante: 2 },
     ],
   },
+  // La zuppa, ed è la prima ricetta che vuole un fuoco invece del banco: si
+  // cuoce, non si costruisce. Due scodelle da una verdura, un cavolo e un
+  // secchio d'acqua, e il secchio torna vuoto — un contenitore si svuota,
+  // non si consuma, come quando si beve (vedi azioni.js). È la ragione per
+  // tenere il cavolo accanto al focolare: da solo sfama poco, nella zuppa fa
+  // di due verdure un pasto e mezzo.
+  {
+    id: "zuppa",
+    fuoco: true,
+    produce: { cosa: "zuppa", quante: 2 },
+    rende: { cosa: "secchio", quante: 1 },
+    costo: [
+      { cosa: "rapa", quante: 1 },
+      { cosa: "cavolo", quante: 1 },
+      { cosa: "secchio_pieno", quante: 1 },
+    ],
+  },
+  {
+    id: "zuppa_patate",
+    fuoco: true,
+    produce: { cosa: "zuppa", quante: 2 },
+    rende: { cosa: "secchio", quante: 1 },
+    costo: [
+      { cosa: "patata", quante: 1 },
+      { cosa: "cavolo", quante: 1 },
+      { cosa: "secchio_pieno", quante: 1 },
+    ],
+  },
 ];
 
 export function bastano(ricetta) {
@@ -255,10 +283,12 @@ export function bastano(ricetta) {
 // poter costruire sono diversi e si risolvono in modi diversi — andare a
 // raccogliere, o liberare una casella — e dirli entrambi "materiali
 // insufficienti" mandava a cercare pietre chi aveva solo lo zaino pieno.
-export function fai(ricetta, alBanco = false) {
+export function fai(ricetta, alBanco = false, alFuoco = false) {
   // Il banco prima dei materiali: chi sta in mezzo a un bosco con tutto il
-  // necessario deve sentirsi dire che gli manca il posto, non la roba.
+  // necessario deve sentirsi dire che gli manca il posto, non la roba. E il
+  // fuoco allo stesso modo.
   if (ricetta.banco && !alBanco) return { fatto: false, perche: "banco" };
+  if (ricetta.fuoco && !alFuoco) return { fatto: false, perche: "fuoco" };
   if (ricetta.ripara && !inventario.daRiparare(ricetta.ripara)) {
     // Due no diversi, e vanno detti diversi: "non c'è niente da riparare" si
     // risolve aspettando di usarlo, "non si ripara più" si risolve rifacendolo.
@@ -276,7 +306,7 @@ export function fai(ricetta, alBanco = false) {
     bisogni.consuma("stanchezza", 0.02);
     return { fatto: true, massimo: inventario.massimoDi(attrezzo) };
   }
-  if (!inventario.trasforma(ricetta.costo, ricetta.produce)) {
+  if (!inventario.trasforma(ricetta.costo, ricetta.rende ? [ricetta.produce, ricetta.rende] : ricetta.produce)) {
     return { fatto: false, perche: "zaino" };
   }
   bisogni.consuma("stanchezza", 0.02);

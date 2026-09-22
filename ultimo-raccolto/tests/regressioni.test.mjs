@@ -39,6 +39,9 @@ import * as entita from '../entita/entita.js';
 import * as decadimento from '../regole/decadimento.js';
 import * as stagioni from '../regole/stagioni.js';
 import * as orto from '../regole/orto.js';
+import * as colture from '../regole/colture.js';
+import * as ortoArte from '../arte/sprite-orto.js';
+import * as arteCose from '../arte/sprite-cose.js';
 import { OGGETTO, TERRENO } from '../mondo/generazione.js';
 import { CATALOGO, RACCOLTA } from '../regole/oggetti.js';
 import { vistaLibera, fattoreSuono } from '../mondo/ostacoli.js';
@@ -146,7 +149,9 @@ test('carro e tronchi richiedono lavoro, consumano ascia e stamina e non ricresc
   assert.equal(inventario.quante('legna'),4);
 });
 test('bottino dei piccoli luoghi tematico, modesto e stabile alla riapertura',()=>{
-  const ammessi={carro:['fibra','legna','benda'],pozzo:['secchio','fibra','pietra'],bruciato:['fibra','benda','conserva'],boscaioli:['legna','ramo','ascia'],orto:['semi','fibra','zappa']};
+  // Da M7.17 i luoghi di chi viaggiava hanno i fagioli, e l'orto i semi
+  // della rapa e del cavolo e qualche patata.
+  const ammessi={carro:['fibra','legna','fagioli','benda'],pozzo:['secchio','fibra','pietra'],bruciato:['fibra','benda','fagioli','conserva'],boscaioli:['legna','ramo','ascia'],orto:['semi','semi_cavolo','patata','fibra','zappa']};
   for(const l of LUOGHI) {
     const r=trovaLuogo(l.id),p=segnoNelLuogo(r,'c');
     const prima=contenitori.contenutoDi(p.tx,p.ty),pile=prima.filter(Boolean);
@@ -2739,4 +2744,172 @@ test('l’orto rende, ma un tassello non sfama più da solo',()=>{
   // Un giorno saltato ogni quattro costa, ma non tutto il campo.
   const distratta=rendita(giorno=>giorno%4!==0,1);
   assert.ok(distratta>perfetta*0.3&&distratta<perfetta*0.7,`un giorno su quattro senz'acqua: ${distratta.toFixed(3)}`);
+});
+
+// --- M7.17: cinque colture --------------------------------------------------
+
+// Un tassello zappato davanti al superstite, e il superstite con in mano quello
+// che si dice.
+function zappato(){modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.TERRA_ZAPPATA});}
+// Cresce un giorno: la si innaffia e passa la mezzanotte.
+function unGiorno(x,y,giorno){orto.innaffia(x,y,modifiche.di(x,y).oggetto);notte(giorno);}
+
+test('ogni seme pianta la sua coltura, e fuori stagione dice quando',()=>{
+  tempo.impostaGiorno(13);zappato();
+  inventario.aggiungi('patata',2);inventario.aggiungi('fagioli',2);inventario.aggiungi('semi_lino',2);
+  // La patata si pianta, e il tasto lo dice col suo verbo.
+  assert.equal(azioni.azionePossibile(eroe,'patata',0).verbo,'Pianta');
+  // I fagioli no: in primavera non è la loro stagione, e si dice quale è.
+  assert.equal(azioni.azionePossibile(eroe,'fagioli',1).impedito,'i fagioli si seminano d’estate'.replace('’',"'"));
+  assert.equal(azioni.agisci(eroe,'fagioli',1),null);assert.equal(inventario.quante('fagioli'),2);
+  assert.equal(azioni.agisci(eroe,'patata',0).tipo,'semina');
+  assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.SEMINATO,coltura:'patata',passo:0});
+  assert.equal(inventario.quante('patata'),1,'si pianta una patata dello zaino');
+  // D'inverno nessuno germoglia, e lo si dice come prima.
+  tempo.impostaGiorno(10);zappato();
+  assert.equal(azioni.azionePossibile(eroe,'semi_lino',2).impedito,"d'inverno non germoglia");
+  // E la rapa resta scritta com'era: senza coltura.
+  tempo.impostaGiorno(13);inventario.aggiungi('semi',1);
+  assert.equal(azioni.agisci(eroe,'semi',3).tipo,'semina');
+  assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.SEMINATO});
+});
+test('la patata cresce piano: sei stadi, cinque innaffiature, e rende tre patate',()=>{
+  tempo.impostaGiorno(13);modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.SEMINATO,coltura:'patata',passo:0});
+  const visti=[];
+  for(let giorno=14;giorno<=18;giorno++){unGiorno(tx+1,ty,giorno);visti.push(modifiche.di(tx+1,ty).oggetto);}
+  assert.deepEqual(visti,[OGGETTO.GERMOGLIO,OGGETTO.GERMOGLIO,OGGETTO.CRESCIUTA,OGGETTO.CRESCIUTA,OGGETTO.MATURA]);
+  assert.equal(modifiche.di(tx+1,ty).passo,5);assert.equal(modifiche.di(tx+1,ty).coltura,'patata');
+  assert.equal(azioni.agisci(eroe,null).tipo,'raccolto');
+  assert.equal(inventario.quante('patata'),3);assert.equal(inventario.quante('rapa'),0);
+});
+test('ogni coltura rende il suo raccolto, e a seme i suoi semi',()=>{
+  const prova=(coltura,oggetto,atteso)=>{
+    inventario.svuota();const stadi=colture.di(coltura).stadi;
+    modifiche.imposta(tx+1,ty,{oggetto,coltura,passo:stadi.length-1,maturata:tempo.giornoCorrente()});
+    assert.equal(azioni.agisci(eroe,null).tipo,'raccolto',coltura);
+    for(const [cosa,quante] of Object.entries(atteso))assert.equal(inventario.quante(cosa),quante,`${coltura}: ${cosa}`);
+  };
+  prova('lino',OGGETTO.MATURA,{fibra:4});
+  prova('lino',OGGETTO.A_SEME,{semi_lino:3,fibra:0});
+  prova('cavolo',OGGETTO.MATURA,{cavolo:1});
+  prova('cavolo',OGGETTO.A_SEME,{semi_cavolo:3,cavolo:0});
+  prova('fagioli',OGGETTO.MATURA,{fagioli:3});
+});
+test('patata e fagioli non vanno a seme: il loro seme è il raccolto, e dopo quattro giorni marciscono',()=>{
+  tempo.impostaGiorno(13);modifiche.imposta(tx,ty,{oggetto:OGGETTO.MATURA,coltura:'patata',passo:5,maturata:13});
+  for(const giorno of [14,15,16]){assert.equal(notte(giorno).aSeme,0);assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.MATURA);}
+  assert.equal(notte(17).appassite,1);assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.APPASSITA);
+});
+test('il cavolo regge il gelo: d’inverno si ferma invece di morire, e il maturo resta da mangiare',()=>{
+  tempo.impostaGiorno(7);
+  modifiche.imposta(tx,ty,{oggetto:OGGETTO.MATURA,coltura:'cavolo',passo:4,maturata:7});
+  modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.CRESCIUTA,coltura:'cavolo',passo:2});
+  modifiche.imposta(tx+3,ty,{oggetto:OGGETTO.CRESCIUTA});
+  notte(8);
+  const gelo=notte(9);assert.equal(gelo.appassite,1,'la rapa muore');
+  assert.equal(mappa.oggettoDi(tx+3,ty),OGGETTO.APPASSITA);
+  for(const giorno of [10,11,12]){notte(giorno);assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.MATURA,`giorno ${giorno}`);}
+  assert.equal(mappa.oggettoDi(tx+2,ty),OGGETTO.CRESCIUTA,'quello che cresceva aspetta la primavera');
+  // L'ultimo giorno d'autunno era rimasto senz'acqua, e quella sete se la
+  // porta dietro: ma l'inverno non ne aggiunge.
+  assert.equal(modifiche.di(tx+2,ty).secco,1,'d’inverno non ha sete');
+  // I quattro giorni d'inverno non contano: a primavera ha l'età di fine
+  // autunno più uno, cioè due, e va a seme.
+  assert.equal(modifiche.di(tx,ty).maturata,11);
+  assert.equal(notte(13).aSeme,1);assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.A_SEME);
+  // E quello che aspettava riprende a crescere, quando lo si innaffia.
+  unGiorno(tx+2,ty,14);assert.equal(mappa.oggettoDi(tx+2,ty),OGGETTO.CRESCIUTA);assert.equal(modifiche.di(tx+2,ty).passo,3);
+  unGiorno(tx+2,ty,15);assert.equal(mappa.oggettoDi(tx+2,ty),OGGETTO.MATURA);
+});
+test('i fagioli bevono: d’estate un giorno senz’acqua li secca, la patata lo regge',()=>{
+  tempo.impostaGiorno(2);
+  modifiche.imposta(tx,ty,{oggetto:OGGETTO.CRESCIUTA,coltura:'fagioli',passo:2});
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CRESCIUTA,coltura:'patata',passo:3});
+  assert.equal(notte(3).seccate,1);
+  assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.APPASSITA);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.CRESCIUTA);assert.equal(modifiche.di(tx+1,ty).secco,2);
+  // Ma d'estate la patata il secondo giorno non lo regge, e guardandola lo si
+  // legge: a quattro secca, e ne ha già due.
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,'ha sete: stanotte secca','d’estate il secondo giorno la secca');
+});
+test('i fagioli si seccano all’essiccatoio, e il telaio lo dice al plurale',()=>{
+  assert.equal(azioni.SECCABILI.fagioli.secca,'fagioli_secchi');
+  tempo.impostaGiorno(10);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.ESSICCATOIO_CARICO,cosa:'fagioli',quante:3,dal:10});
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,"d'inverno i fagioli non seccano");
+  tempo.impostaGiorno(13);
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,'i fagioli stanno ancora seccando');
+  assert.equal(azioni.detteCosi('fagioli',2),'2 manciate di fagioli secchi');
+});
+test('la zuppa vuole un fuoco, e il secchio torna vuoto',()=>{
+  const zuppa=ricette.RICETTE.find(r=>r.id==='zuppa');
+  inventario.aggiungi('rapa',1);inventario.aggiungi('cavolo',1);inventario.aggiungi('secchio_pieno',1);
+  assert.equal(ricette.fai(zuppa,true,false).perche,'fuoco','il banco non basta');
+  assert.equal(inventario.quante('rapa'),1);
+  assert.ok(ricette.fai(zuppa,false,true).fatto);
+  assert.equal(inventario.quante('zuppa'),2);assert.equal(inventario.quante('secchio'),1);
+  assert.equal(inventario.quante('secchio_pieno'),0);assert.equal(inventario.quante('cavolo'),0);
+  // Sfama più dei due ingredienti cotti ciascuno per conto suo.
+  const cotto=c=>CATALOGO[CATALOGO[c].cuoce]?.commestibile.fame ?? CATALOGO[c].commestibile.fame;
+  for(const r of ricette.RICETTE.filter(r=>r.produce.cosa==='zuppa')) {
+    const ingredienti=r.costo.filter(v=>v.cosa!=='secchio_pieno').reduce((a,v)=>a+cotto(v.cosa)*v.quante,0);
+    assert.ok(CATALOGO.zuppa.commestibile.fame*r.produce.quante>ingredienti,r.id);
+  }
+});
+test('con lo zaino pieno la zuppa non si fa, e non si perde niente',()=>{
+  const zuppa=ricette.RICETTE.find(r=>r.id==='zuppa');
+  inventario.aggiungi('rapa',1);inventario.aggiungi('cavolo',1);inventario.aggiungi('secchio_pieno',1);
+  for(const cosa of ['legna','pietra','fibra','ramo','torcia'])inventario.aggiungi(cosa,1);
+  // Otto caselle piene: via rapa, cavolo e secchio pieno se ne liberano tre,
+  // e servono la zuppa e il secchio — due. Ci sta.
+  assert.ok(ricette.fai(zuppa,false,true).fatto);
+  // Con due rape e due cavoli le loro caselle restano occupate, e se ne
+  // libera una sola — quella del secchio pieno: la zuppa ci sta, il secchio no.
+  inventario.svuota();
+  inventario.aggiungi('rapa',2);inventario.aggiungi('cavolo',2);inventario.aggiungi('secchio_pieno',1);
+  for(const cosa of ['legna','pietra','fibra','ramo','torcia'])inventario.aggiungi(cosa,1);
+  const prima=JSON.stringify(inventario.contenuto());
+  assert.equal(ricette.fai(zuppa,false,true).perche,'zaino');
+  assert.equal(JSON.stringify(inventario.contenuto()),prima);
+});
+test('coltura e passo si salvano solo se tornano con lo stadio',()=>{
+  const stato=salvataggio.istantanea(eroe,0);
+  const valida=m=>{stato.modifiche=[{tx:tx+1,ty,...m}];return salvataggio.valido(stato);};
+  assert.ok(valida({oggetto:OGGETTO.GERMOGLIO,coltura:'patata',passo:2}));
+  assert.ok(valida({oggetto:OGGETTO.A_SEME,coltura:'lino',passo:4,maturata:3}));
+  assert.ok(valida({oggetto:OGGETTO.CRESCIUTA,coltura:'patata',passo:3,secco:3}),'la patata regge tre giorni');
+  assert.equal(valida({oggetto:OGGETTO.CRESCIUTA,coltura:'fagioli',passo:2,secco:2}),false,'i fagioli a due sono secchi');
+  assert.equal(valida({oggetto:OGGETTO.GERMOGLIO,coltura:'mais',passo:1}),false,'una coltura che non esiste');
+  assert.equal(valida({oggetto:OGGETTO.GERMOGLIO,coltura:'patata',passo:3}),false,'il passo non torna con lo stadio');
+  assert.equal(valida({oggetto:OGGETTO.GERMOGLIO,passo:1}),false,'un passo senza coltura');
+  assert.equal(valida({oggetto:OGGETTO.ALBERO,coltura:'cavolo'}),false,'una coltura su un albero');
+});
+test('ogni coltura ha un disegno per stadio, diverso dalla rapa e coi colori della tavolozza',()=>{
+  const disegni=ortoArte.tuttiIDisegni();
+  for(const {coltura,stadio,righe} of disegni){
+    assert.ok(righe.length===16&&righe.every(r=>r.length===16),`${coltura} ${stadio}`);
+    for(const c of righe.join(''))assert.ok(c==='.'||Object.hasOwn(TAVOLOZZA,c),`${coltura} ${stadio}: ${c}`);
+  }
+  for(const coltura of Object.keys(colture.COLTURE)){
+    for(const stadio of ['GERMOGLIO','CRESCIUTA','MATURA']){
+      const d=ortoArte.disegnoDi(coltura,stadio);assert.ok(d,`${coltura} ${stadio}`);
+      if(coltura!=='rapa')assert.notDeepEqual(d,ortoArte.disegnoDi('rapa',stadio),`${coltura} ${stadio} è una rapa`);
+    }
+    // Chi va a seme ha il suo disegno a seme; chi non ci va non ne ha bisogno.
+    if(colture.di(coltura).aSeme)assert.ok(ortoArte.disegnoDi(coltura,'A_SEME'));
+  }
+  // Senza coltura, e con una che non esiste, è la rapa: il campo di prima.
+  assert.equal(ortoArte.disegnoDi(undefined,'MATURA'),ortoArte.MATURA);
+});
+test('le cose nuove hanno un’icona di dodici per dodici e un nome',()=>{
+  for(const cosa of ['patata','patata_arrostita','fagioli','fagioli_cotti','fagioli_secchi','cavolo','semi_cavolo','semi_lino','zuppa']){
+    const voce=CATALOGO[cosa];assert.ok(voce?.nome,cosa);
+    assert.ok(voce.icona.length===12&&voce.icona.every(r=>r.length===12),cosa);
+    for(const c of voce.icona.join(''))assert.ok(c==='.'||Object.hasOwn(TAVOLOZZA,c),`${cosa}: ${c}`);
+  }
+  // Ogni seme di ogni coltura esiste nel catalogo, e ogni raccolto anche.
+  for(const [id,c] of Object.entries(colture.COLTURE)){
+    assert.ok(CATALOGO[c.seme],`${id}: seme ${c.seme}`);
+    for(const v of [...c.raccolto,...(c.aSeme??[])])assert.ok(CATALOGO[v.cosa],`${id}: ${v.cosa}`);
+  }
 });

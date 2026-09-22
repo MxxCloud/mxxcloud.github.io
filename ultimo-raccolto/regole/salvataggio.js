@@ -28,6 +28,7 @@ import * as fauna from "./fauna.js";
 import * as addosso from "./addosso.js";
 import * as meteo from "./meteo.js";
 import * as orto from "./orto.js";
+import * as colture from "./colture.js";
 import { CATALOGO } from "./oggetti.js";
 import * as decadimento from "./decadimento.js";
 import * as azioni from "./azioni.js";
@@ -209,10 +210,21 @@ function modificaValida(v) {
   }
   if (!presente(v, "bagnato", b => typeof b === "boolean")) return false;
   // La sete di una pianta: giorni asciutti di fila, da uno fino a quello
-  // prima di seccarla — a quel numero la pianta non c'è più, è appassita. E
-  // solo su una coltura: una sete scritta su un albero sarebbe un campo che
-  // nessuno legge, cioè un salvataggio storto che passa.
-  if (!presente(v, "secco", n => intero(n) && n >= 1 && n < orto.SETE_MORTALE && orto.eColtura(v.oggetto))) return false;
+  // prima di seccarla — a quel numero la pianta non c'è più, è appassita — e
+  // il numero è della sua coltura. E solo su una coltura: una sete scritta su
+  // un albero sarebbe un campo che nessuno legge, cioè un salvataggio storto
+  // che passa.
+  if (!presente(v, "secco", n => intero(n) && n >= 1 && n < colture.di(v.coltura).sete && orto.eColtura(v.oggetto))) return false;
+  // Quale coltura, e a che passo della sua fila. Il passo deve cadere sullo
+  // stadio che il tassello dice di essere — o sull'ultimo, per quella andata
+  // a seme — perché è da lì che riparte la crescita: un passo avanti rispetto
+  // al disegno farebbe maturare un germoglio.
+  if (!presente(v, "coltura", c => colture.esiste(c) && orto.eColtura(v.oggetto))) return false;
+  if (!presente(v, "passo", n => {
+    const stadi = colture.di(v.coltura).stadi;
+    return intero(n) && n >= 0 && n < stadi.length && v.coltura !== undefined
+      && (v.oggetto === OGGETTO.A_SEME ? n === stadi.length - 1 : stadi[n] === v.oggetto);
+  })) return false;
   // La legna dentro un fuoco: fra una e la capienza di QUEL fuoco — quattro
   // nel focolare, due nel falò. Zero no: un fuoco a zero non è acceso, è
   // spento, ed è un altro oggetto. E su un tassello che non è un fuoco acceso

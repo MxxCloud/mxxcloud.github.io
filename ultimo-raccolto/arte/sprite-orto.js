@@ -149,3 +149,153 @@ export const APPASSITA = [
   "bccbbccbbccbbccb",
   "bbbbbbbbbbbbbbbb",
 ];
+
+// --- le altre colture (M7.17) ----------------------------------------------
+//
+// Le rape qui sopra sono disegnate a mano; le altre quattro nascono da un
+// motivo di tre pixel di lato ripetuto sui nove posti dei solchi — tre file
+// per tre — che è il ritmo che fa riconoscere un orto (vedi l'inizio del
+// file). Scritte così, due piantine della stessa coltura sono per forza
+// uguali, e una coltura intera è una dozzina di righe invece di sessanta.
+//
+// Il motivo si posa sulla terra zappata; "." lascia la terra com'è. Uno alto
+// quattro righe sale di una sopra il suo posto, come le rape mature.
+const POSTI = [1, 6, 11];
+
+function campo(motivo) {
+  const righe = TERRA_ZAPPATA.map((r) => r.split(""));
+  const su = motivo.length > 3 ? 1 : 0;
+  for (const y0 of POSTI) {
+    for (const x0 of POSTI) {
+      motivo.forEach((riga, j) => {
+        [...riga].forEach((pixel, i) => {
+          if (pixel !== ".") righe[y0 - su + j][x0 + i] = pixel;
+        });
+      });
+    }
+  }
+  return righe.map((r) => r.join(""));
+}
+
+// Per ogni coltura, un disegno per stadio. Il seminato è lo stesso per tutte:
+// un seme nella terra è un seme, e cosa diventerà lo si vede dal germoglio.
+// Quello a seme c'è solo per chi ci va: il cavolo fiorisce giallo come la
+// rapa, che è sua parente, e il lino fa le sue capsule dorate.
+const ALTRE = {
+  // La patata: un cespuglio scuro e fitto, che fiorisce bianco quando è
+  // pronta — il raccolto sta sotto, e sopra si vede solo il fiore.
+  patata: {
+    GERMOGLIO: [
+      "x.x",
+      ".x.",
+      ".x.",
+    ],
+    CRESCIUTA: [
+      "xyx",
+      "yxy",
+      ".x.",
+    ],
+    MATURA: [
+      "z.z",
+      "xzx",
+      "yxy",
+      ".x.",
+    ],
+  },
+  // I fagioli salgono su un paletto: il legno è quello che li distingue da
+  // lontano, e i baccelli pendono lungo il paletto quando sono pronti. Il
+  // legno chiaro e non quello scuro, che sulla terra zappata spariva.
+  fagioli: {
+    GERMOGLIO: [
+      "y.y",
+      ".x.",
+      ".x.",
+    ],
+    CRESCIUTA: [
+      ".wy",
+      "yw.",
+      ".w.",
+    ],
+    MATURA: [
+      "ywy",
+      "xwx",
+      "ywx",
+      ".w.",
+    ],
+  },
+  // Il cavolo: una rosetta che si chiude in una palla chiara.
+  cavolo: {
+    GERMOGLIO: [
+      ".E.",
+      "ExE",
+      "...",
+    ],
+    CRESCIUTA: [
+      "E.E",
+      "ExE",
+      ".x.",
+    ],
+    MATURA: [
+      "EEE",
+      "EEE",
+      "xEx",
+    ],
+    A_SEME: [
+      "v.v",
+      "vxv",
+      ".x.",
+      "EEE",
+    ],
+  },
+  // Il lino: steli sottili, fiori azzurri, e alla fine le capsule dorate con
+  // dentro i semi.
+  lino: {
+    GERMOGLIO: [
+      ".y.",
+      ".y.",
+      "...",
+    ],
+    CRESCIUTA: [
+      "y.y",
+      ".y.",
+      ".y.",
+    ],
+    MATURA: [
+      "C.C",
+      "yCy",
+      ".y.",
+      ".y.",
+    ],
+    A_SEME: [
+      "5.5",
+      "y5y",
+      ".y.",
+      ".y.",
+    ],
+  },
+};
+
+const RAPA = { SEMINATO, GERMOGLIO, CRESCIUTA, MATURA, A_SEME };
+
+// Cotti una volta sola, al caricamento: la cottura mette in cache per
+// identità del disegno, e un disegno rifatto a ogni settore sarebbe ogni
+// volta un disegno nuovo.
+const DISEGNI = { rapa: RAPA };
+for (const [coltura, motivi] of Object.entries(ALTRE)) {
+  DISEGNI[coltura] = { SEMINATO };
+  for (const [stadio, motivo] of Object.entries(motivi)) DISEGNI[coltura][stadio] = campo(motivo);
+}
+
+// Il disegno di questo stadio per questa coltura, per nome di stadio
+// ("GERMOGLIO", "MATURA"...). Senza coltura, o per uno stadio che la coltura
+// non ha, è quello della rapa: un campo di un salvataggio vecchio non ha la
+// coltura scritta, ed era un campo di rape.
+export function disegnoDi(coltura, stadio) {
+  return DISEGNI[coltura]?.[stadio] ?? RAPA[stadio];
+}
+
+// Per i collaudi: tutti i disegni, per controllarne forma e colori.
+export function tuttiIDisegni() {
+  return Object.entries(DISEGNI).flatMap(([coltura, stadi]) =>
+    Object.entries(stadi).map(([stadio, righe]) => ({ coltura, stadio, righe })));
+}

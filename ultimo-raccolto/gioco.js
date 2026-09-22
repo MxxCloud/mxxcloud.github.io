@@ -72,7 +72,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.16";
+const VERSIONE = "M7.17";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -109,6 +109,8 @@ let ricettaScelta = 0;
 // guarda — e chiederla a ogni fotogramma vorrebbe dire quarantanove tasselli
 // di mondo generati sessanta volte al secondo per sapere una cosa sola.
 let alBanco = false;
+// Lo stesso per il fuoco, che da M7.17 serve alla zuppa.
+let alFuoco = false;
 let azioneCorrente = null;
 let smontaggioCorrente = null;
 let messaggio = null;
@@ -699,6 +701,13 @@ function bancoQui() {
   return mappa.bancoVicino(Math.floor(eroe.px / TASSELLO), Math.floor(eroe.py / TASSELLO));
 }
 
+// Un fuoco acceso a due passi: la zuppa si cuoce accanto al fuoco, non
+// davanti, come il banco — si gira per l'accampamento con la pentola, non ci
+// si inchioda davanti alle braci.
+function fuocoQui() {
+  return mappa.fuocoVicino(Math.floor(eroe.px / TASSELLO), Math.floor(eroe.py / TASSELLO), 2);
+}
+
 // Le frecce e non più i tasti da 1 a 8.
 //
 // Le cifre sceglievano la ricetta, e con otto ricette il menu era pieno: la
@@ -714,7 +723,7 @@ function leggiLeRicette() {
   if (!comandi.appenaPremuto("usa")) return;
 
   const ricetta = RICETTE[ricettaScelta];
-  const esito = fai(ricetta, alBanco);
+  const esito = fai(ricetta, alBanco, alFuoco);
   suono.suona(esito.fatto ? FATTO : NEGATO);
   if (esito.fatto) {
     // Riparando si dice anche quanto regge adesso: una riparazione che non
@@ -724,6 +733,7 @@ function leggiLeRicette() {
     annuncia(`${ricetta.ripara ? "riparato" : "fatto"}: ${nomeDi(ricetta.produce.cosa)}${quanto}`, "#9ec97e");
   }
   else if (esito.perche === "banco") annuncia("questo vuole un banco da lavoro", "#c9b189");
+  else if (esito.perche === "fuoco") annuncia("questo vuole un fuoco acceso vicino", "#c9b189");
   else if (esito.perche === "integro") annuncia("nessun attrezzo da riparare di questo tipo", "#c9b189");
   else if (esito.perche === "consumato") annuncia("troppo consumato: va rifatto", "#c0705f");
   else if (esito.perche === "zaino") annuncia("zaino pieno: getta qualcosa con G", "#c0705f");
@@ -854,7 +864,7 @@ function leggiComandi() {
   if (comandi.appenaPremuto("ricette")) {
     ricetteAperte = !ricetteAperte;
     ricettaScelta = 0;
-    if (ricetteAperte) alBanco = bancoQui();
+    if (ricetteAperte) { alBanco = bancoQui(); alFuoco = fuocoQui(); }
     return;
   }
 
@@ -1503,7 +1513,7 @@ function disegnaInterfaccia() {
   }
   hud.disegnaMessaggio(p, messaggio);
   if (minimappaVisibile && !aperturaVisibile) minimappa.disegna(p);
-  if (ricetteAperte) hud.disegnaRicette(p, { scelta: ricettaScelta, alBanco });
+  if (ricetteAperte) hud.disegnaRicette(p, { scelta: ricettaScelta, alBanco, alFuoco });
   if (cassaAperta) {
     hud.disegnaCassa(p, {
       contenuto: contenitori.contenutoDi(cassaAperta.tx, cassaAperta.ty),

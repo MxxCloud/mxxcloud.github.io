@@ -451,10 +451,12 @@ export function disegnaMessaggio(p, messaggio) {
 // finestra che scorre e un cursore, il tetto non c'è più.
 const RICETTE_VISIBILI = 7;
 
-export function disegnaRicette(p, { scelta, alBanco }) {
+export function disegnaRicette(p, { scelta, alBanco, alFuoco = false }) {
   const righe = Math.min(RICETTE_VISIBILI, RICETTE.length);
   const altezzaRiga = 16;
-  const larghezza = 164;
+  // Largo quanto la riga dei costi più lunga, misurata: la zuppa di patate
+  // ha tre ingredienti, e a 164 il secchio pieno usciva dal riquadro.
+  const larghezza = 196;
   const altezza = 16 + righe * altezzaRiga + 12;
   const x = Math.round((schermo.LARGHEZZA - larghezza) / 2);
   const y = Math.round((schermo.ALTEZZA - altezza) / 2) - 12;
@@ -493,7 +495,7 @@ export function disegnaRicette(p, { scelta, alBanco }) {
     // roba, o manca il posto. Il primo si risolve raccogliendo, il secondo
     // tornando a casa — e un grigio solo li manderebbe a fare la cosa
     // sbagliata.
-    const manca = ricetta.banco && !alBanco;
+    const manca = (ricetta.banco && !alBanco) || (ricetta.fuoco && !alFuoco);
     const possibile = !manca && bastano(ricetta);
     const eScelta = indice === scelta;
 
@@ -518,8 +520,8 @@ export function disegnaRicette(p, { scelta, alBanco }) {
     // apre il pannello in mezzo a un prato deve poter vedere che esistono e
     // cosa gli manca, che è il solo modo di imparare il sistema senza che
     // nessuno glielo spieghi.
-    if (ricetta.banco) {
-      const eti = "BANCO";
+    if (ricetta.banco || ricetta.fuoco) {
+      const eti = ricetta.banco ? "BANCO" : "FUOCO";
       testo.disegna(p, eti, x + larghezza - 7 - testo.larghezza(eti), ry, manca ? ROSSO : BORDO_SCELTO);
     }
 
