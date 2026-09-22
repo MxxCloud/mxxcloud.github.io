@@ -60,9 +60,17 @@ const SORSO = 0.45;
 export const PEZZI_PER_RAZIONE = 3;
 export const CARICO_MASSIMO = 6;
 
-// Quanti pezzi entrano davvero, avendone tanti in mano.
-export function quanteSiStendono(disponibili) {
-  return Math.min(CARICO_MASSIMO, Math.floor(disponibili / PEZZI_PER_RAZIONE) * PEZZI_PER_RAZIONE);
+// Quanti pezzi entrano in un gesto, avendone tanti in mano e tanti già appesi.
+//
+// TRE PER VOLTA, e non "tutti quelli che ci stanno". Stendere sei pezzi con un
+// tasto solo faceva sparire dallo zaino mezza scorta di carne in un fotogramma,
+// e il giocatore se ne accorgeva dopo; tre per volta è il gesto che si vede —
+// appendi una fila, guardi il telaio, appendi l'altra. Il carico massimo resta
+// sei, quindi il secondo gesto è anche l'ultimo.
+export function quanteSiStendono(disponibili, gia = 0) {
+  const posto = Math.max(0, CARICO_MASSIMO - gia);
+  if (posto < PEZZI_PER_RAZIONE || disponibili < PEZZI_PER_RAZIONE) return 0;
+  return PEZZI_PER_RAZIONE;
 }
 
 // Cosa si stende, e cosa diventa.
@@ -361,11 +369,22 @@ function sulTassello(eroe, cosaInMano, indice) {
   // L'essiccatoio, i due gesti che lo riguardano. Stanno sopra il catalogo
   // della raccolta come il fuoco che si carica: sono l'unica cosa da fare a un
   // telaio che si ha davanti, e la X resta libera di portarselo via.
+  // Si stende su un telaio vuoto e su uno già carico che abbia ancora posto,
+  // purché sia la stessa roba: due file di pesce o due file di carne, mai una
+  // per una. Il conto dei giorni non riparte — resta quello della prima fila,
+  // quindi chi torna dopo con altri tre pezzi non allunga l'attesa a chi
+  // aspettava già, e chi vuole il telaio pieno subito lo riempie con due
+  // pressioni di seguito, che è il gesto per cui questa regola esiste.
   const daSeccare = SECCABILI[cosaInMano];
-  if (daSeccare && b.oggetto === OGGETTO.ESSICCATOIO) {
-    const quante = quanteSiStendono(inventario.quante(cosaInMano));
-    return { tipo: "stendi", verbo: "Stendi", quante, cosa: cosaInMano, bersaglio: b,
-      impedito: quante === 0 ? `servono almeno ${PEZZI_PER_RAZIONE} ${daSeccare.tanti}` : null };
+  const siStende = b.oggetto === OGGETTO.ESSICCATOIO
+    || (b.oggetto === OGGETTO.ESSICCATOIO_CARICO && stesoIn(b.tx, b.ty) === cosaInMano);
+  if (daSeccare && siStende) {
+    const gia = b.oggetto === OGGETTO.ESSICCATOIO ? 0 : (modifiche.di(b.tx, b.ty)?.quante ?? 0);
+    const quante = quanteSiStendono(inventario.quante(cosaInMano), gia);
+    if (quante > 0 || gia === 0) {
+      return { tipo: "stendi", verbo: "Stendi", quante, gia, cosa: cosaInMano, bersaglio: b,
+        impedito: quante === 0 ? `servono almeno ${PEZZI_PER_RAZIONE} ${daSeccare.tanti}` : null };
+    }
   }
   if (b.oggetto === OGGETTO.ESSICCATOIO_PRONTO) {
     return { tipo: "ritira", verbo: "Ritira", bersaglio: b };
@@ -987,15 +1006,17 @@ function esegui(eroe, cosaInMano, indice, azione) {
   if (azione.tipo === "stendi") {
     if (azione.quante === 0 || !inventario.togli(azione.cosa, azione.quante)) return null;
     // "dal" e non un contatore: quanti giorni asciutti siano passati lo sa il
-    // calendario, che è una funzione pura del giorno e del seme.
+    // calendario, che è una funzione pura del giorno e del seme. Rabboccando
+    // si tiene quello della prima fila, e il telaio finisce tutto insieme.
+    const prima = modifiche.di(tx, ty);
     mappa.cambiaTassello(tx, ty, {
       oggetto: OGGETTO.ESSICCATOIO_CARICO,
-      dal: tempo.giornoCorrente(),
-      quante: azione.quante,
+      dal: azione.gia > 0 ? (prima?.dal ?? tempo.giornoCorrente()) : tempo.giornoCorrente(),
+      quante: azione.gia + azione.quante,
       cosa: azione.cosa,
     });
-    return { tipo: "stendi", tx, ty, quante: azione.quante, cosa: azione.cosa,
-      tanti: SECCABILI[azione.cosa].tanti };
+    return { tipo: "stendi", tx, ty, quante: azione.quante, appesi: azione.gia + azione.quante,
+      cosa: azione.cosa, tanti: SECCABILI[azione.cosa].tanti };
   }
 
   if (azione.tipo === "ritira") {

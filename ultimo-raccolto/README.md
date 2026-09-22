@@ -12,6 +12,31 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.15.3 — il telaio mostra quello che ha
+
+Tre correzioni all'essiccatoio, e la prima è una regola che vale per tutto il
+gioco: **il disegno non deve promettere quello che il tassello non ha.**
+
+**Si stende tre pezzi per volta.** Con sei carni in mano ci vogliono due
+pressioni della barra: appendi una fila, guardi il telaio, appendi l'altra. Un
+tasto solo che svuotava mezza scorta in un fotogramma era un gesto che il
+giocatore scopriva dopo averlo fatto. Il carico massimo resta sei, quindi il
+secondo gesto è anche l'ultimo, e **rabboccare non fa ripartire il conto**: il
+telaio finisce tutto insieme, con la data della prima fila. Si rabbocca solo
+con la stessa roba — due file di pesce o due di carne, mai una per una.
+
+**Il telaio disegna i pezzi che ha davvero**: tre pezzi sono tre strisce sulla
+traversa di sopra, sei sono sei. Prima ne disegnava sempre sei, e da lontano un
+telaio a metà sembrava pieno — cioè l'unica informazione per cui si guarda un
+essiccatoio da lontano era sbagliata. Il disegno adesso si compone dal
+tassello, come il mucchio fa da sempre con l'icona di quello che contiene.
+
+**Il pesce steso è azzurro**, lo stesso `3` dell'acqua bassa che ha il pesce
+nello zaino: un pesce appeso e un pesce in mano sono la stessa cosa vista da
+due distanze. Pendeva rosso come la carne. E **il pesce secco è blu che vira al
+grigio** (`D`, nuova nella tavolozza) invece del bruno che gli avevo dato: la
+carne secca sbiadisce nella sua metà di tavolozza, il pesce nella sua.
+
 ## M7.15.2 — si secca anche il pesce
 
 L'essiccatoio prendeva solo carne. Adesso prende **anche il pesce, con le
@@ -953,7 +978,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.15.2**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.15.3**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

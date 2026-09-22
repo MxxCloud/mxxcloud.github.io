@@ -2140,9 +2140,14 @@ test('l’essiccatoio vuole aria: dentro una stanza non si posa',()=>{
   assert.equal(azioni.agisci(eroe,'essiccatoio',0).tipo,'posa');
   assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.ESSICCATOIO);
 });
-test('si stende a multipli di tre, mai quattro né cinque',()=>{
-  assert.deepEqual([0,1,2,3,4,5,6,7,9,20].map(azioni.quanteSiStendono),
-    [0,0,0,3,3,3,6,6,6,6]);
+test('si stende tre per volta, mai quattro né cinque',()=>{
+  // Tre per gesto, qualunque cosa si abbia in mano: sotto tre non si stende
+  // niente, sopra tre se ne stendono comunque tre.
+  assert.deepEqual([0,1,2,3,4,5,6,7,9,20].map(n=>azioni.quanteSiStendono(n)),
+    [0,0,0,3,3,3,3,3,3,3]);
+  // E con tre già appesi ne entrano altri tre, poi basta.
+  assert.equal(azioni.quanteSiStendono(9,3),3);
+  assert.equal(azioni.quanteSiStendono(9,6),0);
   essiccatoio();inventario.aggiungi('carne_cruda',2);
   assert.match(azioni.azionePossibile(eroe,'carne_cruda',0).impedito,/almeno 3/);
   assert.equal(azioni.agisci(eroe,'carne_cruda',0),null);
@@ -2321,4 +2326,70 @@ test('una razione sola non si dice al plurale',()=>{
   assert.equal(azioni.detteCosi('carne_cruda',2),'2 carni secche');
   essiccatoio(OGGETTO.ESSICCATOIO_PRONTO,{quante:3,cosa:'pesce_crudo'});
   assert.equal(azioni.agisci(eroe,null,0).dette,'1 pesce secco');
+});
+
+// --- M7.15.3: il telaio mostra quello che ha, e si carica a file ------------
+
+test('sei pezzi in mano vogliono due gesti, e il conto non riparte',()=>{
+  tempo.impostaGiorno(1);
+  essiccatoio();inventario.aggiungi('carne_cruda',6);
+  assert.equal(azioni.agisci(eroe,'carne_cruda',0).quante,3);
+  assert.equal(inventario.quante('carne_cruda'),3,'la prima fila ne prende tre');
+  assert.equal(modifiche.di(tx+1,ty).quante,3);
+  // Il secondo gesto rabbocca: stesso telaio, stessa data.
+  tempo.impostaGiorno(2);
+  const secondo=azioni.agisci(eroe,'carne_cruda',0);
+  assert.equal(secondo.quante,3);assert.equal(secondo.appesi,6);
+  assert.equal(inventario.quante('carne_cruda'),0);
+  assert.equal(modifiche.di(tx+1,ty).quante,6);
+  assert.equal(modifiche.di(tx+1,ty).dal,1,'il conto resta quello della prima fila');
+  // Pieno: il terzo gesto non entra.
+  inventario.aggiungi('carne_cruda',3);
+  assert.notEqual(azioni.azionePossibile(eroe,'carne_cruda',0)?.tipo,'stendi');
+  assert.equal(azioni.agisci(eroe,'carne_cruda',0),null);
+  assert.equal(inventario.quante('carne_cruda'),3);
+});
+test('non si rabbocca un telaio con roba diversa',()=>{
+  essiccatoio(OGGETTO.ESSICCATOIO_CARICO,{dal:1,quante:3,cosa:'pesce_crudo'});
+  inventario.aggiungi('carne_cruda',6);
+  assert.match(azioni.azionePossibile(eroe,'carne_cruda',0).impedito,/il pesce sta ancora seccando/);
+  assert.equal(azioni.agisci(eroe,'carne_cruda',0),null);
+  assert.equal(modifiche.di(tx+1,ty).quante,3);
+  // Con lo stesso pesce invece sì.
+  inventario.aggiungi('pesce_crudo',3);
+  assert.equal(azioni.agisci(eroe,'pesce_crudo',1).appesi,6);
+});
+test('il telaio disegna i pezzi che ha davvero, e il pesce è azzurro',()=>{
+  const vuoto=sprite.essiccatoioSteso(0);
+  const tre=sprite.essiccatoioSteso(3,'carne_cruda');
+  const sei=sprite.essiccatoioSteso(6,'carne_cruda');
+  const conta=(righe,tinta)=>righe.join('').split('').filter(c=>c===tinta).length;
+  assert.equal(conta(vuoto,'t'),0,'vuoto non appende niente');
+  assert.equal(conta(sei,'t'),conta(tre,'t')*2,'sei pezzi disegnano il doppio di tre');
+  // Tre pezzi stanno tutti nella fila di sopra: sotto la seconda traversa non
+  // pende niente, ed è quello che si legge da lontano.
+  assert.deepEqual(tre.slice(6,8),vuoto.slice(6,8));
+  assert.notDeepEqual(tre.slice(3,5),vuoto.slice(3,5));
+  // Il pesce steso ha la tinta del pesce nello zaino, e la si chiede all'icona
+  // invece di ripeterla qui: scritta a mano, questo collaudo resterebbe verde
+  // il giorno che l'icona cambia colore e il telaio no.
+  const tinte=righe=>new Set(righe.join('').split(''));
+  const telaio=tinte(vuoto);
+  const appeso=[...tinte(sprite.essiccatoioSteso(6,'pesce_crudo'))].filter(c=>!telaio.has(c));
+  assert.deepEqual(appeso,['3'],'il carico aggiunge una tinta sola');
+  assert.ok(appeso.every(c=>tinte(sprite.PESCE_CRUDO).has(c)),'ed è quella del pesce in mano');
+  assert.ok(!appeso.includes('t'),'non è il rosso della carne');
+  // Secco: la carne vira ad A, il pesce al blu grigiastro D.
+  assert.ok(conta(sprite.essiccatoioSteso(6,'carne_cruda',true),'A')>0);
+  assert.ok(conta(sprite.essiccatoioSteso(6,'pesce_crudo',true),'D')>0);
+});
+test('il pesce secco è blu grigiastro, non bruno come la carne',()=>{
+  const pixel=sprite.PESCE_SECCO.join('').split('');
+  assert.ok(pixel.includes('D'),'usa la tinta nuova');
+  assert.equal(pixel.filter(c=>c==='g').length,0,'e non più il bruno del legno');
+  const blu=TAVOLOZZA.D, acqua=TAVOLOZZA['3'];
+  const canali=c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2),16));
+  const [r,v,b]=canali(blu);
+  assert.ok(b>r,'tende al blu');
+  assert.ok(b-r<canali(acqua)[2]-canali(acqua)[0],'ma meno del pesce crudo: è sbiadito');
 });

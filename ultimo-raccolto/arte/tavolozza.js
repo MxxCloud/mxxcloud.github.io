@@ -106,6 +106,12 @@ export const TAVOLOZZA = {
   // quello che ci si aspetta da un corpo che cammina da mesi.
   A: "#5e2a24",
 
+  // Il pesce secco, e le strisce di pesce appese all'essiccatoio: un blu
+  // sbiadito verso il grigio. Il pesce crudo è "3", l'azzurro dell'acqua bassa
+  // da cui viene; seccando perde l'acqua e resta questo — lo stesso salto che
+  // la carne fa da "t" ad "A", detto nell'altra metà della tavolozza.
+  D: "#5f7480",
+
   t: "#a33b2a", // bacche
   u: "#e0913a", // fiamma
   v: "#f2d06b", // fiamma, cuore
