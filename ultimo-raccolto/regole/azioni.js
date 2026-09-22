@@ -76,6 +76,18 @@ const COMBUSTIBILI = {
   ramo: { quante: 2, tanti: "rami" },
 };
 
+// Come si chiama il fuoco che si ha davanti, per il verbo e per il messaggio.
+//
+// Sta qui e non nel catalogo degli oggetti perché è il fuoco sul tassello a
+// parlare, non la cosa nello zaino: nello zaino il falò è spento per
+// definizione, sul tassello è tutte e due le cose a giorni alterni.
+const NOME_DEL_FUOCO = {
+  [OGGETTO.FOCOLARE_ACCESO]: "focolare",
+  [OGGETTO.FOCOLARE_SPENTO]: "focolare",
+  [OGGETTO.FALO_ACCESO]: "falò",
+  [OGGETTO.FALO_SPENTO]: "falò",
+};
+
 const COLPI_DURI = new Set([OGGETTO.ALBERO, OGGETTO.SASSO, OGGETTO.MURO, OGGETTO.MURO_ROTTO, OGGETTO.CARRO, OGGETTO.TRONCO]);
 
 // Su cosa si dorme, e quanto rende. Due letti e due condizioni: scritto come
@@ -265,22 +277,33 @@ function sulTassello(eroe, cosaInMano, indice) {
   // tasto una volta sola, per quattro giorni, vorrebbe dire una casa che non
   // chiede niente — cioè un monumento, che è quello che decadimento.js dice di
   // non voler costruire.
-  if (b.oggetto === OGGETTO.FOCOLARE_ACCESO || b.oggetto === OGGETTO.FOCOLARE_SPENTO) {
+  if (decadimento.siCarica(b.oggetto)) {
     const legna = decadimento.legnaNel(b.tx, b.ty);
+    const capienza = decadimento.capienzaDi(b.oggetto);
+    const quale = NOME_DEL_FUOCO[b.oggetto];
     const fascina = COMBUSTIBILI[cosaInMano];
-    if (fascina && legna < decadimento.LEGNA_MASSIMA) {
+    if (fascina && legna < capienza) {
       // Il cambio sta scritto sul tasto quando non è uno, e non in un messaggio
       // dopo: quanto costa una tacca è la cosa che si vuole sapere prima di
       // darla, e un giocatore che lo scopre contando i rami spariti dallo zaino
       // l'ha imparato nel modo sbagliato.
-      return { tipo: "carica", bersaglio: b, legna, cosa: cosaInMano, quante: fascina.quante,
+      return { tipo: "carica", bersaglio: b, legna, capienza, fuoco: quale,
+        cosa: cosaInMano, quante: fascina.quante,
         verbo: fascina.quante > 1
-          ? `Carica il focolare (${fascina.quante} ${fascina.tanti})`
-          : "Carica il focolare",
+          ? `Carica il ${quale} (${fascina.quante} ${fascina.tanti})`
+          : `Carica il ${quale}`,
+        // La pioggia non impedisce più di POSARE un fuoco — quello che si posa
+        // è una fossa fredda, e l'acqua su una fossa fredda non ha niente da
+        // dire — ma impedisce di accenderlo allo scoperto. La regola non è
+        // cambiata, è arrivata al punto giusto: prima rifiutava il gesto
+        // sbagliato, adesso rifiuta quello che l'acqua spegnerebbe la sera
+        // stessa.
         impedito: inventario.quante(cosaInMano) < fascina.quante
-          ? `servono ${fascina.quante} ${fascina.tanti}` : null };
+          ? `servono ${fascina.quante} ${fascina.tanti}`
+          : meteo.evento() === "pioggia" && !meteo.riparatoDallaPioggia(b.tx, b.ty)
+            ? "piove: accendi il fuoco al chiuso o sotto gli alberi" : null };
     }
-    return { tipo: "guarda", verbo: "Guarda il focolare", bersaglio: b, legna };
+    return { tipo: "guarda", verbo: `Guarda il ${quale}`, bersaglio: b, legna, capienza, fuoco: quale };
   }
 
   const raccolta = raccoltaDi(b.oggetto);
@@ -350,8 +373,6 @@ function sulTassello(eroe, cosaInMano, indice) {
     // niente da fare. Con, il viaggiatore ha il suo ciclo — ti infili nella
     // macchia, accendi, ti asciughi — e la pioggia diventa una cosa a cui si
     // reagisce invece di una cosa che si subisce.
-    if (cosaInMano === "falo" && meteo.evento() === "pioggia" && !meteo.riparatoDallaPioggia(b.tx,b.ty))
-      return { tipo: "posa", bersaglio: b, impedito: "piove: accendi il fuoco al chiuso o sotto gli alberi" };
     // Il focolare vuole quattro mura, ed è quello che gli impedisce di essere
     // soltanto un falò migliore: in viaggio, sotto un temporale, dentro una
     // macchia, il falò resta l'unica risposta. In cambio, dove sta, la pioggia
@@ -493,6 +514,13 @@ const SMONTAGGI = {
   [OGGETTO.CASSA]: { cosa: "cassa", verbo: "Smonta la cassa" },
   [OGGETTO.FOCOLARE_SPENTO]: { cosa: "focolare", verbo: "Smonta il focolare" },
   [OGGETTO.FOCOLARE_ACCESO]: { cosa: "focolare", verbo: "Smonta il focolare" },
+  // Il falò si raccoglie da spento come il focolare, e per lo stesso motivo:
+  // un fuoco acceso in tasca non esiste, e la legna che ci hai messo dentro
+  // non si riprende cambiando idea. Qui la cenere delle rovine conta come
+  // roba tua — chi arriva a un accampamento bruciato trova una fossa già
+  // fatta, e può portarsela via o riaccenderla.
+  [OGGETTO.FALO_SPENTO]: { cosa: "falo", verbo: "Raccogli il falò", detto: "raccolto" },
+  [OGGETTO.FALO_ACCESO]: { cosa: "falo", verbo: "Raccogli il falò", detto: "raccolto" },
 };
 
 // Un gesto e non un lavoro, quindi si paga in un colpo solo. Quanto un colpo
@@ -510,7 +538,10 @@ export function smontaggioPossibile(eroe) {
   const b = bersaglio(eroe);
   const voce = SMONTAGGI[b.oggetto];
   if (!voce) return null;
-  return { tipo: "smonta", verbo: voce.verbo, cosa: voce.cosa, bersaglio: b, impedito: perche(b, voce) };
+  // "detto" è come si racconta il gesto una volta fatto, quando "smontato" non
+  // è la parola giusta: una fossa di pietre non si smonta, si raccoglie.
+  return { tipo: "smonta", verbo: voce.verbo, cosa: voce.cosa, detto: voce.detto ?? "smontato",
+    bersaglio: b, impedito: perche(b, voce) };
 }
 
 // Le due cose che si smontano solo da vuote, e i due motivi sono diversi.
@@ -527,8 +558,8 @@ export function smontaggioPossibile(eroe) {
 // aver pagato per tornare a prendersi la pietra.
 function perche(b, voce) {
   if (b.oggetto === OGGETTO.CASSA && !contenitori.eVuota(b.tx, b.ty)) return "prima svuotala";
-  if (b.oggetto === OGGETTO.FOCOLARE_ACCESO) {
-    return `il focolare è acceso: ${decadimento.legnaNel(b.tx, b.ty)}/${decadimento.LEGNA_MASSIMA}`;
+  if (NOME_DEL_FUOCO[b.oggetto] && decadimento.legnaNel(b.tx, b.ty) > 0) {
+    return `il ${NOME_DEL_FUOCO[b.oggetto]} è acceso: ${decadimento.legnaNel(b.tx, b.ty)}/${decadimento.capienzaDi(b.oggetto)}`;
   }
   // Il messaggio è quello finito e non una parola d'ordine da tradurre altrove:
   // chi lo riceve lo mostra e basta, e il rimedio sta dentro la frase perché
@@ -548,7 +579,7 @@ export function smontaDavanti(eroe) {
   inventario.aggiungi(azione.cosa, 1);
   mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
   bisogni.consuma("stanchezza", FATICA_SMONTAGGIO);
-  return { tipo: "smontato", cosa: azione.cosa, tx, ty };
+  return { tipo: "smontato", cosa: azione.cosa, detto: azione.detto, tx, ty };
 }
 
 // La stessa cosa dal pannello della cassa, dove non si ha un "davanti" ma due
@@ -843,18 +874,24 @@ function esegui(eroe, cosaInMano, indice, azione) {
   }
 
   if (azione.tipo === "guarda") {
-    return { tipo: "guardato", tx, ty, legna: azione.legna, massimo: decadimento.LEGNA_MASSIMA };
+    return { tipo: "guardato", tx, ty, legna: azione.legna, massimo: azione.capienza, fuoco: azione.fuoco };
   }
 
   if (azione.tipo === "carica") {
     if (!inventario.togli(azione.cosa, azione.quante)) return null;
-    const legna = Math.min(decadimento.LEGNA_MASSIMA, azione.legna + 1);
+    const legna = Math.min(azione.capienza, azione.legna + 1);
     // Il tassello si riscrive da zero e non si aggiorna: quello che c'era
     // dentro era il conto di prima e la data di un fuoco che si misurava a
     // giorni. Un campo che nessuno legge più è un campo che qualcuno un giorno
     // leggerà.
-    mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.FOCOLARE_ACCESO, legna });
-    return { tipo: "carica", tx, ty, legna, massimo: decadimento.LEGNA_MASSIMA,
+    mappa.cambiaTassello(tx, ty, { oggetto: decadimento.accesoDi(azione.bersaglio.oggetto) ?? azione.bersaglio.oggetto, legna });
+    // E ci si fa da parte, per la stessa ragione di quando si posa: accendere
+    // un falò lo rende solido — la fossa fredda non lo era — e il riquadro
+    // d'urto sborda spesso nel tassello davanti. Senza questa riga si accende
+    // il fuoco dentro cui si sta.
+    const [dx, dy] = SCARTI[eroe.guarda] ?? SCARTI.giu;
+    urti.spingiFuori(eroe, dx, dy);
+    return { tipo: "carica", tx, ty, legna, massimo: azione.capienza, fuoco: azione.fuoco,
       cosa: azione.cosa, quante: azione.quante };
   }
 

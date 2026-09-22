@@ -72,7 +72,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.14.1";
+const VERSIONE = "M7.14.2";
 
 // --- elementi -------------------------------------------------------------
 
@@ -953,7 +953,7 @@ function leggiComandi() {
       // "Smontato: cassa" e non "cassa smontata": è la stessa forma di
       // "posato:" e di "fatto:", e per di più non deve accordarsi con niente —
       // una porta smontato sarebbe italiano sbagliato scritto dal gioco.
-      annuncia(`smontato: ${nomeDi(esito.cosa)}`, "#9ec97e");
+      annuncia(`${esito.detto}: ${nomeDi(esito.cosa)}`, "#9ec97e");
     } else if (esito?.tipo === "impedito") {
       suono.suona(NEGATO);
       annuncia(esito.messaggio, "#c0705f");
@@ -1022,15 +1022,15 @@ function leggiComandi() {
   // per tutte e quattro: quello che conta saperlo è quanto ne ha dentro adesso.
   if (esito.tipo === "carica") {
     suono.suona(FATTO);
-    annuncia(`focolare: ${esito.legna}/${esito.massimo} legna`, "#e0913a");
+    annuncia(`${esito.fuoco}: ${esito.legna}/${esito.massimo} legna`, "#e0913a");
   }
   // Guardare è l'unica azione che non cambia niente, e serve a questo: la
   // fiamma è uguale con una legna e con quattro, quindi il conto va chiesto.
   if (esito.tipo === "guardato") {
     suono.suona(SCELTA);
     annuncia(esito.legna > 0
-      ? `focolare: ${esito.legna}/${esito.massimo} legna`
-      : "focolare spento: caricalo con la legna", esito.legna > 0 ? "#e0913a" : "#c9b189");
+      ? `${esito.fuoco}: ${esito.legna}/${esito.massimo} legna`
+      : `${esito.fuoco} spento: caricalo con la legna`, esito.legna > 0 ? "#e0913a" : "#c9b189");
   }
   if (esito.tipo === "cotto") { suono.suona(FATTO); annuncia(`sul fuoco: ${nomeDi(esito.diventa)}`, "#e0913a"); }
 

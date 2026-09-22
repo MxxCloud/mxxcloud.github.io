@@ -95,18 +95,25 @@ export const TORCIA = [
   "............",
 ];
 
-export const FALO = [
+// Il falò nello zaino, ed è spento: da M7.14.2 si posa una fossa fredda e la
+// si accende con la legna, quindi l'icona con il fuoco dentro prometteva una
+// cosa che quella casella non dà più. I legni sono quelli di sempre — si
+// riconosce che è lui — ma nei toni della cenere invece che della fiamma.
+//
+// L'icona accesa è stata tolta e non commentata: quello che non disegna più
+// niente è un disegno che il prossimo crede ancora in uso.
+export const FALO_ICONA_SPENTO = [
   "............",
-  ".....v......",
-  "....vuv.....",
-  "...vuuuv....",
-  "...vuuuv....",
-  "....vuv.....",
-  "..g.....g...",
-  "..hg...gh...",
-  "...hg.gh....",
-  "..ghhhhhg...",
-  "...gggg.....",
+  "............",
+  "............",
+  "............",
+  "..d.....d...",
+  "..gd...dg...",
+  "...dg.gd....",
+  "..dgggggd...",
+  "...ddddd....",
+  "............",
+  "............",
   "............",
 ];
 

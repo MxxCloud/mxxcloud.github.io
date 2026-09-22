@@ -719,11 +719,23 @@ test('pioggia spegne solo i falò scoperti; aprire la porta espone quello dentro
   modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.PORTA_APERTA});
   assert.equal(meteo.aggiornaMondo().spenti,1);assert.equal(mappa.oggettoDi(tx-1,ty),OGGETTO.FALO_SPENTO);
 });
-test('pioggia impedisce di sprecare un falò posandolo allo scoperto',()=>{
-  maltempo('pioggia');inventario.aggiungi('falo',1);
-  assert.match(azioni.azionePossibile(eroe,'falo').impedito,/piove/);
-  assert.equal(azioni.agisci(eroe,'falo'),null);assert.equal(inventario.quante('falo'),1);
-  stanza();assert.equal(azioni.agisci(eroe,'falo').tipo,'posa');
+test('sotto la pioggia il falò si posa, ma non si accende allo scoperto',()=>{
+  // La regola è la stessa di sempre e sta al punto giusto: posare una fossa
+  // fredda sotto l'acqua non spreca niente, accenderla sì.
+  maltempo('pioggia');inventario.aggiungi('falo',2);inventario.aggiungi('legna',4);
+  assert.equal(azioni.agisci(eroe,'falo',0).tipo,'posa');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FALO_SPENTO);
+  assert.match(azioni.azionePossibile(eroe,'legna',1).impedito,/piove/);
+  assert.equal(azioni.agisci(eroe,'legna',1),null);
+  assert.equal(inventario.quante('legna'),4);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FALO_SPENTO);
+  // Al chiuso invece si accende. La stanza rifà i tasselli dentro, quindi il
+  // falò si riposa: è il secondo dei due nello zaino.
+  stanza();
+  assert.equal(azioni.agisci(eroe,'falo',0).tipo,'posa');
+  assert.equal(azioni.azionePossibile(eroe,'legna',1).impedito ?? null,null);
+  assert.equal(azioni.agisci(eroe,'legna',1).tipo,'carica');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FALO_ACCESO);
 });
 test('colture seminate dopo l’inizio della pioggia ricevono acqua',()=>{
   maltempo('pioggia');meteo.aggiornaMondo();
@@ -1690,18 +1702,24 @@ test('sotto la chioma la pioggia bagna un quarto, e il falò si accende',()=>{
   modifiche.imposta(tx+1,ty+1,{oggetto:OGGETTO.ALBERO});
   assert.equal(meteo.sottoLaChioma(tx+1,ty),true);
   assert.equal(meteo.sottoLaChioma(tx-3,ty),false,'un prato non ripara');
-  // Il falò si posa sotto la chioma e non sul prato scoperto.
-  inventario.svuota();inventario.aggiungi('falo',2);
-  const sulPrato={...pos(tx-4,ty),guarda:'destra'};
-  assert.match(azioni.azionePossibile(sulPrato,'falo',0).impedito,/piove/);
-  const sottoIlBosco={...pos(tx,ty),guarda:'destra'};
-  assert.equal(azioni.azionePossibile(sottoIlBosco,'falo',0).impedito ?? null,null);
-  // E bagna un quarto: fradici in ottanta secondi invece che in venti.
+  // Bagna un quarto: fradici in ottanta secondi invece che in venti. Si misura
+  // prima di accendere qualunque cosa, se no è il fuoco che asciuga.
   meteo.reimposta();
   const dentroLaMacchia={px:(tx+1.5)*16,py:(ty+0.75)*16,guarda:'destra'};
   for(let s=0;s<40;s+=1) meteo.avanza(1,dentroLaMacchia);
   vicino(meteo.livelloBagnato(),40/80,1e-6);
   assert.equal(giorno>0,true);
+  // E il falò si accende sotto la chioma e non sul prato scoperto: la fossa si
+  // posa dovunque, è la legna che l'acqua non lascia accendere.
+  inventario.svuota();inventario.aggiungi('legna',4);
+  modifiche.imposta(tx-3,ty,{oggetto:OGGETTO.FALO_SPENTO});
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FALO_SPENTO});
+  const sulPrato={...pos(tx-4,ty),guarda:'destra'};
+  assert.match(azioni.azionePossibile(sulPrato,'legna',0).impedito,/piove/);
+  const sottoIlBosco={...pos(tx,ty),guarda:'destra'};
+  assert.equal(azioni.azionePossibile(sottoIlBosco,'legna',0).impedito ?? null,null);
+  assert.equal(azioni.agisci(sottoIlBosco,'legna',0).tipo,'carica');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FALO_ACCESO);
 });
 
 test('la stagione decide quale bestia arriva, e i pesi sono quelli dichiarati',()=>{
@@ -1800,9 +1818,12 @@ test('il temperamento arriva fino alla decisione, e si misura contando le carich
 
 // --- M7.13: il focolare ----------------------------------------------------
 
+const CAPIENZA_FOCOLARE = decadimento.capienzaDi(OGGETTO.FOCOLARE_ACCESO);
+const CAPIENZA_FALO = decadimento.capienzaDi(OGGETTO.FALO_ACCESO);
+
 // Posare il focolare davanti all'eroe, saltando la regola delle quattro mura:
 // serve ai collaudi che parlano di legna e di calore, non di dove si può.
-function focolare(legna=decadimento.LEGNA_MASSIMA) {
+function focolare(legna=CAPIENZA_FOCOLARE) {
   modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FOCOLARE_ACCESO,legna});
   return {tx:tx+1,ty};
 }
@@ -1844,7 +1865,7 @@ test('sul focolare si cucina e accanto si dorme',()=>{
 test('una legna per volta fino al pieno, e la prima accende',()=>{
   modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FOCOLARE_SPENTO});
   inventario.aggiungi('legna',6);
-  for(let attesa=1;attesa<=decadimento.LEGNA_MASSIMA;attesa++) {
+  for(let attesa=1;attesa<=CAPIENZA_FOCOLARE;attesa++) {
     assert.equal(azioni.azionePossibile(eroe,'legna',0).verbo,'Carica il focolare');
     const esito=azioni.agisci(eroe,'legna',0);
     assert.equal(esito.tipo,'carica');assert.equal(esito.legna,attesa);
@@ -1882,7 +1903,7 @@ test('due rami valgono una legna, e con uno solo il tasto lo dice prima',()=>{
   inventario.aggiungi('legna',1);
   assert.equal(azioni.azionePossibile(eroe,'legna',1).verbo,'Carica il focolare');
   azioni.agisci(eroe,'legna',1);
-  assert.equal(decadimento.legnaNel(tx+1,ty),decadimento.LEGNA_MASSIMA);
+  assert.equal(decadimento.legnaNel(tx+1,ty),CAPIENZA_FOCOLARE);
 });
 test('un albero scalda sei volte tanto in legna che in rami',()=>{
   // Non è una ripetizione del collaudo qui sopra: quello prova il cambio,
@@ -1904,7 +1925,7 @@ test('guardare il focolare dice quanto è carico, e non cambia niente',()=>{
   modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FOCOLARE_SPENTO});
   let esito=azioni.agisci(eroe,null,0);
   assert.equal(esito.tipo,'guardato');assert.equal(esito.legna,0);
-  assert.equal(esito.massimo,decadimento.LEGNA_MASSIMA);
+  assert.equal(esito.massimo,CAPIENZA_FOCOLARE);
   focolare(2);
   esito=azioni.agisci(eroe,null,0);
   assert.equal(esito.legna,2);
@@ -1935,9 +1956,9 @@ test('un focolare acceso di una partita vecchia vale pieno, non spento',()=>{
   // misurava a giorni, e spegnerlo subito sarebbe punirlo per un cambiamento
   // del gioco.
   modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FOCOLARE_ACCESO,posata:1});
-  assert.equal(decadimento.legnaNel(tx+1,ty),decadimento.LEGNA_MASSIMA);
+  assert.equal(decadimento.legnaNel(tx+1,ty),CAPIENZA_FOCOLARE);
   tempo.impostaGiorno(2);decadimento.nuovoGiorno();
-  assert.equal(decadimento.legnaNel(tx+1,ty),decadimento.LEGNA_MASSIMA-1);
+  assert.equal(decadimento.legnaNel(tx+1,ty),CAPIENZA_FOCOLARE-1);
 });
 test('il focolare carico non si smonta: prima deve finire la legna',()=>{
   focolare(1);
@@ -1997,7 +2018,7 @@ test('un salvataggio con un focolare carico si rilegge con la sua legna',()=>{
   reset();assert.ok(salvataggio.applica(stato));
   assert.equal(decadimento.legnaNel(tx+1,ty),3);
   // Fuori scala si rifiuta prima di toccare la partita: zero non è un fuoco.
-  for(const legna of [0,decadimento.LEGNA_MASSIMA+1,1.5]) {
+  for(const legna of [0,CAPIENZA_FOCOLARE+1,1.5]) {
     const storto=JSON.parse(JSON.stringify(stato));
     storto.modifiche.find(m=>m.oggetto===OGGETTO.FOCOLARE_ACCESO).legna=legna;
     assert.equal(salvataggio.valido(storto),false,String(legna));
@@ -2008,4 +2029,98 @@ test('la pioggia non spegne il focolare: è il motivo per cui sta al chiuso',()=
   focolare(giorno);
   meteo.aggiornaMondo();
   assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
+});
+
+// --- M7.14.2: anche il falò si accende --------------------------------------
+
+test('il falò si posa spento e si accende a legna, e ne tiene due',()=>{
+  inventario.aggiungi('falo',1);inventario.aggiungi('legna',5);
+  assert.equal(azioni.agisci(eroe,'falo',0).tipo,'posa');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FALO_SPENTO);
+  assert.equal(decadimento.legnaNel(tx+1,ty),0);
+  assert.equal(freddo.fuocoPerRiposo(pos(tx+1,ty+1)),false);
+  // La prima legna accende, la seconda riempie, la terza non entra.
+  assert.equal(azioni.agisci(eroe,'legna',1).legna,1);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FALO_ACCESO);
+  assert.equal(azioni.agisci(eroe,'legna',1).legna,CAPIENZA_FALO);
+  assert.equal(CAPIENZA_FALO,2);
+  const pieno=azioni.azionePossibile(eroe,'legna',1);
+  assert.equal(pieno.tipo,'guarda');
+  assert.equal(azioni.agisci(eroe,'legna',1).tipo,'guardato');
+  assert.equal(inventario.quante('legna'),3);
+  // E scalda e cuoce come prima, perché quello lo dice il catalogo.
+  assert.equal(freddo.fuocoPerRiposo(pos(tx+1,ty+1)),true);
+  assert.equal(mappa.scaldaIn(tx+1,ty),true);
+});
+test('il falò dura due giorni, e d’inverno una notte sola',()=>{
+  const acceso=()=>mappa.oggettoDi(tx+1,ty)===OGGETTO.FALO_ACCESO;
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FALO_ACCESO,legna:CAPIENZA_FALO});
+  tempo.impostaGiorno(2);decadimento.nuovoGiorno();
+  assert.equal(decadimento.legnaNel(tx+1,ty),1);assert.equal(acceso(),true);
+  tempo.impostaGiorno(3);decadimento.nuovoGiorno();
+  assert.equal(acceso(),false);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FALO_SPENTO);
+  // D'inverno ne brucia due al giorno: il pieno non arriva a domani.
+  reset();modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FALO_ACCESO,legna:CAPIENZA_FALO});
+  tempo.impostaGiorno(9);tempo.impostaGiorno(10);decadimento.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FALO_SPENTO);
+});
+test('il falò acceso non si raccoglie, e la barra non lo raccoglie più',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FALO_ACCESO,legna:1});
+  assert.match(azioni.smontaggioPossibile(eroe).impedito,/falò è acceso: 1\/2/);
+  assert.equal(azioni.smontaDavanti(eroe).tipo,'impedito');
+  assert.equal(inventario.quante('falo'),0);
+  // La barra su un fuoco carica o guarda: non lo mette più in tasca.
+  for(let i=0;i<4;i++) azioni.agisci(eroe,null,0);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FALO_ACCESO);
+  assert.equal(inventario.quante('falo'),0);
+  // Spento invece torna in mano con la X, e torna spento.
+  tempo.impostaGiorno(2);decadimento.nuovoGiorno();
+  assert.equal(azioni.smontaDavanti(eroe).tipo,'smontato');
+  assert.equal(inventario.quante('falo'),1);
+  assert.equal(azioni.agisci(eroe,'falo',0).tipo,'posa');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FALO_SPENTO);
+});
+test('la cenere di un accampamento bruciato è un falò da riaccendere',()=>{
+  const r=trovaLuogo('bruciato');
+  const cenere=segnoNelLuogo(r,'f');
+  assert.equal(mappa.oggettoDi(cenere.tx,cenere.ty),OGGETTO.FALO_SPENTO);
+  assert.equal(decadimento.legnaNel(cenere.tx,cenere.ty),0);
+  const davanti={...pos(cenere.tx-1,cenere.ty),guarda:'destra'};
+  inventario.aggiungi('legna',2);
+  assert.equal(azioni.azionePossibile(davanti,'legna',0).tipo,'carica');
+  assert.equal(azioni.agisci(davanti,'legna',0).legna,1);
+  assert.equal(mappa.oggettoDi(cenere.tx,cenere.ty),OGGETTO.FALO_ACCESO);
+});
+test('la pioggia spegne il falò scoperto e la legna dentro se n’è andata',()=>{
+  maltempo('pioggia');
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FALO_ACCESO,legna:CAPIENZA_FALO});
+  meteo.aggiornaMondo();
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FALO_SPENTO);
+  assert.equal(decadimento.legnaNel(tx+1,ty),0);
+  assert.equal(modifiche.di(tx+1,ty).legna,undefined,'niente conti vecchi sul tassello');
+});
+test('un salvataggio non può dichiarare in un falò più legna di quanta ce ne stia',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FALO_ACCESO,legna:CAPIENZA_FALO});
+  const stato=salvataggio.istantanea(eroe,0);
+  assert.equal(salvataggio.valido(stato),true);
+  const storto=JSON.parse(JSON.stringify(stato));
+  storto.modifiche.find(m=>m.oggetto===OGGETTO.FALO_ACCESO).legna=CAPIENZA_FOCOLARE;
+  assert.equal(salvataggio.valido(storto),false,'quattro legna stanno nel focolare, non nel falò');
+  // E la legna non sta sui tasselli che non sono fuochi accesi.
+  const altrove=JSON.parse(JSON.stringify(stato));
+  altrove.modifiche.find(m=>m.oggetto===OGGETTO.FALO_ACCESO).oggetto=OGGETTO.FALO_SPENTO;
+  assert.equal(salvataggio.valido(altrove),false);
+});
+test('accendere un falò addosso non ci chiude dentro il fuoco',()=>{
+  // La fossa fredda non ferma i piedi, il fuoco acceso sì: chi gli sta
+  // appiccicato e lo accende si troverebbe dentro un tassello solido.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FALO_SPENTO});
+  assert.equal(mappa.solidoIn(tx+1,ty),false);
+  eroe.px=(tx+1)*16-1;
+  assert.equal(urti.liberoIn(eroe.px,eroe.py),true,'prima è libero');
+  inventario.aggiungi('legna',1);
+  assert.equal(azioni.agisci(eroe,'legna',0).tipo,'carica');
+  assert.equal(mappa.solidoIn(tx+1,ty),true);
+  assert.equal(urti.liberoIn(eroe.px,eroe.py),true,'e dopo non si sta dentro il fuoco');
 });
