@@ -2252,3 +2252,73 @@ test('la legna resta il combustibile migliore, qualunque cosa si aggiunga',()=>{
   // E quello che non è combustibile non entra: la pietra non brucia.
   assert.equal(costo('pietra'),null);
 });
+
+// --- M7.15.2: si secca anche il pesce ---------------------------------------
+
+test('tre pesci crudi diventano un pesce secco, con le stesse regole della carne',()=>{
+  essiccatoio();inventario.aggiungi('pesce_crudo',5);
+  assert.equal(azioni.azionePossibile(eroe,'pesce_crudo',0).verbo,'Stendi');
+  const steso=azioni.agisci(eroe,'pesce_crudo',0);
+  assert.equal(steso.quante,3);
+  assert.equal(inventario.quante('pesce_crudo'),2,'i due spaiati restano in mano');
+  assert.equal(modifiche.di(tx+1,ty).cosa,'pesce_crudo');
+  // Tre albe asciutte, come per la carne: il telaio non sa cosa gli pende.
+  tempo.impostaGiorno(4);decadimento.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.ESSICCATOIO_PRONTO);
+  assert.equal(modifiche.di(tx+1,ty).cosa,'pesce_crudo','il pronto ricorda cosa pende');
+  assert.equal(azioni.agisci(eroe,null,0).secche,1);
+  assert.equal(inventario.quante('pesce_secco'),1);
+  assert.equal(inventario.quante('carne_secca'),0,'un pesce non diventa carne');
+});
+test('il pesce secco è la carne secca del fiume, ma vale meno',()=>{
+  const pesce=CATALOGO.pesce_secco, carne=CATALOGO.carne_secca;
+  assert.equal(pesce.dura,carne.dura,'stessa scorta: dodici giorni');
+  assert.ok(pesce.commestibile.fame<carne.commestibile.fame,'e nutre meno');
+  // E seccare deve restare il baratto che è, per tutti e due: nutre meno che
+  // arrostire, dura molto di più. Se quel divario si chiudesse, il fuoco
+  // perderebbe il mestiere di cuocere senza che nessuno lo abbia deciso.
+  for(const [arrostito,secco] of [['carne_arrostita','carne_secca'],['pesce_arrostito','pesce_secco']]) {
+    assert.ok(CATALOGO[secco].commestibile.fame<CATALOGO[arrostito].commestibile.fame,`${secco} nutre meno di ${arrostito}`);
+    assert.ok(CATALOGO[secco].dura>CATALOGO[arrostito].dura,`${secco} dura più di ${arrostito}`);
+  }
+});
+test('il telaio dice cosa ci pende, e non si mischia',()=>{
+  essiccatoio(OGGETTO.ESSICCATOIO_CARICO,{dal:1,quante:3,cosa:'pesce_crudo'});
+  assert.match(azioni.azionePossibile(eroe,null,0).impedito,/il pesce sta ancora seccando/);
+  // Con altra roba in mano non si aggiunge niente: il carico è uno solo.
+  inventario.aggiungi('carne_cruda',3);
+  assert.match(azioni.azionePossibile(eroe,'carne_cruda',0).impedito,/il pesce sta ancora seccando/);
+  assert.equal(azioni.agisci(eroe,'carne_cruda',0),null);
+  assert.equal(inventario.quante('carne_cruda'),3);
+  assert.match(azioni.smontaggioPossibile(eroe).impedito,/prima ritira il pesce/);
+});
+test('un carico steso prima che il pesce si seccasse resta carne',()=>{
+  // Nessun campo "cosa": è il telaio di una partita di M7.15.
+  essiccatoio(OGGETTO.ESSICCATOIO_PRONTO,{quante:3});
+  assert.equal(azioni.agisci(eroe,null,0).secche,1);
+  assert.equal(inventario.quante('carne_secca'),1);
+  assert.equal(inventario.quante('pesce_secco'),0);
+});
+test('il salvataggio rifiuta un telaio che dichiara di seccare la pietra',()=>{
+  essiccatoio(OGGETTO.ESSICCATOIO_CARICO,{dal:1,quante:3,cosa:'pesce_crudo'});
+  const stato=salvataggio.istantanea(eroe,0);
+  assert.equal(salvataggio.valido(stato),true);
+  for(const storto of ['pietra','carne_secca','',3]) {
+    const rotto=JSON.parse(JSON.stringify(stato));
+    rotto.modifiche.find(m=>m.oggetto===OGGETTO.ESSICCATOIO_CARICO).cosa=storto;
+    assert.equal(salvataggio.valido(rotto),false,String(storto));
+  }
+  // E il carico che si rilegge è ancora pesce.
+  reset();assert.ok(salvataggio.applica(stato));
+  assert.equal(modifiche.di(tx+1,ty).cosa,'pesce_crudo');
+});
+test('una razione sola non si dice al plurale',()=>{
+  // "Ritirati: 1 pesci secchi" è quello che diceva il gioco, e lo diceva anche
+  // per la carne da M7.15. Il conto e la parola vengono dallo stesso posto.
+  assert.equal(azioni.detteCosi('pesce_crudo',1),'1 pesce secco');
+  assert.equal(azioni.detteCosi('pesce_crudo',2),'2 pesci secchi');
+  assert.equal(azioni.detteCosi('carne_cruda',1),'1 carne secca');
+  assert.equal(azioni.detteCosi('carne_cruda',2),'2 carni secche');
+  essiccatoio(OGGETTO.ESSICCATOIO_PRONTO,{quante:3,cosa:'pesce_crudo'});
+  assert.equal(azioni.agisci(eroe,null,0).dette,'1 pesce secco');
+});

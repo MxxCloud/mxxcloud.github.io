@@ -12,6 +12,32 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.15.2 — si secca anche il pesce
+
+L'essiccatoio prendeva solo carne. Adesso prende **anche il pesce, con le
+stesse regole**: tre pesci crudi stesi, tre albe asciutte, **un pesce secco**.
+
+| | Crudo | Arrostito | Secco |
+| --- | --- | --- | --- |
+| Carne | 0,15 — 2 giorni | 0,45 — 4 giorni | **0,35 — 12 giorni** |
+| Pesce | 0,18 — 2 giorni | 0,40 — 4 giorni | **0,30 — 12 giorni** |
+
+Il tre decimi non è scelto a occhio: **seccare vale il 78% di arrostire**, che
+è la proporzione già scritta nella carne (0,45 → 0,35) e nelle conserve di
+bacche. Applicata al pesce arrostito dà 0,31, cioè tre decimi. Resta un po'
+meno della carne secca di proposito: **pescare non ti carica addosso un orso**,
+e il cibo che si prende senza rischio non può conservarsi meglio di quello che
+te lo fa correre.
+
+**Il telaio ricorda cosa gli hai appeso.** Non si mischia — un carico è uno
+solo — e quello che ritiri è quello che ci avevi messo, anche se torni fra
+mezza stagione o se lo zaino era pieno e metà è rimasta appesa. Le parole lo
+dicono dove serve: `IL PESCE STA ANCORA SECCANDO`, `PRIMA RITIRA IL PESCE`.
+
+Il disegno continua a dire lo **stato** — corde nude, carico, pronto — e non la
+specie: da una schermata di distanza quello che si vuole sapere è se vale la
+pena tornare, non cosa pende.
+
 ## M7.15.1 — brucia anche la fibra
 
 Terzo combustibile, e chiude la tavola: **10 fibra valgono una legna**, nel
@@ -927,7 +953,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.15.1**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.15.2**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -948,10 +974,10 @@ casa si costruisce **un focolare**, e in viaggio si posa **un falò**: tutti e
 due si posano spenti e si caricano una tacca alla volta — a legna, a rami (due
 per una) o a fibra (dieci per una) — e ne bruciano una al giorno, due
 d'inverno; quando finiscono non si perdono: resta la pietra o la fossa, e si
-rimette legna. Il camino di
-casa ne tiene quattro, il fuoco da viaggio due. E fuori, all'aria, si costruisce
-**un essiccatoio**: tre carni crude stese per tre giorni di sole fanno una carne
-secca che dura dodici giorni. Il fuoco dentro, la carne fuori.
+rimette legna. Il camino di casa ne tiene quattro, il fuoco da viaggio due. E
+fuori, all'aria, si costruisce **un essiccatoio**: tre carni crude — o tre
+pesci — stesi per tre giorni di sole fanno una razione che dura dodici giorni.
+Il fuoco dentro, quello che aspetta fuori.
 
 Si abbattono alberi, si spaccano sassi, si strappano cespugli — a colpi, non
 con un tocco: l'oggetto colpito trema e sputa scheggie, e l'ultimo colpo ne

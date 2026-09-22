@@ -263,7 +263,10 @@ export function nuovoGiorno() {
     if (cambio.oggetto === OGGETTO.ESSICCATOIO_CARICO) {
       const dal = cambio.dal ?? giorno;
       if (giorniAsciutti(dal, giorno) >= GIORNI_DI_SECCA) {
-        seccati.push({ tx, ty, quante: cambio.quante });
+        // "cosa" viaggia con il carico: il telaio che finisce di seccare deve
+        // ricordare se lì sopra c'era carne o pesce, se no chi torna a
+        // ritirarlo trova l'altra cosa.
+        seccati.push({ tx, ty, quante: cambio.quante, cosa: cambio.cosa });
       } else if (cambio.dal === undefined) {
         modifiche.imposta(tx, ty, { ...cambio, dal: giorno });
       }
@@ -300,8 +303,8 @@ export function nuovoGiorno() {
     contenitori.scrivi(tx, ty, fila);
   }
 
-  for (const { tx, ty, quante } of seccati) {
-    mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.ESSICCATOIO_PRONTO, quante });
+  for (const { tx, ty, quante, cosa } of seccati) {
+    mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.ESSICCATOIO_PRONTO, quante, cosa });
   }
 
   for (const { tx, ty, diventa } of spenti) {

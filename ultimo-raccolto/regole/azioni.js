@@ -51,18 +51,52 @@ export function bersaglio(eroe) {
 // ritmo giusto perché bere sia un gesto e non un lavoro.
 const SORSO = 0.45;
 
-// L'essiccatoio: quante carni crude per una secca, e quante ne tiene in tutto.
+// L'essiccatoio: quanti pezzi crudi per una razione secca, e quanti ne tiene.
 //
 // Tre a uno è il baratto della conserva, e il carico è un multiplo di tre —
-// quindi 3 o 6, mai 4 né 5. Prendere "quello che c'è" farebbe restare due carni
+// quindi 3 o 6, mai 4 né 5. Prendere "quello che c'è" farebbe restare due pezzi
 // dentro a marcire senza che nessuno lo dica, e una regola che mangia due carni
 // in silenzio è una trappola, non una difficoltà.
-export const CARNI_PER_SECCA = 3;
+export const PEZZI_PER_RAZIONE = 3;
 export const CARICO_MASSIMO = 6;
 
-// Quante carni entrano davvero, avendone tante in mano.
+// Quanti pezzi entrano davvero, avendone tanti in mano.
 export function quanteSiStendono(disponibili) {
-  return Math.min(CARICO_MASSIMO, Math.floor(disponibili / CARNI_PER_SECCA) * CARNI_PER_SECCA);
+  return Math.min(CARICO_MASSIMO, Math.floor(disponibili / PEZZI_PER_RAZIONE) * PEZZI_PER_RAZIONE);
+}
+
+// Cosa si stende, e cosa diventa.
+//
+// Il telaio non sa cosa gli appendi: sa che dopo tre soli quello che pende è
+// una razione che arriva a marzo. Per questo è una tavola e non due rami di un
+// "se": la carne è arrivata per prima e il pesce dopo, e il giorno che si
+// seccheranno le rape sarà una riga, non una terza stesura della stessa regola.
+//
+// Le parole stanno qui accanto ai dati perché l'italiano non si deduce da un
+// identificatore: "servono almeno 3 carni" e "servono almeno 3 pesci" cambiano
+// genere e numero, e costruirle a pezzi in mezzo al codice è il modo più
+// sicuro di scrivere "3 pesci secche".
+export const SECCABILI = {
+  carne_cruda: { secca: "carne_secca", tanti: "carni", quello: "la carne",
+    uno: "carne secca", molti: "carni secche" },
+  pesce_crudo: { secca: "pesce_secco", tanti: "pesci", quello: "il pesce",
+    uno: "pesce secco", molti: "pesci secchi" },
+};
+
+// Quante ne sono, dette come si dicono. Una riga per non scrivere mai
+// "ritirati: 1 pesci secchi", che è quello che diceva prima — e lo diceva
+// anche per la carne, da M7.15: "ritirate 1 carni secche".
+export function detteCosi(cosa, quante) {
+  const voce = SECCABILI[cosa];
+  return `${quante} ${quante === 1 ? voce.uno : voce.molti}`;
+}
+
+// Cosa sta seccando su questo telaio. Senza il campo è carne: è il carico di
+// una partita cominciata quando il pesce non si seccava ancora, e chi torna a
+// ritirarlo deve trovarci quello che ci aveva messo.
+export function stesoIn(tx, ty) {
+  const cosa = modifiche.di(tx, ty)?.cosa;
+  return SECCABILI[cosa] ? cosa : "carne_cruda";
 }
 
 // Cosa brucia in un fuoco, e quanto ne serve per una tacca.
@@ -327,10 +361,11 @@ function sulTassello(eroe, cosaInMano, indice) {
   // L'essiccatoio, i due gesti che lo riguardano. Stanno sopra il catalogo
   // della raccolta come il fuoco che si carica: sono l'unica cosa da fare a un
   // telaio che si ha davanti, e la X resta libera di portarselo via.
-  if (cosaInMano === "carne_cruda" && b.oggetto === OGGETTO.ESSICCATOIO) {
-    const quante = quanteSiStendono(inventario.quante("carne_cruda"));
-    return { tipo: "stendi", verbo: "Stendi", quante, bersaglio: b,
-      impedito: quante === 0 ? `servono almeno ${CARNI_PER_SECCA} carni` : null };
+  const daSeccare = SECCABILI[cosaInMano];
+  if (daSeccare && b.oggetto === OGGETTO.ESSICCATOIO) {
+    const quante = quanteSiStendono(inventario.quante(cosaInMano));
+    return { tipo: "stendi", verbo: "Stendi", quante, cosa: cosaInMano, bersaglio: b,
+      impedito: quante === 0 ? `servono almeno ${PEZZI_PER_RAZIONE} ${daSeccare.tanti}` : null };
   }
   if (b.oggetto === OGGETTO.ESSICCATOIO_PRONTO) {
     return { tipo: "ritira", verbo: "Ritira", bersaglio: b };
@@ -339,7 +374,7 @@ function sulTassello(eroe, cosaInMano, indice) {
   // sappia che la carne è ancora lì dentro e non è andata persa.
   if (b.oggetto === OGGETTO.ESSICCATOIO_CARICO) {
     return { tipo: "essiccatoio", verbo: "Guarda l'essiccatoio", bersaglio: b,
-      impedito: "la carne sta ancora seccando" };
+      impedito: `${SECCABILI[stesoIn(b.tx, b.ty)].quello} sta ancora seccando` };
   }
 
   const raccolta = raccoltaDi(b.oggetto);
@@ -611,7 +646,7 @@ function perche(b, voce) {
   // L'essiccatoio: è il terzo caso, e ha la stessa forma dei primi due. Dentro
   // c'è roba tua, e smontare il telaio con la carne appesa vorrebbe dire farla
   // sparire — di nuovo un ripostiglio travestito da struttura.
-  if (ESSICCATOIO_PIENO.has(b.oggetto)) return "prima ritira la carne";
+  if (ESSICCATOIO_PIENO.has(b.oggetto)) return `prima ritira ${SECCABILI[stesoIn(b.tx, b.ty)].quello}`;
   if (NOME_DEL_FUOCO[b.oggetto] && decadimento.legnaNel(b.tx, b.ty) > 0) {
     return `il ${NOME_DEL_FUOCO[b.oggetto]} è acceso: ${decadimento.legnaNel(b.tx, b.ty)}/${decadimento.capienzaDi(b.oggetto)}`;
   }
@@ -950,28 +985,35 @@ function esegui(eroe, cosaInMano, indice, azione) {
   }
 
   if (azione.tipo === "stendi") {
-    if (azione.quante === 0 || !inventario.togli("carne_cruda", azione.quante)) return null;
+    if (azione.quante === 0 || !inventario.togli(azione.cosa, azione.quante)) return null;
     // "dal" e non un contatore: quanti giorni asciutti siano passati lo sa il
     // calendario, che è una funzione pura del giorno e del seme.
     mappa.cambiaTassello(tx, ty, {
       oggetto: OGGETTO.ESSICCATOIO_CARICO,
       dal: tempo.giornoCorrente(),
       quante: azione.quante,
+      cosa: azione.cosa,
     });
-    return { tipo: "stendi", tx, ty, quante: azione.quante };
+    return { tipo: "stendi", tx, ty, quante: azione.quante, cosa: azione.cosa,
+      tanti: SECCABILI[azione.cosa].tanti };
   }
 
   if (azione.tipo === "ritira") {
-    const quante = modifiche.di(tx, ty)?.quante ?? CARNI_PER_SECCA;
-    const secche = Math.floor(quante / CARNI_PER_SECCA);
+    const quante = modifiche.di(tx, ty)?.quante ?? PEZZI_PER_RAZIONE;
+    const cosa = stesoIn(tx, ty);
+    const voce = SECCABILI[cosa];
+    const secche = Math.floor(quante / PEZZI_PER_RAZIONE);
     // Si prende quello che ci sta e il resto resta appeso, come per i mucchi:
     // far sparire una scorta di tre stagioni perché lo zaino era pieno sarebbe
-    // il difetto peggiore che questa tappa possa avere.
-    const resto = inventario.aggiungi("carne_secca", secche);
+    // il difetto peggiore che questa tappa possa avere. E quello che resta
+    // appeso resta quello che era: senza "cosa" un pesce a metà ritiro
+    // diventerebbe carne.
+    const resto = inventario.aggiungi(voce.secca, secche);
     if (resto === secche) return { tipo: "zainoPieno" };
-    if (resto > 0) mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.ESSICCATOIO_PRONTO, quante: resto * CARNI_PER_SECCA });
+    if (resto > 0) mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.ESSICCATOIO_PRONTO, quante: resto * PEZZI_PER_RAZIONE, cosa });
     else mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.ESSICCATOIO });
-    return { tipo: "ritira", tx, ty, secche: secche - resto };
+    return { tipo: "ritira", tx, ty, secche: secche - resto, cosa,
+      dette: detteCosi(cosa, secche - resto) };
   }
 
   if (azione.tipo === "riempi") {

@@ -72,7 +72,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.15.1";
+const VERSIONE = "M7.15.2";
 
 // --- elementi -------------------------------------------------------------
 
@@ -1034,8 +1034,11 @@ function leggiComandi() {
   }
   // I due gesti dell'essiccatoio. Il secondo dice quante carni secche sono
   // uscite, perché è il numero che si stava aspettando per tre giorni.
-  if (esito.tipo === "stendi") { suono.suona(FATTO); annuncia(`stese ${esito.quante} carni a seccare`, "#c9b189"); }
-  if (esito.tipo === "ritira") { suono.suona(FATTO); annuncia(`ritirate ${esito.secche} carni secche`, "#c9b189"); }
+  // Le parole al plurale arrivano da azioni.js insieme al gesto: "3 carni" e
+  // "3 pesci" non si costruiscono da un identificatore senza scrivere prima o
+  // poi "3 pesci secche".
+  if (esito.tipo === "stendi") { suono.suona(FATTO); annuncia(`a seccare: ${esito.quante} ${esito.tanti}`, "#c9b189"); }
+  if (esito.tipo === "ritira") { suono.suona(FATTO); annuncia(`ritirato: ${esito.dette}`, "#c9b189"); }
   if (esito.tipo === "cotto") { suono.suona(FATTO); annuncia(`sul fuoco: ${nomeDi(esito.diventa)}`, "#e0913a"); }
 
   if (esito.tipo === "porta") {

@@ -51,6 +51,16 @@ export const CATALOGO = {
     commestibile: { fame: 0.18 }, cuoce: "pesce_arrostito", dura: 2 },
   pesce_arrostito: { nome: "Pesce arrostito", icona: arte.PESCE_ARROSTITO, pila: 10,
     commestibile: { fame: 0.4 }, dura: 4 },
+  // Il pesce che aspetta, ed è la carne secca del fiume. Il numero non è
+  // scelto a occhio: seccare vale il 78% di arrostire, che è la proporzione
+  // già scritta nella carne (0,45 arrostita → 0,35 secca) e nelle conserve.
+  // Applicata al pesce arrostito, 0,4 × 0,78 fa 0,31, cioè tre decimi.
+  //
+  // Meno della carne secca di proposito, e non per sfregio al pesce: pescare
+  // non ti carica addosso un orso. Il cibo che si prende senza rischio non può
+  // conservarsi meglio di quello che te lo fa correre.
+  pesce_secco: { nome: "Pesce secco", icona: arte.PESCE_SECCO, pila: 20,
+    commestibile: { fame: 0.3 }, dura: 12 },
   legna: { nome: "Legna", icona: arte.LEGNA, pila: 40 },
   ramo: { nome: "Ramo", icona: arte.RAMO, pila: 40 },
   pietra: { nome: "Pietra", icona: arte.PIETRA, pila: 40 },

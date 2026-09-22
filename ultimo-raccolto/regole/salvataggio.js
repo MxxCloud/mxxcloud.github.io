@@ -29,6 +29,7 @@ import * as addosso from "./addosso.js";
 import * as meteo from "./meteo.js";
 import { CATALOGO } from "./oggetti.js";
 import * as decadimento from "./decadimento.js";
+import * as azioni from "./azioni.js";
 import { OGGETTO } from "../mondo/generazione.js";
 
 // Cambiando la forma di quello che si scrive, questo numero sale e i
@@ -222,6 +223,9 @@ function modificaValida(v) {
   // di M7.12, e costa una riga pagarla subito.
   const essiccatoio = v.oggetto === OGGETTO.ESSICCATOIO_CARICO || v.oggetto === OGGETTO.ESSICCATOIO_PRONTO;
   if (essiccatoio && !(intero(v.quante) && v.quante >= 1 && v.quante <= 6)) return false;
+  // E cosa ci pende: o è una cosa che si secca, o il campo non c'è — e allora
+  // è un carico scritto quando si seccava solo la carne.
+  if (essiccatoio && !presente(v, "cosa", c => Object.hasOwn(azioni.SECCABILI, c))) return false;
   if (!presente(v, "contenuto", a => filaValida(a, 12))) return false;
   // Un cadavere è un mucchio, non uno zaino: di suo non ha il limite di otto.
   // Il posto in più è per quello che si porta addosso, che non sta in nessuna
