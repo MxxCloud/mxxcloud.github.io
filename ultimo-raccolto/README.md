@@ -12,6 +12,24 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.15.5 — il ghiaccio non è color sangue
+
+Trovato guardando un'altra cosa, e vecchio quanto il gelo: **gli stagni
+ghiacciati si sono disegnati color sangue per ogni inverno giocato finora.**
+
+In `tavolozza.js` la chiave `A` era definita **due volte** — `#abcdd7` per il
+ghiaccio in cima al file, `#5e2a24` per il sangue degli infetti settanta righe
+più in basso. In un oggetto letterale vince l'ultimo, e lo sprite del ghiaccio
+è fatto quasi tutto di `A`: ogni lastra prendeva il colore del sangue vecchio.
+Il gioco non protestava, i collaudi erano verdi, e rileggendo non si vedeva —
+le due righe non si incontrano mai sullo schermo.
+
+Il ghiaccio adesso ha una chiave sua (`G`), e la tinta è quella che l'arte
+aveva sempre dichiarato. **E c'è un collaudo che pretende che in quel file non
+esistano due chiavi uguali**: è il genere di errore che non si trova
+rileggendo e che una prova trova in un millesimo di secondo. Provato al
+contrario, rimettendo un doppione: cade.
+
 ## M7.15.4 — rabboccare fa ripartire il conto
 
 Un telaio con tre pezzi appesi da due giorni, e tu che ne appendi altri tre: la
@@ -995,7 +1013,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.15.4**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.15.5**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

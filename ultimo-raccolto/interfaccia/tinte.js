@@ -14,7 +14,7 @@ import { TERRENO } from "../mondo/generazione.js";
 import { TAVOLOZZA } from "../arte/tavolozza.js";
 
 const CHIAVI = {
-  [TERRENO.GHIACCIO]: "A",
+  [TERRENO.GHIACCIO]: "G",
   [TERRENO.ACQUA]: "1",
   [TERRENO.ACQUA_BASSA]: "3",
   [TERRENO.SABBIA]: "5",

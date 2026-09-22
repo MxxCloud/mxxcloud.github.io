@@ -2422,3 +2422,43 @@ test('rabboccando non si secca in un giorno: il conto riparte per tutti',()=>{
   assert.equal(azioni.agisci(eroe,null,0).secche,2);
   assert.equal(inventario.quante('pesce_secco'),2);
 });
+
+// --- M7.15.5: il ghiaccio non è color sangue --------------------------------
+
+test('nella tavolozza non ci sono due chiavi uguali',()=>{
+  // Il difetto che questo collaudo chiude è costato ogni inverno giocato fin
+  // qui: "A" era il ghiaccio in cima al file e il sangue degli infetti in
+  // fondo, e in un oggetto letterale vince l'ultimo. Rileggendo non si vede —
+  // le due righe stanno a venti righe di distanza — e il gioco non protesta.
+  const sorgente=readFileSync(new URL('../arte/tavolozza.js',import.meta.url),'utf8');
+  const chiaviDi=tavola=>{
+    const corpo=sorgente.slice(sorgente.indexOf(`export const ${tavola} = {`));
+    return [...corpo.slice(0,corpo.indexOf('\n};')).matchAll(/^\s*"?([A-Za-z0-9.])"?:\s*["#.]/gm)].map(m=>m[1]);
+  };
+  // La tavolozza piena e le sue correzioni: quella bagnata e le quattro vesti
+  // stagionali ridefiniscono poche chiavi di proposito — lì il doppione è fra
+  // le righe della stessa tavola, non fra una tavola e l'altra.
+  for(const tavola of ['TAVOLOZZA','TAVOLOZZA_BAGNATA','TAVOLOZZA_INFETTO']) {
+    const chiavi=chiaviDi(tavola);
+    const doppie=chiavi.filter((c,i)=>chiavi.indexOf(c)!==i);
+    assert.deepEqual(doppie,[],`${tavola}: chiavi ripetute ${doppie.join(', ')}`);
+  }
+  // E che il conto si legga davvero: un'espressione regolare che non trova
+  // niente passerebbe questo collaudo senza guardare una riga.
+  assert.ok(chiaviDi('TAVOLOZZA').length>20,`chiavi lette: ${chiaviDi('TAVOLOZZA').length}`);
+});
+test('il ghiaccio si disegna azzurro, da vicino e da lontano',async()=>{
+  const tinte=await import('../interfaccia/tinte.js');
+  tinte.impostaTavolozza(tavolozzaDi('inverno'));
+  const lettere=new Set(GHIACCIO.flat().join(''));
+  assert.ok(!lettere.has('A'),'niente sangue sulle lastre');
+  const [r,v,b]=tinte.coloreDi(TERRENO.GHIACCIO);
+  assert.ok(b>r+40,`da lontano è azzurro e non rosso: ${r},${v},${b}`);
+  // E ogni lettera del disegno è una tinta che esiste davvero: una chiave
+  // sbagliata qui dipingerebbe il ghiaccio di trasparente senza dire niente.
+  for(const lettera of lettere) {
+    assert.ok(TAVOLOZZA[lettera],`la tinta ${lettera} esiste`);
+    const [rr,,bb]=[1,3,5].map(i=>parseInt(TAVOLOZZA[lettera].slice(i,i+2),16));
+    assert.ok(bb>=rr,`la tinta ${lettera} del ghiaccio non è calda`);
+  }
+});
