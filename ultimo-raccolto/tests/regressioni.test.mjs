@@ -215,7 +215,7 @@ test('ogni taglio di macellazione costa il 2%; senza ascia non si paga',()=>{
 test('costruzione e riparazione costano solo quando riescono',()=>{
   const benda=ricette.RICETTE.find(r=>r.id==='benda');
   assert.equal(ricette.fai(benda).fatto,false);vicino(bisogni.livello('stanchezza'),1);
-  inventario.aggiungi('fibra',5);assert.equal(ricette.fai(benda).fatto,true);vicino(bisogni.livello('stanchezza'),0.98);
+  inventario.aggiungi('filo',5);assert.equal(ricette.fai(benda).fatto,true);vicino(bisogni.livello('stanchezza'),0.98);
   inventario.aggiungi('ascia',1);inventario.attrezzo('ascia').usi=1;inventario.aggiungi('pietra',1);
   const ricetta=ricette.RICETTE.find(r=>r.id==='ripara_ascia');
   assert.equal(ricette.fai(ricetta,false).fatto,false);vicino(bisogni.livello('stanchezza'),0.98);
@@ -556,10 +556,13 @@ function allaRiva() {
   inventario.aggiungi('canna',1);
   return b;
 }
-test('canna costruibile senza banco con rami e fibra',()=>{
+test('canna costruibile senza banco con rami e filo, e la fibra non fa lenza',()=>{
+  const canna=ricette.RICETTE.find(r=>r.id==='canna');
   inventario.aggiungi('ramo',3);inventario.aggiungi('fibra',4);
-  assert.equal(ricette.fai(ricette.RICETTE.find(r=>r.id==='canna')).fatto,true);
-  assert.equal(inventario.quante('canna'),1);assert.equal(inventario.quante('fibra'),0);
+  assert.equal(ricette.fai(canna).perche,'materiali');
+  inventario.aggiungi('filo',4);
+  assert.equal(ricette.fai(canna).fatto,true);
+  assert.equal(inventario.quante('canna'),1);assert.equal(inventario.quante('filo'),0);assert.equal(inventario.quante('fibra'),4);
 });
 test('pesca: attesa completa, tempo e bisogni continuano, una cattura sola',()=>{
   allaRiva();assert.equal(azioni.agisci(eroe,'canna').tipo,'pesca');
@@ -992,7 +995,7 @@ test('ogni attrezzo nuovo ha la propria durata, e riparato ne perde un decimo',(
   for(const [cosa,durata] of Object.entries({ascia:60,zappa:40,lancia:50,canna:20})) {
     inventario.svuota();inventario.aggiungi(cosa,1);
     assert.equal(inventario.contenuto()[0].usi,durata);
-    inventario.contenuto()[0].usi=0;inventario.aggiungi('pietra',1);inventario.aggiungi('fibra',2);
+    inventario.contenuto()[0].usi=0;inventario.aggiungi('pietra',1);inventario.aggiungi(cosa==='canna'?'filo':'fibra',2);
     assert.equal(ricette.fai(riparazione(cosa),true).fatto,true);
     assert.equal(inventario.contenuto()[0].usi,Math.round(durata*0.9));
     assert.equal(inventario.massimoDi(inventario.contenuto()[0]),Math.round(durata*0.9));
@@ -1373,7 +1376,7 @@ test('gli animali si scansano fra loro e dal superstite, senza entrare nei muri'
 
 const RICETTA_PELLI = ricette.RICETTE.find(r=>r.id==='giaciglio_pelli');
 test('il giaciglio di pelli vuole il banco, tre pelli e le altre cose',()=>{
-  inventario.aggiungi('pelle',2);inventario.aggiungi('fibra',4);inventario.aggiungi('legna',2);
+  inventario.aggiungi('pelle',2);inventario.aggiungi('filo',4);inventario.aggiungi('legna',2);
   assert.equal(ricette.fai(RICETTA_PELLI).perche,'banco');
   assert.equal(ricette.fai(RICETTA_PELLI,true).perche,'materiali');
   inventario.aggiungi('pelle',1);
@@ -1577,7 +1580,7 @@ test('con la pelliccia ci si bagna in diciotto secondi invece di dieci',()=>{
   meteo.avanza(1,eroe);assert.equal(meteo.zuppo(),true);
 });
 test('la ricetta della pelliccia vuole il banco e quattro pelli',()=>{
-  inventario.aggiungi('pelle',3);inventario.aggiungi('fibra',3);
+  inventario.aggiungi('pelle',3);inventario.aggiungi('filo',3);
   assert.equal(ricette.fai(RICETTA_PELLICCIA).perche,'banco');
   assert.equal(ricette.fai(RICETTA_PELLICCIA,true).perche,'materiali');
   inventario.aggiungi('pelle',1);
@@ -2789,8 +2792,8 @@ test('ogni coltura rende il suo raccolto, e a seme i suoi semi',()=>{
     assert.equal(azioni.agisci(eroe,null).tipo,'raccolto',coltura);
     for(const [cosa,quante] of Object.entries(atteso))assert.equal(inventario.quante(cosa),quante,`${coltura}: ${cosa}`);
   };
-  prova('lino',OGGETTO.MATURA,{fibra:4});
-  prova('lino',OGGETTO.A_SEME,{semi_lino:3,fibra:0});
+  prova('lino',OGGETTO.MATURA,{filo:4,fibra:0});
+  prova('lino',OGGETTO.A_SEME,{semi_lino:3,filo:0});
   prova('cavolo',OGGETTO.MATURA,{cavolo:1});
   prova('cavolo',OGGETTO.A_SEME,{semi_cavolo:3,cavolo:0});
   prova('fagioli',OGGETTO.MATURA,{fagioli:3});
@@ -3081,4 +3084,68 @@ test('fertilità, sete patita e cenere si salvano solo dove hanno senso',()=>{
   assert.equal(valida({oggetto:OGGETTO.CRESCIUTA,patito:false}),false);
   assert.equal(valida({oggetto:OGGETTO.FALO_SPENTO,cenere:4}),false);
   assert.equal(valida({oggetto:OGGETTO.CASSA,cenere:1}),false,'cenere fuori da un fuoco');
+});
+
+// M7.18.1 — il lino fa filo, e il filo vale anche come fibra.
+test('il filo vale come fibra, e si spende dopo la fibra',()=>{
+  const torcia=ricette.RICETTE.find(r=>r.id==='torcia');
+  inventario.aggiungi('ramo',2);inventario.aggiungi('filo',3);
+  assert.equal(ricette.disponibili('fibra'),3);
+  assert.equal(ricette.bastano(torcia),true);
+  assert.equal(ricette.fai(torcia).fatto,true);
+  assert.equal(inventario.quante('filo'),1);
+  // Con tutte e due nello zaino si paga in fibra, e il filo resta per quello
+  // che la fibra non sa fare.
+  inventario.aggiungi('fibra',1);
+  assert.equal(ricette.disponibili('fibra'),2);
+  assert.equal(ricette.fai(torcia).fatto,true);
+  assert.equal(inventario.quante('fibra'),0);assert.equal(inventario.quante('filo'),0);
+  assert.equal(inventario.quante('torcia'),2);
+});
+
+test('la fibra non vale come filo: bende, lenze e pelli vogliono il lino',()=>{
+  inventario.aggiungi('fibra',40);inventario.aggiungi('pelle',10);inventario.aggiungi('ramo',5);inventario.aggiungi('legna',5);
+  assert.equal(ricette.disponibili('filo'),0);
+  for(const id of ['benda','canna','pelliccia','giaciglio_pelli']) {
+    const r=ricette.RICETTE.find(x=>x.id===id);
+    assert.ok(r.costo.some(v=>v.cosa==='filo'),id);
+    assert.equal(ricette.bastano(r),false,id);
+    assert.equal(ricette.fai(r,true).perche,'materiali',id);
+  }
+  inventario.svuota();inventario.aggiungi('canna',1);inventario.contenuto()[0].usi=0;
+  inventario.aggiungi('pietra',1);inventario.aggiungi('fibra',10);
+  assert.equal(ricette.fai(ricette.RICETTE.find(r=>r.id==='ripara_canna'),true).perche,'materiali');
+  // Gli attrezzi di pietra invece si rilegano ancora con la fibra.
+  inventario.aggiungi('ascia',1);inventario.attrezzo('ascia').usi=0;
+  assert.equal(ricette.fai(ricette.RICETTE.find(r=>r.id==='ripara_ascia'),true).fatto,true);
+  assert.equal(inventario.quante('fibra'),8);
+});
+
+test('una ricetta che volesse fibra e filo non spende come fibra il filo che le serve',()=>{
+  const prova={id:'prova',produce:{cosa:'benda',quante:1},costo:[{cosa:'fibra',quante:2},{cosa:'filo',quante:2}]};
+  inventario.aggiungi('filo',3);
+  assert.equal(ricette.bastano(prova),false);
+  assert.equal(ricette.fai(prova).perche,'materiali');
+  assert.equal(inventario.quante('filo'),3);
+  inventario.aggiungi('filo',1);
+  assert.equal(ricette.fai(prova).fatto,true);
+  assert.equal(inventario.quante('filo'),0);
+  // E con le voci al contrario il conto non cambia: la fibra si prende prima.
+  const rovescia={...prova,costo:[...prova.costo].reverse()};
+  inventario.aggiungi('fibra',1);inventario.aggiungi('filo',3);
+  assert.equal(ricette.fai(rovescia).fatto,true);
+  assert.equal(inventario.quante('fibra'),0);assert.equal(inventario.quante('filo'),0);
+});
+
+test('il filo è un oggetto con la sua icona, e nel fuoco non si mette',()=>{
+  assert.equal(CATALOGO.filo.nome,'Filo di lino');
+  assert.ok(CATALOGO.filo.pila>=40);
+  assert.equal(sprite.FILO.length,12);
+  for(const riga of sprite.FILO){assert.equal(riga.length,12);for(const c of riga)assert.ok(c in TAVOLOZZA,c);}
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FALO_SPENTO});
+  inventario.aggiungi('filo',20);
+  const azione=azioni.azionePossibile(eroe,'filo',0);
+  assert.notEqual(azione?.tipo,'carica');
+  azioni.agisci(eroe,'filo',0);
+  assert.equal(inventario.quante('filo'),20);
 });

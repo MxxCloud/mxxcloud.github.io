@@ -971,6 +971,25 @@ export const SEMI_CAVOLO = [
   "............",
 ];
 
+// Il filo di lino: una matassa avvolta su un rocchetto, con il capo che
+// pende. Chiaro come il lino e non verde come la fibra, perché nello zaino le
+// due cose stanno una accanto all'altra e devono sembrare due cose: una è
+// sterpo strappato, l'altra è lavoro.
+export const FILO = [
+  "............",
+  "............",
+  "..bccccccb..",
+  "...zzzzz5...",
+  "...555554...",
+  "...zzzzz5...",
+  "...555554...",
+  "...zzzzz5...",
+  "..bccccccb..",
+  ".........5..",
+  "..........5.",
+  "............",
+];
+
 export const SEMI_LINO = [
   "............",
   "............",

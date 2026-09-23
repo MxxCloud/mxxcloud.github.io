@@ -134,7 +134,9 @@ export function stesoIn(tx, ty) {
 // legna. Cara in fatica, gratis in attrezzi — e i cespugli stanno dappertutto,
 // anche dove non c'è un albero. È il combustibile del viandante rimasto a
 // secco, non quello con cui si tiene caldo un camino: chi ha la legna non
-// brucerà mai l'erba, perché quella serve a bende, corde e a mezzo catalogo.
+// brucerà mai l'erba, perché quella serve a torce, giacigli e mezzo catalogo.
+// Il filo di lino invece non brucia affatto: un campo innaffiato quattro volte
+// per fare quello che fanno due rami sarebbe l'errore, non la scelta.
 const COMBUSTIBILI = {
   legna: { quante: 1, tanti: "legna" },
   ramo: { quante: 2, tanti: "rami" },

@@ -12,6 +12,56 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.1 — il lino fa filo
+
+Il lino aveva un difetto che nessun numero poteva correggere: **rendeva la
+stessa cosa dei cespugli**. Misurato sulla fattoria di tre semi diversi, nel
+raggio di venti tasselli ci sono fra 36 e 48 cespugli, ognuno dà due fibre con
+uno strappo a mani nude e ricresce in una stagione: una ventina di fibre al
+giorno senza allontanarsi da casa. Un tassello di lino ne dava quattro dopo
+quattro viaggi col secchio. **Due cespugli valevano un campo**, e nessuno
+coltiva quello che trova gratis lungo la strada.
+
+Adesso **il lino rende filo di lino** — un rocchetto chiaro nello zaino, che
+accanto al ciuffo verde della fibra non si confonde — e le ricette che cuciono
+vogliono quello:
+
+| Ricetta | Costo |
+|---|---|
+| Benda | 3 fili |
+| Canna da pesca | 3 rami, 4 fili |
+| Riparare la canna | 1 pietra, 2 fili |
+| Pelliccia (al banco) | 4 pelli, 3 fili |
+| Giaciglio di pelli (al banco) | 3 pelli, 4 fili, 2 legne |
+
+Le quantità sono quelle di prima: cambia il materiale, non il prezzo.
+
+**Il filo vale anche come fibra**, una per una, in tutte le altre ricette — la
+torcia, il falò, gli attrezzi, l'essiccatoio — così un campo di lino non è mai
+un raccolto buttato. **La fibra invece non vale mai come filo.** Con tutte e
+due nello zaino si paga prima in fibra, e il filo resta per quello che la fibra
+non sa fare. Il pannello conta le due cose insieme: con una fibra e quattro
+fili la torcia dice `5/2 FIBRA`, che è quello che la ricetta userà davvero. Il
+filo nel fuoco non si mette: sarebbe un campo innaffiato quattro volte per fare
+quello che fanno due rami.
+
+Quello che cambia giocando:
+
+- **le bende dei primi giorni sono quelle che trovi** — nelle case, nei carri,
+  negli accampamenti bruciati — finché il primo lino non matura. Il campo di
+  lino è la farmacia;
+- **la pesca arriva dopo il primo lino**, non il primo giorno: la lenza è filo;
+- **la pelliccia chiede all'orto di pensare all'inverno**: le pelli si trovano
+  cacciando, il filo si semina in primavera o d'estate;
+- i semi di lino continuano a trovarsi solo nelle case, e un tassello rende o
+  quattro fili o tre semi: tenerne uno a seme è la scelta che decide se l'anno
+  dopo si avranno ancora bende.
+
+Un tassello rende da tre a cinque fili a seconda della terra (vedi M7.18): una
+benda e un terzo, o una canna. Se provando risultasse troppo stretto, il numero
+da toccare è la resa del lino in `regole/colture.js`, non il costo delle
+ricette.
+
 ## M7.18 — la terra si stanca
 
 Fino a qui un tassello dava lo stesso raccolto per sempre: il campo migliore
@@ -1240,7 +1290,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.18**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.1**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
