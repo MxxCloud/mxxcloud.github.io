@@ -1279,16 +1279,14 @@ function esegui(eroe, cosaInMano, indice, azione) {
   // Il tassello si libera per primo, così quello che avanza può cadere proprio
   // lì: è dove il giocatore sta già guardando.
   //
-  // Il giorno resta scritto: è da lì che parte il conto della ricrescita. La
-  // stessa data che i fuochi chiamano "posata" e le colture "maturata" — e
-  // come loro, chi la trova mancante assume adesso e la scrive, così i
-  // salvataggi di prima non restano spogli per sempre.
+  // Nessuna data: da M7.18.7 quello che si prende torna in un giorno fisso
+  // dell'anno, non tanti giorni dopo (vedi ricrescita.js).
   //
   // Il campo no: lì resta la terra zappata, con la fertilità che il raccolto
   // le ha lasciato (vedi orto.js).
   mappa.cambiaTassello(tx, ty, orto.eDelCampo(oggetto)
     ? orto.dopoIlRaccolto(oggetto, precedente)
-    : { oggetto: OGGETTO.NESSUNO, svuotata: tempo.giornoCorrente() });
+    : { oggetto: OGGETTO.NESSUNO });
 
   // Quello che non ci sta resta per terra invece di sparire. Prima spariva, e
   // "zaino pieno, perso qualcosa" era un messaggio che annunciava un danno
