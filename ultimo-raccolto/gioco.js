@@ -72,7 +72,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.8";
+const VERSIONE = "M7.18.9";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1447,7 +1447,7 @@ function aggiorna(passo) {
     if (messaggio.vita <= 0) messaggio = null;
   }
 
-  const { cresciute, appassite, seccate, assetate, aSeme, mangiate, spenti, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
+  const { cresciute, appassite, seccate, assetate, aSeme, mangiate, spentiLegna, spentiPioggia, torceFinite, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
 
   const arrivata = vestiLaValle();
 
@@ -1470,7 +1470,16 @@ function aggiorna(passo) {
   // due notizie che si coprono a vicenda vince quella su cui non si può più
   // fare nulla.
   else if (guaste > 0) annuncia(`si è guastato del cibo: ${guaste}`, "#c0705f");
-  else if (spenti > 0) annuncia("il fuoco si è spento", "#c0705f");
+  // Il fuoco spento si dice con la sua causa, perché ognuna ha il suo rimedio:
+  // la legna si porta, dalla pioggia ci si ripara, la torcia si rifà. Detto
+  // con la stessa frase, un focolare rimasto senza legna la mezzanotte in cui
+  // comincia a piovere sembrava spento dall'acqua anche fra quattro mura.
+  //
+  // La legna prima della pioggia: è il fuoco di casa, quello a cui si torna,
+  // e se succedono tutte e due nella stessa notte è la notizia che serve.
+  else if (spentiLegna > 0) annuncia("il fuoco ha finito la legna", "#c0705f");
+  else if (spentiPioggia > 0) annuncia("la pioggia ha spento il fuoco", "#c0705f");
+  else if (torceFinite > 0) annuncia("la torcia si è consumata", "#c0705f");
   // L'avviso prima del fatto, e dopo tutte le notizie di cose già successe:
   // è l'unico messaggio del giorno che parla di domani, e chi ha appena perso
   // un campo non ha bisogno di sapere anche che le bacche sono vecchie.

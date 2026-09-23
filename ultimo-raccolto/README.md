@@ -12,6 +12,22 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.9 — il fuoco spento dice perché
+
+«Il fuoco si è spento» era la stessa frase per tre cose diverse, ed è la
+ragione per cui un focolare rimasto senza legna la mezzanotte in cui comincia a
+piovere sembrava spento dall'acqua. Adesso il messaggio dice la causa, perché
+ognuna ha il suo rimedio:
+
+- **«il fuoco ha finito la legna»** — la legna si porta;
+- **«la pioggia ha spento il fuoco»** — dalla pioggia ci si ripara, al chiuso
+  o sotto gli alberi;
+- **«la torcia si è consumata»** — la torcia piantata dura un giorno, e si
+  rifà.
+
+Il messaggio resta uno solo per volta. Se nella stessa notte succedono le prime
+due, vince la legna: è il fuoco di casa, quello a cui si torna.
+
 ## M7.18.8 — in casa il fuoco si carica anche quando piove
 
 Sembrava che la pioggia spegnesse il focolare anche fra quattro mura. Non lo
@@ -1418,7 +1434,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.18.8**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.9**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
