@@ -253,17 +253,19 @@ export const RICETTE = [
       { cosa: "fibra", quante: 2 },
     ],
   },
-  // La conserva risponde all'inverno, che da M7.1 ha un orologio addosso.
-  // Seccare al fuoco dà il cibo che nutre, questa dà il cibo che aspetta: sei
-  // bacche diventano due vasi che valgono meno di quelle sei e durano un anno
-  // invece di tre giorni.
+  // La conserva risponde all'inverno, che da M7.1 ha un orologio addosso: sei
+  // bacche diventano due vasi che durano un anno invece di tre giorni.
+  //
+  // Da M7.18.3 è del secondo gradino, come l'essiccatoio: il vaso si chiude
+  // col filo, non con la fibra, quindi non si fa il primo giorno. In cambio
+  // ogni vaso sfama del tutto (vedi oggetti.js).
   {
     id: "conserva",
     banco: true,
     produce: { cosa: "conserva", quante: 2 },
     costo: [
       { cosa: "bacche", quante: 6 },
-      { cosa: "fibra", quante: 2 },
+      { cosa: "filo", quante: 2 },
     ],
   },
   // Lo spaventapasseri, a mani nude: due rami in croce e la fibra per farne
@@ -277,6 +279,11 @@ export const RICETTE = [
       { cosa: "fibra", quante: 4 },
     ],
   },
+  // La zuppa è del secondo gradino senza bisogno di cambiarle il costo: vuole
+  // un fuoco acceso, un secchio e due verdure dell'orto, cioè una zappa e dei
+  // giorni di innaffiature. Niente di quello che chiede si raccoglie a mani
+  // nude il primo giorno.
+  //
   // La zuppa, ed è la prima ricetta che vuole un fuoco invece del banco: si
   // cuoce, non si costruisce. Due scodelle da una verdura, un cavolo e un
   // secchio d'acqua, e il secchio torna vuoto — un contenitore si svuota,
