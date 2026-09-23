@@ -823,6 +823,23 @@ test('sotto la pioggia il falò si posa, ma non si accende allo scoperto',()=>{
   assert.equal(azioni.agisci(eroe,'legna',1).tipo,'carica');
   assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FALO_ACCESO);
 });
+test('il resoconto dice perché si è spento il fuoco: legna, pioggia o torcia',()=>{
+  // Tutte e tre nella mezzanotte in cui comincia a piovere, ed è il caso che
+  // le confondeva: il focolare in casa finisce la legna, il falò fuori lo
+  // spegne l'acqua, la torcia piantata ieri si consuma.
+  const giorno=maltempo('pioggia');
+  stanza();modifiche.imposta(tx-1,ty,{oggetto:OGGETTO.FOCOLARE_ACCESO,legna:1});
+  modifiche.imposta(tx+4,ty,{oggetto:OGGETTO.FALO_ACCESO,legna:2});
+  modifiche.imposta(tx,ty+4,{oggetto:OGGETTO.TORCIA_PIANTATA,posata:giorno-1});
+  tempo.impostaGiorno(giorno-1);tempo.impostaOra(23.9);simulazione.resoconto();
+  simulazione.avanza(5);
+  const r=simulazione.resoconto();
+  assert.equal(tempo.giornoCorrente(),giorno);
+  assert.equal(mappa.oggettoDi(tx-1,ty),OGGETTO.FOCOLARE_SPENTO);
+  assert.equal(mappa.oggettoDi(tx+4,ty),OGGETTO.FALO_SPENTO);
+  assert.equal(mappa.oggettoDi(tx,ty+4),OGGETTO.NESSUNO);
+  assert.deepEqual([r.spentiLegna,r.spentiPioggia,r.torceFinite],[1,1,1]);
+});
 test('sotto la pioggia al chiuso si caricano anche il focolare e il falò acceso, all’aperto no',()=>{
   // Il focolare e il falò acceso sono solidi: la stanza va chiesta a chi gli
   // sta attorno, non al loro tassello. Prima il focolare non si caricava

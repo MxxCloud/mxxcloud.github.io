@@ -10,7 +10,7 @@ import * as orto from "./orto.js";
 import * as decadimento from "./decadimento.js";
 import * as ricrescita from "./ricrescita.js";
 
-const vuoto = () => ({ cresciute: 0, appassite: 0, seccate: 0, assetate: 0, aSeme: 0, mangiate: 0, spenti: 0, guaste: 0, inScadenza: 0, tornati: 0, risvegliForzati: 0 });
+const vuoto = () => ({ cresciute: 0, appassite: 0, seccate: 0, assetate: 0, aSeme: 0, mangiate: 0, spentiLegna: 0, spentiPioggia: 0, torceFinite: 0, guaste: 0, inScadenza: 0, tornati: 0, risvegliForzati: 0 });
 let eventi = vuoto();
 
 export function resoconto() {
@@ -23,7 +23,7 @@ export function avanza(secondi, { eroe = null, dorme = false, corre = false, siM
   if (!Number.isFinite(secondi) || secondi <= 0) return 0;
   let trascorsi = 0;
   while (secondi > 1e-10 && !salute.eMorto()) {
-    eventi.spenti += meteo.aggiornaMondo().spenti;
+    eventi.spentiPioggia += meteo.aggiornaMondo().spenti;
     const esaurito = bisogni.livello("stanchezza") === 0;
     const dormendo = dorme || riposo.secondiDiSonno() > 0;
     const confineRiposo = riposo.confine(esaurito, dorme);
@@ -74,7 +74,8 @@ export function avanza(secondi, { eroe = null, dorme = false, corre = false, siM
       // due notti d'assenza le assetate di ieri sono le seccate di oggi, e
       // contarle due volte direbbe un orto più grande di quello che c'è.
       eventi.assetate = orti.assetate;
-      eventi.spenti += lasciato.fuochi;
+      eventi.spentiLegna += lasciato.fuochi;
+      eventi.torceFinite += lasciato.torce;
       eventi.guaste += lasciato.guaste;
       eventi.inScadenza = lasciato.inScadenza;
       eventi.tornati += ricrescita.nuovoGiorno();

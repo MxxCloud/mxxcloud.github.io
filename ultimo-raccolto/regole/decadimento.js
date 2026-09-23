@@ -260,6 +260,11 @@ function guastaLaFila(fila, inCassa, giorno) {
 // Da chiamare a ogni cambio di giorno, come l'orto. Dice quanti fuochi si sono
 // spenti e quanto cibo si è guastato: una cosa che succede mentre dormi e che
 // nessuno racconta è un guasto, dal punto di vista di chi gioca.
+//
+// I fuochi rimasti senza legna e le torce consumate si contano a parte, e a
+// parte ancora quelli che spegne la pioggia (vedi meteo.js): sono tre notizie
+// diverse, perché si rimediano in tre modi diversi. Detti con la stessa frase,
+// un focolare senza legna in un giorno di pioggia sembrava spento dall'acqua.
 export function nuovoGiorno() {
   const giorno = tempo.giornoCorrente();
 
@@ -273,6 +278,7 @@ export function nuovoGiorno() {
   // cambiamenti, e cambiarla mentre la si scorre è il modo più corto per
   // saltarne metà.
   const spenti = [];
+  let torce = 0;
   const seccati = [];
   const svuotati = [];
   const casse = [];
@@ -283,8 +289,10 @@ export function nuovoGiorno() {
       // fuoco che esisteva prima che i fuochi avessero una durata, e spegnerlo
       // subito sarebbe punire il giocatore per un cambiamento del gioco.
       const acceso = cambio.posata ?? giorno;
-      if (giorno - acceso >= fuoco.giorni) spenti.push({ tx, ty, diventa: fuoco.diventa });
-      else if (cambio.posata === undefined) modifiche.imposta(tx, ty, { ...cambio, posata: giorno });
+      if (giorno - acceso >= fuoco.giorni) {
+        spenti.push({ tx, ty, diventa: fuoco.diventa });
+        torce += 1;
+      } else if (cambio.posata === undefined) modifiche.imposta(tx, ty, { ...cambio, posata: giorno });
       return;
     }
 
@@ -360,5 +368,5 @@ export function nuovoGiorno() {
     mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
   }
 
-  return { fuochi: spenti.length, guaste, inScadenza, seccati: seccati.length };
+  return { fuochi: spenti.length - torce, torce, guaste, inScadenza, seccati: seccati.length };
 }
