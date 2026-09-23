@@ -72,11 +72,17 @@ const CATALOGO_OGGETTI = {
   //
   // Illumina un po' più in là del falò (ottanta contro sessantaquattro): una
   // stanza intera, che è il posto dove sta.
+  //
+  // E scalda la stanza intera, che il falò non fa: il falò scalda tre tasselli
+  // dovunque stia, anche fra quattro mura. È il vantaggio vero del focolare,
+  // quello che vale le dieci pietre e la regola delle quattro mura (vedi
+  // riparo.caldaDentro).
   [OGGETTO.FOCOLARE_ACCESO]: {
     fotogrammi: coseArte.FOCOLARE_ACCESO,
     solido: true,
     luce: { raggio: 80, intensita: 1 },
     scalda: true,
+    scaldaStanza: true,
   },
   // Spento ferma lo stesso, e la cenere del falò no: quella è cenere, questo è
   // un metro cubo di pietra che è rimasto dov'era.
@@ -377,10 +383,20 @@ export function scaldaIn(tx, ty) {
 }
 
 export function fuocoVicino(tx, ty, raggio) {
+  return campoVicino(tx, ty, raggio, "scalda");
+}
+
+// C'è entro questo raggio un fuoco che scalda tutta la stanza? Il focolare sì,
+// il falò no (vedi il catalogo, e riparo.caldaDentro).
+export function scaldaStanzaVicino(tx, ty, raggio) {
+  return campoVicino(tx, ty, raggio, "scaldaStanza");
+}
+
+function campoVicino(tx, ty, raggio, campo) {
   for (let dy = -raggio; dy <= raggio; dy += 1) {
     for (let dx = -raggio; dx <= raggio; dx += 1) {
       const oggetto = oggettoDi(tx + dx, ty + dy);
-      if (oggetto !== OGGETTO.NESSUNO && CATALOGO_OGGETTI[oggetto].scalda) return true;
+      if (oggetto !== OGGETTO.NESSUNO && CATALOGO_OGGETTI[oggetto][campo]) return true;
     }
   }
   return false;

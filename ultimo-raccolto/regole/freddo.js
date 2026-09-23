@@ -12,7 +12,9 @@
 //
 // Da M7.5 la frase ha una coda, e arriva dai muri: al chiuso il calore resta
 // dentro. La regola non cambia — serve sempre una fiamma — cambia quanto
-// lontano arriva, e quella è la differenza fra un fuoco e una casa.
+// lontano arriva, e quella è la differenza fra un fuoco e una casa. Da M7.18.10
+// la coda vale per il focolare soltanto: il falò scalda tre tasselli dovunque
+// stia, e la stanza intera è quello che il focolare dà in più.
 //
 // Quello che ne esce è che falò e torcia smettono di servire solo a vedere.
 // Da M7.7 anche il corpo zuppo e la nevicata all'aperto richiedono calore,
@@ -71,14 +73,16 @@ export function tipo(eroe) {
   // collaudo che dice "la torcia in mano non sostituisce il falò nel riposo".
   // Adesso vale anche per chi sta in piedi.
   //
-  // Quello che scalda è il fuoco vero: un falò a tre tasselli, o una stanza
-  // chiusa che ne contiene uno.
+  // Quello che scalda è il fuoco vero: un falò o un focolare a tre tasselli,
+  // o una stanza chiusa con dentro un focolare.
   const tx = Math.floor(eroe.px / TASSELLO);
   const ty = Math.floor(eroe.py / TASSELLO);
   if (mappa.fuocoVicino(tx, ty, RAGGIO_FUOCO)) return null;
 
-  // Al chiuso il calore resta dentro: un fuoco acceso in un punto qualsiasi
-  // della stanza la scalda tutta, invece di fermarsi a tre tasselli.
+  // Al chiuso il calore del focolare resta dentro: acceso in un punto
+  // qualsiasi della stanza la scalda tutta, invece di fermarsi a tre tasselli.
+  // Il falò no, e non è una svista: è la differenza fra i due (vedi
+  // riparo.caldaDentro).
   //
   // Non è "al chiuso non si gela": una capanna senza fuoco è una capanna
   // fredda, e regalare il tepore a chi ha alzato quattro muri toglierebbe al

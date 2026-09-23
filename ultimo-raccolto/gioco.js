@@ -72,7 +72,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.9";
+const VERSIONE = "M7.18.10";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1341,7 +1341,7 @@ function aggiorna(passo) {
     if (gelando && gelando !== primaGelava) {
       suono.suona(GELO);
       // "Una fiamma" era vero finché bastava la torcia. Adesso scaldano solo
-      // il fuoco per terra e la stanza che ne contiene uno, e un messaggio che
+      // il fuoco per terra e la stanza con un focolare, e un messaggio che
       // dice una cosa che non funziona più è peggio di nessun messaggio.
       //
       // E i due freddi si dicono diversi, perché si risolvono diversi: dal

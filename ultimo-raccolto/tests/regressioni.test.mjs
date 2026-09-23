@@ -467,14 +467,31 @@ test('muri e porta chiusa delimitano la stanza, ma senza fuoco resta fredda',()=
   assert.equal(chiuso(),true);assert.equal(freddo.alFreddo(eroe),true);
   modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.PORTA_APERTA});assert.equal(chiuso(),false);
 });
-test('il fuoco riscalda tutta la stanza finché la porta è chiusa',()=>{
+// Una stanza di sette tasselli per cinque, con la porta chiusa a est.
+function stanzaGrande() {
   for(let y=ty-3;y<=ty+3;y++)for(let x=tx-4;x<=tx+4;x++)
     modifiche.imposta(x,y,{oggetto:Math.abs(x-tx)===4||Math.abs(y-ty)===3?OGGETTO.MURO:OGGETTO.NESSUNO});
   modifiche.imposta(tx+4,ty,{oggetto:OGGETTO.PORTA});
-  modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.FALO_ACCESO});
+}
+test('il focolare riscalda tutta la stanza finché la porta è chiusa',()=>{
+  stanzaGrande();
+  modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.FOCOLARE_ACCESO});
   eroe={...eroe,...pos(tx+2,ty)};tempo.impostaGiorno(9);tempo.impostaOra(22);
   assert.equal(freddo.alFreddo(eroe),false);
   modifiche.imposta(tx+4,ty,{oggetto:OGGETTO.PORTA_APERTA});assert.equal(freddo.alFreddo(eroe),true);
+});
+test('il falò in casa scalda tre tasselli come fuori, non la stanza',()=>{
+  stanzaGrande();
+  modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.FALO_ACCESO});
+  tempo.impostaGiorno(9);tempo.impostaOra(22);
+  eroe={...eroe,...pos(tx+2,ty)};assert.equal(freddo.alFreddo(eroe),true);
+  eroe={...eroe,...pos(tx+1,ty)};assert.equal(freddo.alFreddo(eroe),false);
+  // E ci si asciuga allo stesso modo: a quattro tasselli come in una stanza
+  // senza fuoco, un quarantesimo al secondo; col focolare un decimo.
+  eroe={...eroe,...pos(tx+2,ty)};
+  meteo.ripristina(1);meteo.avanza(4,eroe);vicino(meteo.livelloBagnato(),0.9);
+  modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.FOCOLARE_ACCESO});
+  meteo.ripristina(1);meteo.avanza(4,eroe);vicino(meteo.livelloBagnato(),0.6);
 });
 test('rompere il muro invalida immediatamente il riparo',()=>{
   stanza();assert.equal(chiuso(),true);
