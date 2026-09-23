@@ -23,25 +23,33 @@ import * as tempo from "./tempo.js";
 import * as stagioni from "./stagioni.js";
 import * as riparo from "./riparo.js";
 
-// Quanto ci mette a tornare, in giorni, e a decidere è cosa c'era secondo la
-// generazione — non cosa ha tolto il giocatore.
+// Quando torna: il primo giorno di quale stagione. Una volta l'anno e tutto
+// insieme, non tanti giorni dopo il raccolto. La valle ha un calendario, e
+// chi lo conosce sa quando conviene tornare a prendere: a primavera attorno a
+// casa ci sono di nuovo i cespugli, d'estate di nuovo il bosco.
+//
+// Vuol dire anche che conta quando si prende. Un cespuglio strappato l'ultimo
+// giorno d'inverno torna la mattina dopo; uno strappato il primo giorno di
+// primavera aspetta un anno intero. Ed è la ragione per cui d'inverno non
+// torna niente senza bisogno di una regola apposta: nessuna delle due date
+// cade d'inverno.
 //
 // Il sasso non è in questa tabella e non è una dimenticanza: la pietra è
 // minerale, non ricresce, e una cava che si ricarica toglierebbe l'unica
 // risorsa finita del gioco. Se un giorno servirà la pietra rinnovabile, sarà
 // una miniera da scavare, non un sasso che rispunta.
 const RITORNO = {
-  [OGGETTO.CESPUGLIO]: stagioni.GIORNI_PER_STAGIONE,
-  // Il bosco si riprende piano: tre stagioni su quattro, cioè quasi un anno.
-  // Un albero che ricresce in una stagione non sarebbe un albero, e uno che
-  // non ricresce mai farebbe del legno una risorsa da esaurire attorno a casa
-  // propria — che è esattamente il difetto che questo file viene a togliere.
-  [OGGETTO.ALBERO]: stagioni.GIORNI_PER_STAGIONE * 3,
+  [OGGETTO.CESPUGLIO]: "primavera",
+  // Il bosco dopo, quando la primavera ha finito: un albero che torna con i
+  // cespugli sembrerebbe un cespuglio più alto.
+  [OGGETTO.ALBERO]: "estate",
 };
 
 // Una modifica è "un tassello svuotato e basta" solo se non porta altro.
 // Chi ha innaffiato, colpito a metà o posato qualcosa ha scritto altri campi,
-// e quella non è terra libera: è roba sua.
+// e quella non è terra libera: è roba sua. "svuotata" è la data del raccolto
+// che si scriveva finché la ricrescita contava i giorni: i salvataggi di prima
+// la portano ancora, e non fa del tassello qualcosa di diverso.
 function soloSvuotato(cambio) {
   if (cambio.oggetto !== OGGETTO.NESSUNO) return false;
   for (const chiave of Object.keys(cambio)) {
@@ -99,13 +107,12 @@ function alChiuso(tx, ty, verdetti) {
 // te lo dice è un cambiamento che il giocatore attribuirebbe a un guasto.
 export function nuovoGiorno() {
   const giorno = tempo.giornoCorrente();
-  // D'inverno non torna niente, per la stessa ragione per cui l'orto non
-  // cresce. Chi strappa in autunno rivede il cespuglio in primavera, ed è
-  // anche ciò che rende l'inverno una stagione da attraversare con quello che
-  // si ha invece che da rifornire strada facendo.
-  const ricresce = stagioni.siColtiva();
+  // La stagione che comincia oggi, o null: è l'unico giorno in cui torna
+  // quello che le appartiene. Si chiama allo scoccare della mezzanotte, quindi
+  // di oggi non si è ancora preso niente — tutto quello che c'è da far
+  // tornare è stato tolto prima.
+  const comincia = stagioni.giornoNellaStagione(giorno) === 1 ? stagioni.stagioneDi(giorno) : null;
 
-  const daDatare = [];
   const daDimenticare = [];
   const verdetti = new Map();
 
@@ -116,35 +123,22 @@ export function nuovoGiorno() {
 
     // Qui la generazione non ci metteva niente: la modifica non dice nulla
     // che il mondo non dica già. È il caso di un mucchio posato e ripreso, e
-    // si butta in qualunque stagione — non è una ricrescita, è pulizia, e
+    // si butta in qualunque giorno — non è una ricrescita, è pulizia, e
     // toglie peso al salvataggio senza cambiare un pixel.
     if (generato === OGGETTO.NESSUNO) {
       daDimenticare.push({ tx, ty });
       return;
     }
 
-    const attesa = RITORNO[generato];
-    if (attesa === undefined) return;
-    if (!ricresce) return;
-
-    // Senza data si assume svuotato adesso e la si scrive, come i fuochi e le
-    // colture. Serve ai salvataggi scritti prima che la ricrescita esistesse:
-    // senza, il confronto darebbe zero ogni giorno e quei tasselli non
-    // tornerebbero mai — un "non succede niente" che nessuna prova noterebbe.
-    if (cambio.svuotata === undefined) {
-      daDatare.push({ tx, ty, cambio });
-      return;
-    }
-    if (giorno - cambio.svuotata < attesa) return;
-    // Il conto va avanti anche al chiuso: se un giorno i muri vengono giù,
-    // l'attesa è già passata e torna la mattina dopo.
+    const ritorno = RITORNO[generato];
+    if (ritorno === undefined || ritorno !== comincia) return;
+    // Il giorno è uno solo anche per chi è al chiuso: se quella mattina la
+    // casa c'è, si riprova l'anno dopo. Riaprirla d'autunno non fa spuntare un
+    // cespuglio fuori stagione.
     if (alChiuso(tx, ty, verdetti)) return;
     daDimenticare.push({ tx, ty });
   });
 
-  for (const { tx, ty, cambio } of daDatare) {
-    modifiche.imposta(tx, ty, { ...cambio, svuotata: giorno });
-  }
   // cambiaTassello con null rimuove la modifica e butta il settore cotto, che
   // è esattamente quello che serve: il tassello si ridisegna con quello che la
   // generazione dice, cioè con il cespuglio tornato.

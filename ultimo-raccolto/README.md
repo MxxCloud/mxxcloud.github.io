@@ -12,7 +12,26 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
-## M7.18.6 — in casa non ricresce il bosco
+## M7.18.7 — la valle ricresce a calendario
+
+Quello che si prende non torna più dopo un certo numero di giorni ma **una
+volta l'anno, in un giorno fisso**: i **cespugli il primo giorno di
+primavera**, gli **alberi il primo giorno d'estate**. Quella mattina torna
+tutto insieme, qualunque sia il giorno in cui è stato preso.
+
+Vuol dire che conta quando si raccoglie. Un cespuglio strappato l'ultimo
+giorno d'inverno torna la mattina dopo, e uno strappato il primo giorno di
+primavera aspetta un anno intero. D'inverno non torna niente, come prima, ma
+senza una regola apposta: nessuna delle due date cade d'inverno.
+
+Il posto chiuso di M7.18.6 resta: dentro non ricresce niente. Cambia solo che
+il giorno è uno: se quella mattina la casa è chiusa, si riprova l'anno dopo, e
+buttare giù un muro d'autunno non fa spuntare un cespuglio fuori stagione.
+
+Il raccolto non scrive più la data sul tassello, perché non serve più. I
+salvataggi di prima che ce l'hanno tornano lo stesso nel loro giorno.
+
+## M7.18.6 — in casa non ricresce il bosco (il giorno del ritorno cambia in M7.18.7)
 
 Chi alzava quattro muri attorno al punto in cui aveva tagliato un albero se lo
 ritrovava in mezzo alla stanza dopo tre stagioni: la ricrescita non guardava
@@ -1379,7 +1398,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.18.6**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.7**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -1491,11 +1510,11 @@ costa quattro volte il cammino, al freddo e col buio addosso. È questo a fare
 del raccolto d'autunno una provvista invece di una collezione — e quando
 l'autunno arriva, il gioco te lo dice.
 
-**Quello che prendi torna, se gli dai tempo.** Un cespuglio ricresce dopo una
-stagione, un albero dopo tre. Il sasso mai: la pietra è minerale, e resta
-l'unica risorsa che si esaurisce davvero. D'inverno non torna niente, quindi
-chi strappa in autunno rivede il cespuglio in primavera. E non torna niente
-dentro un posto chiuso da muri o porte (vedi M7.18.6).
+**Quello che prendi torna, se gli dai tempo.** Una volta l'anno: i cespugli il
+primo giorno di primavera, gli alberi il primo giorno d'estate (vedi
+M7.18.7). Il sasso mai: la pietra è minerale, e resta l'unica risorsa che si
+esaurisce davvero. D'inverno non torna niente, e niente torna dentro un posto
+chiuso da muri o porte (vedi M7.18.6).
 
 Prima di questo ogni cosa raccolta era tolta per sempre: la valle attorno alla
 fattoria si spogliava e l'unica risposta era andarsene più lontano, che da M6

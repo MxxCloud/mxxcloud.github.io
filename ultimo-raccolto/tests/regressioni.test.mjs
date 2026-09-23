@@ -480,18 +480,47 @@ test('rompere il muro invalida immediatamente il riparo',()=>{
   stanza();assert.equal(chiuso(),true);
   modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.MURO_ROTTO});assert.equal(chiuso(),false);
 });
-// Un tassello su cui la generazione mette questo oggetto, strappato il giorno 1,
-// con attorno un quadrato sgombro più largo di una stanza: così a decidere se è
-// chiuso è solo quello che il collaudo ci posa attorno.
+// Un tassello su cui la generazione mette questo oggetto, strappato, con
+// attorno un campo zappato più largo di una stanza: non ricresce e non chiude,
+// così a decidere se è chiuso è solo quello che il collaudo ci posa attorno.
 function strappato(tipo) {
   for(let r=0;r<400;r++)for(let y=ty-r;y<=ty+r;y++)for(let x=tx-r;x<=tx+r;x++){
     if(Math.max(Math.abs(x-tx),Math.abs(y-ty))!==r||mappa.oggettoGenerato(x,y)!==tipo)continue;
-    for(let yy=y-8;yy<=y+8;yy++)for(let xx=x-8;xx<=x+8;xx++)modifiche.imposta(xx,yy,{oggetto:OGGETTO.NESSUNO});
-    modifiche.imposta(x,y,{oggetto:OGGETTO.NESSUNO,svuotata:1});
+    for(let yy=y-8;yy<=y+8;yy++)for(let xx=x-8;xx<=x+8;xx++)modifiche.imposta(xx,yy,{oggetto:OGGETTO.TERRA_ZAPPATA});
+    modifiche.imposta(x,y,{oggetto:OGGETTO.NESSUNO});
     return {tx:x,ty:y};
   }
   assert.fail('niente di generato: '+tipo);
 }
+// Il primo giorno di questa stagione, da questo giorno in poi.
+function primoDi(stagione,da) {
+  for(let g=da;;g++)if(stagioni.stagioneDi(g)===stagione&&stagioni.giornoNellaStagione(g)===1)return g;
+}
+const STAGIONE_DI={[OGGETTO.CESPUGLIO]:'primavera',[OGGETTO.ALBERO]:'estate'};
+test('i cespugli tornano il primo giorno di primavera, gli alberi il primo d’estate: una volta l’anno',()=>{
+  const albero=strappato(OGGETTO.ALBERO),cespuglio=strappato(OGGETTO.CESPUGLIO);
+  // Il campo del cespuglio può aver coperto l'albero.
+  modifiche.imposta(albero.tx,albero.ty,{oggetto:OGGETTO.NESSUNO});
+  const tornato={albero:[],cespuglio:[]};
+  for(let g=2;g<=40;g++) {
+    tempo.impostaGiorno(g);ricrescita.nuovoGiorno();
+    for(const [nome,p,tipo] of [['albero',albero,OGGETTO.ALBERO],['cespuglio',cespuglio,OGGETTO.CESPUGLIO]]) {
+      if(mappa.oggettoDi(p.tx,p.ty)!==tipo)continue;
+      tornato[nome].push(g);
+      // Ripreso la mattina stessa in cui è tornato: aspetta l'anno dopo.
+      modifiche.imposta(p.tx,p.ty,{oggetto:OGGETTO.NESSUNO});
+    }
+  }
+  assert.equal(stagioni.stagioneDi(13),'primavera');assert.equal(stagioni.stagioneDi(17),'estate');
+  assert.deepEqual(tornato.cespuglio,[13,29]);
+  assert.deepEqual(tornato.albero,[17,33]);
+});
+test('un salvataggio di prima con la data del raccolto torna lo stesso nel suo giorno',()=>{
+  const p=strappato(OGGETTO.CESPUGLIO);
+  modifiche.imposta(p.tx,p.ty,{oggetto:OGGETTO.NESSUNO,svuotata:12});
+  tempo.impostaGiorno(13);ricrescita.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(p.tx,p.ty),OGGETTO.CESPUGLIO);
+});
 test('alberi e cespugli non ricrescono in un posto chiuso, nemmeno a porta aperta',()=>{
   for(const tipo of [OGGETTO.ALBERO,OGGETTO.CESPUGLIO]) {
     reset();
@@ -499,13 +528,14 @@ test('alberi e cespugli non ricrescono in un posto chiuso, nemmeno a porta apert
     for(let y=p.ty-2;y<=p.ty+2;y++)for(let x=p.tx-2;x<=p.tx+2;x++)
       if(Math.abs(x-p.tx)===2||Math.abs(y-p.ty)===2)modifiche.imposta(x,y,{oggetto:OGGETTO.MURO});
     modifiche.imposta(p.tx+2,p.ty,{oggetto:OGGETTO.PORTA_APERTA});
-    tempo.impostaGiorno(100);
-    assert.equal(ricrescita.nuovoGiorno(),0);
+    const giorno=primoDi(STAGIONE_DI[tipo],20);
+    tempo.impostaGiorno(giorno);ricrescita.nuovoGiorno();
     assert.equal(mappa.oggettoDi(p.tx,p.ty),OGGETTO.NESSUNO);
-    // Il conto però è andato avanti: venuto giù un muro, torna la mattina dopo.
-    modifiche.imposta(p.tx-2,p.ty,{oggetto:OGGETTO.NESSUNO});
-    tempo.impostaGiorno(101);
-    assert.equal(ricrescita.nuovoGiorno(),1);
+    // Venuto giù un muro non torna fuori stagione: aspetta il suo giorno.
+    modifiche.imposta(p.tx-2,p.ty,{oggetto:OGGETTO.TERRA_ZAPPATA});
+    tempo.impostaGiorno(giorno+1);ricrescita.nuovoGiorno();
+    assert.equal(mappa.oggettoDi(p.tx,p.ty),OGGETTO.NESSUNO);
+    tempo.impostaGiorno(giorno+16);ricrescita.nuovoGiorno();
     assert.equal(mappa.oggettoDi(p.tx,p.ty),tipo);
   }
 });
@@ -515,14 +545,14 @@ test('una radura chiusa da alberi, sassi e mobili ricresce: la chiude solo un mu
   modifiche.imposta(p.tx+1,p.ty,{oggetto:OGGETTO.ALBERO});
   modifiche.imposta(p.tx,p.ty-1,{oggetto:OGGETTO.SASSO});
   modifiche.imposta(p.tx,p.ty+1,{oggetto:OGGETTO.MURO});
-  tempo.impostaGiorno(100);
-  assert.equal(ricrescita.nuovoGiorno(),0);
+  tempo.impostaGiorno(primoDi('estate',20));
+  ricrescita.nuovoGiorno();
   assert.equal(mappa.oggettoDi(p.tx,p.ty),OGGETTO.NESSUNO);
   // Con una cassa al posto del muro per il freddo resta una stanza, come un
   // buco nella roccia; ma è ancora bosco, e il bosco si riprende l'albero.
   modifiche.imposta(p.tx,p.ty+1,{oggetto:OGGETTO.CASSA});
   assert.notEqual(riparo.stanzaDi(p.tx,p.ty),null);
-  assert.equal(ricrescita.nuovoGiorno(),1);
+  ricrescita.nuovoGiorno();
   assert.equal(mappa.oggettoDi(p.tx,p.ty),OGGETTO.ALBERO);
 });
 test('un infetto può sfondare la porta verso una posizione sentita',()=>{
