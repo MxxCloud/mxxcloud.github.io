@@ -12,6 +12,25 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.6 — in casa non ricresce il bosco
+
+Chi alzava quattro muri attorno al punto in cui aveva tagliato un albero se lo
+ritrovava in mezzo alla stanza dopo tre stagioni: la ricrescita non guardava
+cosa ci fosse attorno. Adesso **dentro un posto chiuso alberi e cespugli non
+ricrescono**.
+
+Chiuso è la stanza del riparo, con due differenze. **Porte aperte e muri
+crollati contano come pareti**: per il freddo un varco è un varco, ma una casa
+con la porta aperta resta una casa. E **fra le pareti ci dev'essere almeno un
+muro o una porta**: un albero tagliato nel bosco fitto ha quattro alberi
+attorno, e per il freddo è una stanza di un tassello; contarla voleva dire che
+nel bosco non ricresceva più niente. Alberi, sassi, casse e fuochi chiudono,
+ma una radura resta bosco finché qualcuno non ci alza un muro.
+
+Il conto dei giorni va avanti anche al chiuso: se i muri vengono giù, quello
+che doveva tornare torna la mattina dopo. La generazione non cambia: dentro
+le rovine non ha mai messo né alberi né cespugli.
+
 ## M7.18.5 — la schermata iniziale
 
 Il gioco non comincia più da solo. All'avvio una schermata chiede cosa fare,
@@ -1360,7 +1379,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.18.5**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.6**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -1475,7 +1494,8 @@ l'autunno arriva, il gioco te lo dice.
 **Quello che prendi torna, se gli dai tempo.** Un cespuglio ricresce dopo una
 stagione, un albero dopo tre. Il sasso mai: la pietra è minerale, e resta
 l'unica risorsa che si esaurisce davvero. D'inverno non torna niente, quindi
-chi strappa in autunno rivede il cespuglio in primavera.
+chi strappa in autunno rivede il cespuglio in primavera. E non torna niente
+dentro un posto chiuso da muri o porte (vedi M7.18.6).
 
 Prima di questo ogni cosa raccolta era tolta per sempre: la valle attorno alla
 fattoria si spogliava e l'unica risposta era andarsene più lontano, che da M6

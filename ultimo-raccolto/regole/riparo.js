@@ -40,11 +40,24 @@ const VICINI = [
 
 // La stanza che contiene questo tassello, come elenco di tasselli, oppure null
 // se di stanza non ce n'è una — cioè se si è all'aperto, o dentro un muro.
-export function stanzaDi(tx, ty) {
-  if (mappa.chiudeIn(tx, ty)) return null;
+//
+// Cosa fa da parete lo decide chiude(), che di solito è chiudeIn(). Chi chiede
+// per un'altra ragione che il freddo può contarne altre: alla ricrescita una
+// porta aperta resta una porta (vedi ricrescita.js).
+export function stanzaDi(tx, ty, chiude = mappa.chiudeIn) {
+  const { tasselli, chiusa } = allaga(tx, ty, chiude);
+  return chiusa ? tasselli : null;
+}
+
+// L'allagamento vero e proprio: i tasselli toccati, e se l'acqua è rimasta
+// dentro. Quando esce, i tasselli toccati sono tutti all'aperto, perché sono
+// collegati al punto da cui è uscita: chi deve chiederlo per molti tasselli
+// insieme può ricordarselo invece di riallagare (vedi ricrescita.js).
+export function allaga(tx, ty, chiude = mappa.chiudeIn) {
+  if (chiude(tx, ty)) return { tasselli: [], chiusa: false };
 
   const visti = new Set([`${tx},${ty}`]);
-  const stanza = [{ tx, ty }];
+  const tasselli = [{ tx, ty }];
   // Una pila e non una coda: qui non serve l'ordine in cui si arriva, serve
   // sapere se si esce, e una pila costa uno shift in meno per tassello.
   const daVedere = [{ tx, ty }];
@@ -56,17 +69,35 @@ export function stanzaDi(tx, ty) {
       const y = qui.ty + dy;
       const k = `${x},${y}`;
       if (visti.has(k)) continue;
-      if (mappa.chiudeIn(x, y)) continue;
+      if (chiude(x, y)) continue;
       // Uscita trovata: oltre il limite non è più una stanza, ed è inutile
       // continuare a contare la valle.
-      if (stanza.length >= LIMITE) return null;
+      if (tasselli.length >= LIMITE) return { tasselli, chiusa: false };
       visti.add(k);
-      stanza.push({ tx: x, ty: y });
+      tasselli.push({ tx: x, ty: y });
       daVedere.push({ tx: x, ty: y });
     }
   }
 
-  return stanza;
+  return { tasselli, chiusa: true };
+}
+
+// I tasselli che chiudono questa stanza, una volta ciascuno: quello che
+// l'allagamento ha trovato attorno senza poterci entrare.
+export function pareti(stanza, chiude = mappa.chiudeIn) {
+  const viste = new Set();
+  const trovate = [];
+  for (const { tx, ty } of stanza) {
+    for (const [dx, dy] of VICINI) {
+      const x = tx + dx;
+      const y = ty + dy;
+      const k = `${x},${y}`;
+      if (viste.has(k) || !chiude(x, y)) continue;
+      viste.add(k);
+      trovate.push({ tx: x, ty: y });
+    }
+  }
+  return trovate;
 }
 
 // C'è una fiamma dentro questa stanza?
