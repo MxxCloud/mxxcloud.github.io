@@ -168,8 +168,14 @@ const CATALOGO_OGGETTI = {
   // tutta qui. Chiusa ferma come un muro, aperta non ferma niente — e non ha
   // una via di mezzo, perché a sedici pixel una porta socchiusa sarebbe un
   // disegno diverso che si comporta uguale.
+  //
+  // Aperta non ferma i piedi, ma la stanza la chiude lo stesso: una casa con
+  // la porta aperta è ancora una casa. Fino a M7.18.10 aprirla metteva tutta
+  // la stanza all'aperto — la pioggia spegneva il fuoco dentro e innaffiava
+  // l'orto fra le mura. Il muro crollato invece apre davvero: è un buco, non
+  // una porta (vedi chiudeIn).
   [OGGETTO.PORTA]: { sprite: coseArte.PORTA, solido: true },
-  [OGGETTO.PORTA_APERTA]: { sprite: coseArte.PORTA_APERTA, solido: false },
+  [OGGETTO.PORTA_APERTA]: { sprite: coseArte.PORTA_APERTA, solido: false, chiude: true },
 
   // Una torcia piantata è luce fissa che costa molto meno di un falò, e non
   // ferma: è un bastone, ci si passa accanto.
@@ -422,16 +428,22 @@ export function bancoVicino(tx, ty, raggio = 3) {
   return false;
 }
 
-// C'è qualcosa che ferma i piedi su questo tassello — un muro, una porta
-// chiusa, un albero, un sasso, una cassa — senza contare il terreno?
+// Questo tassello fa da parete a una stanza? Tutto quello che ferma i piedi —
+// un muro, una porta chiusa, un albero, un sasso, una cassa — senza contare il
+// terreno, e in più la porta aperta.
 //
 // Esiste separata da solidoIn() perché il riparo ha bisogno di distinguere le
 // due cose. L'acqua ferma i piedi ed è solida, ma non è una parete: un isolotto
 // in mezzo al lago non è una stanza, e un accampamento sulla riva non è al
 // chiuso perché di là c'è il lago. Le pareti sono roba che sta in piedi.
+//
+// E la porta aperta si attraversa ma è una parete: aperta o chiusa, una casa
+// resta chiusa. Il muro crollato no — lì la casa ha un buco.
 export function chiudeIn(tx, ty) {
   const oggetto = oggettoDi(tx, ty);
-  return oggetto !== OGGETTO.NESSUNO && CATALOGO_OGGETTI[oggetto].solido === true;
+  if (oggetto === OGGETTO.NESSUNO) return false;
+  const voce = CATALOGO_OGGETTI[oggetto];
+  return voce.solido === true || voce.chiude === true;
 }
 
 // Che cosa toglie la vista. Non è la solidità, e non è nemmeno chiudeIn():

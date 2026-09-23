@@ -462,10 +462,13 @@ test('non si colpisce con la lancia attraverso un muro',()=>{
   assert.equal(infetti.quelloDavanti(eroe,64),null);
 });
 function chiuso() { riparo.aggiorna(0,tx,ty); return riparo.alChiuso(); }
-test('muri e porta chiusa delimitano la stanza, ma senza fuoco resta fredda',()=>{
+test('muri e porta delimitano la stanza, ma senza fuoco resta fredda',()=>{
   stanza();tempo.impostaGiorno(9);tempo.impostaOra(22);
   assert.equal(chiuso(),true);assert.equal(freddo.alFreddo(eroe),true);
-  modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.PORTA_APERTA});assert.equal(chiuso(),false);
+  // Aperta, la porta resta una parete: una casa con la porta aperta è ancora
+  // una casa. Il muro crollato invece la apre.
+  modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.PORTA_APERTA});assert.equal(chiuso(),true);
+  modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.MURO_ROTTO});assert.equal(chiuso(),false);
 });
 // Una stanza di sette tasselli per cinque, con la porta chiusa a est.
 function stanzaGrande() {
@@ -473,12 +476,13 @@ function stanzaGrande() {
     modifiche.imposta(x,y,{oggetto:Math.abs(x-tx)===4||Math.abs(y-ty)===3?OGGETTO.MURO:OGGETTO.NESSUNO});
   modifiche.imposta(tx+4,ty,{oggetto:OGGETTO.PORTA});
 }
-test('il focolare riscalda tutta la stanza finché la porta è chiusa',()=>{
+test('il focolare riscalda tutta la stanza, anche a porta aperta, finché i muri reggono',()=>{
   stanzaGrande();
   modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.FOCOLARE_ACCESO});
   eroe={...eroe,...pos(tx+2,ty)};tempo.impostaGiorno(9);tempo.impostaOra(22);
   assert.equal(freddo.alFreddo(eroe),false);
-  modifiche.imposta(tx+4,ty,{oggetto:OGGETTO.PORTA_APERTA});assert.equal(freddo.alFreddo(eroe),true);
+  modifiche.imposta(tx+4,ty,{oggetto:OGGETTO.PORTA_APERTA});assert.equal(freddo.alFreddo(eroe),false);
+  modifiche.imposta(tx,ty-3,{oggetto:OGGETTO.MURO_ROTTO});assert.equal(freddo.alFreddo(eroe),true);
 });
 test('il falò in casa scalda tre tasselli come fuori, non la stanza',()=>{
   stanzaGrande();
@@ -548,8 +552,9 @@ test('alberi e cespugli non ricrescono in un posto chiuso, nemmeno a porta apert
     const giorno=primoDi(STAGIONE_DI[tipo],20);
     tempo.impostaGiorno(giorno);ricrescita.nuovoGiorno();
     assert.equal(mappa.oggettoDi(p.tx,p.ty),OGGETTO.NESSUNO);
-    // Venuto giù un muro non torna fuori stagione: aspetta il suo giorno.
-    modifiche.imposta(p.tx-2,p.ty,{oggetto:OGGETTO.TERRA_ZAPPATA});
+    // Crollato un muro la stanza è aperta, ma non torna fuori stagione:
+    // aspetta il suo giorno.
+    modifiche.imposta(p.tx-2,p.ty,{oggetto:OGGETTO.MURO_ROTTO});
     tempo.impostaGiorno(giorno+1);ricrescita.nuovoGiorno();
     assert.equal(mappa.oggettoDi(p.tx,p.ty),OGGETTO.NESSUNO);
     tempo.impostaGiorno(giorno+16);ricrescita.nuovoGiorno();
@@ -812,14 +817,22 @@ test('pioggia bagna le colture aperte ma non quelle nella stanza',()=>{
   const esito=meteo.aggiornaMondo();assert.equal(esito.innaffiate,1);
   assert.equal(modifiche.di(tx,ty).bagnato,undefined);assert.equal(modifiche.di(tx+4,ty).bagnato,true);
   assert.equal(meteo.aggiornaMondo().innaffiate,0);
+  // A porta aperta l'orto fra le mura resta asciutto; col muro crollato no.
+  modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.PORTA_APERTA});
+  assert.equal(meteo.aggiornaMondo().innaffiate,0);assert.equal(modifiche.di(tx,ty).bagnato,undefined);
+  modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.MURO_ROTTO});
+  assert.equal(meteo.aggiornaMondo().innaffiate,1);assert.equal(modifiche.di(tx,ty).bagnato,true);
 });
-test('pioggia spegne solo i falò scoperti; aprire la porta espone quello dentro',()=>{
+test('pioggia spegne solo i falò scoperti; la porta aperta no, il muro crollato espone quello dentro',()=>{
   stanza();maltempo('pioggia');
   modifiche.imposta(tx-1,ty,{oggetto:OGGETTO.FALO_ACCESO,posata:tempo.giornoCorrente()});
   modifiche.imposta(tx+4,ty,{oggetto:OGGETTO.FALO_ACCESO,posata:tempo.giornoCorrente()});
   assert.equal(meteo.aggiornaMondo().spenti,1);
   assert.equal(mappa.oggettoDi(tx-1,ty),OGGETTO.FALO_ACCESO);
   modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.PORTA_APERTA});
+  assert.equal(meteo.aggiornaMondo().spenti,0);assert.equal(mappa.oggettoDi(tx-1,ty),OGGETTO.FALO_ACCESO);
+  // In alto e non accanto al falò: un buco che dà sul fuoco lo chiude il fuoco.
+  modifiche.imposta(tx,ty-2,{oggetto:OGGETTO.MURO_ROTTO});
   assert.equal(meteo.aggiornaMondo().spenti,1);assert.equal(mappa.oggettoDi(tx-1,ty),OGGETTO.FALO_SPENTO);
 });
 test('sotto la pioggia il falò si posa, ma non si accende allo scoperto',()=>{
