@@ -393,7 +393,7 @@ test('il cibo gettato scade nel giorno previsto',()=>{
   assert.equal(modifiche.di(tx+1,ty).oggetto,OGGETTO.NESSUNO);
 });
 test('ricetta fallita lascia identici contenuto, ordine e date',()=>{
-  tempo.impostaGiorno(3);inventario.ripristina([{cosa:'bacche',quantita:12,dal:1},{cosa:'fibra',quantita:3},...Array.from({length:6},()=>({cosa:'ascia',quantita:1}))]);
+  tempo.impostaGiorno(3);inventario.ripristina([{cosa:'bacche',quantita:12,dal:1},{cosa:'filo',quantita:3},...Array.from({length:6},()=>({cosa:'ascia',quantita:1}))]);
   const prima=structuredClone(inventario.contenuto());
   assert.deepEqual(ricette.fai(ricette.RICETTE.find(r=>r.id==='conserva'),true),{fatto:false,perche:'zaino'});
   assert.deepEqual(inventario.contenuto(),prima);
@@ -3160,4 +3160,24 @@ test("l'essiccatoio si fa con sei fili, e le fibre non bastano",()=>{
   assert.equal(ricette.fai(r,true).fatto,true);
   assert.equal(inventario.quante('essiccatoio'),1);
   assert.equal(inventario.quante('filo'),0);assert.equal(inventario.quante('fibra'),30);
+});
+
+// M7.18.3 — la conserva sale di gradino: filo nel costo, e sfama del tutto.
+test('la conserva si chiude col filo, dura un anno e sfama del tutto',()=>{
+  const r=ricette.RICETTE.find(x=>x.id==='conserva');
+  assert.deepEqual(r.costo,[{cosa:'bacche',quante:6},{cosa:'filo',quante:2}]);
+  inventario.aggiungi('bacche',6);inventario.aggiungi('fibra',20);
+  assert.equal(ricette.fai(r,true).perche,'materiali');
+  inventario.aggiungi('filo',2);
+  assert.equal(ricette.fai(r,true).fatto,true);
+  assert.equal(inventario.quante('conserva'),2);assert.equal(inventario.quante('fibra'),20);
+  assert.equal(CATALOGO.conserva.dura,16);
+  assert.equal(CATALOGO.conserva.commestibile.fame,1);
+  // Un vaso riempie la fame da vuota.
+  bisogni.consuma('fame',1);
+  assert.equal(bisogni.livello('fame'),0);
+  const i=inventario.contenuto().findIndex(c=>c?.cosa==='conserva');
+  assert.equal(azioni.consuma('conserva',i).tipo,'consumato');
+  assert.equal(bisogni.livello('fame'),1);
+  assert.equal(inventario.quante('conserva'),1);
 });

@@ -12,6 +12,23 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.3 — la conserva sale di gradino
+
+La conserva fa la stessa strada dell'essiccatoio, e per la stessa ragione: è
+cibo che aspetta, cioè cibo del secondo gradino.
+
+- **Costo**: 6 bacche e **2 fili di lino**, al banco, invece di 2 fibre. Rende
+  sempre due vasi, e non si fa più il primo giorno.
+- **Sfama del tutto**: un vaso riempie la fame da vuota (prima 0,7). Finché
+  costava sei bacche e due sterpi era giusto che valesse meno delle bacche;
+  adesso costa un campo di lino, e vale quello che si è pagato.
+- **Dura un anno**: 16 giorni nello zaino, come prima; in una cassa, che
+  rallenta il guasto di tre volte, 48.
+
+La **zuppa** resta com'è: vuole già un fuoco acceso, un secchio d'acqua e due
+verdure dell'orto, e niente di questo si raccoglie a mani nude il primo giorno.
+È del secondo gradino da quando esiste.
+
 ## M7.18.2 — l'essiccatoio vuole il lino
 
 Le ricette cominciano a dividersi in **gradini**. Al primo stanno le cose che
@@ -1307,7 +1324,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.18.2**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.3**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

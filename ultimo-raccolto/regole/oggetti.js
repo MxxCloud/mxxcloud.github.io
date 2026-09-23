@@ -337,16 +337,17 @@ export const CATALOGO = {
   },
   // La conserva: il gradino più alto della dispensa.
   //
-  // Nutre meno di tre bacche crude — sei bacche danno due vasi, e due vasi
-  // valgono 1,4 contro 1,8 — e dura un anno di gioco. È il baratto che fa
-  // ogni conserva vera: si perde qualcosa adesso per avere qualcosa a marzo.
-  // Seccare al fuoco resta la via del cibo che nutre; questa è la via del cibo
-  // che aspetta.
+  // Dura un anno di gioco e sfama del tutto: un vaso riempie la fame da vuota.
+  // Fino a M7.18.2 nutriva meno delle bacche che costava — due vasi 1,4 contro
+  // 1,8 — e si faceva con la fibra, cioè il primo giorno. Da M7.18.3 sta al
+  // secondo gradino come l'essiccatoio: il vaso si chiude col filo di lino, e
+  // il filo va coltivato. Quello che costa adesso è il campo, non le bacche,
+  // e allora il vaso può valere quello che si è pagato per averlo.
   conserva: {
     nome: "Conserva",
     icona: arte.CONSERVA,
     pila: 10,
-    commestibile: { fame: 0.7 },
+    commestibile: { fame: 1 },
     dura: 16,
   },
   // La benda è la risposta al morso, e fa due cose diverse: rimargina un po'
