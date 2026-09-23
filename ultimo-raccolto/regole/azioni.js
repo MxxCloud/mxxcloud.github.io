@@ -365,9 +365,16 @@ function sulTassello(eroe, cosaInMano, indice) {
         // cambiata, è arrivata al punto giusto: prima rifiutava il gesto
         // sbagliato, adesso rifiuta quello che l'acqua spegnerebbe la sera
         // stessa.
+        //
+        // Quindi la domanda è quella della pioggia che spegne, fuocoCoperto(),
+        // e non riparatoDallaPioggia(): il focolare e il falò acceso sono
+        // solidi, e chiesto al loro tassello l'allagamento partiva da dentro
+        // una parete e rispondeva "all'aperto" anche in casa. Il focolare non
+        // si poteva caricare sotto la pioggia neanche fra quattro mura, finiva
+        // la legna a mezzanotte e sembrava che l'avesse spento l'acqua.
         impedito: inventario.quante(cosaInMano) < fascina.quante
           ? `servono ${fascina.quante} ${fascina.tanti}`
-          : meteo.evento() === "pioggia" && !meteo.riparatoDallaPioggia(b.tx, b.ty)
+          : meteo.evento() === "pioggia" && !meteo.fuocoCoperto(b.tx, b.ty)
             ? "piove: accendi il fuoco al chiuso o sotto gli alberi" : null };
     }
     // A mani vuote, se c'è della cenere, la si prende: è quello che resta

@@ -12,6 +12,26 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.8 — in casa il fuoco si carica anche quando piove
+
+Sembrava che la pioggia spegnesse il focolare anche fra quattro mura. Non lo
+spegneva: la pioggia spegne solo il falò scoperto, e il focolare restava acceso
+tutto il giorno. Ma **sotto la pioggia non lo si poteva caricare**, nemmeno in
+casa. La legna finiva a mezzanotte, cioè proprio quando comincia un giorno di
+pioggia, il messaggio del mattino era lo stesso — «il fuoco si è spento» — e
+per tutta la giornata il gioco rispondeva «piove: accendi il fuoco al chiuso o
+sotto gli alberi» a chi era già al chiuso.
+
+La ragione: per sapere se un fuoco era riparato si chiedeva la stanza al suo
+tassello, e il focolare è solido come un muro. Partendo da dentro una parete la
+risposta era sempre «all'aperto». Il falò spento invece è cenere, ci si
+cammina sopra, e al chiuso si accendeva; il falò acceso, solido anche lui, al
+chiuso non si poteva ricaricare.
+
+Adesso la domanda è la stessa della pioggia che spegne: il fuoco è riparato se
+**affaccia su una stanza** o sta **sotto la chioma**. Sotto la pioggia si
+carica esattamente dove la pioggia non lo spegnerebbe.
+
 ## M7.18.7 — la valle ricresce a calendario
 
 Quello che si prende non torna più dopo un certo numero di giorni ma **una
@@ -1398,7 +1418,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.18.7**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.8**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

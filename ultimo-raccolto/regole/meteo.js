@@ -68,16 +68,15 @@ export function sottoLaChioma(tx, ty) {
   return false;
 }
 
-// Dove la pioggia non arriva addosso: la stanza chiusa, oppure la chioma. È il
-// predicato del fuoco — sotto un albero il falò si accende e non si spegne —
-// e non quello del bagnarsi, che sotto la chioma rallenta invece di fermarsi:
-// una macchia non è un tetto.
-export function riparatoDallaPioggia(tx, ty) {
-  return coperto(tx, ty) || sottoLaChioma(tx, ty);
-}
-
-// Un falò è solido e non appartiene al pavimento: deve affacciare su una
-// stanza — o stare sotto una chioma, che invece lo copre dove sta.
+// Dove la pioggia non arriva sul fuoco: è il predicato del fuoco, sia per
+// spegnerlo sia per accenderlo — sotto un albero il falò si accende e non si
+// spegne. Non è quello del bagnarsi, che sotto la chioma rallenta invece di
+// fermarsi: una macchia non è un tetto.
+//
+// Un fuoco acceso è solido e non appartiene al pavimento, e il focolare lo è
+// sempre: deve affacciare su una stanza — o stare sotto una chioma, che invece
+// lo copre dove sta. Chiedere la stanza al suo tassello vorrebbe dire
+// allagare partendo da dentro una parete, cioè sentirsi dire "all'aperto".
 export function fuocoCoperto(tx, ty) {
   return sottoLaChioma(tx, ty) || [[1,0],[-1,0],[0,1],[0,-1]].some(([x,y]) => coperto(tx+x,ty+y));
 }

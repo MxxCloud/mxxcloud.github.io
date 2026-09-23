@@ -823,6 +823,27 @@ test('sotto la pioggia il falò si posa, ma non si accende allo scoperto',()=>{
   assert.equal(azioni.agisci(eroe,'legna',1).tipo,'carica');
   assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FALO_ACCESO);
 });
+test('sotto la pioggia al chiuso si caricano anche il focolare e il falò acceso, all’aperto no',()=>{
+  // Il focolare e il falò acceso sono solidi: la stanza va chiesta a chi gli
+  // sta attorno, non al loro tassello. Prima il focolare non si caricava
+  // sotto la pioggia neanche in casa, e restava senza legna a mezzanotte.
+  maltempo('pioggia');inventario.aggiungi('legna',10);
+  for(const [oggetto,legna] of [[OGGETTO.FOCOLARE_SPENTO],[OGGETTO.FOCOLARE_ACCESO,1],[OGGETTO.FALO_ACCESO,1],[OGGETTO.FALO_SPENTO]]) {
+    stanza();modifiche.imposta(tx+1,ty,legna?{oggetto,legna}:{oggetto});
+    const dentro=azioni.azionePossibile(eroe,'legna',0);
+    assert.equal(dentro.tipo,'carica',String(oggetto));assert.equal(dentro.impedito ?? null,null,String(oggetto));
+    // Crollato il muro di fronte la stanza non c'è più, e il fuoco è di nuovo
+    // all'aperto. Non la porta: si apre proprio sul fuoco, e uno solido il
+    // varco lo chiude da sé.
+    modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.MURO_ROTTO});
+    assert.match(azioni.azionePossibile(eroe,'legna',0).impedito,/piove/,String(oggetto));
+  }
+  stanza();modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FOCOLARE_SPENTO});
+  assert.equal(azioni.agisci(eroe,'legna',0).tipo,'carica');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
+  // E la pioggia non lo spegne: sta in casa.
+  meteo.aggiornaMondo();assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
+});
 test('colture seminate dopo l’inizio della pioggia ricevono acqua',()=>{
   maltempo('pioggia');meteo.aggiornaMondo();
   modifiche.imposta(tx,ty,{oggetto:OGGETTO.SEMINATO});meteo.aggiornaMondo();
