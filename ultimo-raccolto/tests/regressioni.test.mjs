@@ -3149,3 +3149,15 @@ test('il filo è un oggetto con la sua icona, e nel fuoco non si mette',()=>{
   azioni.agisci(eroe,'filo',0);
   assert.equal(inventario.quante('filo'),20);
 });
+
+// M7.18.2 — l'essiccatoio vuole il filo: è un attrezzo del secondo gradino.
+test("l'essiccatoio si fa con sei fili, e le fibre non bastano",()=>{
+  const r=ricette.RICETTE.find(x=>x.id==='essiccatoio');
+  assert.deepEqual(r.costo,[{cosa:'legna',quante:4},{cosa:'ramo',quante:2},{cosa:'filo',quante:6}]);
+  inventario.aggiungi('legna',4);inventario.aggiungi('ramo',2);inventario.aggiungi('fibra',30);
+  assert.equal(ricette.fai(r,true).perche,'materiali');
+  inventario.aggiungi('filo',6);
+  assert.equal(ricette.fai(r,true).fatto,true);
+  assert.equal(inventario.quante('essiccatoio'),1);
+  assert.equal(inventario.quante('filo'),0);assert.equal(inventario.quante('fibra'),30);
+});
