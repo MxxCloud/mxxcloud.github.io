@@ -3165,8 +3165,8 @@ test("l'essiccatoio si fa con sei fili, e le fibre non bastano",()=>{
 // M7.18.3 — la conserva sale di gradino: filo nel costo, e sfama del tutto.
 test('la conserva si chiude col filo, dura un anno e sfama del tutto',()=>{
   const r=ricette.RICETTE.find(x=>x.id==='conserva');
-  assert.deepEqual(r.costo,[{cosa:'bacche',quante:6},{cosa:'filo',quante:2}]);
-  inventario.aggiungi('bacche',6);inventario.aggiungi('fibra',20);
+  assert.deepEqual(r.costo,[{cosa:'bacche',quante:4},{cosa:'filo',quante:2}]);
+  inventario.aggiungi('bacche',4);inventario.aggiungi('fibra',20);
   assert.equal(ricette.fai(r,true).perche,'materiali');
   inventario.aggiungi('filo',2);
   assert.equal(ricette.fai(r,true).fatto,true);

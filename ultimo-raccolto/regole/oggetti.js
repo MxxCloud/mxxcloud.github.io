@@ -341,8 +341,9 @@ export const CATALOGO = {
   // Fino a M7.18.2 nutriva meno delle bacche che costava — due vasi 1,4 contro
   // 1,8 — e si faceva con la fibra, cioè il primo giorno. Da M7.18.3 sta al
   // secondo gradino come l'essiccatoio: il vaso si chiude col filo di lino, e
-  // il filo va coltivato. Quello che costa adesso è il campo, non le bacche,
-  // e allora il vaso può valere quello che si è pagato per averlo.
+  // il filo va coltivato. Quello che costa adesso è il campo, non le bacche —
+  // da M7.18.4 ne bastano quattro per due vasi — e allora il vaso può valere
+  // quello che si è pagato per averlo.
   conserva: {
     nome: "Conserva",
     icona: arte.CONSERVA,

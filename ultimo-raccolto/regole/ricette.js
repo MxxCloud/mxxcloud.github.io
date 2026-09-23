@@ -253,8 +253,10 @@ export const RICETTE = [
       { cosa: "fibra", quante: 2 },
     ],
   },
-  // La conserva risponde all'inverno, che da M7.1 ha un orologio addosso: sei
-  // bacche diventano due vasi che durano un anno invece di tre giorni.
+  // La conserva risponde all'inverno, che da M7.1 ha un orologio addosso:
+  // quattro bacche diventano due vasi che durano un anno invece di tre giorni.
+  // Erano sei fino a M7.18.3; con il filo nel costo il campo di lino è già il
+  // prezzo vero, e sei bacche sopra erano una tassa in più.
   //
   // Da M7.18.3 è del secondo gradino, come l'essiccatoio: il vaso si chiude
   // col filo, non con la fibra, quindi non si fa il primo giorno. In cambio
@@ -264,7 +266,7 @@ export const RICETTE = [
     banco: true,
     produce: { cosa: "conserva", quante: 2 },
     costo: [
-      { cosa: "bacche", quante: 6 },
+      { cosa: "bacche", quante: 4 },
       { cosa: "filo", quante: 2 },
     ],
   },

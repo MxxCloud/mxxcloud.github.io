@@ -12,6 +12,13 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.4 — la conserva vuole quattro bacche
+
+Con il filo di lino nel costo la conserva era diventata troppo cara: il campo
+di lino è già il prezzo vero, e sei bacche sopra erano una tassa in più.
+Adesso **4 bacche e 2 fili** fanno due vasi, al banco. Il resto non cambia: un
+vaso sfama del tutto e dura 16 giorni nello zaino, 48 in una cassa.
+
 ## M7.18.3 — la conserva sale di gradino
 
 La conserva fa la stessa strada dell'essiccatoio, e per la stessa ragione: è
@@ -1324,7 +1331,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.18.3**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.4**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
