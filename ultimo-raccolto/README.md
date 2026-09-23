@@ -12,6 +12,29 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.10 — la stanza la scalda il focolare
+
+Fino a qui dentro una stanza chiusa qualunque fuoco acceso la scaldava tutta,
+falò compreso. Il focolare allora scaldava come un falò: dieci pietre e la
+regola delle quattro mura per quattro legna invece di due, e poco altro.
+
+Adesso **il falò scalda sempre tre tasselli**, all'aperto come in casa, e
+**la stanza intera la scalda solo il focolare**. È il suo vantaggio vero.
+
+| | all'aperto | in una stanza chiusa |
+|---|---|---|
+| Falò | 3 tasselli | 3 tasselli |
+| Focolare | 3 tasselli | tutta la stanza (fino a 200 tasselli) |
+
+Vale anche per asciugarsi: vicino a un fuoco ci si asciuga quattro volte più in
+fretta che al chiuso senza fuoco, e in casa quel «vicino» è la stanza intera
+solo se il fuoco è un focolare.
+
+Il resto non cambia. Il raggio di tre tasselli passa attraverso i muri, perché
+il calore di un fuoco all'aperto si sente anche dall'altra parte di una
+parete; per dormire invece il fuoco dev'essere entro tre tasselli e senza muri
+in mezzo.
+
 ## M7.18.9 — il fuoco spento dice perché
 
 «Il fuoco si è spento» era la stessa frase per tre cose diverse, ed è la
@@ -1434,7 +1457,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.18.9**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.10**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -2088,8 +2111,9 @@ Da questo discendono due cose, e sono il premio della tappa.
 
 **Al chiuso il calore resta dentro.** La regola del freddo era *d'inverno, di
 notte, lontano da una fiamma, si gela*, e il «lontano» erano tre tasselli.
-Adesso, dentro una stanza, un fuoco acceso in un punto qualsiasi la scalda
-tutta. Non è «al chiuso non si gela»: una capanna senza fuoco è una capanna
+Adesso, dentro una stanza, un focolare acceso in un punto qualsiasi la scalda
+tutta. (Fino a M7.18.9 bastava anche un falò; da M7.18.10 il falò in casa
+scalda tre tasselli come fuori.) Non è «al chiuso non si gela»: una capanna senza fuoco è una capanna
 fredda, e regalare il tepore toglierebbe al falò il mestiere che ha da M1.
 Quello che cambia è la portata — ed è esattamente la differenza fra stare
 vicino a un fuoco e avere una stanza con un fuoco dentro.

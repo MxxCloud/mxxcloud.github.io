@@ -100,7 +100,7 @@ export function pareti(stanza, chiude = mappa.chiudeIn) {
   return trovate;
 }
 
-// C'è una fiamma dentro questa stanza?
+// C'è un focolare acceso dentro questa stanza?
 //
 // È la seconda metà della regola del freddo, e la ragione per cui "al chiuso"
 // non vuol dire "al caldo": una capanna senza fuoco è una capanna fredda, e
@@ -108,16 +108,23 @@ export function pareti(stanza, chiude = mappa.chiudeIn) {
 // mestiere che ha da M1. Quello che cambia è la portata — il calore resta
 // dentro invece di finire a tre tasselli — ed è esattamente quello che fa una
 // stanza vera.
-// Un tassello di raggio e non zero, e la ragione è che il falò acceso ferma:
-// è solido, quindi non fa parte della stanza — l'allagamento gli gira attorno.
-// Cercandolo solo sui tasselli calpestabili non lo si trovava mai, e una
-// capanna col fuoco acceso dentro risultava fredda. Misurato, non immaginato.
+//
+// Il focolare e non qualunque fuoco. Fino a M7.18.9 bastava anche un falò, e
+// allora il focolare scaldava come lui: dieci pietre e la regola delle quattro
+// mura per quattro legna invece di due. Adesso il falò scalda tre tasselli
+// dovunque stia, anche in casa, e la stanza intera è il mestiere del focolare.
+//
+// Un tassello di raggio e non zero, e la ragione è che il focolare acceso
+// ferma: è solido, quindi non fa parte della stanza — l'allagamento gli gira
+// attorno. Cercandolo solo sui tasselli calpestabili non lo si trovava mai, e
+// una capanna col fuoco acceso dentro risultava fredda. Misurato, non
+// immaginato.
 //
 // Un raggio solo basta e non sborda: il fuoco di qualcun altro, dall'altra
 // parte della parete, sta a due tasselli dal pavimento di qua.
 export function caldaDentro(stanza) {
   for (const { tx, ty } of stanza) {
-    if (mappa.fuocoVicino(tx, ty, 1)) return true;
+    if (mappa.scaldaStanzaVicino(tx, ty, 1)) return true;
   }
   return false;
 }
