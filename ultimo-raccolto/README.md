@@ -12,6 +12,35 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.5 — la schermata iniziale
+
+Il gioco non comincia più da solo. All'avvio una schermata chiede cosa fare,
+con due voci al centro — **Avvia nuova partita** e **Carica partita** — e la
+versione in piccolo nell'angolo in basso a destra. Si sceglie con `W` `S` o le
+frecce e si conferma con la barra o `Invio`.
+
+**Carica partita** apre il pannello delle partite, lo stesso di `P`, ma solo
+per caricare: dalle caselle, da un file con `I`, o dalla rete con un codice che
+si ha già. Salvare, esportare su file, creare un codice nuovo o sovrascrivere
+la rete da lì non si può, e il gioco lo dice: non c'è ancora una partita, e
+quelle strade manderebbero in giro una valle vuota al posto di quella vera.
+`Esc` o `P` riportano al titolo; una partita ripresa lo chiude.
+
+**Avvia nuova partita** ha un passo in più, finché il gioco è in collaudo:
+si sceglie **la stagione**, poi **il giorno, da 1 a 4**, e la partita comincia
+lì, alle sette di mattina. Mentre si scorre, la valle dietro il menu si veste
+della stagione accesa — la neve si vede prima di scegliere l'inverno. `Esc`
+torna al passo prima. Il menu parte dal giorno dell'indirizzo, quindi
+`?giorno=` continua a funzionare: basta premere la barra tre volte.
+
+Il collaudo nel browser ha trovato un difetto prima che arrivasse a qualcuno:
+il salvataggio dell'alba guardava solo il giorno, e scorrendo le stagioni nel
+menu scriveva la valle vuota nella casella ALBA — e in rete — al posto di
+quella da caricare. Adesso dalla schermata iniziale non parte mai.
+
+La vecchia apertura con l'elenco dei comandi non c'è più; l'elenco sta nella
+tabella dei comandi in fondo a questo file.
+
 ## M7.18.4 — la conserva vuole quattro bacche
 
 Con il filo di lino nel costo la conserva era diventata troppo cara: il campo
@@ -1331,7 +1360,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.18.4**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.5**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -1922,9 +1951,9 @@ luce, e servono identici qui.
 
 **Il primo tasto accende il suono.** Un browser non fa partire l'audio finché
 chi guarda non ha toccato niente, e di solito quella regola si paga con un
-cartello «clicca per attivare l'audio». Qui il gesto c'era già — la schermata
-d'apertura si toglie con un tasto qualsiasi — quindi il tasto che comincia la
-partita è anche quello che accende le casse. `V` gira fra muto, piano e forte,
+cartello «clicca per attivare l'audio». Qui il gesto c'era già — la partita
+si comincia con un tasto dalla schermata iniziale — quindi il tasto che la
+comincia è anche quello che accende le casse. `V` gira fra muto, piano e forte,
 e il livello si ricorda in questo computer e non nel salvataggio: una partita
 viaggia fra computer, il volume appartiene alle casse.
 
@@ -2117,6 +2146,7 @@ e un posto con dentro una cassa e niente altro è ancora un accampamento.
 
 | | |
 |---|---|
+| `W` `S` o frecce, `Spazio` o `Invio`, `Esc` | nella schermata iniziale: scegliere, confermare, tornare indietro |
 | `W A S D` o frecce | camminare |
 | `Maiusc` | correre |
 | `Spazio` | agire su ciò che si ha davanti: colpire, raccogliere, zappare, seminare, innaffiare, bere, dormire, posare, aprire una cassa o una porta, frugare un cadavere, difendersi |

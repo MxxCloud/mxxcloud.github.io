@@ -8,7 +8,7 @@
 export const AZIONI = [
   "su", "giu", "sinistra", "destra", "usa", "corri", "ricette", "minimappa",
   "consuma", "getta", "partita", "esporta", "importa", "spegni", "mappa",
-  "suono",
+  "suono", "indietro",
 ];
 
 // Otto caselle, otto tasti: la selezione con la rotellina o con Q/E costringe
@@ -44,6 +44,10 @@ const MAPPA = {
   KeyI: "importa",
   // "X" come cancella, e anche lui solo dentro la schermata della partita.
   KeyX: "spegni",
+  // Tornare al passo prima nella schermata iniziale. Esc è il tasto che in
+  // ogni menu vuol dire "indietro", e il tasto di cancellazione è quello che
+  // cerca chi ha la mano sulla parte destra della tastiera.
+  Escape: "indietro", Backspace: "indietro",
 };
 
 for (let i = 1; i <= CASELLE; i += 1) MAPPA[`Digit${i}`] = `casella${i}`;

@@ -604,52 +604,70 @@ export function disegnaPromemoria(p, barra, cosaInMano, indice, smontaggio = nul
   }
 }
 
-// --- schermata di apertura ------------------------------------------------
+// --- la schermata iniziale ------------------------------------------------
 
-const COMANDI = [
-  ["WASD  FRECCE", "CAMMINARE"],
-  ["MAIUSC", "CORRERE"],
-  ["SPAZIO", "COLPIRE CIÒ CHE HAI DAVANTI"],
-  ["1-8", "SCEGLIERE DALLO ZAINO"],
-  ["C", "COSTRUIRE"],
-  ["E", "MANGIARE, FASCIARTI, VESTIRTI"],
-  ["G", "POSARE PER TERRA CIÒ CHE HAI IN MANO"],
-  ["X", "SMONTARE CIÒ CHE HAI COSTRUITO"],
-  ["M", "MINIMAPPA"],
-  ["TAB", "LA MAPPA DI QUELLO CHE HAI VISTO"],
-  ["V", "IL VOLUME: MUTO, PIANO, FORTE"],
-  ["P", "SALVARE E CARICARE"],
-  ["F3", "DIAGNOSTICA"],
-];
+// Le voci di ogni passo, come si leggono. Il gioco ragiona per indici e nomi
+// interni; le parole stanno qui, dove si disegnano.
+const VOCI_INIZIALI = {
+  titolo: () => ["AVVIA NUOVA PARTITA", "CARICA PARTITA"],
+  stagione: () => ["ESTATE", "AUTUNNO", "INVERNO", "PRIMAVERA"],
+  giorno: () => ["GIORNO 1", "GIORNO 2", "GIORNO 3", "GIORNO 4"],
+};
 
-// Si mostra a ogni avvio e sparisce al primo tasto. A ogni avvio e non solo
-// al primo: chi sa già i comandi preme W e non la vede più, chi torna dopo
-// una settimana non deve andarseli a cercare.
-export function disegnaApertura(p, versione) {
-  const larghezza = 236;
-  const altezza = 30 + COMANDI.length * 9 + 22;
-  const x = Math.round((schermo.LARGHEZZA - larghezza) / 2);
-  const y = Math.round((schermo.ALTEZZA - altezza) / 2);
-
-  p.fillStyle = "rgb(8 9 12 / 0.72)";
+// Si mostra a ogni avvio, e prima di ogni altra cosa chiede cosa fare: una
+// partita nuova o una salvata. Fino a M7.18.4 si apriva sempre la partita
+// nuova e per riprendere quella di ieri bisognava aprire il pannello con P
+// dopo esserci già dentro, cioè cominciare una valle per buttarla via.
+//
+// La partita nuova ha un passo in più, la stagione e il giorno da cui
+// cominciare. È una scelta da cantiere, e lo è apertamente: provare l'inverno
+// non deve voler dire aspettarlo un'ora, e fino a qui si poteva solo
+// scrivendo "?giorno=" nell'indirizzo.
+export function disegnaIniziale(p, { schermata, riga, stagione, versione }) {
+  // Il mondo resta dietro, scurito: nei passi della stagione e del giorno la
+  // valle si veste di quello che si sta scegliendo, e vederla è metà della
+  // scelta.
+  p.fillStyle = "rgb(8 9 12 / 0.8)";
   p.fillRect(0, 0, schermo.LARGHEZZA, schermo.ALTEZZA);
-  riquadro(p, x, y, larghezza, altezza, FONDO_PIENO, BORDO);
+  const centro = (scritta) => Math.round((schermo.LARGHEZZA - testo.larghezza(scritta)) / 2);
 
-  testo.disegna(p, "ULTIMO RACCOLTO", x + 10, y + 9, CHIARO);
-  // La versione sta qui perché è l'unico posto in cui serve davvero: senza,
-  // non c'è modo di distinguere "non è stato pubblicato" da "il browser ti
-  // sta servendo una copia vecchia".
-  testo.disegna(p, versione, x + larghezza - 10 - testo.larghezza(versione), y + 9, BORDO_SCELTO);
-  testo.disegna(p, "DI GIORNO SI RACCOGLIE, DI NOTTE SERVE LUCE", x + 10, y + 18, GRIGIO);
+  // Il nome a grandezza doppia: è l'unica scritta del gioco che non è
+  // un'informazione, e deve sembrare un titolo e non un'altra riga.
+  const nome = "ULTIMO RACCOLTO";
+  p.save();
+  p.scale(2, 2);
+  testo.disegna(p, nome, Math.round((schermo.LARGHEZZA / 2 - testo.larghezza(nome)) / 2), 22, CHIARO);
+  p.restore();
 
-  COMANDI.forEach(([tasto, cosa], i) => {
-    const ry = y + 32 + i * 9;
-    testo.disegna(p, tasto, x + 10, ry, BORDO_SCELTO);
-    testo.disegna(p, cosa, x + 86, ry, TENUE);
+  const domanda = schermata === "titolo" ? "DI GIORNO SI RACCOGLIE, DI NOTTE SERVE LUCE"
+    : schermata === "stagione" ? "NUOVA PARTITA: DA QUALE STAGIONE?"
+      : `NUOVA PARTITA, ${stagione.toUpperCase()}: DA QUALE GIORNO?`;
+  testo.disegna(p, domanda, centro(domanda), 60, GRIGIO);
+
+  // Le voci centrate una sotto l'altra, con la scelta accesa su una fascia
+  // larga quanto la voce più lunga: una fascia che cambia larghezza a ogni
+  // riga farebbe sembrare il menu storto.
+  const voci = VOCI_INIZIALI[schermata]();
+  const altezzaRiga = 14;
+  const larga = Math.max(...voci.map((v) => testo.larghezza(v))) + 20;
+  const y0 = Math.round((schermo.ALTEZZA - voci.length * altezzaRiga) / 2) + 12;
+  voci.forEach((voce, i) => {
+    const ry = y0 + i * altezzaRiga;
+    const scelta = i === riga;
+    if (scelta) {
+      p.fillStyle = "rgb(255 255 255 / 0.08)";
+      p.fillRect(Math.round((schermo.LARGHEZZA - larga) / 2), ry - 4, larga, altezzaRiga - 1);
+    }
+    testo.disegna(p, voce, centro(voce), ry, scelta ? BORDO_SCELTO : TENUE);
   });
 
-  const chiudi = "UN TASTO QUALSIASI PER COMINCIARE";
-  testo.disegna(p, chiudi, Math.round((schermo.LARGHEZZA - testo.larghezza(chiudi)) / 2), y + altezza - 11, GRIGIO);
+  const piede = schermata === "titolo" ? "W/S SCEGLI   SPAZIO CONFERMA"
+    : "W/S SCEGLI   SPAZIO CONFERMA   ESC INDIETRO";
+  testo.disegna(p, piede, centro(piede), schermo.ALTEZZA - 22, GRIGIO);
+
+  // La versione in piccolo nell'angolo, dove non disturba: serve a una
+  // domanda sola — "sto giocando l'ultima?" — e a quella risponde anche da lì.
+  testo.disegna(p, versione, schermo.LARGHEZZA - 5 - testo.larghezza(versione), schermo.ALTEZZA - 9, BORDO);
 }
 
 // --- la partita: salvare e caricare ---------------------------------------
@@ -667,7 +685,7 @@ function quandoInBreve(quando) {
   return `${due(d.getDate())}/${due(d.getMonth() + 1)} ${due(d.getHours())}:${due(d.getMinutes())}`;
 }
 
-export function disegnaPartita(p, { voci, modo, scelta, rete }) {
+export function disegnaPartita(p, { voci, modo, scelta, rete, dalTitolo = false }) {
   const altezzaRiga = 16;
   const larghezza = 186;
   // Due righe di piede: i tasti sono sei, e su una riga sola non ci stanno
@@ -684,7 +702,9 @@ export function disegnaPartita(p, { voci, modo, scelta, rete }) {
   const salva = modo === "salva";
   const acceso = (quale) => (modo === quale ? BORDO_SCELTO : GRIGIO);
   testo.disegna(p, "CARICA", x + 74, y + 6, acceso("carica"));
-  testo.disegna(p, "SALVA", x + 110, y + 6, acceso("salva"));
+  // Dal titolo non c'è niente da salvare: la parola resta, spenta, perché
+  // sparire sposterebbe le altre e il pannello non sembrerebbe lo stesso.
+  testo.disegna(p, "SALVA", x + 110, y + 6, dalTitolo ? BORDO : acceso("salva"));
   testo.disegna(p, "RETE", x + 142, y + 6, acceso("rete"));
 
   if (modo === "rete") {
@@ -730,8 +750,8 @@ export function disegnaPartita(p, { voci, modo, scelta, rete }) {
   testo.disegna(p, `1-4 SCEGLI   A/D MODO   SPAZIO ${verbo}   P CHIUDI`, x + 7, y + altezza - 17, GRIGIO);
   // Il file sta su una riga sua perché non riguarda le caselle: porta via e
   // porta dentro la partita in corso, ed è quello che serve per cambiare
-  // computer.
-  testo.disegna(p, "F  SALVA SU FILE      I  APRI UN FILE", x + 7, y + altezza - 9, GRIGIO);
+  // computer. Dal titolo si porta solo dentro.
+  testo.disegna(p, dalTitolo ? "I  APRI UN FILE" : "F  SALVA SU FILE      I  APRI UN FILE", x + 7, y + altezza - 9, GRIGIO);
 }
 
 // Il pannello della rete, che prende il posto delle caselle nel modo "rete".
@@ -766,7 +786,9 @@ function disegnaRete(p, x, y, larghezza, altezza, rete = {}) {
     testo.disegna(p, "UN CODICE LEGA QUESTA PARTITA ALLA", x + 7, riga(2), GRIGIO);
     testo.disegna(p, "RETE. SCRIVILO SULL'ALTRO COMPUTER", x + 7, riga(3), GRIGIO);
     testo.disegna(p, "E LA VALLE TI SEGUE.", x + 7, riga(4), GRIGIO);
-    testo.disegna(p, "SPAZIO CREA UN CODICE", x + 7, y + altezza - 17, GRIGIO);
+    // Dal titolo un codice nuovo legherebbe alla rete una partita che non
+    // esiste ancora: si può solo scrivere quello di una partita che c'è.
+    if (!rete.dalTitolo) testo.disegna(p, "SPAZIO CREA UN CODICE", x + 7, y + altezza - 17, GRIGIO);
     testo.disegna(p, "I  SCRIVI UN CODICE CHE HAI GIÀ", x + 7, y + altezza - 9, GRIGIO);
     return;
   }
@@ -797,7 +819,9 @@ function disegnaRete(p, x, y, larghezza, altezza, rete = {}) {
     testo.disegna(p, "COMPUTER NON HA MAI VISTO. NIENTE", x + 7, riga(5), ROSSO);
     testo.disegna(p, "SALE FINCHÉ NON DECIDI.", x + 7, riga(6), ROSSO);
     testo.disegna(p, "SPAZIO RIPRENDI QUELLA IN RETE", x + 7, y + altezza - 17, GRIGIO);
-    testo.disegna(p, "F  TIENI QUESTA E SOVRASCRIVI", x + 7, y + altezza - 9, GRIGIO);
+    // Dal titolo "questa" non c'è: sovrascrivere manderebbe in rete una valle
+    // vuota al posto di quella vera.
+    if (!rete.dalTitolo) testo.disegna(p, "F  TIENI QUESTA E SOVRASCRIVI", x + 7, y + altezza - 9, GRIGIO);
     return;
   }
 

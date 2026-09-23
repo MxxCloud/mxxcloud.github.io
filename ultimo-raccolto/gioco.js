@@ -72,7 +72,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.4";
+const VERSIONE = "M7.18.5";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -116,7 +116,20 @@ let smontaggioCorrente = null;
 let messaggio = null;
 let avvisoRisveglio = null;
 let luogoAttuale = null;
-let aperturaVisibile = true;
+// La schermata iniziale, o null quando si gioca. Sono tre passi di uno stesso
+// ingresso: "titolo" sceglie fra partita nuova e partita salvata, "stagione" e
+// "giorno" scelgono da che punto dell'anno comincia quella nuova.
+let iniziale = "titolo";
+// La riga accesa della schermata iniziale in cui si è. Una sola, perché si
+// guarda una schermata alla volta; la stagione scelta invece si ricorda,
+// così tornando indietro dal giorno si ritrova quella di prima.
+let rigaIniziale = 0;
+let stagioneIniziale = 0;
+// Il pannello delle partite aperto dal titolo e non da una partita in corso.
+// Non è lo stesso pannello: dal titolo non c'è niente da salvare, e mandare in
+// rete o su file una partita che non è ancora cominciata vorrebbe dire
+// sovrascrivere quella vera con una valle vuota.
+let caricaDalTitolo = false;
 let minimappaVisibile = true;
 // La mappa grande è modale come le ricette e la partita: il mondo non avanza
 // mentre la si guarda. Un mondo che tira avanti dietro una schermata a tutto
@@ -176,22 +189,44 @@ function annuncia(testo, colore) {
   messaggio = { testo: testo.toUpperCase(), colore, vita: 1 };
 }
 
-// Il primo tasto chiude l'apertura, e chiudendola accende anche il suono.
+// Chiudere la schermata iniziale accende anche il suono.
 //
 // Un browser non fa partire l'audio finché chi guarda non ha toccato niente, e
 // di solito quella regola si paga con un cartello "clicca per attivare
-// l'audio". Qui il gesto c'era già — questa schermata si toglie con un tasto
-// qualsiasi — quindi il tasto che comincia la partita è anche il gesto che
-// accende le casse, e di cartelli non ne serve nessuno.
+// l'audio". Qui il gesto c'era già — la partita comincia con un tasto — quindi
+// il tasto che la comincia è anche il gesto che accende le casse, e di
+// cartelli non ne serve nessuno.
 //
 // Questa chiamata però non basta da sola, e sotto, accanto al tasto della
 // diagnostica, c'è il perché: qui siamo dentro un fotogramma, non dentro il
 // gestore del tasto. Resta perché è il posto in cui la decisione si legge —
 // "il suono comincia quando comincia la partita" — ed è innocua: accendere un
 // contesto già acceso non fa niente.
-function chiudiLApertura() {
-  aperturaVisibile = false;
+function chiudiLIniziale() {
+  iniziale = null;
+  caricaDalTitolo = false;
   suono.sblocca();
+}
+
+// Il giorno da cui si comincia, messo subito e non alla conferma: mentre si
+// scorre fra le stagioni la valle dietro il menu si veste di quella accesa, e
+// si vede la neve prima di scegliere l'inverno. Il mondo è fermo, quindi
+// cambiare giorno qui non attraversa nessuna mezzanotte: è lo stesso salto di
+// "?giorno=" nell'indirizzo, fatto dopo invece che prima.
+function provaIlGiorno(giorno) {
+  tempo.impostaGiorno(giorno);
+  // L'alba di oggi conta come già passata se lo è, per la stessa ragione
+  // dell'avvio: nessun salvataggio automatico prima di aver mosso un passo.
+  albaScritta = tempo.oraCorrente() >= tempo.ALBA_PIENA ? giorno : giorno - 1;
+  vestiLaValle();
+}
+
+// Una partita nuova, dal giorno scelto. La valle, il superstite e lo zaino
+// sono già quelli di una partita nuova — la pagina si apre così — quindi
+// cominciarla vuol dire soltanto fissare il giorno e togliere il menu.
+function avviaNuovaPartita(giorno) {
+  provaIlGiorno(giorno);
+  chiudiLIniziale();
 }
 
 // --- la morte -------------------------------------------------------------
@@ -201,7 +236,7 @@ function chiudiLApertura() {
 // invece di restare tre condizioni ricopiate in tre punti: la quarta sarebbe
 // stata la prima a essere dimenticata da qualche parte.
 function mondoFermo() {
-  return ricetteAperte || aperturaVisibile || partitaAperta || mappaAperta
+  return ricetteAperte || iniziale !== null || partitaAperta || mappaAperta
     || cassaAperta !== null || mortoDi !== null;
 }
 
@@ -585,6 +620,16 @@ function riprendi(ripreso) {
 
   partitaAperta = false;
   mappaAperta = false;
+  // Riprendere dal titolo comincia la partita: da una casella, da un file o
+  // dalla rete che sia, e anche quando la risposta arriva dopo.
+  if (iniziale !== null) chiudiLIniziale();
+}
+
+// Quello che dal titolo non si può fare: non c'è ancora una partita, e le tre
+// cose qui sotto la manderebbero da qualche parte. Detto invece di tacere,
+// perché un tasto che non risponde sembra un tasto rotto.
+function nienteDaMandare() {
+  annuncia("prima comincia o carica una partita", "#c9b189");
 }
 
 // I tasti del pannello della rete. Ogni ramo finisce con un ritorno perché
@@ -612,13 +657,15 @@ function leggiRete() {
   }
 
   if (comandi.appenaPremuto("esporta") && codice) {
-    sovrascriviLaRete();
+    if (caricaDalTitolo) nienteDaMandare();
+    else sovrascriviLaRete();
     return;
   }
 
   if (!comandi.appenaPremuto("usa")) return;
 
   if (codice) riprendiDallaRete();
+  else if (caricaDalTitolo) nienteDaMandare();
   else accendiLaRete(sincronia.codiceNuovo());
 }
 
@@ -651,6 +698,12 @@ function leggiScrittura() {
   annuncia("codice scritto: ora riprendi", "#9ec97e");
 }
 
+// Dal titolo si carica e basta: salvare una partita che non è cominciata
+// vorrebbe dire riempire una casella con una valle vuota.
+function modiDellaPartita() {
+  return caricaDalTitolo ? ["carica", "rete"] : MODI_PARTITA;
+}
+
 function leggiPartita() {
   const voci = caselleDiSalvataggio();
 
@@ -666,8 +719,9 @@ function leggiPartita() {
   // serve un tasto nuovo per cambiare modo.
   if (comandi.appenaPremuto("sinistra") || comandi.appenaPremuto("destra")) {
     const passo = comandi.appenaPremuto("destra") ? 1 : -1;
-    const quale = MODI_PARTITA.indexOf(modoPartita);
-    modoPartita = MODI_PARTITA[(quale + passo + MODI_PARTITA.length) % MODI_PARTITA.length];
+    const modi = modiDellaPartita();
+    const quale = modi.indexOf(modoPartita);
+    modoPartita = modi[(quale + passo + modi.length) % modi.length];
     if (modoPartita === "rete") guardaLaRete();
   }
 
@@ -680,7 +734,8 @@ function leggiPartita() {
   // dentro la partita in corso. Una casella è un posto dove tornare, un file è
   // il modo di portarsi la valle altrove.
   if (comandi.appenaPremuto("esporta")) {
-    esportaSuFile();
+    if (caricaDalTitolo) nienteDaMandare();
+    else esportaSuFile();
     return;
   }
   if (comandi.appenaPremuto("importa")) {
@@ -691,7 +746,7 @@ function leggiPartita() {
   if (!comandi.appenaPremuto("usa")) return;
   const voce = voci[slotScelto];
   if (!voce) return;
-  if (modoPartita === "salva") salvaIn(voce);
+  if (modoPartita === "salva" && !caricaDalTitolo) salvaIn(voce);
   else caricaDa(voce);
 }
 
@@ -825,6 +880,88 @@ function leggiLaCassa() {
   suono.suona(versoLaCassa ? POSA : PRESO);
 }
 
+// --- la schermata iniziale -------------------------------------------------
+
+// Le voci del titolo, nell'ordine in cui si leggono.
+const VOCI_TITOLO = ["nuova", "carica"];
+
+// Su e giù scelgono, la barra o invio confermano, Esc torna indietro. È lo
+// stesso modo di muoversi del pannello delle ricette: un menu solo da
+// imparare.
+function scorri(quante) {
+  const prima = rigaIniziale;
+  if (comandi.appenaPremuto("su")) rigaIniziale = Math.max(0, rigaIniziale - 1);
+  if (comandi.appenaPremuto("giu")) rigaIniziale = Math.min(quante - 1, rigaIniziale + 1);
+  if (rigaIniziale !== prima) suono.suona(SCELTA);
+  return rigaIniziale !== prima;
+}
+
+// Il giorno dell'anno di una stagione e di un giorno dentro di essa: l'estate
+// comincia il giorno uno, e ogni stagione dura GIORNI_PER_STAGIONE giorni.
+function giornoDellAnno(stagione, giorno) {
+  return stagione * stagioni.GIORNI_PER_STAGIONE + giorno + 1;
+}
+
+function leggiLIniziale() {
+  // Il pannello delle partite aperto dal titolo si chiude come si chiude
+  // sempre, con P, oppure con Esc; e chiuso si torna al titolo.
+  if (partitaAperta) {
+    if (!comandi.stoScrivendo() && scrittaInCorso === null
+      && (comandi.appenaPremuto("partita") || comandi.appenaPremuto("indietro"))) {
+      partitaAperta = false;
+      caricaDalTitolo = false;
+      return;
+    }
+    leggiPartita();
+    return;
+  }
+
+  if (iniziale === "titolo") {
+    scorri(VOCI_TITOLO.length);
+    if (!comandi.appenaPremuto("usa")) return;
+    suono.sblocca();
+    if (VOCI_TITOLO[rigaIniziale] === "carica") {
+      partitaAperta = true;
+      caricaDalTitolo = true;
+      modoPartita = "carica";
+      slotScelto = 0;
+      return;
+    }
+    // Si parte dalla stagione in cui la valle è adesso — l'estate, o quella
+    // chiesta con "?giorno=" nell'indirizzo — così chi preme la barra due
+    // volte di fila comincia da dove avrebbe cominciato comunque.
+    iniziale = "stagione";
+    rigaIniziale = stagioni.STAGIONI.indexOf(stagioni.stagioneCorrente());
+    return;
+  }
+
+  if (iniziale === "stagione") {
+    if (comandi.appenaPremuto("indietro")) {
+      iniziale = "titolo";
+      rigaIniziale = 0;
+      return;
+    }
+    if (scorri(stagioni.STAGIONI.length)) provaIlGiorno(giornoDellAnno(rigaIniziale, 0));
+    if (!comandi.appenaPremuto("usa")) return;
+    stagioneIniziale = rigaIniziale;
+    iniziale = "giorno";
+    rigaIniziale = stagioni.stagioneCorrente() === stagioni.STAGIONI[stagioneIniziale]
+      ? stagioni.giornoNellaStagione() - 1
+      : 0;
+    provaIlGiorno(giornoDellAnno(stagioneIniziale, rigaIniziale));
+    return;
+  }
+
+  // Il giorno dentro la stagione scelta.
+  if (comandi.appenaPremuto("indietro")) {
+    iniziale = "stagione";
+    rigaIniziale = stagioneIniziale;
+    return;
+  }
+  if (scorri(stagioni.GIORNI_PER_STAGIONE)) provaIlGiorno(giornoDellAnno(stagioneIniziale, rigaIniziale));
+  if (comandi.appenaPremuto("usa")) avviaNuovaPartita(giornoDellAnno(stagioneIniziale, rigaIniziale));
+}
+
 // --- comandi --------------------------------------------------------------
 
 function leggiComandi() {
@@ -836,16 +973,11 @@ function leggiComandi() {
     return;
   }
 
-  if (aperturaVisibile) {
-    // Il primo tasto chiude la schermata e basta: se valesse anche come
-    // comando, chi preme la barra per toglierla di mezzo darebbe una zappata
-    // a caso senza capire perché.
-    for (const azione of comandi.AZIONI) {
-      if (comandi.appenaPremuto(azione)) { chiudiLApertura(); return; }
-    }
-    for (let i = 0; i < comandi.CASELLE; i += 1) {
-      if (comandi.appenaPremuto(`casella${i + 1}`)) { chiudiLApertura(); return; }
-    }
+  // La schermata iniziale prende tutti i comandi: nessuno dei suoi tasti deve
+  // valere anche come gesto nel mondo, altrimenti la barra che conferma
+  // "avvia" darebbe anche una zappata a caso.
+  if (iniziale !== null) {
+    leggiLIniziale();
     return;
   }
 
@@ -1364,7 +1496,12 @@ function aggiorna(passo) {
   // Il salvataggio dell'alba, e proprio qui: dopo che il giorno ha fatto i
   // suoi conti — l'orto cresciuto, i fuochi spenti, la stagione girata — così
   // una partita ripresa non li rifà e non li salta.
-  if (!salute.eMorto() && tempo.giornoCorrente() > albaScritta && tempo.oraCorrente() >= tempo.ALBA_PIENA) {
+  //
+  // Mai dalla schermata iniziale: lì la partita non è ancora cominciata, e
+  // scriverla vorrebbe dire mettere una valle vuota nella casella dell'alba —
+  // e in rete — al posto di quella che si stava per caricare. Il collaudo di
+  // M7.18.5 l'ha visto succedere scorrendo le stagioni.
+  if (iniziale === null && !salute.eMorto() && tempo.giornoCorrente() > albaScritta && tempo.oraCorrente() >= tempo.ALBA_PIENA) {
     albaScritta = tempo.giornoCorrente();
     const istantanea = salvataggio.istantanea(eroe, casellaScelta);
     const esito = salvataggio.scrivi(salvataggio.ALBA, istantanea);
@@ -1470,6 +1607,26 @@ function disegnaBuio() {
   oscurita.disegna(schermo.pennello(), tempo.luceAmbiente(), tempo.tintaOscurita(), lumi);
 }
 
+// Quello che il pannello delle partite deve sapere per disegnarsi. Sta in una
+// funzione perché lo si apre da due posti — dal gioco e dal titolo — e i due
+// elenchi scritti a mano sarebbero il primo a restare indietro.
+function datiDellaPartita() {
+  return {
+    voci: caselleDiSalvataggio(),
+    modo: modoPartita,
+    scelta: slotScelto,
+    dalTitolo: caricaDalTitolo,
+    rete: {
+      configurata: sincronia.configurata(),
+      codice: sincronia.codiceAttivo(),
+      nuvola,
+      conflitto,
+      scrittura: scrittaInCorso,
+      dalTitolo: caricaDalTitolo,
+    },
+  };
+}
+
 function disegnaInterfaccia() {
   const p = schermo.pennello();
 
@@ -1480,6 +1637,22 @@ function disegnaInterfaccia() {
   // diventerebbero righe che si intravedono attraverso la carta.
   if (mappaAperta) {
     mappaGrande.disegna(p, eroe);
+    return;
+  }
+
+  // Lo stesso vale per la schermata iniziale: le barre piene e lo zaino vuoto
+  // di una partita che non è cominciata non dicono niente. Sopra ci stanno
+  // solo il pannello delle partite, se lo si è aperto per caricare, e i
+  // messaggi, che dicono cosa è andato storto caricando.
+  if (iniziale !== null) {
+    hud.disegnaIniziale(p, {
+      schermata: iniziale,
+      riga: rigaIniziale,
+      stagione: stagioni.STAGIONI[stagioneIniziale],
+      versione: VERSIONE_MOSTRATA,
+    });
+    if (partitaAperta) hud.disegnaPartita(p, datiDellaPartita());
+    hud.disegnaMessaggio(p, messaggio);
     return;
   }
 
@@ -1518,7 +1691,7 @@ function disegnaInterfaccia() {
     hud.disegnaPromemoria(p, barra, cosaInMano(), casellaScelta, smontaggioCorrente);
   }
   hud.disegnaMessaggio(p, messaggio);
-  if (minimappaVisibile && !aperturaVisibile) minimappa.disegna(p);
+  if (minimappaVisibile) minimappa.disegna(p);
   if (ricetteAperte) hud.disegnaRicette(p, { scelta: ricettaScelta, alBanco, alFuoco });
   if (cassaAperta) {
     hud.disegnaCassa(p, {
@@ -1526,21 +1699,7 @@ function disegnaInterfaccia() {
       scelta: cassaScelta,
     });
   }
-  if (partitaAperta) {
-    hud.disegnaPartita(p, {
-      voci: caselleDiSalvataggio(),
-      modo: modoPartita,
-      scelta: slotScelto,
-      rete: {
-        configurata: sincronia.configurata(),
-        codice: sincronia.codiceAttivo(),
-        nuvola,
-        conflitto,
-        scrittura: scrittaInCorso,
-      },
-    });
-  }
-  if (aperturaVisibile) hud.disegnaApertura(p, VERSIONE_MOSTRATA);
+  if (partitaAperta) hud.disegnaPartita(p, datiDellaPartita());
   // Ultima di tutte: copre anche lo zaino e la minimappa, che a quel punto non
   // sono più cose su cui si possa agire.
   if (mortoDi !== null) {
@@ -1746,7 +1905,11 @@ if (parametri.has("diagnostica")) {
     giocatore,
     urti,
     scegliCasella: (i) => { casellaScelta = i; },
-    chiudiApertura: () => { chiudiLApertura(); },
+    // Per il collaudo "chiudere l'apertura" vuol dire cominciare subito una
+    // partita nuova dal giorno in cui la pagina si è aperta — quello di
+    // "?giorno=", se c'è — senza passare dai menu.
+    chiudiApertura: () => { avviaNuovaPartita(tempo.giornoCorrente()); },
+    schermataIniziale: () => iniziale,
     tremolio: () => (colpito ? { ...colpito } : null),
     messaggio: () => (messaggio ? messaggio.testo : null),
     minimappa,
