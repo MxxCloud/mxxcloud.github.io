@@ -14,7 +14,7 @@ import * as bisogni from "../regole/bisogni.js";
 import { CATALOGO } from "../regole/oggetti.js";
 import * as inventario from "../regole/inventario.js";
 import * as addosso from "../regole/addosso.js";
-import { RICETTE, bastano } from "../regole/ricette.js";
+import { RICETTE, bastano, disponibili } from "../regole/ricette.js";
 import * as contenitori from "../regole/contenitori.js";
 import * as decadimento from "../regole/decadimento.js";
 import { nomeDi } from "../regole/oggetti.js";
@@ -526,11 +526,13 @@ export function disegnaRicette(p, { scelta, alBanco, alFuoco = false }) {
     }
 
     // Il costo dice quanto hai e quanto serve, non solo quanto serve: senza,
-    // bisogna aprire lo zaino per capire perché la riga è grigia.
+    // bisogna aprire lo zaino per capire perché la riga è grigia. "Quanto hai"
+    // conta anche quello che la sostituisce — il filo accanto alla fibra —
+    // perché è lo stesso conto che fa la ricetta quando la si costruisce.
     let cx = x + 20;
     const cy = ry + 7;
     for (const voce of ricetta.costo) {
-      const posseduti = inventario.quante(voce.cosa);
+      const posseduti = disponibili(voce.cosa);
       const pezzo = `${posseduti}/${voce.quante} ${nomeDi(voce.cosa).toUpperCase()}`;
       testo.disegna(p, pezzo, cx, cy, posseduti >= voce.quante ? VERDE : ROSSO);
       cx += testo.larghezza(pezzo) + 5;

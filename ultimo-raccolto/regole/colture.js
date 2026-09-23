@@ -18,8 +18,8 @@
 //   bevono tanto che un giorno d'estate dimenticato li secca;
 // - il cavolo regge il gelo: d'inverno non muore, si ferma, e quello maturo è
 //   l'unica cosa fresca di gennaio;
-// - il lino non si mangia: rende fibra, cioè bende e giacigli, e contende al
-//   cibo lo spazio dell'orto.
+// - il lino non si mangia: rende filo, cioè bende, lenze e pelli cucite, e
+//   contende al cibo lo spazio dell'orto.
 
 import { OGGETTO } from "../mondo/generazione.js";
 
@@ -88,12 +88,15 @@ export const COLTURE = {
     gelo: true,
     quando: "il cavolo si semina in primavera e d'autunno",
   },
+  // Filo e non fibra, da M7.18.1. Con la fibra il lino perdeva contro qualunque
+  // cespuglio: due strappi a mani nude rendevano quanto un campo innaffiato
+  // quattro volte. Il filo invece non cresce lungo la strada (vedi ricette.js).
   lino: {
     nome: "lino", seme: "semi_lino", verbo: "Semina",
     stagioni: ["primavera", "estate"],
     stadi: [S, G, C, C, M],
     sete: 3,
-    raccolto: [{ cosa: "fibra", quante: 4 }],
+    raccolto: [{ cosa: "filo", quante: 4 }],
     aSeme: [{ cosa: "semi_lino", quante: 3 }],
     gelo: false,
     quando: "il lino si semina in primavera e d'estate",

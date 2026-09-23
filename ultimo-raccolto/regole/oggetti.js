@@ -238,6 +238,12 @@ export const CATALOGO = {
   // avvicinano a tre tasselli da lui (vedi orto.js).
   spaventapasseri: { nome: "Spaventapasseri", icona: arte.SPAVENTAPASSERI_ICONA, pila: 2, posa: OGGETTO.SPAVENTAPASSERI },
   semi_lino: { nome: "Semi di lino", icona: arte.SEMI_LINO, pila: 40 },
+  // Il filo è quello che il lino rende, ed esiste per non essere fibra: la
+  // fibra si strappa ai cespugli, il filo si coltiva. Cuce quello che la fibra
+  // non sa tenere — bende, lenze, pelli — e nelle altre ricette vale come
+  // fibra, una per una (vedi ricette.js). Non brucia nel fuoco: sarebbe
+  // buttare un campo per fare quello che fanno due rami.
+  filo: { nome: "Filo di lino", icona: arte.FILO, pila: 60 },
   // La zuppa: due scodelle da una verdura, un cavolo e un secchio d'acqua,
   // sul fuoco (vedi ricette.js). Sfama più di quanto sfamerebbero i due
   // ingredienti cotti ciascuno per conto suo, e toglie anche un po' di sete:
@@ -349,11 +355,15 @@ export const CATALOGO = {
   // era già la regola e inventarne un secondo tasto per lo stesso gesto
   // sarebbe un comando in più da imparare per niente.
   //
-  // Di fibra, e questo è metà del suo senso: la fibra era il materiale meno
-  // interessante del gioco — due per una torcia e poi basta — e diventa
-  // quello che tieni da parte per quando le cose vanno male. È lo stesso
-  // trucco delle bacche a M2, e vale per la stessa ragione: una risorsa
+  // Di fibra fino a M7.18, e questo era metà del suo senso: la fibra era il
+  // materiale meno interessante del gioco — due per una torcia e poi basta —
+  // e diventava quello che tieni da parte per quando le cose vanno male. È lo
+  // stesso trucco delle bacche a M2, e vale per la stessa ragione: una risorsa
   // esiste davvero solo quando c'è qualcosa che la consuma.
+  //
+  // Da M7.18.1 lo stesso trucco passa al filo, perché la fibra si era rivelata
+  // troppo facile per fare da scorta: ce n'è un cespuglio ogni pochi passi.
+  // Il filo si coltiva, e allora tenerlo da parte è di nuovo una scelta.
   benda: {
     nome: "Benda",
     icona: arte.BENDA,

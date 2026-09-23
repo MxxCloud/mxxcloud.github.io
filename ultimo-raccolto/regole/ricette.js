@@ -74,16 +74,19 @@ export const RICETTE = [
   // o tre cervi: un paio di battute di caccia, non un pomeriggio.
   {
     // Quattro pelli sono due animali grossi, o un bufalo più un cervo: un paio
-    // di battute di caccia. Le fibre sono la riga che dice "questa cosa è
+    // di battute di caccia. Il filo è la riga che dice "questa cosa è
     // cucita", ed è anche l'unica che impedisce di arrivare al banco con
     // quattro pelli e uscirne senza aver pensato. Al banco perché prepara una
     // stagione, e quello che prepara sta dove hai deciso che è casa.
+    //
+    // Filo e non fibra da M7.18.1: le pelli non si cuciono con la paglia, e la
+    // pelliccia è la prima cosa che chiede all'orto di pensare all'inverno.
     id: "pelliccia",
     banco: true,
     produce: { cosa: "pelliccia", quante: 1 },
     costo: [
       { cosa: "pelle", quante: 4 },
-      { cosa: "fibra", quante: 3 },
+      { cosa: "filo", quante: 3 },
     ],
   },
   // Il focolare. Al banco, e non per il gusto di mettere un cancello: è la
@@ -126,14 +129,17 @@ export const RICETTE = [
     produce: { cosa: "giaciglio_pelli", quante: 1 },
     costo: [
       { cosa: "pelle", quante: 3 },
-      { cosa: "fibra", quante: 4 },
+      { cosa: "filo", quante: 4 },
       { cosa: "legna", quante: 2 },
     ],
   },
+  // La lenza è filo: con la fibra dei cespugli si lega una torcia, non si
+  // tira fuori un pesce dall'acqua. È il motivo per cui la pesca arriva dopo
+  // il primo lino, e non il primo giorno.
   {
     id: "canna",
     produce: { cosa: "canna", quante: 1 },
-    costo: [{ cosa: "ramo", quante: 3 }, { cosa: "fibra", quante: 4 }],
+    costo: [{ cosa: "ramo", quante: 3 }, { cosa: "filo", quante: 4 }],
   },
   {
     id: "secchio",
@@ -145,17 +151,24 @@ export const RICETTE = [
   },
   // La benda resta a mani nude e non è una svista: è la risposta a una ferita,
   // e una risposta che si può dare solo tornando a casa non è una risposta.
+  //
+  // Ma da M7.18.1 è di filo, ed è il legame più forte che il lino ha con il
+  // resto del gioco: la benda è l'unica cura dell'infezione, quindi il campo
+  // di lino è la farmacia. A mani nude si fa dove capita; il filo, invece, va
+  // coltivato prima — o trovato già fatto nelle case, in forma di bende.
   {
     id: "benda",
     produce: { cosa: "benda", quante: 1 },
-    costo: [{ cosa: "fibra", quante: 3 }],
+    costo: [{ cosa: "filo", quante: 3 }],
   },
 
   // --- al banco -----------------------------------------------------------
+  // Gli attrezzi di pietra si rilegano con la fibra; la canna no, perché
+  // quello che si consuma è la lenza, e una lenza si rifà di filo.
   ...["ascia", "zappa", "lancia", "canna"].map(cosa => ({
     id: "ripara_" + cosa, ripara: cosa, banco: true,
     produce: { cosa, quante: 1 },
-    costo: [{ cosa: "pietra", quante: 1 }, { cosa: "fibra", quante: 2 }],
+    costo: [{ cosa: "pietra", quante: 1 }, { cosa: cosa === "canna" ? "filo" : "fibra", quante: 2 }],
   })),
   // Gli attrezzi passano di qui, ed è il cambiamento che si sente di più.
   // Prima l'ascia era la prima cosa che si faceva, in piedi in mezzo a un
@@ -286,8 +299,49 @@ export const RICETTE = [
   },
 ];
 
+// IL FILO VALE COME FIBRA, E NON IL CONTRARIO. Da M7.18.1 il lino non rende più
+// fibra ma filo, e il motivo è che rendeva la stessa cosa dei cespugli: due
+// strappi a mani nude valevano un campo innaffiato quattro volte, e nessuno
+// coltiva quello che trova gratis lungo la strada. Adesso le ricette che
+// cuciono — la benda, la lenza, le pelli — vogliono filo, e la fibra non basta.
+//
+// All'incontrario invece sì: il filo è fibra più fine, e un superstite che
+// avanza dieci matasse non deve restare senza torcia perché i cespugli sono
+// lontani. Così il lino non è mai un raccolto buttato, ma non si paga mai il
+// filo con la paglia.
+const VALE_ANCHE = { fibra: ["filo"] };
+
+// Quanta roba conta per questa voce di costo: la cosa, più quello che la può
+// sostituire. È quello che il pannello mostra accanto a "fibra", perché
+// "0/2 FIBRA" con cinque fili nello zaino direbbe una bugia.
+export function disponibili(cosa) {
+  return (VALE_ANCHE[cosa] ?? []).reduce((somma, altra) => somma + inventario.quante(altra), inventario.quante(cosa));
+}
+
+// Il costo tradotto in quello che esce davvero dallo zaino, o null se non
+// basta. Prima la cosa chiesta e poi i sostituti: chi ha fibra e filo paga in
+// fibra, perché il filo è quello che la fibra non sa fare. Ed è anche quello
+// che rende giusto il conto di una ricetta che volesse sia fibra sia filo:
+// alla fibra va del filo solo per quello che la fibra non copre, cioè il
+// minimo possibile, in qualunque ordine stiano le voci.
+function spesa(costo) {
+  const presi = new Map();
+  const restano = (cosa) => inventario.quante(cosa) - (presi.get(cosa) ?? 0);
+  const prendi = (cosa, quante) => presi.set(cosa, (presi.get(cosa) ?? 0) + quante);
+  for (const voce of costo) {
+    let manca = voce.quante;
+    for (const cosa of [voce.cosa, ...(VALE_ANCHE[voce.cosa] ?? [])]) {
+      const qui = Math.min(manca, Math.max(0, restano(cosa)));
+      if (qui > 0) prendi(cosa, qui);
+      manca -= qui;
+    }
+    if (manca > 0) return null;
+  }
+  return [...presi].map(([cosa, quante]) => ({ cosa, quante }));
+}
+
 export function bastano(ricetta) {
-  return (!ricetta.ripara || Boolean(inventario.daRiparare(ricetta.ripara))) && ricetta.costo.every((voce) => inventario.quante(voce.cosa) >= voce.quante);
+  return (!ricetta.ripara || Boolean(inventario.daRiparare(ricetta.ripara))) && spesa(ricetta.costo) !== null;
 }
 
 // Restituisce il motivo del rifiuto e non un no secco. I due modi di non
@@ -307,9 +361,10 @@ export function fai(ricetta, alBanco = false, alFuoco = false) {
   }
   if (!bastano(ricetta)) return { fatto: false, perche: "materiali" };
 
+  const costo = spesa(ricetta.costo);
   if (ricetta.ripara) {
     const attrezzo = inventario.daRiparare(ricetta.ripara);
-    for (const voce of ricetta.costo) inventario.togli(voce.cosa, voce.quante);
+    for (const voce of costo) inventario.togli(voce.cosa, voce.quante);
     // Nessuna casella aggiuntiva: si ripara lo stesso oggetto, anche a zaino
     // pieno. E non torna nuovo: ogni riparazione gli toglie un pezzo di quello
     // che reggeva (vedi inventario.js), finché non resta che rifarlo.
@@ -317,7 +372,7 @@ export function fai(ricetta, alBanco = false, alFuoco = false) {
     bisogni.consuma("stanchezza", 0.02);
     return { fatto: true, massimo: inventario.massimoDi(attrezzo) };
   }
-  if (!inventario.trasforma(ricetta.costo, ricetta.rende ? [ricetta.produce, ricetta.rende] : ricetta.produce)) {
+  if (!inventario.trasforma(costo, ricetta.rende ? [ricetta.produce, ricetta.rende] : ricetta.produce)) {
     return { fatto: false, perche: "zaino" };
   }
   bisogni.consuma("stanchezza", 0.02);
