@@ -12,6 +12,25 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.11 — la porta aperta resta una parete
+
+Aprire la porta metteva tutta la stanza all'aperto: se pioveva, il fuoco dentro
+si spegneva e l'orto fra le mura si innaffiava, e d'inverno la casa col
+focolare tornava fredda. Ma una casa con la porta aperta è ancora una casa.
+
+Adesso **la porta, aperta o chiusa, chiude la stanza come un muro**. Aperta
+non ferma i piedi — ci si passa — ma non apre il posto. Lo apre invece **un
+muro crollato**: lì la casa ha un buco.
+
+Vale per tutto quello che chiede se un posto è chiuso: la pioggia che spegne i
+fuochi e innaffia l'orto, bagnarsi e la neve, il calore del focolare, dove si
+può posare il focolare e dove l'essiccatoio, la ricrescita. Per la ricrescita
+cambia anche l'altro verso: fino a qui il muro crollato contava come parete, e
+adesso apre come ovunque.
+
+Sulla soglia, cioè sul tassello della porta aperta, si è fuori: la porta è una
+parete, e chi ci sta sopra non è dentro la stanza.
+
 ## M7.18.10 — la stanza la scalda il focolare
 
 Fino a qui dentro una stanza chiusa qualunque fuoco acceso la scaldava tutta,
@@ -90,7 +109,7 @@ buttare giù un muro d'autunno non fa spuntare un cespuglio fuori stagione.
 Il raccolto non scrive più la data sul tassello, perché non serve più. I
 salvataggi di prima che ce l'hanno tornano lo stesso nel loro giorno.
 
-## M7.18.6 — in casa non ricresce il bosco (il giorno del ritorno cambia in M7.18.7)
+## M7.18.6 — in casa non ricresce il bosco (il giorno del ritorno cambia in M7.18.7, porte e muri crollati in M7.18.11)
 
 Chi alzava quattro muri attorno al punto in cui aveva tagliato un albero se lo
 ritrovava in mezzo alla stanza dopo tre stagioni: la ricrescita non guardava
@@ -1345,7 +1364,8 @@ I **falò scoperti si spengono** e la legna che avevano dentro se ne va con
 loro; quelli in una stanza chiusa o sotto la chioma restano accesi. Accendere
 un fuoco allo scoperto mentre piove è impedito prima di consumare la legna —
 posare la fossa fredda no, che quella l'acqua non la tocca.
-Una porta aperta o un muro sfondato espongono subito la stanza al maltempo.
+Un muro sfondato espone subito la stanza al maltempo (fino a M7.18.10 anche una
+porta aperta; da M7.18.11 la porta aperta resta una parete).
 
 All'aperto la pioggia bagna progressivamente: dopo **10 secondi** si è zuppi,
 dopo **20 secondi** fradici — ed è da lì, non da zuppi, che si soffre il
@@ -1457,7 +1477,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.18.10**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.11**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -2102,10 +2122,12 @@ allaga a partire da dove sei, e si guarda se l'acqua esce. Se non esce entro
 stanza. Il limite non è una rinuncia: una stanza più larga di duecento tasselli
 è un recinto, non una casa, e un recinto non deve scaldare.
 
-Le pareti sono le cose che stanno in piedi — muri, porte chiuse, casse, banchi,
-e anche alberi e sassi: chi si accampa in un buco di roccia ha fatto lo stesso
+Le pareti sono le cose che stanno in piedi — muri, porte, casse, banchi, e
+anche alberi e sassi: chi si accampa in un buco di roccia ha fatto lo stesso
 lavoro di chi ha alzato quattro muri, solo che l'ha trovato già fatto. L'acqua
-no: ferma i piedi ma non è una parete, quindi un isolotto non è una stanza.
+no: ferma i piedi ma non è una parete, quindi un isolotto non è una stanza. La
+porta conta aperta o chiusa, e un muro crollato invece apre la stanza (da
+M7.18.11).
 
 Da questo discendono due cose, e sono il premio della tappa.
 

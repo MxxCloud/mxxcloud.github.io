@@ -63,30 +63,15 @@ function soloSvuotato(cambio) {
 // stanza una mattina: la valle si riprende quello che le hai tolto, non la
 // casa che ci hai costruito sopra.
 //
-// "Chiuso" è la stanza di riparo.js, con due differenze.
-//
-// La prima: porte aperte e muri crollati fanno parete. Per il freddo un varco
-// è un varco, e una casa con la porta aperta non scalda; ma resta una casa, e
-// lasciare la porta aperta la notte del cambio di giorno non deve voler dire
-// trovarci dentro un cespuglio.
-//
-// La seconda: fra le pareti ci dev'essere almeno un muro o una porta. Per
-// riparo.js anche alberi e sassi chiudono, e per il freddo è giusto; qui no,
-// perché un albero tagliato in mezzo al bosco ha quattro alberi attorno, cioè
-// una "stanza" di un tassello solo. Contarla vorrebbe dire che nel bosco fitto
-// non ricresce più niente. Una radura chiusa dagli alberi è ancora bosco, e
-// così una con dentro una cassa o un falò: diventa un posto quando qualcuno ci
-// alza un muro.
-const VARCHI = new Set([OGGETTO.PORTA_APERTA, OGGETTO.MURO_ROTTO]);
-const MURATURA = new Set([OGGETTO.MURO, OGGETTO.MURO_ROTTO, OGGETTO.PORTA, OGGETTO.PORTA_APERTA]);
-
-// Il tassello vuoto esce subito: è quasi tutta la valle, e chiudeIn() lo
-// guarderebbe una seconda volta.
-function delimita(tx, ty) {
-  const oggetto = mappa.oggettoDi(tx, ty);
-  if (oggetto === OGGETTO.NESSUNO) return false;
-  return VARCHI.has(oggetto) || mappa.chiudeIn(tx, ty);
-}
+// "Chiuso" è la stanza di riparo.js — la porta chiude aperta o chiusa, il muro
+// crollato apre — con una differenza: fra le pareti ci dev'essere almeno un
+// muro o una porta. Per riparo.js anche alberi e sassi chiudono, e per il
+// freddo è giusto; qui no, perché un albero tagliato in mezzo al bosco ha
+// quattro alberi attorno, cioè una "stanza" di un tassello solo. Contarla
+// vorrebbe dire che nel bosco fitto non ricresce più niente. Una radura chiusa
+// dagli alberi è ancora bosco, e così una con dentro una cassa o un falò:
+// diventa un posto quando qualcuno ci alza un muro.
+const MURATURA = new Set([OGGETTO.MURO, OGGETTO.PORTA, OGGETTO.PORTA_APERTA]);
 
 // Il verdetto si ricorda per tutti i tasselli che l'allagamento ha toccato,
 // non solo per quello da cui è partito: sono nello stesso spazio, quindi hanno
@@ -96,8 +81,8 @@ function delimita(tx, ty) {
 function alChiuso(tx, ty, verdetti) {
   const noto = verdetti.get(`${tx},${ty}`);
   if (noto !== undefined) return noto;
-  const { tasselli, chiusa } = riparo.allaga(tx, ty, delimita);
-  const murata = chiusa && riparo.pareti(tasselli, delimita).some(p => MURATURA.has(mappa.oggettoDi(p.tx, p.ty)));
+  const { tasselli, chiusa } = riparo.allaga(tx, ty);
+  const murata = chiusa && riparo.pareti(tasselli).some(p => MURATURA.has(mappa.oggettoDi(p.tx, p.ty)));
   for (const t of tasselli) verdetti.set(`${t.tx},${t.ty}`, murata);
   return murata;
 }

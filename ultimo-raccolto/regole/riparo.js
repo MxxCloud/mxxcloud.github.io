@@ -20,9 +20,12 @@
 // Le pareti sono chiudeIn() e non solidoIn(), ed è una differenza che conta:
 // l'acqua ferma i piedi ma non è una parete, quindi un isolotto non è una
 // stanza e una capanna aperta sul lago non è chiusa. Le pareti sono roba che
-// sta in piedi — muri, porte chiuse, casse, banchi, e sì, anche alberi e
-// sassi: chi si accampa in un buco di roccia ha fatto lo stesso lavoro di chi
-// ha alzato quattro muri, solo che l'ha trovato già fatto.
+// sta in piedi — muri, porte, casse, banchi, e sì, anche alberi e sassi: chi
+// si accampa in un buco di roccia ha fatto lo stesso lavoro di chi ha alzato
+// quattro muri, solo che l'ha trovato già fatto.
+//
+// La porta conta aperta o chiusa: aprirla non mette la casa all'aperto. Un
+// muro crollato sì, perché lì la casa ha un buco.
 
 import * as modifiche from "../mondo/modifiche.js";
 import * as mappa from "../mondo/mappa.js";
@@ -40,12 +43,8 @@ const VICINI = [
 
 // La stanza che contiene questo tassello, come elenco di tasselli, oppure null
 // se di stanza non ce n'è una — cioè se si è all'aperto, o dentro un muro.
-//
-// Cosa fa da parete lo decide chiude(), che di solito è chiudeIn(). Chi chiede
-// per un'altra ragione che il freddo può contarne altre: alla ricrescita una
-// porta aperta resta una porta (vedi ricrescita.js).
-export function stanzaDi(tx, ty, chiude = mappa.chiudeIn) {
-  const { tasselli, chiusa } = allaga(tx, ty, chiude);
+export function stanzaDi(tx, ty) {
+  const { tasselli, chiusa } = allaga(tx, ty);
   return chiusa ? tasselli : null;
 }
 
@@ -53,8 +52,8 @@ export function stanzaDi(tx, ty, chiude = mappa.chiudeIn) {
 // dentro. Quando esce, i tasselli toccati sono tutti all'aperto, perché sono
 // collegati al punto da cui è uscita: chi deve chiederlo per molti tasselli
 // insieme può ricordarselo invece di riallagare (vedi ricrescita.js).
-export function allaga(tx, ty, chiude = mappa.chiudeIn) {
-  if (chiude(tx, ty)) return { tasselli: [], chiusa: false };
+export function allaga(tx, ty) {
+  if (mappa.chiudeIn(tx, ty)) return { tasselli: [], chiusa: false };
 
   const visti = new Set([`${tx},${ty}`]);
   const tasselli = [{ tx, ty }];
@@ -69,7 +68,7 @@ export function allaga(tx, ty, chiude = mappa.chiudeIn) {
       const y = qui.ty + dy;
       const k = `${x},${y}`;
       if (visti.has(k)) continue;
-      if (chiude(x, y)) continue;
+      if (mappa.chiudeIn(x, y)) continue;
       // Uscita trovata: oltre il limite non è più una stanza, ed è inutile
       // continuare a contare la valle.
       if (tasselli.length >= LIMITE) return { tasselli, chiusa: false };
@@ -84,7 +83,7 @@ export function allaga(tx, ty, chiude = mappa.chiudeIn) {
 
 // I tasselli che chiudono questa stanza, una volta ciascuno: quello che
 // l'allagamento ha trovato attorno senza poterci entrare.
-export function pareti(stanza, chiude = mappa.chiudeIn) {
+export function pareti(stanza) {
   const viste = new Set();
   const trovate = [];
   for (const { tx, ty } of stanza) {
@@ -92,7 +91,7 @@ export function pareti(stanza, chiude = mappa.chiudeIn) {
       const x = tx + dx;
       const y = ty + dy;
       const k = `${x},${y}`;
-      if (viste.has(k) || !chiude(x, y)) continue;
+      if (viste.has(k) || !mappa.chiudeIn(x, y)) continue;
       viste.add(k);
       trovate.push({ tx: x, ty: y });
     }
