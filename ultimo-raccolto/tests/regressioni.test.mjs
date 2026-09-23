@@ -3181,3 +3181,23 @@ test('la conserva si chiude col filo, dura un anno e sfama del tutto',()=>{
   assert.equal(bisogni.livello('fame'),1);
   assert.equal(inventario.quante('conserva'),1);
 });
+
+// M7.18.5 — la schermata iniziale.
+test("dalla schermata iniziale non parte il salvataggio dell'alba",()=>{
+  // Il difetto trovato nel browser: scorrendo le stagioni il giorno salta
+  // avanti, e l'alba — che guardava solo il giorno — scriveva la valle vuota
+  // nella casella ALBA e in rete. Qui si controlla che la condizione lo dica.
+  const sorgente=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  const riga=sorgente.split('\n').find(r=>r.includes('salvataggio.scrivi(salvataggio.ALBA')) ?? '';
+  const i=sorgente.indexOf('tempo.giornoCorrente() > albaScritta');
+  assert.ok(i>0);
+  const condizione=sorgente.slice(sorgente.lastIndexOf('if (',i),i);
+  assert.match(condizione,/iniziale === null/);
+  assert.ok(riga.length>0);
+});
+
+test('Esc e il tasto di cancellazione vogliono dire indietro',()=>{
+  const sorgente=readFileSync(new URL('../motore/comandi.js',import.meta.url),'utf8');
+  assert.match(sorgente,/Escape: "indietro", Backspace: "indietro"/);
+  assert.match(sorgente,/"suono", "indietro",/);
+});
