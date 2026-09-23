@@ -480,6 +480,51 @@ test('rompere il muro invalida immediatamente il riparo',()=>{
   stanza();assert.equal(chiuso(),true);
   modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.MURO_ROTTO});assert.equal(chiuso(),false);
 });
+// Un tassello su cui la generazione mette questo oggetto, strappato il giorno 1,
+// con attorno un quadrato sgombro più largo di una stanza: così a decidere se è
+// chiuso è solo quello che il collaudo ci posa attorno.
+function strappato(tipo) {
+  for(let r=0;r<400;r++)for(let y=ty-r;y<=ty+r;y++)for(let x=tx-r;x<=tx+r;x++){
+    if(Math.max(Math.abs(x-tx),Math.abs(y-ty))!==r||mappa.oggettoGenerato(x,y)!==tipo)continue;
+    for(let yy=y-8;yy<=y+8;yy++)for(let xx=x-8;xx<=x+8;xx++)modifiche.imposta(xx,yy,{oggetto:OGGETTO.NESSUNO});
+    modifiche.imposta(x,y,{oggetto:OGGETTO.NESSUNO,svuotata:1});
+    return {tx:x,ty:y};
+  }
+  assert.fail('niente di generato: '+tipo);
+}
+test('alberi e cespugli non ricrescono in un posto chiuso, nemmeno a porta aperta',()=>{
+  for(const tipo of [OGGETTO.ALBERO,OGGETTO.CESPUGLIO]) {
+    reset();
+    const p=strappato(tipo);
+    for(let y=p.ty-2;y<=p.ty+2;y++)for(let x=p.tx-2;x<=p.tx+2;x++)
+      if(Math.abs(x-p.tx)===2||Math.abs(y-p.ty)===2)modifiche.imposta(x,y,{oggetto:OGGETTO.MURO});
+    modifiche.imposta(p.tx+2,p.ty,{oggetto:OGGETTO.PORTA_APERTA});
+    tempo.impostaGiorno(100);
+    assert.equal(ricrescita.nuovoGiorno(),0);
+    assert.equal(mappa.oggettoDi(p.tx,p.ty),OGGETTO.NESSUNO);
+    // Il conto però è andato avanti: venuto giù un muro, torna la mattina dopo.
+    modifiche.imposta(p.tx-2,p.ty,{oggetto:OGGETTO.NESSUNO});
+    tempo.impostaGiorno(101);
+    assert.equal(ricrescita.nuovoGiorno(),1);
+    assert.equal(mappa.oggettoDi(p.tx,p.ty),tipo);
+  }
+});
+test('una radura chiusa da alberi, sassi e mobili ricresce: la chiude solo un muro',()=>{
+  const p=strappato(OGGETTO.ALBERO);
+  modifiche.imposta(p.tx-1,p.ty,{oggetto:OGGETTO.ALBERO});
+  modifiche.imposta(p.tx+1,p.ty,{oggetto:OGGETTO.ALBERO});
+  modifiche.imposta(p.tx,p.ty-1,{oggetto:OGGETTO.SASSO});
+  modifiche.imposta(p.tx,p.ty+1,{oggetto:OGGETTO.MURO});
+  tempo.impostaGiorno(100);
+  assert.equal(ricrescita.nuovoGiorno(),0);
+  assert.equal(mappa.oggettoDi(p.tx,p.ty),OGGETTO.NESSUNO);
+  // Con una cassa al posto del muro per il freddo resta una stanza, come un
+  // buco nella roccia; ma è ancora bosco, e il bosco si riprende l'albero.
+  modifiche.imposta(p.tx,p.ty+1,{oggetto:OGGETTO.CASSA});
+  assert.notEqual(riparo.stanzaDi(p.tx,p.ty),null);
+  assert.equal(ricrescita.nuovoGiorno(),1);
+  assert.equal(mappa.oggettoDi(p.tx,p.ty),OGGETTO.ALBERO);
+});
 test('un infetto può sfondare la porta verso una posizione sentita',()=>{
   modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.PORTA,colpi:4});
   entita.aggiungi({tipo:'infetto',...pos(tx+2,ty),px:(tx+2)*16+5,sfonda:true,richiamo:{x:eroe.px,y:eroe.py}});

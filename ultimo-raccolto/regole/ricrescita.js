@@ -21,6 +21,7 @@ import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
 import * as tempo from "./tempo.js";
 import * as stagioni from "./stagioni.js";
+import * as riparo from "./riparo.js";
 
 // Quanto ci mette a tornare, in giorni, e a decidere è cosa c'era secondo la
 // generazione — non cosa ha tolto il giocatore.
@@ -49,6 +50,50 @@ function soloSvuotato(cambio) {
   return true;
 }
 
+// Dentro un posto chiuso non ricresce niente. Chi ha tirato su quattro muri
+// attorno al punto in cui c'era un albero non deve ritrovarselo in mezzo alla
+// stanza una mattina: la valle si riprende quello che le hai tolto, non la
+// casa che ci hai costruito sopra.
+//
+// "Chiuso" è la stanza di riparo.js, con due differenze.
+//
+// La prima: porte aperte e muri crollati fanno parete. Per il freddo un varco
+// è un varco, e una casa con la porta aperta non scalda; ma resta una casa, e
+// lasciare la porta aperta la notte del cambio di giorno non deve voler dire
+// trovarci dentro un cespuglio.
+//
+// La seconda: fra le pareti ci dev'essere almeno un muro o una porta. Per
+// riparo.js anche alberi e sassi chiudono, e per il freddo è giusto; qui no,
+// perché un albero tagliato in mezzo al bosco ha quattro alberi attorno, cioè
+// una "stanza" di un tassello solo. Contarla vorrebbe dire che nel bosco fitto
+// non ricresce più niente. Una radura chiusa dagli alberi è ancora bosco, e
+// così una con dentro una cassa o un falò: diventa un posto quando qualcuno ci
+// alza un muro.
+const VARCHI = new Set([OGGETTO.PORTA_APERTA, OGGETTO.MURO_ROTTO]);
+const MURATURA = new Set([OGGETTO.MURO, OGGETTO.MURO_ROTTO, OGGETTO.PORTA, OGGETTO.PORTA_APERTA]);
+
+// Il tassello vuoto esce subito: è quasi tutta la valle, e chiudeIn() lo
+// guarderebbe una seconda volta.
+function delimita(tx, ty) {
+  const oggetto = mappa.oggettoDi(tx, ty);
+  if (oggetto === OGGETTO.NESSUNO) return false;
+  return VARCHI.has(oggetto) || mappa.chiudeIn(tx, ty);
+}
+
+// Il verdetto si ricorda per tutti i tasselli che l'allagamento ha toccato,
+// non solo per quello da cui è partito: sono nello stesso spazio, quindi hanno
+// la stessa risposta. Vale per un cambio di giorno solo, perché è lì che non
+// si muove niente. Senza, mille ricrescite nello stesso giorno erano mille
+// allagamenti da duecento tasselli, cioè 190 millisecondi fermi a mezzanotte.
+function alChiuso(tx, ty, verdetti) {
+  const noto = verdetti.get(`${tx},${ty}`);
+  if (noto !== undefined) return noto;
+  const { tasselli, chiusa } = riparo.allaga(tx, ty, delimita);
+  const murata = chiusa && riparo.pareti(tasselli, delimita).some(p => MURATURA.has(mappa.oggettoDi(p.tx, p.ty)));
+  for (const t of tasselli) verdetti.set(`${t.tx},${t.ty}`, murata);
+  return murata;
+}
+
 // Da chiamare a ogni cambio di giorno, come l'orto e i fuochi. Restituisce
 // quanti tasselli sono tornati: uno che ricresce mentre dormi e nessuno che
 // te lo dice è un cambiamento che il giocatore attribuirebbe a un guasto.
@@ -62,6 +107,7 @@ export function nuovoGiorno() {
 
   const daDatare = [];
   const daDimenticare = [];
+  const verdetti = new Map();
 
   modifiche.perOgnuno((tx, ty, cambio) => {
     if (!soloSvuotato(cambio)) return;
@@ -89,7 +135,11 @@ export function nuovoGiorno() {
       daDatare.push({ tx, ty, cambio });
       return;
     }
-    if (giorno - cambio.svuotata >= attesa) daDimenticare.push({ tx, ty });
+    if (giorno - cambio.svuotata < attesa) return;
+    // Il conto va avanti anche al chiuso: se un giorno i muri vengono giù,
+    // l'attesa è già passata e torna la mattina dopo.
+    if (alChiuso(tx, ty, verdetti)) return;
+    daDimenticare.push({ tx, ty });
   });
 
   for (const { tx, ty, cambio } of daDatare) {
