@@ -125,11 +125,16 @@ export function legnaNel(tx, ty) {
 // --- la cenere -------------------------------------------------------------
 //
 // Ogni giorno che un fuoco brucia lascia un po' di cenere sul fondo, fino a
-// tre, e resta anche quando il fuoco si spegne. Si prende a mani vuote e sul
-// campo è concime (vedi orto.js): è il primo filo che lega il fuoco all'orto,
-// e la ragione per cui un focolare acceso tutto l'inverno vale qualcosa anche
-// a primavera.
-export const CENERE_MASSIMA = 3;
+// dieci, e resta anche quando il fuoco si spegne. Si prende a mani vuote, da
+// spento o da acceso, e sul campo è concime (vedi orto.js): è il primo filo
+// che lega il fuoco all'orto, e la ragione per cui un focolare acceso tutto
+// l'inverno vale qualcosa anche a primavera.
+//
+// Dieci e non tre, da M7.18.12. Con tre il fondo era pieno dopo tre giorni, e
+// il resto dell'inverno il focolare bruciava legna senza dare più niente
+// all'orto se nessuno passava a svuotarlo: dieci giorni di fuoco sono due
+// stagioni e mezza, cioè un camino che si svuota ogni tanto e non ogni sera.
+export const CENERE_MASSIMA = 10;
 
 export function cenereNel(tx, ty) {
   if (!siCarica(mappa.oggettoDi(tx, ty))) return 0;

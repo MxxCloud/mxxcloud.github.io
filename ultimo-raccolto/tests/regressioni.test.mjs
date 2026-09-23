@@ -3214,6 +3214,22 @@ test('lo spaventapasseri si fa a mani nude, si posa, sta in piedi e si smonta',(
     for(const c of r.join(''))assert.ok(c==='.'||Object.hasOwn(TAVOLOZZA,c),`${n}: ${c}`);
   }
 });
+test('la cenere si accumula fino a dieci, e si prende anche dal fuoco acceso',()=>{
+  // D'estate, che non piove e si brucia una legna al giorno.
+  tempo.impostaGiorno(1);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FOCOLARE_ACCESO,legna:4,cenere:8});
+  for(const [giorno,attesa] of [[2,9],[3,10],[4,10]]) {
+    tempo.impostaGiorno(giorno);decadimento.nuovoGiorno();
+    assert.equal(modifiche.di(tx+1,ty).cenere,attesa,'giorno '+giorno);
+  }
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
+  // A mani vuote la si prende tutta, e il fuoco resta acceso con la sua legna.
+  assert.equal(azioni.azionePossibile(eroe,null).verbo,'Prendi la cenere (10)');
+  assert.equal(azioni.agisci(eroe,null).tipo,'cenere');
+  assert.equal(inventario.quante('cenere'),10);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.FOCOLARE_ACCESO);
+  assert.equal(modifiche.di(tx+1,ty).legna,1);assert.equal(modifiche.di(tx+1,ty).cenere,undefined);
+});
 test('fertilità, sete patita e cenere si salvano solo dove hanno senso',()=>{
   const stato=salvataggio.istantanea(eroe,0);
   const valida=m=>{stato.modifiche=[{tx:tx+1,ty,...m}];return salvataggio.valido(stato);};
@@ -3221,11 +3237,12 @@ test('fertilità, sete patita e cenere si salvano solo dove hanno senso',()=>{
   assert.ok(valida({oggetto:OGGETTO.APPASSITA,fertilita:3}));
   assert.ok(valida({oggetto:OGGETTO.CRESCIUTA,fertilita:1,patito:true,secco:1}));
   assert.ok(valida({oggetto:OGGETTO.FALO_SPENTO,cenere:3}));
+  assert.ok(valida({oggetto:OGGETTO.FOCOLARE_ACCESO,legna:2,cenere:10}));
   for(const storto of [4,-1,1.5,'due'])assert.equal(valida({oggetto:OGGETTO.TERRA_ZAPPATA,fertilita:storto}),false,String(storto));
   assert.equal(valida({oggetto:OGGETTO.ALBERO,fertilita:2}),false,'una fertilità su un albero');
   assert.equal(valida({oggetto:OGGETTO.TERRA_ZAPPATA,patito:true}),false,'patita senza pianta');
   assert.equal(valida({oggetto:OGGETTO.CRESCIUTA,patito:false}),false);
-  assert.equal(valida({oggetto:OGGETTO.FALO_SPENTO,cenere:4}),false);
+  assert.equal(valida({oggetto:OGGETTO.FALO_SPENTO,cenere:11}),false);
   assert.equal(valida({oggetto:OGGETTO.CASSA,cenere:1}),false,'cenere fuori da un fuoco');
 });
 

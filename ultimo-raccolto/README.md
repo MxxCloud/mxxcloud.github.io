@@ -12,6 +12,19 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.12 — il fondo del camino tiene dieci ceneri
+
+Un fuoco che brucia lascia una cenere al giorno, e il fondo ne teneva tre. Il
+focolare si riempiva in tre giorni, e per il resto dell'inverno bruciava legna
+senza dare più niente all'orto, a meno di passare a svuotarlo. Adesso **ne
+tiene dieci**, falò e focolare allo stesso modo: dieci giorni di fuoco, cioè due
+stagioni e mezza, e il camino si svuota ogni tanto invece che ogni tre sere.
+
+La cenere **si prende anche dal fuoco acceso**, e si poteva già: a mani vuote,
+cioè con una casella vuota scelta nella barra, il tasto la prende tutta e il
+fuoco resta acceso con la sua legna. Con la legna in mano il tasto carica il
+fuoco, e con un'altra cosa in mano lo guarda: è voluto, e resta così.
+
 ## M7.18.11 — la porta aperta resta una parete
 
 Aprire la porta metteva tutta la stanza all'aperto: se pioveva, il fuoco dentro
@@ -277,9 +290,10 @@ Tre modi di ridarle forza:
   interra — niente fibra, un punto di terra. Una benda domani o un raccolto
   migliore la prossima volta;
 - **la cenere**: ogni giorno che un fuoco brucia ne lascia un po' sul fondo,
-  fino a tre, e resta anche da spento e ricaricandolo. Si prende a mani vuote e
-  si sparge sul campo, vuoto o già seminato. È il primo filo che lega il
-  focolare all'orto.
+  fino a dieci (tre fino a M7.18.11), e resta anche da spento e ricaricandolo.
+  Si prende a mani vuote, dal fuoco spento come da quello acceso, e si sparge
+  sul campo, vuoto o già seminato. È il primo filo che lega il focolare
+  all'orto.
 
 **Le bestie di notte.** In primavera e d'autunno — le stagioni in cui la fauna
 cammina di più — una notte su due una bestia viene a mangiare una pianta, e
@@ -1477,7 +1491,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.18.11**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.12**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
