@@ -12,6 +12,23 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.2 — l'essiccatoio vuole il lino
+
+Le ricette cominciano a dividersi in **gradini**. Al primo stanno le cose che
+si fanno con quello che si raccoglie a mani nude dal primo minuto — legna,
+rami, pietra, fibra. Al secondo quelle che vogliono un materiale guadagnato con
+un attrezzo e con del tempo, e il filo di lino è il primo: va zappato,
+seminato e innaffiato per quattro giorni.
+
+L'essiccatoio è la prima ricetta a salire di gradino. Quello che produce — la
+carne e il pesce che aspettano tre stagioni — non è cibo del primo giorno, e
+allora non lo è nemmeno il telaio: **4 legne, 2 rami e 6 fili di lino**,
+invece di 6 fibre. Non si costruisce appena arrivati: si sblocca col primo
+raccolto di lino, cioè un campo e mezzo, o due se la terra è stanca.
+
+La fibra non vale come filo, quindi trenta fibre nello zaino non bastano, e il
+pannello lo dice: `0/6 FILO DI LINO` in rosso.
+
 ## M7.18.1 — il lino fa filo
 
 Il lino aveva un difetto che nessun numero poteva correggere: **rendeva la
@@ -1290,7 +1307,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.18.1**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.2**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

@@ -111,8 +111,16 @@ export const RICETTE = [
   // L'essiccatoio. Al banco, come tutto quello che prepara una stagione.
   //
   // Niente pietra: non è una cosa che si paga, è una cosa che si costruisce —
-  // quattro legne per il telaio, due rami per le traverse, sei fibre per le
+  // quattro legne per il telaio, due rami per le traverse, sei fili per le
   // corde a cui si appende. È il contrario esatto del focolare anche nel costo.
+  //
+  // Fili e non fibre da M7.18.2, ed è la prima ricetta che segue la regola dei
+  // gradini. Al primo stanno le cose che si fanno con quello che si raccoglie
+  // a mani nude dal primo minuto; al secondo quelle che vogliono un materiale
+  // guadagnato con un attrezzo e con del tempo — il lino va zappato, seminato
+  // e innaffiato. Quello che l'essiccatoio produce, il cibo che aspetta tre
+  // stagioni, sta al secondo gradino, e allora ci sta anche lui: non si
+  // costruisce il primo giorno, si sblocca col primo raccolto di lino.
   {
     id: "essiccatoio",
     banco: true,
@@ -120,7 +128,7 @@ export const RICETTE = [
     costo: [
       { cosa: "legna", quante: 4 },
       { cosa: "ramo", quante: 2 },
-      { cosa: "fibra", quante: 6 },
+      { cosa: "filo", quante: 6 },
     ],
   },
   {
