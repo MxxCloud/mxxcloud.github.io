@@ -72,7 +72,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.12";
+const VERSIONE = "M7.18.13";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1248,7 +1248,7 @@ function leggiComandi() {
     if (esito.perse.length > 0) annuncia("zaino pieno, perso qualcosa", "#c0705f");
     else if (esito.avanzate.length > 0) annuncia("zaino pieno: il resto è per terra", "#c9b189");
     else if (elenco) annuncia(elenco, "#9ec97e");
-  } else if (esito.tipo === "posa") {
+  } else if (esito.tipo === "posa" || esito.tipo === "pavimenta") {
     suono.suona(POSA);
     annuncia(`posato: ${nomeDi(esito.cosa)}`, "#9ec97e");
   }

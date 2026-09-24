@@ -106,6 +106,9 @@ export const OGGETTO = {
   // Lo spaventapasseri. Lo posa il giocatore, e tiene lontane le bestie che di
   // notte mangiano l'orto (vedi orto.js).
   SPAVENTAPASSERI: 32,
+  // Il letto, il primo mobile: si posa solo sul pavimento di legno, e chi ci
+  // dorme guarisce (vedi salute.js).
+  LETTO: 33,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati

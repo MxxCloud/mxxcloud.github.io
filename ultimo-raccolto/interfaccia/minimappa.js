@@ -53,6 +53,7 @@ const SEGNAPOSTI = {
   // mentre si cammina, non una destinazione da pianificare.
   [OGGETTO.CASSA]: "#c9b189",
   [OGGETTO.GIACIGLIO]: "#8fa8d8",
+  [OGGETTO.LETTO]: "#8fa8d8",
 };
 
 const CORNICE = "#3a3f48";

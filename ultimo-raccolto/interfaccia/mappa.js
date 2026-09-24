@@ -69,6 +69,7 @@ const SEGNAPOSTI = {
   // al posto in cui puoi dormire, che d'inverno vuol dire saltare il gelo.
   [OGGETTO.CASSA]: "#c9b189",
   [OGGETTO.GIACIGLIO]: "#8fa8d8",
+  [OGGETTO.LETTO]: "#8fa8d8",
 };
 
 // Le rovine hanno un segnaposto loro, e ci sono arrivate per prova.

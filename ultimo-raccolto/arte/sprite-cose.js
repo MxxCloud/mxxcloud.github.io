@@ -440,6 +440,79 @@ const concia = (righe) => righe.map(r => r.replaceAll("9", "c").replaceAll("a", 
 export const GIACIGLIO_PELLI = concia(GIACIGLIO);
 export const GIACIGLIO_PELLI_STESO = concia(GIACIGLIO_STESO);
 
+// Il letto: una cornice di legno con la testiera, il cuscino di lino e una
+// coperta. Più alto del giaciglio di un palmo — è un mobile, non un materasso
+// per terra — ma si disegna ancora quasi tutto dentro il suo tassello.
+export const LETTO = [
+  "................",
+  ".g............g.",
+  ".gwwwwwwwwwwwwg.",
+  ".ghhhhhhhhhhhhg.",
+  ".gzzzzzzzzzzzzg.",
+  ".gzzzzzzzzzzzzg.",
+  ".gppppppppppppg.",
+  ".goooooooooooog.",
+  ".gooooopoooooog.",
+  ".goooooooooooog.",
+  ".goooooooopooog.",
+  ".gwwwwwwwwwwwwg.",
+  ".gg..........gg.",
+  "................",
+];
+
+export const LETTO_ICONA = [
+  "............",
+  ".g........g.",
+  ".gwwwwwwwwg.",
+  ".gzzzzzzzzg.",
+  ".gppppppppg.",
+  ".goooooooog.",
+  ".gooooopoog.",
+  ".goooooooog.",
+  ".gwwwwwwwwg.",
+  ".gg......gg.",
+  "............",
+  "............",
+];
+
+// Il pavimento di legno: quattro assi per tassello, con le giunture sfalsate
+// perché una fila di tasselli non si legga come una griglia. Copre il
+// tassello tutto — si stende sopra l'erba e i suoi bordi — e sta sotto tutto
+// quello che ci si posa.
+export const PAVIMENTO_LEGNO = [
+  "hhhhhhhhhhghhhhh",
+  "hhwhhhhhhhghhhhh",
+  "hhhhhhhwhhghhhwh",
+  "gggggggggggggggg",
+  "ccccgcccccccccwc",
+  "cwccgccccccwcccc",
+  "ccccgccccccccccc",
+  "gggggggggggggggg",
+  "hhhhhhhhhhhhhghh",
+  "hhhhwhhhhhhhhghh",
+  "hhhhhhhhhwhhhghh",
+  "gggggggggggggggg",
+  "cccccccgcccccccc",
+  "ccwccccgccccwccc",
+  "cccccccgcccccccc",
+  "gggggggggggggggg",
+];
+
+export const PAVIMENTO_ICONA = [
+  "............",
+  "............",
+  "..hhhhhhgh..",
+  "..hwhhhhgh..",
+  "..gggggggg..",
+  "..ccgccccc..",
+  "..ccgcccwc..",
+  "..gggggggg..",
+  "..hhhhhghh..",
+  "..hwhhhghh..",
+  "..gggggggg..",
+  "............",
+];
+
 export const ZAPPA = [
   "............",
   "..eeee......",

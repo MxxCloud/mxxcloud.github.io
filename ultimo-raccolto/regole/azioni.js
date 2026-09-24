@@ -170,9 +170,12 @@ const COLPI_DURI = new Set([OGGETTO.ALBERO, OGGETTO.SASSO, OGGETTO.MURO, OGGETTO
 // E le pelli danno RIPOSO, non CALORE: d'inverno senza fuoco si continua a
 // prendere danno da gelo dormendoci sopra, esattamente come sulla paglia. Il
 // calore è la tappa dopo, ed è di proposito che le due cose stanno separate.
+// Il letto riposa come le pelli: quello che dà in più non è il sonno ma la
+// guarigione (vedi salute.js), ed è una cosa diversa da contare qui.
 const RIPOSO = {
   [OGGETTO.GIACIGLIO]: { conFuoco: 0.75, senza: 0.25 },
   [OGGETTO.GIACIGLIO_PELLI]: { conFuoco: 1, senza: 0.5 },
+  [OGGETTO.LETTO]: { conFuoco: 1, senza: 0.5 },
 };
 const LETTI = new Set(Object.keys(RIPOSO).map(Number));
 
@@ -490,7 +493,10 @@ function sulTassello(eroe, cosaInMano, indice) {
 
   // La zappa non accorcia un lavoro: ne apre uno che senza di lei non
   // esiste.
-  if (ATTREZZI[strumento(cosaInMano, indice, "zappa")]?.zappa && b.oggetto === OGGETTO.NESSUNO && zappabile(terreno)) {
+  // Sulle assi di un pavimento non si zappa: sotto c'è la terra, ma per
+  // arrivarci si solleva il pavimento con X.
+  if (ATTREZZI[strumento(cosaInMano, indice, "zappa")]?.zappa && b.oggetto === OGGETTO.NESSUNO && zappabile(terreno)
+      && !mappa.pavimentoIn(b.tx, b.ty)) {
     return { tipo: "zappa", verbo: "Zappa", bersaglio: b };
   }
 
@@ -539,8 +545,22 @@ function sulTassello(eroe, cosaInMano, indice) {
     return { tipo: "coltura", verbo: "Guarda", bersaglio: b, impedito: quanto };
   }
 
+  // Il pavimento non si posa come le altre cose: non prende il posto di
+  // niente, ci va sotto. Vuole una casella libera — sopra non ci dev'essere
+  // niente, nemmeno un mucchio — e un posto chiuso: è quello che fa di una
+  // stanza una casa, e all'aperto sarebbe un pezzo di legno in mezzo al prato.
+  if (cosaInMano && CATALOGO[cosaInMano]?.pavimento && posabile(b)) {
+    const gesto = { tipo: "pavimenta", verbo: "Posa il pavimento", cosa: cosaInMano, bersaglio: b };
+    if (mappa.pavimentoIn(b.tx, b.ty)) return { ...gesto, impedito: "c'è già il pavimento" };
+    if (riparo.stanzaDi(b.tx, b.ty) === null) return { ...gesto, impedito: "il pavimento va posato al chiuso" };
+    return gesto;
+  }
+
   const posa = cosaInMano && CATALOGO[cosaInMano]?.posa;
   if (posa !== undefined && posa !== null && posabile(b)) {
+    // I mobili si posano solo sul pavimento di legno. Il primo è il letto.
+    if (CATALOGO[cosaInMano].mobile && !mappa.pavimentoIn(b.tx, b.ty))
+      return { tipo: "posa", bersaglio: b, impedito: `${CATALOGO[cosaInMano].nome.toLowerCase()}: serve il pavimento di legno` };
     // Sotto un albero il falò si accende anche mentre piove, ed è la seconda
     // metà del riparo debole: senza, la chioma rallentava l'acqua e non dava
     // niente da fare. Con, il viaggiatore ha il suo ciclo — ti infili nella
@@ -688,6 +708,7 @@ const SMONTAGGI = {
   [OGGETTO.PORTA_APERTA]: { cosa: "porta", verbo: "Stacca la porta" },
   [OGGETTO.GIACIGLIO]: { cosa: "giaciglio", verbo: "Smonta il giaciglio" },
   [OGGETTO.GIACIGLIO_PELLI]: { cosa: "giaciglio_pelli", verbo: "Smonta il giaciglio" },
+  [OGGETTO.LETTO]: { cosa: "letto", verbo: "Smonta il letto" },
   [OGGETTO.BANCO]: { cosa: "banco", verbo: "Smonta il banco" },
   [OGGETTO.CASSA]: { cosa: "cassa", verbo: "Smonta la cassa" },
   [OGGETTO.FOCOLARE_SPENTO]: { cosa: "focolare", verbo: "Smonta il focolare" },
@@ -722,14 +743,20 @@ const FATICA_SMONTAGGIO = 0.02;
 //
 // Prende l'eroe e non due coordinate perché è un gesto su quello che si ha
 // davanti, come getta(): chi chiama non deve sapere cos'è un tassello.
+// Il pavimento si solleva quando sopra non c'è più niente: prima si smonta
+// quello che ci sta sopra, poi le assi. È lo stesso tasto, e l'ordine è quello
+// in cui le cose stanno una sull'altra.
+const PAVIMENTO_SOLLEVATO = { cosa: "pavimento", verbo: "Solleva il pavimento", detto: "sollevato", pavimento: true };
+
 export function smontaggioPossibile(eroe) {
   const b = bersaglio(eroe);
-  const voce = SMONTAGGI[b.oggetto];
+  const voce = SMONTAGGI[b.oggetto]
+    ?? (b.oggetto === OGGETTO.NESSUNO && mappa.pavimentoIn(b.tx, b.ty) ? PAVIMENTO_SOLLEVATO : null);
   if (!voce) return null;
   // "detto" è come si racconta il gesto una volta fatto, quando "smontato" non
   // è la parola giusta: una fossa di pietre non si smonta, si raccoglie.
   return { tipo: "smonta", verbo: voce.verbo, cosa: voce.cosa, detto: voce.detto ?? "smontato",
-    bersaglio: b, impedito: perche(b, voce) };
+    pavimento: voce.pavimento === true, bersaglio: b, impedito: perche(b, voce) };
 }
 
 // Le due cose che si smontano solo da vuote, e i due motivi sono diversi.
@@ -769,7 +796,11 @@ export function smontaDavanti(eroe) {
 
   const { tx, ty } = azione.bersaglio;
   inventario.aggiungi(azione.cosa, 1);
-  mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });
+  // Smontare quello che sta sopra lascia il pavimento dov'è (vedi
+  // modifiche.js); sollevare il pavimento lo deve dire.
+  mappa.cambiaTassello(tx, ty, azione.pavimento
+    ? { oggetto: OGGETTO.NESSUNO, pavimento: undefined }
+    : { oggetto: OGGETTO.NESSUNO });
   bisogni.consuma("stanchezza", FATICA_SMONTAGGIO);
   return { tipo: "smontato", cosa: azione.cosa, detto: azione.detto, tx, ty };
 }
@@ -1199,7 +1230,7 @@ function esegui(eroe, cosaInMano, indice, azione) {
     const letto = { px:(tx+0.5)*TASSELLO, py:(ty+0.75)*TASSELLO };
     let riscaldato = freddo.fuocoPerRiposo(letto);
     const secondi = simulazione.avanza(diurno ? 2 * riposo.ORA : tempo.secondiFinoAlle(tempo.ALBA_PIENA), {
-      dorme: true, eroe: letto,
+      dorme: true, eroe: letto, nelLetto: azione.bersaglio.oggetto === OGGETTO.LETTO,
       alFreddo: () => {
         riscaldato = freddo.fuocoPerRiposo(letto) && riscaldato;
         return freddo.tipo(letto);
@@ -1231,6 +1262,14 @@ function esegui(eroe, cosaInMano, indice, azione) {
       urti.spingiFuori(eroe, dx, dy);
     }
     return { tipo: "porta", aperta: apre, tx, ty };
+  }
+
+  // Le assi vanno sotto: la casella resta vuota, con il pavimento scritto
+  // accanto all'oggetto che non c'è.
+  if (azione.tipo === "pavimenta") {
+    if (!inventario.togli(azione.cosa, 1)) return null;
+    mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO, pavimento: CATALOGO[azione.cosa].pavimento });
+    return { tipo: "pavimenta", tx, ty, cosa: azione.cosa };
   }
 
   if (azione.tipo === "posa") {
