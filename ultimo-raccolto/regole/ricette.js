@@ -311,9 +311,12 @@ export const RICETTE = [
     id: "steccato",
     banco: true,
     produce: { cosa: "steccato", quante: 1 },
+    // La fibra lega le traverse ai pali (M7.18.17): due legne e due rami
+    // soltanto erano un recinto che si pagava con un albero e un cespuglio.
     costo: [
       { cosa: "legna", quante: 2 },
       { cosa: "ramo", quante: 2 },
+      { cosa: "fibra", quante: 2 },
     ],
   },
   // Il cancello costa un po' di più: ha i cardini legati, e la fibra è quella.

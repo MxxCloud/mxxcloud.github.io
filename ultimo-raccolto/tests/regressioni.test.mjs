@@ -3659,7 +3659,8 @@ function recinto(cx,cy,cancello=OGGETTO.CANCELLO) {
 test('steccato e cancello si fanno al banco e si posano',()=>{
   const steccato=ricette.RICETTE.find(r=>r.id==='steccato'),cancello=ricette.RICETTE.find(r=>r.id==='cancello');
   assert.equal(steccato.banco,true);assert.equal(cancello.banco,true);
-  inventario.aggiungi('legna',5);inventario.aggiungi('ramo',4);inventario.aggiungi('fibra',2);
+  assert.deepEqual(steccato.costo,[{cosa:'legna',quante:2},{cosa:'ramo',quante:2},{cosa:'fibra',quante:2}]);
+  inventario.aggiungi('legna',5);inventario.aggiungi('ramo',4);inventario.aggiungi('fibra',4);
   assert.equal(ricette.fai(steccato,true).fatto,true);assert.equal(ricette.fai(cancello,true).fatto,true);
   inventario.svuota();inventario.aggiungi('steccato',2);
   assert.equal(azioni.agisci(eroe,'steccato',0).tipo,'posa');
