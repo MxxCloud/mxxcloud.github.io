@@ -302,6 +302,31 @@ export const RICETTE = [
       { cosa: "fibra", quante: 4 },
     ],
   },
+  // Lo steccato e il cancello (M7.18.16), al banco. Lo spaventapasseri costa
+  // due rami e copre un raggio di tre tasselli; il recinto costa legna per
+  // ogni pezzo ma copre tutto quello che ci sta dentro, grande quanto lo si
+  // fa — e più avanti terrà dentro gli animali. Due modi di proteggere lo
+  // stesso campo, e la scelta fra i due è quanto è grande il campo.
+  {
+    id: "steccato",
+    banco: true,
+    produce: { cosa: "steccato", quante: 1 },
+    costo: [
+      { cosa: "legna", quante: 2 },
+      { cosa: "ramo", quante: 2 },
+    ],
+  },
+  // Il cancello costa un po' di più: ha i cardini legati, e la fibra è quella.
+  {
+    id: "cancello",
+    banco: true,
+    produce: { cosa: "cancello", quante: 1 },
+    costo: [
+      { cosa: "legna", quante: 3 },
+      { cosa: "ramo", quante: 2 },
+      { cosa: "fibra", quante: 2 },
+    ],
+  },
   // La zuppa è del secondo gradino senza bisogno di cambiarle il costo: vuole
   // un fuoco acceso, un secchio e due verdure dell'orto, cioè una zappa e dei
   // giorni di innaffiature. Niente di quello che chiede si raccoglie a mani

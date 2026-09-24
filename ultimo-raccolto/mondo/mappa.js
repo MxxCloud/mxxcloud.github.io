@@ -181,6 +181,16 @@ const CATALOGO_OGGETTI = {
   [OGGETTO.PORTA]: { sprite: coseArte.PORTA, solido: true },
   [OGGETTO.PORTA_APERTA]: { sprite: coseArte.PORTA_APERTA, solido: false, chiude: true },
 
+  // Lo steccato e il cancello (M7.18.16). Fermano i piedi come un muro, ma
+  // non chiudono il posto: fra le assi passano la luce, l'aria e la pioggia.
+  // "Recinta" è la loro parola, e chiudeIn() la ignora apposta — un recinto
+  // non è una stanza, non scalda, non ripara, e l'orto dentro cresce. Conta
+  // soltanto per chi chiede se un posto è recintato (vedi riparo.js). Il
+  // cancello aperto non recinta niente: da lì le bestie entrano.
+  [OGGETTO.STECCATO]: { sprite: coseArte.STECCATO, solido: true, recinta: true },
+  [OGGETTO.CANCELLO]: { sprite: coseArte.CANCELLO, solido: true, recinta: true },
+  [OGGETTO.CANCELLO_APERTO]: { sprite: coseArte.CANCELLO_APERTO, solido: false },
+
   // Una torcia piantata è luce fissa che costa molto meno di un falò, e non
   // ferma: è un bastone, ci si passa accanto.
   [OGGETTO.TORCIA_PIANTATA]: {
@@ -455,7 +465,14 @@ export function chiudeIn(tx, ty) {
   const oggetto = oggettoDi(tx, ty);
   if (oggetto === OGGETTO.NESSUNO) return false;
   const voce = CATALOGO_OGGETTI[oggetto];
+  if (voce.recinta === true) return false;
   return voce.solido === true || voce.chiude === true;
+}
+
+// Lo steccato e il cancello chiuso: pareti di un recinto e di nient'altro.
+export function recintaIn(tx, ty) {
+  const oggetto = oggettoDi(tx, ty);
+  return oggetto !== OGGETTO.NESSUNO && CATALOGO_OGGETTI[oggetto].recinta === true;
 }
 
 // Che cosa toglie la vista. Non è la solidità, e non è nemmeno chiudeIn():

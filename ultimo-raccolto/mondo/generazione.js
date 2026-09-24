@@ -109,6 +109,11 @@ export const OGGETTO = {
   // Il letto, il primo mobile: si posa solo sul pavimento di legno, e chi ci
   // dorme guarisce (vedi salute.js).
   LETTO: 33,
+  // Lo steccato e il suo cancello, chiuso e aperto (M7.18.16): fermano i
+  // piedi ma non chiudono il posto (vedi mappa.js e riparo.recintato).
+  STECCATO: 34,
+  CANCELLO: 35,
+  CANCELLO_APERTO: 36,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati
