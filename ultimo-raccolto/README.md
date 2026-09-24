@@ -12,6 +12,34 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.14 — al chiuso l'orto non cresce
+
+Le stanze sono fatte per dormire, costruire e ripararsi; le piante vogliono il
+cielo. **Dentro un posto murato l'orto non cresce.**
+
+"Murato" è la stessa domanda della ricrescita (M7.18.6): un posto chiuso con
+almeno un muro o una porta fra le pareti. Una radura chiusa da alberi e sassi è
+ancora campagna, e lì l'orto cresce come prima. Adesso la regola sta in un
+posto solo, `riparo.murato()`, e la chiedono tutte e due.
+
+- **Al chiuso non si zappa e non si semina**, nemmeno sulla terra zappata prima
+  di alzare i muri: il tasto dice *al chiuso non arriva la luce*.
+- **Un orto piantato all'aperto e poi murato non muore di colpo.** La prima
+  notte al chiuso si ferma: non cresce anche se innaffiato, non patisce la sete,
+  e la matura non invecchia. Il mattino lo dice — *al chiuso l'orto non cresce* —
+  e davanti alla pianta il tasto avvisa: *al chiuso non cresce: la seconda notte
+  muore*, poi *al chiuso: stanotte appassisce*. Se la notte dopo è ancora
+  chiuso, appassisce: *al chiuso l'orto è morto*. In mezzo c'è un giorno per
+  smontare un muro con la X; la porta non basta, perché anche aperta chiude la
+  stanza (M7.18.11). Riaperto, l'orto si dimentica la notte al buio e riprende.
+- Una pianta matura al chiuso si raccoglie ancora: il raccolto è già fatto.
+- D'inverno muore chi non regge il gelo, al chiuso come fuori.
+
+**Le bestie.** Fino a qui un orto dentro quattro muri era anche al sicuro dalle
+bestie. Adesso un orto murato non cresce, quindi a proteggerlo restano lo
+spaventapasseri e il fuoco acceso. Se servirà un recinto, sarà uno steccato che
+ferma i piedi ma non chiude il posto.
+
 ## M7.18.13 — il pavimento e il letto
 
 Fino a qui una casa era quattro muri e un focolare: riparava e scaldava, ma
@@ -335,8 +363,8 @@ Tre modi di ridarle forza:
 cammina di più — una notte su due una bestia viene a mangiare una pianta, e
 resta la terra. La tiene lontana **uno spaventapasseri** a tre tasselli (due
 rami e quattro fibre, a mani nude; si posa, e si smonta con la X), **un fuoco
-acceso** a tre tasselli, o **dei muri**: un orto dentro una stanza chiusa non lo
-raggiunge nessuno. Il seme nella terra e la pianta andata a seme non li
+acceso** a tre tasselli. (Fino a M7.18.13 bastavano anche dei muri; da M7.18.14
+un orto murato non cresce, vedi sopra.) Il seme nella terra e la pianta andata a seme non li
 mangiano, e d'estate e d'inverno le bestie restano nella prateria. Il mattino lo
 dice: *le bestie hanno mangiato l'orto*.
 
@@ -1527,7 +1555,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.18.13**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.14**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

@@ -29,6 +29,7 @@
 
 import * as modifiche from "../mondo/modifiche.js";
 import * as mappa from "../mondo/mappa.js";
+import { OGGETTO } from "../mondo/generazione.js";
 
 export const LIMITE = 200;
 
@@ -97,6 +98,52 @@ export function pareti(stanza) {
     }
   }
   return trovate;
+}
+
+// Un posto murato: chiuso, e con almeno un muro o una porta fra le pareti.
+//
+// È la domanda di chi non è una persona. Per il freddo anche alberi e sassi
+// chiudono, ed è giusto: chi si accampa in un buco di roccia è riparato. Per
+// quello che cresce no. Un albero tagliato in mezzo al bosco ha quattro alberi
+// attorno, cioè una "stanza" di un tassello, e una radura chiusa dagli alberi
+// è ancora bosco: sotto il cielo, con la luce. Diventa un posto chiuso quando
+// qualcuno ci alza un muro.
+//
+// La chiedono la ricrescita (M7.18.6: in casa non torna il bosco) e l'orto
+// (M7.18.14: al chiuso non cresce niente), e stava dentro la ricrescita finché
+// era una sola a chiederla. Due copie della stessa regola sono due risposte
+// che un giorno non coincidono.
+const MURATURA = new Set([OGGETTO.MURO, OGGETTO.PORTA, OGGETTO.PORTA_APERTA]);
+
+// Il verdetto si ricorda per tutti i tasselli che l'allagamento ha toccato,
+// non solo per quello da cui è partito: sono nello stesso spazio, quindi hanno
+// la stessa risposta. Vale finché il mondo non cambia — la revisione delle
+// modifiche e il seme — ed è quello che la rende chiamabile a ogni
+// fotogramma: davanti a un campo con la zappa in mano la domanda si fa
+// sessanta volte al secondo. Senza, mille ricrescite nello stesso giorno erano
+// mille allagamenti da duecento tasselli, cioè 190 millisecondi fermi a
+// mezzanotte.
+const verdetti = new Map();
+let revisioneVerdetti = -1;
+let semeVerdetti = null;
+
+export function murato(tx, ty) {
+  const r = modifiche.revisione();
+  const s = mappa.semeCorrente().nome;
+  if (r !== revisioneVerdetti || s !== semeVerdetti || verdetti.size > 8192) {
+    verdetti.clear();
+    revisioneVerdetti = r;
+    semeVerdetti = s;
+  }
+  const noto = verdetti.get(`${tx},${ty}`);
+  if (noto !== undefined) return noto;
+  const { tasselli, chiusa } = allaga(tx, ty);
+  const risposta = chiusa && pareti(tasselli).some(p => MURATURA.has(mappa.oggettoDi(p.tx, p.ty)));
+  for (const t of tasselli) verdetti.set(`${t.tx},${t.ty}`, risposta);
+  // Un tassello che è esso stesso una parete non entra nell'allagamento:
+  // la risposta per lui si scrive a parte.
+  if (tasselli.length === 0) verdetti.set(`${tx},${ty}`, risposta);
+  return risposta;
 }
 
 // C'è un focolare acceso dentro questa stanza?

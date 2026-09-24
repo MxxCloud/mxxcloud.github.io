@@ -63,29 +63,9 @@ function soloSvuotato(cambio) {
 // stanza una mattina: la valle si riprende quello che le hai tolto, non la
 // casa che ci hai costruito sopra.
 //
-// "Chiuso" è la stanza di riparo.js — la porta chiude aperta o chiusa, il muro
-// crollato apre — con una differenza: fra le pareti ci dev'essere almeno un
-// muro o una porta. Per riparo.js anche alberi e sassi chiudono, e per il
-// freddo è giusto; qui no, perché un albero tagliato in mezzo al bosco ha
-// quattro alberi attorno, cioè una "stanza" di un tassello solo. Contarla
-// vorrebbe dire che nel bosco fitto non ricresce più niente. Una radura chiusa
-// dagli alberi è ancora bosco, e così una con dentro una cassa o un falò:
-// diventa un posto quando qualcuno ci alza un muro.
-const MURATURA = new Set([OGGETTO.MURO, OGGETTO.PORTA, OGGETTO.PORTA_APERTA]);
-
-// Il verdetto si ricorda per tutti i tasselli che l'allagamento ha toccato,
-// non solo per quello da cui è partito: sono nello stesso spazio, quindi hanno
-// la stessa risposta. Vale per un cambio di giorno solo, perché è lì che non
-// si muove niente. Senza, mille ricrescite nello stesso giorno erano mille
-// allagamenti da duecento tasselli, cioè 190 millisecondi fermi a mezzanotte.
-function alChiuso(tx, ty, verdetti) {
-  const noto = verdetti.get(`${tx},${ty}`);
-  if (noto !== undefined) return noto;
-  const { tasselli, chiusa } = riparo.allaga(tx, ty);
-  const murata = chiusa && riparo.pareti(tasselli).some(p => MURATURA.has(mappa.oggettoDi(p.tx, p.ty)));
-  for (const t of tasselli) verdetti.set(`${t.tx},${t.ty}`, murata);
-  return murata;
-}
+// "Chiuso" è il posto murato di riparo.js: chiuso, e con almeno un muro o una
+// porta fra le pareti. Una radura chiusa dagli alberi, o con dentro una cassa
+// o un falò, è ancora bosco: diventa un posto quando qualcuno ci alza un muro.
 
 // Da chiamare a ogni cambio di giorno, come l'orto e i fuochi. Restituisce
 // quanti tasselli sono tornati: uno che ricresce mentre dormi e nessuno che
@@ -99,7 +79,6 @@ export function nuovoGiorno() {
   const comincia = stagioni.giornoNellaStagione(giorno) === 1 ? stagioni.stagioneDi(giorno) : null;
 
   const daDimenticare = [];
-  const verdetti = new Map();
 
   modifiche.perOgnuno((tx, ty, cambio) => {
     if (!soloSvuotato(cambio)) return;
@@ -120,7 +99,7 @@ export function nuovoGiorno() {
     // Il giorno è uno solo anche per chi è al chiuso: se quella mattina la
     // casa c'è, si riprova l'anno dopo. Riaprirla d'autunno non fa spuntare un
     // cespuglio fuori stagione.
-    if (alChiuso(tx, ty, verdetti)) return;
+    if (riparo.murato(tx, ty)) return;
     daDimenticare.push({ tx, ty });
   });
 

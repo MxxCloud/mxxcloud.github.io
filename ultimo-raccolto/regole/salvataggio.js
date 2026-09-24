@@ -219,6 +219,9 @@ function modificaValida(v) {
   // solo vero e solo su una pianta: è un ricordo che conta al raccolto.
   if (!presente(v, "fertilita", n => intero(n) && n >= 0 && n <= orto.FERTILITA_MASSIMA && orto.eDelCampo(v.oggetto))) return false;
   if (!presente(v, "patito", b => b === true && orto.eColtura(v.oggetto))) return false;
+  // Una notte al chiuso: vale uno e basta — alla seconda la pianta non c'è
+  // più — e solo su una pianta.
+  if (!presente(v, "buio", n => n === 1 && orto.eColtura(v.oggetto))) return false;
   // La cenere sul fondo di un fuoco, da una a dieci, e solo in un fuoco.
   if (!presente(v, "cenere", n => intero(n) && n >= 1 && n <= decadimento.CENERE_MASSIMA && decadimento.siCarica(v.oggetto))) return false;
   // Il pavimento: di legno, e con l'oggetto scritto accanto — senza, sul

@@ -72,7 +72,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.13";
+const VERSIONE = "M7.18.14";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1447,7 +1447,7 @@ function aggiorna(passo) {
     if (messaggio.vita <= 0) messaggio = null;
   }
 
-  const { cresciute, appassite, seccate, assetate, aSeme, mangiate, spentiLegna, spentiPioggia, torceFinite, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
+  const { cresciute, appassite, seccate, alBuio, alChiuso, assetate, aSeme, mangiate, spentiLegna, spentiPioggia, torceFinite, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
 
   const arrivata = vestiLaValle();
 
@@ -1460,6 +1460,11 @@ function aggiorna(passo) {
   // stamattina con un secchio, e sapere quale delle due è stata insegna cosa
   // fare domani.
   else if (seccate > 0) annuncia(`l'orto è seccato: ${seccate}`, "#c0705f");
+  // Il buio accanto alla sete: si poteva evitare anche questo, e il rimedio —
+  // un muro smontato — è la notizia. Prima quello morto, poi l'avviso a chi
+  // ha ancora un giorno.
+  else if (alBuio > 0) annuncia(`al chiuso l'orto è morto: ${alBuio}`, "#c0705f");
+  else if (alChiuso > 0) annuncia(`al chiuso l'orto non cresce: ${alChiuso}`, "#c9b189");
   // Le bestie dopo la sete e prima del marcire, per la stessa ragione: si
   // poteva evitare, e sapere come — uno spaventapasseri — è la notizia.
   else if (mangiate > 0) annuncia(`le bestie hanno mangiato l'orto: ${mangiate}`, "#c0705f");

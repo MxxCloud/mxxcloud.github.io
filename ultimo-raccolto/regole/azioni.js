@@ -155,6 +155,9 @@ const NOME_DEL_FUOCO = {
   [OGGETTO.FALO_SPENTO]: "falò",
 };
 
+// Quello che la zappa e il seme rispondono dentro un posto murato.
+const AL_CHIUSO = "al chiuso non arriva la luce";
+
 const COLPI_DURI = new Set([OGGETTO.ALBERO, OGGETTO.SASSO, OGGETTO.MURO, OGGETTO.MURO_ROTTO, OGGETTO.CARRO, OGGETTO.TRONCO]);
 
 // Su cosa si dorme, e quanto rende. Due letti e due condizioni: scritto come
@@ -497,7 +500,12 @@ function sulTassello(eroe, cosaInMano, indice) {
   // arrivarci si solleva il pavimento con X.
   if (ATTREZZI[strumento(cosaInMano, indice, "zappa")]?.zappa && b.oggetto === OGGETTO.NESSUNO && zappabile(terreno)
       && !mappa.pavimentoIn(b.tx, b.ty)) {
-    return { tipo: "zappa", verbo: "Zappa", bersaglio: b };
+    const gesto = { tipo: "zappa", verbo: "Zappa", bersaglio: b };
+    // Al chiuso non si prepara un campo: lì non crescerebbe (vedi orto.js).
+    // Detto sul tasto e non taciuto, perché una zappa che non risponde
+    // sembra una zappa rotta.
+    if (riparo.murato(b.tx, b.ty)) return { ...gesto, impedito: AL_CHIUSO };
+    return gesto;
   }
 
   // Il seme che si ha in mano decide la coltura: sono tre semi, una patata e
@@ -516,6 +524,9 @@ function sulTassello(eroe, cosaInMano, indice) {
     // stessa, e farglielo scoprire dopo sarebbe una trappola travestita da
     // regola. Fuori dalla sua stagione vale lo stesso, e si dice quale è: un
     // fagiolo seminato in autunno non vedrebbe l'estate.
+    // Anche la terra zappata prima che ci alzassero i muri attorno: il seme
+    // morirebbe al buio, e anche questo si dice prima.
+    if (riparo.murato(b.tx, b.ty)) return { ...gesto, impedito: AL_CHIUSO };
     if (!stagioni.siColtiva()) return { ...gesto, impedito: "d'inverno non germoglia" };
     if (!coltura.stagioni.includes(stagioni.stagioneCorrente())) return { ...gesto, impedito: coltura.quando };
     if (f === 0 && !coltura.ingrassa) return { ...gesto, impedito: "terra sfinita: solo fagioli, cenere o riposo" };
@@ -540,6 +551,13 @@ function sulTassello(eroe, cosaInMano, indice) {
   // mano: le foglie gialle si vedono, ma "gialle" non dice se stanotte è
   // morta, e da M7.16 può succedere.
   const pianta = modifiche.di(b.tx, b.ty);
+  // Il buio prima della sete, perché è la più urgente delle due: la sete si
+  // cura con un secchio, il buio solo smontando un muro, e la seconda notte
+  // al chiuso la pianta appassisce comunque.
+  if (orto.eColtura(b.oggetto) && riparo.murato(b.tx, b.ty)) {
+    const quanto = pianta?.buio ? "al chiuso: stanotte appassisce" : "al chiuso non cresce: la seconda notte muore";
+    return { tipo: "coltura", verbo: "Guarda", bersaglio: b, impedito: quanto };
+  }
   if (orto.eColtura(b.oggetto) && pianta?.secco > 0) {
     const quanto = orto.seccaStanotte(pianta) ? "ha sete: stanotte secca" : "ha sete: senz'acqua non cresce";
     return { tipo: "coltura", verbo: "Guarda", bersaglio: b, impedito: quanto };
