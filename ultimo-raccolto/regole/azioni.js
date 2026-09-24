@@ -766,14 +766,30 @@ const FATICA_SMONTAGGIO = 0.02;
 // in cui le cose stanno una sull'altra.
 const PAVIMENTO_SOLLEVATO = { cosa: "pavimento", verbo: "Solleva il pavimento", detto: "sollevato", pavimento: true };
 
+// Anche il campo è roba tua, e da M7.18.15 si toglie con la stessa X: la terra
+// zappata e la pianta morta si spianano, quella che cresce si estirpa. Non
+// torna niente in mano — la terra non è un oggetto, e una pianta strappata a
+// metà non è un raccolto. Serve a rimediare a un campo messo nel posto
+// sbagliato, per esempio dove adesso ci sono i muri di una casa.
+const SPIANATA = { cosa: null, verbo: "Spiana la terra", frase: "terra spianata", orto: true };
+const ESTIRPATA = { cosa: null, verbo: "Estirpa la pianta", frase: "pianta estirpata", orto: true };
+
+function voceDelCampo(oggetto) {
+  if (oggetto === OGGETTO.TERRA_ZAPPATA || orto.eAppassita(oggetto)) return SPIANATA;
+  if (orto.eColtura(oggetto)) return ESTIRPATA;
+  return null;
+}
+
 export function smontaggioPossibile(eroe) {
   const b = bersaglio(eroe);
   const voce = SMONTAGGI[b.oggetto]
-    ?? (b.oggetto === OGGETTO.NESSUNO && mappa.pavimentoIn(b.tx, b.ty) ? PAVIMENTO_SOLLEVATO : null);
+    ?? (b.oggetto === OGGETTO.NESSUNO && mappa.pavimentoIn(b.tx, b.ty) ? PAVIMENTO_SOLLEVATO : null)
+    ?? voceDelCampo(b.oggetto);
   if (!voce) return null;
   // "detto" è come si racconta il gesto una volta fatto, quando "smontato" non
   // è la parola giusta: una fossa di pietre non si smonta, si raccoglie.
   return { tipo: "smonta", verbo: voce.verbo, cosa: voce.cosa, detto: voce.detto ?? "smontato",
+    frase: voce.frase ?? null, orto: voce.orto === true,
     pavimento: voce.pavimento === true, bersaglio: b, impedito: perche(b, voce) };
 }
 
@@ -790,6 +806,10 @@ export function smontaggioPossibile(eroe) {
 // per la legna travestito da fuoco. Si aspetta che finisca, o si aspetta di
 // aver pagato per tornare a prendersi la pietra.
 function perche(b, voce) {
+  // Il raccolto pronto non si butta con la X: è un colpo di barra più in là,
+  // e perderlo per aver premuto il tasto accanto sarebbe la trappola più
+  // stupida del campo.
+  if (voce.orto) return orto.eMatura(b.oggetto) || b.oggetto === OGGETTO.A_SEME ? "prima raccogli" : null;
   if (b.oggetto === OGGETTO.CASSA && !contenitori.eVuota(b.tx, b.ty)) return "prima svuotala";
   // L'essiccatoio: è il terzo caso, e ha la stessa forma dei primi due. Dentro
   // c'è roba tua, e smontare il telaio con la carne appesa vorrebbe dire farla
@@ -813,6 +833,11 @@ export function smontaDavanti(eroe) {
   if (azione.impedito) return { tipo: "impedito", messaggio: azione.impedito };
 
   const { tx, ty } = azione.bersaglio;
+  if (azione.orto) {
+    mappa.cambiaTassello(tx, ty, orto.spianata(modifiche.di(tx, ty)));
+    bisogni.consuma("stanchezza", FATICA_SMONTAGGIO);
+    return { tipo: "smontato", cosa: null, frase: azione.frase, tx, ty };
+  }
   inventario.aggiungi(azione.cosa, 1);
   // Smontare quello che sta sopra lascia il pavimento dov'è (vedi
   // modifiche.js); sollevare il pavimento lo deve dire.
@@ -1195,7 +1220,12 @@ function esegui(eroe, cosaInMano, indice, azione) {
   }
 
   if (azione.tipo === "zappa") {
-    mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.TERRA_ZAPPATA });
+    // La terra stanca spianata se lo ricorda (vedi orto.spianata): zapparla
+    // di nuovo non la rende nuova.
+    const ricordo = modifiche.di(tx, ty)?.fertilita;
+    mappa.cambiaTassello(tx, ty, ricordo === undefined
+      ? { oggetto: OGGETTO.TERRA_ZAPPATA }
+      : { oggetto: OGGETTO.TERRA_ZAPPATA, fertilita: ricordo });
     return { tipo: "zappa" };
   }
 

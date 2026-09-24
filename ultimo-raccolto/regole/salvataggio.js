@@ -217,7 +217,9 @@ function modificaValida(v) {
   if (!presente(v, "secco", n => intero(n) && n >= 1 && n < colture.di(v.coltura).sete && orto.eColtura(v.oggetto))) return false;
   // La terra del campo: da zero a tre, e solo dove c'è un campo. "Patito"
   // solo vero e solo su una pianta: è un ricordo che conta al raccolto.
-  if (!presente(v, "fertilita", n => intero(n) && n >= 0 && n <= orto.FERTILITA_MASSIMA && orto.eDelCampo(v.oggetto))) return false;
+  // E sul prato che è stato un campo stanco e se lo ricorda (orto.spianata).
+  if (!presente(v, "fertilita", n => intero(n) && n >= 0 && n <= orto.FERTILITA_MASSIMA
+    && (orto.eDelCampo(v.oggetto) || orto.pratoStanco(v)))) return false;
   if (!presente(v, "patito", b => b === true && orto.eColtura(v.oggetto))) return false;
   // Una notte al chiuso: vale uno e basta — alla seconda la pianta non c'è
   // più — e solo su una pianta.

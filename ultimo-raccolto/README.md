@@ -12,6 +12,26 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.15 — il campo si toglie con la X
+
+Il campo è roba tua, e adesso si toglie come tutto quello che hai costruito:
+**con la X**, al chiuso come all'aperto.
+
+- Sulla **terra zappata** e sulla **pianta morta**: *Spiana la terra*.
+- Su una **pianta che cresce**: *Estirpa la pianta*.
+- Il tassello torna prato, e in mano non torna niente: la terra non è un
+  oggetto, e una pianta strappata a metà non è un raccolto.
+- Una pianta **matura o andata a seme** non si butta con la X: *prima
+  raccogli*. È un colpo di barra più in là.
+- **La terra stanca se lo ricorda.** Spianare e zappare di nuovo non rifà
+  nuova una terra stanca o sfinita: il prato si ricorda la sua fertilità, e
+  riposa d'inverno come il campo finché non torna come nuova. Quella grassa
+  invece perde il bonus: è il prezzo di averci ripensato.
+
+Serve soprattutto per rimediare a un campo messo nel posto sbagliato, per
+esempio dove adesso ci sono i muri di una casa. Zappare al chiuso resta
+impossibile, come da M7.18.14: il tasto dice *al chiuso non arriva la luce*.
+
 ## M7.18.14 — al chiuso l'orto non cresce
 
 Le stanze sono fatte per dormire, costruire e ripararsi; le piante vogliono il
@@ -1555,7 +1575,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.18.14**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.15**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
