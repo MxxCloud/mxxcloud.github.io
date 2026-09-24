@@ -12,6 +12,14 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.20 — il pavimento chiaro
+
+Il pavimento di legno ha un disegno nuovo: **assi in verticale**, con le
+testate sfalsate, e **un legno chiaro** invece del marrone scuro. Le assi
+orizzontali e scure avevano le stesse doghe e lo stesso colore di casse e
+banchi, che sopra il pavimento si perdevano. Provato anche un tono solo un po'
+più chiaro: in gioco il banco si confondeva ancora.
+
 ## M7.18.19 — uova, gallo, pulcini e pollina
 
 L'ultima tappa dell'allevamento dei polli: quello che danno.
@@ -1686,7 +1694,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.19**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.20**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
