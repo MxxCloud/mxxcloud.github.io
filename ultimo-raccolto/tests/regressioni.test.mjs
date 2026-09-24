@@ -3393,8 +3393,9 @@ test('il pavimento si posa solo al chiuso e su una casella libera, e ci si posa 
   assert.equal(mappa.pavimentoIn(tx+1,ty),'legno');assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.NESSUNO);
   assert.equal(inventario.quante('pavimento'),2);assert.equal(mappa.solidoIn(tx+1,ty),false);
   assert.equal(azioni.azionePossibile(eroe,'pavimento',0).impedito,"c'è già il pavimento");
-  // Su una casella occupata non si posa: prima si toglie quello che c'è.
-  modifiche.imposta(tx+1,ty-1,{oggetto:OGGETTO.BANCO});
+  // Su una casella occupata non si posa: prima si toglie quello che c'è. Gli
+  // arredi sì, da M7.18.21 (vedi più sotto); un mucchio no.
+  modifiche.imposta(tx+1,ty-1,{oggetto:OGGETTO.MUCCHIO});
   assert.notEqual(azioni.azionePossibile({...eroe,...pos(tx+1,ty),guarda:'su'},'pavimento',0)?.tipo,'pavimenta');
   // Sulle assi non si zappa.
   inventario.aggiungi('zappa',1);
@@ -3411,6 +3412,65 @@ test('il pavimento si posa solo al chiuso e su una casella libera, e ci si posa 
   assert.equal(azioni.smontaggioPossibile(eroe).verbo,'Solleva il pavimento');
   assert.equal(azioni.smontaDavanti(eroe).cosa,'pavimento');
   assert.equal(mappa.pavimentoIn(tx+1,ty),null);assert.equal(inventario.quante('pavimento'),3);
+});
+// M7.18.21 — le assi sotto gli arredi.
+test('il pavimento si posa sotto una cassa piena e un focolare acceso, e lascia sopra tutto com\'era',()=>{
+  stanza();inventario.aggiungi('pavimento',3);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CASSA});
+  contenitori.scrivi(tx+1,ty,[{cosa:'legna',quantita:5}]);
+  assert.equal(contenitori.eVuota(tx+1,ty),false);
+  // Senza assi in mano la barra apre, come sempre.
+  assert.equal(azioni.azionePossibile(eroe,null).tipo,'apri');
+  const gesto=azioni.azionePossibile(eroe,'pavimento',0);
+  assert.equal(gesto.tipo,'pavimenta');assert.equal(gesto.impedito,null);
+  assert.equal(azioni.agisci(eroe,'pavimento',0).tipo,'pavimenta');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.CASSA);assert.equal(mappa.pavimentoIn(tx+1,ty),'legno');
+  assert.deepEqual(contenitori.contenutoDi(tx+1,ty)[0],{cosa:'legna',quantita:5});
+  assert.equal(inventario.quante('pavimento'),2);
+  // Con le assi già sotto, le assi in mano non chiudono la cassa.
+  assert.equal(azioni.azionePossibile(eroe,'pavimento',0).tipo,'apri');
+  // Il focolare acceso, con la sua legna.
+  modifiche.imposta(tx,ty+1,{oggetto:OGGETTO.FOCOLARE_ACCESO,legna:3});
+  const giu={...eroe,guarda:'giu'};
+  assert.equal(azioni.agisci(giu,'pavimento',0).tipo,'pavimenta');
+  assert.equal(mappa.oggettoDi(tx,ty+1),OGGETTO.FOCOLARE_ACCESO);assert.equal(mappa.pavimentoIn(tx,ty+1),'legno');
+  assert.equal(decadimento.legnaNel(tx,ty+1),3);
+  // Controprova: all'aperto no, nemmeno sotto una cassa.
+  modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.MURO_ROTTO});
+  modifiche.imposta(tx,ty-1,{oggetto:OGGETTO.BANCO});
+  assert.equal(azioni.azionePossibile({...eroe,guarda:'su'},'pavimento',0).impedito,'il pavimento va posato al chiuso');
+  // E una porta non è un arredo: il pavimento non ci va sotto.
+  modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.MURO});
+  assert.notEqual(azioni.azionePossibile({...eroe,...pos(tx+1,ty),guarda:'destra'},'pavimento',0)?.tipo,'pavimenta');
+});
+test("con l'ascia in mano la X solleva le assi da sotto la cassa piena e il focolare acceso",()=>{
+  stanza();inventario.aggiungi('ascia',1);
+  const ascia=inventario.contenuto().findIndex(c=>c?.cosa==='ascia');
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CASSA,pavimento:'legno'});
+  contenitori.scrivi(tx+1,ty,[{cosa:'legna',quantita:5}]);
+  // A mani vuote la X guarda quello che sta sopra, e la cassa piena non si smonta.
+  assert.equal(azioni.smontaggioPossibile(eroe).impedito,'prima svuotala');
+  const conLAscia=azioni.smontaggioPossibile(eroe,'ascia');
+  assert.equal(conLAscia.verbo,'Solleva il pavimento');assert.equal(conLAscia.impedito,null);
+  assert.equal(azioni.smontaDavanti(eroe,'ascia').cosa,'pavimento');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.CASSA);assert.equal(mappa.pavimentoIn(tx+1,ty),null);
+  assert.deepEqual(contenitori.contenutoDi(tx+1,ty)[0],{cosa:'legna',quantita:5});
+  assert.equal(inventario.quante('pavimento'),1);
+  // Senza assi l'ascia non ha niente da sollevare: torna lo smontaggio di sempre.
+  assert.equal(azioni.smontaggioPossibile(eroe,'ascia').verbo,'Smonta la cassa');
+  // Il focolare acceso resta acceso con la sua legna.
+  modifiche.imposta(tx,ty+1,{oggetto:OGGETTO.FOCOLARE_ACCESO,legna:3,pavimento:'legno'});
+  const giu={...eroe,guarda:'giu'};
+  assert.match(azioni.smontaggioPossibile(giu).impedito,/acceso/);
+  assert.equal(azioni.smontaDavanti(giu,'ascia').cosa,'pavimento');
+  assert.equal(mappa.oggettoDi(tx,ty+1),OGGETTO.FOCOLARE_ACCESO);assert.equal(decadimento.legnaNel(tx,ty+1),3);
+  assert.equal(mappa.pavimentoIn(tx,ty+1),null);
+  // Il letto no: senza assi non si sarebbe potuto posare.
+  modifiche.imposta(tx,ty-1,{oggetto:OGGETTO.LETTO,pavimento:'legno'});
+  assert.equal(azioni.smontaggioPossibile({...eroe,guarda:'su'},'ascia').impedito,'il letto sta sulle assi: prima smontalo');
+  // La casella vuota si solleva anche a mani nude, come prima.
+  modifiche.imposta(tx-1,ty,{oggetto:OGGETTO.NESSUNO,pavimento:'legno'});
+  assert.equal(azioni.smontaggioPossibile({...eroe,guarda:'sinistra'}).verbo,'Solleva il pavimento');
 });
 test('il letto è un mobile: si posa solo sul pavimento di legno, e ci si dorme',()=>{
   stanza();inventario.aggiungi('letto',1);
@@ -3494,6 +3554,9 @@ test('pavimento e tepore si salvano solo dove hanno senso, e il pavimento ferma 
   const valida=m=>{stato.modifiche=[{tx:tx+1,ty,...m}];return salvataggio.valido(stato);};
   assert.ok(valida({oggetto:OGGETTO.NESSUNO,pavimento:'legno'}));
   assert.ok(valida({oggetto:OGGETTO.LETTO,pavimento:'legno'}));
+  // Da M7.18.21 anche sotto una cassa piena e un focolare acceso.
+  assert.ok(valida({oggetto:OGGETTO.CASSA,pavimento:'legno',contenuto:[{cosa:'legna',quantita:5}]}));
+  assert.ok(valida({oggetto:OGGETTO.FOCOLARE_ACCESO,legna:3,pavimento:'legno'}));
   assert.ok(valida({oggetto:OGGETTO.FOCOLARE_SPENTO,tepore:10}));
   assert.equal(valida({oggetto:OGGETTO.NESSUNO,pavimento:'pietra'}),false);
   assert.equal(valida({pavimento:'legno'}),false,'senza oggetto tornerebbe la generazione');

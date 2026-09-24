@@ -12,6 +12,26 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.21 — le assi sotto gli arredi
+
+Il pavimento si posa anche **sotto un arredo già posato**: letti e giacigli,
+banco, cassa, focolare e falò. Con le assi in mano, la barra davanti
+all'arredo dice «Posa il pavimento» e lo infila sotto. Sopra non cambia niente:
+la cassa tiene quello che ha dentro e il focolare acceso resta acceso con la
+sua legna. Vale la regola di sempre, cioè si posa solo al chiuso. Se sotto
+l'arredo il pavimento c'è già, la barra torna a fare quello che fa sempre:
+apre la cassa, fa dormire nel letto.
+
+Per **toglierlo** da sotto un arredo serve l'**ascia in mano**: la X fa leva
+sulle assi, le rimette nello zaino e lascia l'arredo dov'è. A mani vuote la X
+resta quella di prima: prima si smonta quello che sta sopra, poi si
+sollevano le assi. Il promemoria accanto allo zaino dice quale dei due gesti
+farà. Sotto il **letto** le assi non si tolgono, perché il letto si posa solo
+sul pavimento: prima si smonta il letto.
+
+Porte, muri, steccati e cancelli restano fuori: sono pareti, e il pavimento
+sta dentro.
+
 ## M7.18.20 — il pavimento chiaro
 
 Il pavimento di legno ha un disegno nuovo: **assi in verticale**, con le
@@ -1694,7 +1714,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.20**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.21**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
