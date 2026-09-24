@@ -124,6 +124,26 @@ function conLaTerra(vecchio, nuovo) {
 
 const limitata = (n) => Math.max(0, Math.min(FERTILITA_MASSIMA, n));
 
+// Il tassello dopo che la X ha spianato il campo: torna prato. Ma la terra
+// stanca se lo ricorda — altrimenti spianare e zappare di nuovo sarebbe il
+// modo di rifare nuova la terra senza fagioli, cenere o inverno, cioè di
+// saltare tutta M7.18. Quella grassa no: il bonus si perde spianando, ed è il
+// prezzo di averci ripensato. Senza ricordo il tassello scrive solo
+// "niente", come un cespuglio strappato: la ricrescita lo riconosce e, se lì
+// la valle aveva qualcosa, a suo tempo lo rimette.
+export function spianata(cambio) {
+  const f = fertilitaDi(cambio);
+  return f < FERTILITA_INIZIALE ? { oggetto: OGGETTO.NESSUNO, fertilita: f } : { oggetto: OGGETTO.NESSUNO };
+}
+
+// Un prato che si ricorda di essere stato un campo stanco: quello che
+// spianata() ha lasciato. È l'unico posto fuori dal campo dove la fertilità ha
+// un senso, e il salvataggio lo accetta solo così.
+export function pratoStanco(cambio) {
+  return cambio?.oggetto === OGGETTO.NESSUNO && Number.isInteger(cambio.fertilita)
+    && cambio.fertilita >= 0 && cambio.fertilita < FERTILITA_INIZIALE;
+}
+
 // La terra dopo aver ricevuto qualcosa: la cenere, una pianta interrata.
 export function concimata(cambio) {
   return { ...cambio, fertilita: limitata(fertilitaDi(cambio) + 1) };
@@ -376,12 +396,20 @@ export function nuovoGiorno() {
 function riposo(giorno) {
   if (stagioni.stagioneDi(giorno) !== "primavera" || stagioni.giornoNellaStagione(giorno) !== 1) return 0;
   const riposati = [];
+  const guariti = [];
   modifiche.perOgnuno((tx, ty, cambio) => {
+    // Anche il prato che si ricordava di essere stanco riposa, e quando torna
+    // come nuovo se lo dimentica.
+    if (pratoStanco(cambio)) {
+      guariti.push({ tx, ty, cambio });
+      return;
+    }
     if (cambio.oggetto !== OGGETTO.TERRA_ZAPPATA && cambio.oggetto !== OGGETTO.APPASSITA) return;
     if (fertilitaDi(cambio) >= FERTILITA_MASSIMA) return;
     riposati.push({ tx, ty, cambio });
   });
   for (const { tx, ty, cambio } of riposati) mappa.cambiaTassello(tx, ty, concimata(cambio));
+  for (const { tx, ty, cambio } of guariti) modifiche.imposta(tx, ty, spianata({ ...cambio, fertilita: cambio.fertilita + 1 }));
   return riposati.length;
 }
 

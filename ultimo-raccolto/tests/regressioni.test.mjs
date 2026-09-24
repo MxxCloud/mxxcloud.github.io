@@ -3587,3 +3587,62 @@ test('una notte al buio si salva solo su una pianta, e vale uno',()=>{
   for(const storto of [2,0,true,'1'])assert.equal(valida({oggetto:OGGETTO.CRESCIUTA,buio:storto}),false,String(storto));
   assert.equal(valida({oggetto:OGGETTO.TERRA_ZAPPATA,buio:1}),false,'buio senza pianta');
 });
+
+// M7.18.15 — la casella d'orto si toglie con la X.
+test('la X spiana la terra zappata e la pianta morta, estirpa quella che cresce, e non dà niente',()=>{
+  for(const [cambio,verbo,frase] of [
+    [{oggetto:OGGETTO.TERRA_ZAPPATA},'Spiana la terra','terra spianata'],
+    [{oggetto:OGGETTO.APPASSITA,fertilita:2},'Spiana la terra','terra spianata'],
+    [{oggetto:OGGETTO.GERMOGLIO,bagnato:true},'Estirpa la pianta','pianta estirpata'],
+    [{oggetto:OGGETTO.SEMINATO,coltura:'lino',passo:0},'Estirpa la pianta','pianta estirpata'],
+  ]) {
+    inventario.svuota();modifiche.imposta(tx+1,ty,cambio);
+    const x=azioni.smontaggioPossibile(eroe);
+    assert.equal(x.verbo,verbo);assert.equal(x.impedito,null);
+    const esito=azioni.smontaDavanti(eroe);
+    assert.equal(esito.tipo,'smontato');assert.equal(esito.frase,frase);
+    assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.NESSUNO},'torna prato: '+verbo);
+    assert.deepEqual(inventario.contenuto().filter(Boolean),[],'niente in mano');
+  }
+});
+
+test('il raccolto pronto non si butta con la X: prima si raccoglie',()=>{
+  for(const oggetto of [OGGETTO.MATURA,OGGETTO.A_SEME]) {
+    modifiche.imposta(tx+1,ty,{oggetto,maturata:1});
+    assert.equal(azioni.smontaggioPossibile(eroe).impedito,'prima raccogli');
+    assert.deepEqual(azioni.smontaDavanti(eroe),{tipo:'impedito',messaggio:'prima raccogli'});
+    assert.equal(mappa.oggettoDi(tx+1,ty),oggetto);
+  }
+});
+
+test('si spiana anche al chiuso',()=>{
+  stanza();
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CRESCIUTA,buio:1});
+  assert.equal(azioni.smontaDavanti(eroe).tipo,'smontato');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.NESSUNO);
+});
+
+test('la terra stanca spianata se lo ricorda, rizappata resta stanca, e riposa d’inverno',()=>{
+  inventario.aggiungi('zappa',1);
+  // Grassa: spianando si perde il bonus, e il prato non si ricorda niente.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.TERRA_ZAPPATA,fertilita:3});
+  azioni.smontaDavanti(eroe);assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.NESSUNO});
+  // Sfinita: se lo ricorda, e la zappa non la rifà nuova.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.APPASSITA,fertilita:0});
+  azioni.smontaDavanti(eroe);assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.NESSUNO,fertilita:0});
+  assert.equal(azioni.agisci(eroe,'zappa',0).tipo,'zappa');
+  assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.TERRA_ZAPPATA,fertilita:0});
+  // Il prato stanco riposa come il campo: un punto a primavera, e a due se lo scorda.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.NESSUNO,fertilita:0});
+  notte(13);assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.NESSUNO,fertilita:1});
+  notte(29);assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.NESSUNO});
+});
+
+test('il salvataggio accetta la fertilità sul prato solo se è stanca',()=>{
+  const stato=salvataggio.istantanea(eroe,0);
+  const valida=m=>{stato.modifiche=[{tx:tx+1,ty,...m}];return salvataggio.valido(stato);};
+  assert.ok(valida({oggetto:OGGETTO.NESSUNO,fertilita:0}));
+  assert.ok(valida({oggetto:OGGETTO.NESSUNO,fertilita:1}));
+  assert.equal(valida({oggetto:OGGETTO.NESSUNO,fertilita:2}),false);
+  assert.equal(valida({oggetto:OGGETTO.NESSUNO,fertilita:3}),false);
+});
