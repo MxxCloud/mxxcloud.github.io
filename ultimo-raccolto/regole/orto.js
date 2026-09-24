@@ -16,6 +16,7 @@ import * as tempo from "./tempo.js";
 import * as stagioni from "./stagioni.js";
 import * as meteo from "./meteo.js";
 import * as colture from "./colture.js";
+import * as riparo from "./riparo.js";
 import { impronta } from "../motore/casuale.js";
 
 // In ordine di crescita: ogni giorno innaffiato avanza di uno. Quattro stadi,
@@ -223,9 +224,38 @@ export function nuovoGiorno() {
   const daCrescere = [];
   const daDatare = [];
   const fermi = [];
-  modifiche.perOgnuno((tx, ty, cambio) => {
-    if (!eColtura(cambio.oggetto)) return;
+  const alBuio = [];
+  const alChiuso = [];
+  const allAperto = [];
+  modifiche.perOgnuno((tx, ty, vecchio) => {
+    if (!eColtura(vecchio.oggetto)) return;
+    let cambio = vecchio;
     const coltura = colture.di(cambio.coltura);
+    // AL CHIUSO NON CRESCE NIENTE (M7.18.14). Le stanze sono fatte per
+    // dormire, costruire e ripararsi; una pianta vuole il cielo. "Chiuso" è il
+    // posto murato di riparo.js — una radura fra gli alberi resta campagna.
+    //
+    // Un orto seminato all'aperto e poi murato non muore di colpo: la prima
+    // notte si ferma — non cresce anche se bagnato, non ha sete, e l'orologio
+    // della matura sta fermo — e lo si scrive sul tassello. Se la notte dopo
+    // è ancora chiuso, appassisce. In mezzo c'è un giorno per accorgersene e
+    // smontare un muro; e il tasto davanti alla pianta lo dice prima.
+    //
+    // L'inverno però viene prima del buio: chi non regge il gelo muore
+    // comunque, murato o no.
+    if (!(!siColtiva && !coltura.gelo) && riparo.murato(tx, ty)) {
+      if (cambio.buio) alBuio.push({ tx, ty, cambio });
+      else alChiuso.push({ tx, ty, cambio });
+      return;
+    }
+    // Riaperto dopo una notte al buio: si dimentica e si vive la notte come
+    // tutte le altre. Si scrive a parte perché non tutti i rami qui sotto
+    // riscrivono il tassello.
+    if (cambio.buio) {
+      const { buio, ...resto } = cambio;
+      cambio = resto;
+      allAperto.push({ tx, ty, cambio });
+    }
     // D'inverno muore tutto quello che era piantato, maturo e a seme
     // compresi: è la scadenza, ed è la ragione per cui esiste una stagione
     // buona. Si guarda prima di far crescere, perché crescere e morire lo
@@ -272,6 +302,12 @@ export function nuovoGiorno() {
     else assetate.push({ tx, ty, cambio: { ...cambio, secco, patito: true } });
   });
 
+  for (const { tx, ty, cambio } of allAperto) modifiche.imposta(tx, ty, cambio);
+  for (const { tx, ty, cambio } of alChiuso) {
+    const fermo = { ...cambio, buio: 1 };
+    if (cambio.maturata !== undefined) fermo.maturata = cambio.maturata + 1;
+    modifiche.imposta(tx, ty, fermo);
+  }
   for (const { tx, ty, cambio } of daDatare) {
     modifiche.imposta(tx, ty, { ...cambio, maturata: giorno });
   }
@@ -281,7 +317,7 @@ export function nuovoGiorno() {
   for (const { tx, ty, cambio } of fermi) {
     modifiche.imposta(tx, ty, { ...cambio, maturata: cambio.maturata + 1 });
   }
-  for (const { tx, ty, cambio } of [...appassite, ...seccate]) {
+  for (const { tx, ty, cambio } of [...appassite, ...seccate, ...alBuio]) {
     mappa.cambiaTassello(tx, ty, conLaTerra(cambio, { oggetto: OGGETTO.APPASSITA }));
   }
   for (const { tx, ty, cambio } of aSeme) {
@@ -329,6 +365,8 @@ export function nuovoGiorno() {
     aSeme: aSeme.length,
     mangiate,
     riposate,
+    alBuio: alBuio.length,
+    alChiuso: alChiuso.length,
   };
 }
 
@@ -361,9 +399,10 @@ function riposo(giorno) {
 // comportamento. Il tiro è delle coordinate e del giorno, come tutto il resto
 // del mondo: la stessa notte nello stesso orto va sempre allo stesso modo.
 //
-// Protegge l'orto una di tre cose: uno spaventapasseri a tre tasselli, un
-// fuoco acceso a tre tasselli, o dei muri — un orto dentro una stanza chiusa
-// non lo raggiunge nessuno.
+// Protegge l'orto uno spaventapasseri a tre tasselli o un fuoco acceso a tre
+// tasselli. Fino a M7.18.13 bastavano anche dei muri; da M7.18.14 un orto
+// murato non cresce, quindi la stanza chiusa protegge soltanto la notte di
+// grazia prima che appassisca (vedi nuovoGiorno).
 export const PROBABILITA_BESTIE = 0.5;
 
 // Si possono spegnere, e lo fanno soltanto i collaudi: una prova sulla sete

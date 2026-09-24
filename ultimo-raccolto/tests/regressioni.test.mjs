@@ -3507,3 +3507,83 @@ test('pavimento e tepore si salvano solo dove hanno senso, e il pavimento ferma 
   tempo.impostaGiorno(primoDi('estate',20));ricrescita.nuovoGiorno();
   assert.equal(mappa.oggettoDi(p.tx,p.ty),OGGETTO.NESSUNO);
 });
+
+// M7.18.14 — al chiuso l'orto non cresce.
+test('al chiuso la prima notte la pianta si ferma, anche bagnata, e la seconda appassisce',()=>{
+  stanza();tempo.impostaGiorno(5);
+  modifiche.imposta(tx,ty,{oggetto:OGGETTO.CRESCIUTA,fertilita:3,bagnato:true});
+  const prima=notte(6);
+  assert.equal(prima.alChiuso,1);assert.equal(prima.cresciute,0);assert.equal(prima.alBuio,0);
+  assert.deepEqual(modifiche.di(tx,ty),{oggetto:OGGETTO.CRESCIUTA,fertilita:3,buio:1},'ferma, asciugata, e segnata');
+  const seconda=notte(7);
+  assert.equal(seconda.alBuio,1);assert.equal(seconda.alChiuso,0);
+  assert.deepEqual(modifiche.di(tx,ty),{oggetto:OGGETTO.APPASSITA,fertilita:3},'appassita, con la sua terra');
+});
+
+test('al chiuso anche l’orologio della matura si ferma la prima notte',()=>{
+  stanza();tempo.impostaGiorno(5);
+  modifiche.imposta(tx,ty,{oggetto:OGGETTO.MATURA,maturata:5});
+  notte(6);assert.equal(modifiche.di(tx,ty).maturata,6);assert.equal(modifiche.di(tx,ty).buio,1);
+  notte(7);assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.APPASSITA);
+});
+
+test('riaperto dopo una notte al buio, l’orto dimentica il buio e cresce',()=>{
+  stanza();tempo.impostaGiorno(5);
+  modifiche.imposta(tx,ty,{oggetto:OGGETTO.GERMOGLIO,bagnato:true});
+  notte(6);assert.equal(modifiche.di(tx,ty).buio,1);
+  // Un muro smontato: la porta, anche aperta, non basterebbe (M7.18.11).
+  modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.NESSUNO});
+  modifiche.imposta(tx,ty,{...modifiche.di(tx,ty),bagnato:true});
+  const r=notte(7);
+  assert.equal(r.cresciute,1);assert.equal(r.alChiuso,0);
+  assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.CRESCIUTA);assert.equal(modifiche.di(tx,ty).buio,undefined);
+  // E una pianta riaperta che stanotte non cresce si scorda il buio lo stesso.
+  modifiche.imposta(tx,ty,{oggetto:OGGETTO.SEMINATO,buio:1});
+  notte(8);assert.deepEqual(modifiche.di(tx,ty),{oggetto:OGGETTO.SEMINATO});
+});
+
+test('in una radura chiusa solo da alberi e sassi l’orto cresce: è ancora campagna',()=>{
+  tempo.impostaGiorno(5);
+  for(const [dx,dy,o] of [[1,0,OGGETTO.ALBERO],[-1,0,OGGETTO.ALBERO],[0,1,OGGETTO.SASSO],[0,-1,OGGETTO.ALBERO]])
+    modifiche.imposta(tx+dx,ty+dy,{oggetto:o});
+  assert.equal(riparo.allaga(tx,ty).chiusa,true,'chiusa per il freddo');
+  assert.equal(riparo.murato(tx,ty),false,'non murata per l’orto');
+  modifiche.imposta(tx,ty,{oggetto:OGGETTO.GERMOGLIO,bagnato:true});
+  assert.equal(notte(6).cresciute,1);
+});
+
+test('d’inverno al chiuso muore chi non regge il gelo, come fuori: non è buio',()=>{
+  stanza();tempo.impostaGiorno(8);
+  modifiche.imposta(tx,ty,{oggetto:OGGETTO.CRESCIUTA});
+  const r=notte(9);
+  assert.equal(r.appassite,1);assert.equal(r.alBuio,0);assert.equal(r.alChiuso,0);
+});
+
+test('al chiuso non si zappa e non si semina, e la pianta murata lo dice',()=>{
+  tempo.impostaGiorno(1);
+  inventario.aggiungi('zappa',1);
+  assert.equal(azioni.azionePossibile(eroe,'zappa',0).impedito ?? null,null,'fuori si zappa');
+  stanza();
+  assert.equal(azioni.azionePossibile(eroe,'zappa',0).impedito,'al chiuso non arriva la luce');
+  inventario.svuota();inventario.aggiungi('semi',3);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.TERRA_ZAPPATA});
+  assert.equal(azioni.azionePossibile(eroe,'semi',0).impedito,'al chiuso non arriva la luce');
+  assert.equal(azioni.agisci(eroe,'semi',0),null,'il seme resta in mano');assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.TERRA_ZAPPATA);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CRESCIUTA});
+  assert.match(azioni.azionePossibile(eroe,null).impedito,/seconda notte/);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CRESCIUTA,buio:1});
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,'al chiuso: stanotte appassisce');
+  // Aperta la stanza, la terra torna a rispondere.
+  modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.NESSUNO});
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.TERRA_ZAPPATA});
+  assert.equal(azioni.azionePossibile(eroe,'semi',0).impedito ?? null,null);
+});
+
+test('una notte al buio si salva solo su una pianta, e vale uno',()=>{
+  const stato=salvataggio.istantanea(eroe,0);
+  const valida=m=>{stato.modifiche=[{tx:tx+1,ty,...m}];return salvataggio.valido(stato);};
+  assert.ok(valida({oggetto:OGGETTO.CRESCIUTA,buio:1}));
+  assert.ok(valida({oggetto:OGGETTO.MATURA,maturata:3,buio:1}));
+  for(const storto of [2,0,true,'1'])assert.equal(valida({oggetto:OGGETTO.CRESCIUTA,buio:storto}),false,String(storto));
+  assert.equal(valida({oggetto:OGGETTO.TERRA_ZAPPATA,buio:1}),false,'buio senza pianta');
+});
