@@ -1051,6 +1051,107 @@ export const POLLO_ICONA = [
   "............",
 ];
 
+// Il gallo (M7.18.19): la stessa sagoma con la cresta grande, i bargigli e la
+// coda scura. Una coda che si vede da lontano, perché nel recinto serve
+// sapere a colpo d'occhio se c'è.
+const GALLO_A = [
+  ".....ttt..",
+  "......tt..",
+  ".....zzr..",
+  ".....zzzu.",
+  "g...zzzt..",
+  "gg.zzzzz..",
+  "jgzzzzzz..",
+  ".gzzzzzz..",
+  "..zzzzz...",
+  "...u..u...",
+];
+const GALLO_B = [...GALLO_A.slice(0, 9), "....uu...."];
+const GALLO_DORME = [
+  "..........",
+  "..........",
+  ".....ttt..",
+  "......t...",
+  ".....zzz..",
+  "g...zzzzu.",
+  "jgzzzzzz..",
+  ".gzzzzzz..",
+  "..zzzzzz..",
+  "..........",
+];
+export const GALLO = [GALLO_A, GALLO_B];
+export const GALLO_DORME_SPRITE = GALLO_DORME;
+export const GALLO_SELVATICO = [bruna(GALLO_A), bruna(GALLO_B)];
+export const GALLO_SELVATICO_DORME = bruna(GALLO_DORME);
+
+// Il pulcino: una pallina gialla, piccola abbastanza da capire che non è
+// ancora un pollo.
+export const PULCINO = [
+  ["..vv..", ".vvvr.", "vvvvvu", ".vvvv.", "..u.u."],
+  ["..vv..", ".vvvr.", "vvvvvu", ".vvvv.", "...uu."],
+];
+export const PULCINO_DORME = ["......", "..vv..", ".vvvvu", "vvvvv.", "......"];
+
+export const GALLO_ICONA = [
+  ".......ttt..",
+  "........tt..",
+  ".......zzr..",
+  ".......zzzu.",
+  ".g....zzzt..",
+  ".gg..zzzzz..",
+  ".jgzzzzzzz..",
+  "..gzzzzzzz..",
+  "...zzzzzz...",
+  "....zzzz....",
+  ".....u..u...",
+  "............",
+];
+
+export const UOVO_ICONA = [
+  "............",
+  "............",
+  ".....zz.....",
+  "....zzzz....",
+  "...zzzzzz...",
+  "...zzzzzz...",
+  "...zzzzz5...",
+  "....zz55....",
+  "............",
+  "............",
+  "............",
+  "............",
+];
+
+export const UOVO_COTTO_ICONA = [
+  "............",
+  "............",
+  "...zzzzz....",
+  "..zzzzzzzz..",
+  ".zzzvvvzzz..",
+  ".zzzvvvvzzz.",
+  "..zzvvvzzz..",
+  "...zzzzzz...",
+  "....zzz.....",
+  "............",
+  "............",
+  "............",
+];
+
+export const POLLINA_ICONA = [
+  "............",
+  "............",
+  "............",
+  "....bbbb....",
+  "...b9z9bb...",
+  "..b99z999b..",
+  "..b9z9999b..",
+  ".b99999z99b.",
+  ".bbbbbbbbbb.",
+  "............",
+  "............",
+  "............",
+];
+
 // Il pollaio: una casetta di assi col tetto, e un buco scuro da cui si entra.
 export const POLLAIO = [
   "......gggg......",

@@ -355,6 +355,18 @@ export const CATALOGO = {
   // recinto diventa tuo (vedi polli.js). Nello zaino regge una notte sola.
   pollo: { nome: "Pollo vivo", icona: arte.POLLO_ICONA, pila: 1, datato: true },
   pollaio: { nome: "Pollaio", icona: arte.POLLAIO_ICONA, pila: 1, posa: OGGETTO.POLLAIO },
+  // Il gallo vivo (M7.18.19): un oggetto a parte dalla gallina, così nello
+  // zaino e nel salvataggio resta quello che era. Senza gallo non si cova.
+  gallo: { nome: "Gallo vivo", icona: arte.GALLO_ICONA, pila: 1, datato: true },
+  // L'uovo: crudo sfama poco, cotto quanto la carne secca, e non dura. È il
+  // cibo che arriva ogni due giorni senza rischi — e ogni uovo mangiato è un
+  // pulcino che non nasce (vedi polli.js).
+  uovo: { nome: "Uovo", icona: arte.UOVO_ICONA, pila: 12,
+    commestibile: { fame: 0.15 }, cuoce: "uovo_cotto", dura: 4 },
+  uovo_cotto: { nome: "Uovo cotto", icona: arte.UOVO_COTTO_ICONA, pila: 12,
+    commestibile: { fame: 0.35 }, dura: 2 },
+  // La pollina: il concime del pollaio, come la cenere del focolare.
+  pollina: { nome: "Pollina", icona: arte.POLLINA_ICONA, pila: 20 },
   // La lancia. Colpisce meno di un'ascia e arriva molto più lontano, ed è
   // tutta qui la scelta: tre colpi tenendolo a distanza, o due lasciandogli
   // dare il suo.

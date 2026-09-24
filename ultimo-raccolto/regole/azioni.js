@@ -156,6 +156,9 @@ const NOME_DEL_FUOCO = {
   [OGGETTO.FALO_SPENTO]: "falò",
 };
 
+// I concimi e il loro verbo.
+const CONCIMI = { cenere: "Spargi la cenere", pollina: "Spargi la pollina" };
+
 // Quello che la zappa e il seme rispondono dentro un posto murato.
 const AL_CHIUSO = "al chiuso non arriva la luce";
 
@@ -236,7 +239,8 @@ export function azionePossibile(eroe, cosaInMano, indice) {
   const pollo = polli.davanti(eroe);
   if (pollo) {
     if (cosaInMano && attrezzoServe(cosaInMano, "combatti") && strumento(cosaInMano, indice, "combatti")) {
-      return { tipo: "uccidiPollo", verbo: "Tira il collo al pollo", pollo };
+      return { tipo: "uccidiPollo", verbo: "Tira il collo al pollo", pollo,
+        impedito: polli.pulcino(pollo) ? "è un pulcino: lascialo crescere" : null };
     }
     return { tipo: "prendiPollo", verbo: "Prendi il pollo", pollo, impedito: polli.perche(pollo) };
   }
@@ -368,11 +372,24 @@ function sulTassello(eroe, cosaInMano, indice) {
   // quanti polli ci mangiano — il conto che decide se domani avranno fame.
   if (b.oggetto === OGGETTO.POLLAIO) {
     const mangime = polli.mangimeNel(b.tx, b.ty);
+    // Le uova si prendono a mani vuote, la pollina con la zappa: due cose che
+    // stanno nello stesso pollaio, e due mani diverse per prenderle.
+    const uova = polli.uovaNel(b.tx, b.ty);
+    if (!cosaInMano && uova > 0) {
+      return { tipo: "prendiUova", verbo: `Prendi le uova (${uova})`, bersaglio: b,
+        impedito: inventario.spazioPer("uovo") < 1 ? "zaino pieno" : null };
+    }
+    const pollina = polli.pollinaNel(b.tx, b.ty);
+    if (pollina > 0 && ATTREZZI[strumento(cosaInMano, indice, "zappa")]?.zappa) {
+      return { tipo: "prendiPollina", verbo: `Raccogli la pollina (${pollina})`, bersaglio: b,
+        impedito: inventario.spazioPer("pollina") < 1 ? "zaino pieno" : null };
+    }
     if (cosaInMano && polli.MANGIMI.has(cosaInMano)) {
       return { tipo: "nutri", verbo: `Dai da mangiare (${mangime}/${polli.MANGIME_MASSIMO})`, cosa: cosaInMano, bersaglio: b,
         impedito: mangime >= polli.MANGIME_MASSIMO ? "il pollaio è pieno" : null };
     }
-    return { tipo: "guardaPollaio", verbo: "Guarda il pollaio", bersaglio: b, mangime, polli: polli.nelRecintoDi(b.tx, b.ty) };
+    return { tipo: "guardaPollaio", verbo: "Guarda il pollaio", bersaglio: b, mangime, polli: polli.nelRecintoDi(b.tx, b.ty),
+      uova, pollina };
   }
 
   if (decadimento.siCarica(b.oggetto)) {
@@ -560,10 +577,11 @@ function sulTassello(eroe, cosaInMano, indice) {
 
   // La cenere si sparge sulla terra del campo, vuota o già seminata: è
   // concime, e il concime si dà anche a quello che cresce. Sulla terra già
-  // grassa non serve, e lo si dice prima di sprecarla.
-  if (cosaInMano === "cenere" && (b.oggetto === OGGETTO.TERRA_ZAPPATA || orto.eColtura(b.oggetto))) {
+  // grassa non serve, e lo si dice prima di sprecarla. Da M7.18.19 anche la
+  // pollina, che vale uguale.
+  if (CONCIMI[cosaInMano] && (b.oggetto === OGGETTO.TERRA_ZAPPATA || orto.eColtura(b.oggetto))) {
     const piena = orto.fertilitaDi(modifiche.di(b.tx, b.ty)) >= orto.FERTILITA_MASSIMA;
-    return { tipo: "spargi", verbo: "Spargi la cenere", bersaglio: b, impedito: piena ? "la terra è già grassa" : null };
+    return { tipo: "spargi", verbo: CONCIMI[cosaInMano], cosa: cosaInMano, bersaglio: b, impedito: piena ? "la terra è già grassa" : null };
   }
 
   if (cosaInMano === "secchio_pieno" && orto.siPuoInnaffiare(b.oggetto)) {
@@ -603,9 +621,10 @@ function sulTassello(eroe, cosaInMano, indice) {
   // Il pollo in mano si posa davanti ai piedi: dentro un recinto diventa tuo,
   // fuori scappa. Il tasto lo dice prima, perché liberarlo per sbaglio vuol
   // dire perderlo.
-  if (cosaInMano === "pollo" && b.oggetto === OGGETTO.NESSUNO) {
+  if (polli.VIVI.has(cosaInMano) && b.oggetto === OGGETTO.NESSUNO) {
     const posto = polli.doveLiberare(b.tx, b.ty);
-    if (posto) return { tipo: "liberaPollo", verbo: posto.nelRecinto ? "Metti il pollo nel recinto" : "Libera il pollo", bersaglio: b };
+    const chi = cosaInMano === "gallo" ? "il gallo" : "il pollo";
+    if (posto) return { tipo: "liberaPollo", verbo: posto.nelRecinto ? `Metti ${chi} nel recinto` : `Libera ${chi}`, bersaglio: b };
   }
   if (posa !== undefined && posa !== null && posabile(b)) {
     // I mobili si posano solo sul pavimento di legno. Il primo è il letto.
@@ -730,7 +749,7 @@ export function getta(eroe, indice) {
   if (!casella) return null;
   // Un pollo vivo non si butta in un mucchio: si posa, con la stessa regola
   // della barra.
-  if (casella.cosa === "pollo") {
+  if (polli.VIVI.has(casella.cosa)) {
     const { tx, ty } = bersaglio(eroe);
     return polli.libera(tx, ty, indice) ?? { tipo: "nonCePosto" };
   }
@@ -865,6 +884,7 @@ function perche(b, voce) {
   if (b.oggetto === OGGETTO.POLLAIO && polli.mangimeNel(b.tx, b.ty) > 0) {
     return `c'è ancora mangime: ${polli.mangimeNel(b.tx, b.ty)}/${polli.MANGIME_MASSIMO}`;
   }
+  if (b.oggetto === OGGETTO.POLLAIO && polli.uovaNel(b.tx, b.ty) > 0) return "prima prendi le uova";
   if (NOME_DEL_FUOCO[b.oggetto] && decadimento.legnaNel(b.tx, b.ty) > 0) {
     return `il ${NOME_DEL_FUOCO[b.oggetto]} è acceso: ${decadimento.legnaNel(b.tx, b.ty)}/${decadimento.capienzaDi(b.oggetto)}`;
   }
@@ -1205,7 +1225,8 @@ function esegui(eroe, cosaInMano, indice, azione) {
   }
 
   if (azione.tipo === "guardaPollaio") {
-    return { tipo: "pollaioGuardato", mangime: azione.mangime, massimo: polli.MANGIME_MASSIMO, polli: azione.polli };
+    return { tipo: "pollaioGuardato", mangime: azione.mangime, massimo: polli.MANGIME_MASSIMO, polli: azione.polli,
+      pollina: azione.pollina };
   }
   if (azione.tipo === "nutri") {
     if (!inventario.togli(azione.cosa, 1)) return null;
@@ -1213,6 +1234,8 @@ function esegui(eroe, cosaInMano, indice, azione) {
     return { tipo: "nutrito", mangime: polli.mangimeNel(tx, ty), massimo: polli.MANGIME_MASSIMO };
   }
   if (azione.tipo === "liberaPollo") return polli.libera(tx, ty, indice);
+  if (azione.tipo === "prendiUova") return polli.prendiUova(tx, ty);
+  if (azione.tipo === "prendiPollina") return polli.prendiPollina(tx, ty);
 
   if (azione.tipo === "carica") {
     if (!inventario.togli(azione.cosa, azione.quante)) return null;
@@ -1297,9 +1320,9 @@ function esegui(eroe, cosaInMano, indice, azione) {
   }
 
   if (azione.tipo === "spargi") {
-    if (!inventario.togli("cenere", 1)) return null;
+    if (!inventario.togli(azione.cosa, 1)) return null;
     mappa.cambiaTassello(tx, ty, orto.concimata(modifiche.di(tx, ty) ?? { oggetto: azione.bersaglio.oggetto }));
-    return { tipo: "spargi" };
+    return { tipo: "spargi", cosa: azione.cosa };
   }
 
   if (azione.tipo === "cenere") {

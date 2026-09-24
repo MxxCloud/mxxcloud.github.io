@@ -18,6 +18,14 @@
 // - mangia ogni giorno dal pollaio: un seme, una bacca o un fagiolo a testa.
 //   Un giorno senza è un giorno di fame, due di fila e muore;
 // - d'inverno senza pollaio muore di freddo, e un pollaio ne ripara quattro.
+//
+// E da M7.18.19 quello che dà:
+// - uno su quattro è un gallo. La gallina nutrita fa un uovo ogni due giorni,
+//   non d'inverno, nel nido del pollaio;
+// - con un gallo nel recinto le uova lasciate nel nido si covano: alla terza
+//   notte un uovo è un pulcino, che in una stagione diventa gallo o gallina.
+//   Ogni pulcino è un uovo non mangiato, come ogni seme è una rapa;
+// - il pollaio raccoglie la pollina, che sull'orto vale la cenere.
 
 import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
@@ -50,6 +58,18 @@ export const MANGIME_MASSIMO = 12;
 export const RIPARATI_PER_POLLAIO = 4;
 // Quanti giorni di fame di fila uccidono.
 export const GIORNI_DI_FAME = 2;
+// Il nido e la cova: quante uova e quanta pollina tiene un pollaio, quante
+// notti di cova fanno un pulcino, e quanti giorni ci mette a crescere.
+export const UOVA_MASSIME = 6;
+export const POLLINA_MASSIMA = 6;
+export const NOTTI_DI_COVA = 3;
+export const GIORNI_DA_PULCINO = 4;
+// Ogni quanti giorni una gallina nutrita fa un uovo.
+export const GIORNI_PER_UOVO = 2;
+// Quanti selvatici su cento sono galli.
+const GALLI = 0.25;
+// Gli animali vivi che stanno nello zaino: la gallina e il gallo.
+export const VIVI = new Set(["pollo", "gallo"]);
 // Cosa mangia un pollo: i semi e quello che si raccoglie a mani nude. Il
 // mangime fa concorrenza a te e all'orto, ed è questa la sua spesa.
 export const MANGIMI = new Set(["semi", "semi_cavolo", "semi_lino", "bacche", "fagioli"]);
@@ -66,10 +86,15 @@ export function reimposta() {
   sequenza = 0;
 }
 
-function crea(px, py, domestico, seme) {
+// "eta" è l'età di un pulcino in giorni, null per un adulto; "deposto" il
+// giorno dell'ultimo uovo, null per chi non ne ha ancora fatti.
+function crea(px, py, domestico, seme, gallo = false, eta = null) {
   return { px, py, domestico, seme: seme >>> 0, dx: 0, dy: 0, giro: 0,
-    destra: true, passo: 0, fame: 0 };
+    destra: true, passo: 0, fame: 0, gallo, eta, deposto: null };
 }
+
+export const pulcino = (p) => p.eta !== null && p.eta !== undefined;
+const gallina = (p) => !p.gallo && !pulcino(p);
 
 // Un generatore per pollo, come per le bestie: il passeggio non dipende dal
 // fotogramma in cui lo si guarda.
@@ -134,7 +159,8 @@ function nasce(eroe) {
     // Mai dentro un recinto: quelli sono tuoi.
     if (riparo.recintato(tx, ty)) continue;
     if (polli.some(p => Math.hypot(p.px - px, p.py - py) < 48)) continue;
-    polli.push(crea(px, py, false, Math.floor(impronta(i, giro, seme) * 4294967296)));
+    const gallo = impronta(giro, i + 7, seme ^ 0x6a110) < GALLI;
+    polli.push(crea(px, py, false, Math.floor(impronta(i, giro, seme) * 4294967296), gallo));
     return;
   }
 }
@@ -205,8 +231,9 @@ export function davanti(eroe, portata = 22) {
 // Perché non si prende, o null se si prende. Il selvatico di giorno scappa, e
 // lo si dice invece di lasciar premere la barra a vuoto.
 export function perche(p) {
+  if (pulcino(p)) return "è un pulcino: lascialo crescere";
   if (!p.domestico && !tempo.eNotte()) return "di giorno scappa: prendilo di notte";
-  if (inventario.spazioPer("pollo") < 1) return "zaino pieno";
+  if (inventario.spazioPer(p.gallo ? "gallo" : "pollo") < 1) return "zaino pieno";
   return null;
 }
 
@@ -220,13 +247,13 @@ function togli(p) {
 export function prendi(p) {
   if (!polli.includes(p) || perche(p)) return null;
   togli(p);
-  inventario.aggiungi("pollo", 1, tempo.giornoCorrente());
-  return { tipo: "polloPreso" };
+  inventario.aggiungi(p.gallo ? "gallo" : "pollo", 1, tempo.giornoCorrente());
+  return { tipo: "polloPreso", gallo: p.gallo === true };
 }
 
 // Tirargli il collo con un'arma in mano: una carne cruda. Allevato o no.
 export function uccidi(p) {
-  if (!polli.includes(p)) return null;
+  if (!polli.includes(p) || pulcino(p)) return null;
   togli(p);
   const resto = inventario.aggiungi("carne_cruda", 1, tempo.giornoCorrente());
   return { tipo: "polloUcciso", nelloZaino: resto === 0 };
@@ -245,11 +272,11 @@ export function doveLiberare(tx, ty) {
 export function libera(tx, ty, indice) {
   const posto = doveLiberare(tx, ty);
   const casella = inventario.contenuto()[indice];
-  if (!posto || casella?.cosa !== "pollo") return null;
+  if (!posto || !VIVI.has(casella?.cosa)) return null;
   inventario.svuotaCasella(indice);
   const seme = Math.floor(impronta(tx, ty, tempo.giornoCorrente()) * 4294967296);
-  polli.push(crea(posto.px, posto.py, posto.nelRecinto, seme));
-  return { tipo: "polloLiberato", nelRecinto: posto.nelRecinto };
+  polli.push(crea(posto.px, posto.py, posto.nelRecinto, seme, casella.cosa === "gallo"));
+  return { tipo: "polloLiberato", nelRecinto: posto.nelRecinto, gallo: casella.cosa === "gallo" };
 }
 
 // --- il pollaio ---------------------------------------------------------------
@@ -266,6 +293,40 @@ export function nutri(tx, ty) {
   if (mangime >= MANGIME_MASSIMO) return false;
   modifiche.imposta(tx, ty, { ...(modifiche.di(tx, ty) ?? {}), oggetto: OGGETTO.POLLAIO, mangime: mangime + 1 });
   return true;
+}
+
+export function uovaNel(tx, ty) {
+  return modifiche.di(tx, ty)?.uova ?? 0;
+}
+export function pollinaNel(tx, ty) {
+  return modifiche.di(tx, ty)?.pollina ?? 0;
+}
+
+// Riscrive i campi del pollaio: quelli a zero spariscono, come la legna.
+function aggiornaPollaio(tx, ty, campi) {
+  const dati = { ...(modifiche.di(tx, ty) ?? {}), oggetto: OGGETTO.POLLAIO, ...campi };
+  for (const k of ["mangime", "uova", "cova", "pollina"]) if (!dati[k]) delete dati[k];
+  modifiche.imposta(tx, ty, dati);
+}
+
+// Prendere le uova azzera la cova: quello che c'era sotto la chioccia è nello
+// zaino adesso.
+export function prendiUova(tx, ty) {
+  const uova = uovaNel(tx, ty);
+  if (uova === 0) return null;
+  const resto = inventario.aggiungi("uovo", uova, tempo.giornoCorrente());
+  if (resto === uova) return { tipo: "zainoPieno" };
+  aggiornaPollaio(tx, ty, { uova: resto, cova: 0 });
+  return { tipo: "uovaPrese", quante: uova - resto };
+}
+
+export function prendiPollina(tx, ty) {
+  const pollina = pollinaNel(tx, ty);
+  if (pollina === 0) return null;
+  const resto = inventario.aggiungi("pollina", pollina);
+  if (resto === pollina) return { tipo: "zainoPieno" };
+  aggiornaPollaio(tx, ty, { pollina: resto });
+  return { tipo: "pollinaPresa", quante: pollina - resto };
 }
 
 // Quanti polli allevati stanno nel recinto di questo pollaio.
@@ -286,12 +347,14 @@ export function nelRecintoDi(tx, ty) {
 // nessuno lo dica è un pollo sparito.
 export function nuovoGiorno() {
   const giorno = tempo.giornoCorrente();
-  const esito = { mortiNelloZaino: 0, avvisoZaino: 0, scappati: 0, affamati: 0, mortiDiFame: 0, mortiDiFreddo: 0 };
+  const esito = { mortiNelloZaino: 0, avvisoZaino: 0, scappati: 0, affamati: 0, mortiDiFame: 0, mortiDiFreddo: 0,
+    uova: 0, uovaPerse: 0, nati: 0, cresciuti: [] };
+  const nascite = [];
 
   // Nello zaino un pollo regge una notte: preso ieri, a questa mezzanotte è
   // ancora vivo — e lo si avvisa — alla prossima no. Resta la carne.
   for (const casella of inventario.contenuto()) {
-    if (casella?.cosa !== "pollo") continue;
+    if (!VIVI.has(casella?.cosa)) continue;
     const preso = casella.dal ?? giorno;
     if (giorno - preso >= 2) {
       casella.cosa = "carne_cruda";
@@ -327,6 +390,7 @@ export function nuovoGiorno() {
     const pollai = recinto.pareti.filter(t => mappa.oggettoDi(t.tx, t.ty) === OGGETTO.POLLAIO);
 
     // Si mangia dal pollaio che ne ha di più, uno per pollo.
+    const nutriti = new Set();
     for (const q of qui) {
       const pieno = pollai.filter(t => mangimeNel(t.tx, t.ty) > 0)
         .sort((a, b) => mangimeNel(b.tx, b.ty) - mangimeNel(a.tx, a.ty))[0];
@@ -335,6 +399,7 @@ export function nuovoGiorno() {
         const { mangime, ...resto } = modifiche.di(pieno.tx, pieno.ty) ?? { oggetto: OGGETTO.POLLAIO };
         modifiche.imposta(pieno.tx, pieno.ty, resta > 0 ? { ...resto, mangime: resta } : resto);
         q.fame = 0;
+        nutriti.add(q);
         continue;
       }
       q.fame += 1;
@@ -348,14 +413,71 @@ export function nuovoGiorno() {
       const riparati = pollai.length * RIPARATI_PER_POLLAIO;
       for (const q of vivi.slice(riparati)) { morti.add(q); esito.mortiDiFreddo += 1; }
     }
+
+    const vivi = qui.filter(q => !morti.has(q));
+
+    // I pulcini crescono, e al quarto giorno sono gallo o gallina.
+    for (const q of vivi) {
+      if (!pulcino(q)) continue;
+      q.eta += 1;
+      if (q.eta >= GIORNI_DA_PULCINO) {
+        q.eta = null;
+        q.gallo = (q.seme & 1) === 1;
+        esito.cresciuti.push(q.gallo ? "gallo" : "gallina");
+      }
+    }
+
+    if (!inverno) {
+      // Le uova: una gallina nutrita stanotte, ogni due giorni, nel nido meno
+      // pieno. Senza pollaio, o col nido pieno, l'uovo è perso.
+      for (const q of vivi) {
+        if (!gallina(q) || !nutriti.has(q)) continue;
+        if (q.deposto !== null && q.deposto !== undefined && giorno - q.deposto < GIORNI_PER_UOVO) continue;
+        q.deposto = giorno;
+        const nido = pollai.filter(t => uovaNel(t.tx, t.ty) < UOVA_MASSIME)
+          .sort((a, b) => uovaNel(a.tx, a.ty) - uovaNel(b.tx, b.ty))[0];
+        if (!nido) { esito.uovaPerse += 1; continue; }
+        aggiornaPollaio(nido.tx, nido.ty, { uova: uovaNel(nido.tx, nido.ty) + 1 });
+        esito.uova += 1;
+      }
+    }
+
+    // La cova: con un gallo nel recinto le uova del nido si scaldano, e alla
+    // terza notte una è un pulcino. D'inverno si ferma, e senza gallo non
+    // comincia.
+    const gallo = vivi.some(q => q.gallo && !pulcino(q));
+    for (const t of pollai) {
+      const dati = modifiche.di(t.tx, t.ty) ?? {};
+      if (inverno || !gallo || !dati.uova) {
+        if (dati.cova) aggiornaPollaio(t.tx, t.ty, { cova: 0 });
+        continue;
+      }
+      const cova = (dati.cova ?? 0) + 1;
+      if (cova < NOTTI_DI_COVA) { aggiornaPollaio(t.tx, t.ty, { cova }); continue; }
+      aggiornaPollaio(t.tx, t.ty, { cova: 0, uova: dati.uova - 1 });
+      const posto = recinto.tasselli.find(c => Math.abs(c.tx - t.tx) + Math.abs(c.ty - t.ty) <= 2
+        && urti.liberoIn((c.tx + 0.5) * 16, (c.ty + 0.75) * 16)) ?? recinto.tasselli[0];
+      nascite.push(crea((posto.tx + 0.5) * 16, (posto.ty + 0.75) * 16, true,
+        Math.floor(impronta(t.tx, t.ty, giorno) * 4294967296), false, 0));
+      esito.nati += 1;
+    }
+
+    // La pollina: un recinto con dei polli ne lascia una a notte nel pollaio
+    // che ne ha meno.
+    if (vivi.length > 0) {
+      const dove = pollai.filter(t => pollinaNel(t.tx, t.ty) < POLLINA_MASSIMA)
+        .sort((a, b) => pollinaNel(a.tx, a.ty) - pollinaNel(b.tx, b.ty))[0];
+      if (dove) aggiornaPollaio(dove.tx, dove.ty, { pollina: pollinaNel(dove.tx, dove.ty) + 1 });
+    }
   }
   for (const p of morti) togli(p);
+  polli.push(...nascite);
   return esito;
 }
 
 // --- salvataggio ------------------------------------------------------------
 
-const CAMPI = ["px", "py", "domestico", "seme", "dx", "dy", "giro", "destra", "passo", "fame"];
+const CAMPI = ["px", "py", "domestico", "seme", "dx", "dy", "giro", "destra", "passo", "fame", "gallo", "eta", "deposto"];
 
 export function istantanea() {
   return { attesa, sequenza, polli: polli.map(p => Object.fromEntries(CAMPI.map(k => [k, p[k]]))) };
@@ -366,7 +488,9 @@ export function ripristina(dati) {
   if (!dati) return;
   attesa = dati.attesa;
   sequenza = dati.sequenza;
-  for (const p of dati.polli) polli.push({ ...p });
+  // I polli salvati prima di M7.18.19 non hanno i campi nuovi: sono galline
+  // adulte che non hanno ancora fatto uova.
+  for (const p of dati.polli) polli.push({ gallo: false, eta: null, deposto: null, ...p });
 }
 
 export function statoValido(dati) {
@@ -378,7 +502,10 @@ export function statoValido(dati) {
     && typeof p.domestico === "boolean" && intero(p.seme, 0, 4294967295)
     && numero(p.dx, -1, 1) && numero(p.dy, -1, 1) && numero(p.giro, -1, 5)
     && typeof p.destra === "boolean" && numero(p.passo, 0, 1e12)
-    && intero(p.fame, 0, GIORNI_DI_FAME - 1));
+    && intero(p.fame, 0, GIORNI_DI_FAME - 1)
+    && (p.gallo === undefined || typeof p.gallo === "boolean")
+    && (p.eta === undefined || p.eta === null || intero(p.eta, 0, GIORNI_DA_PULCINO - 1))
+    && (p.deposto === undefined || p.deposto === null || intero(p.deposto, 1, Number.MAX_SAFE_INTEGER)));
 }
 
 // --- disegno ------------------------------------------------------------------
@@ -386,9 +513,15 @@ export function statoValido(dati) {
 export function daDisegnare() {
   const notte = tempo.eNotte();
   return polli.map(p => {
-    const righe = notte
+    const passo = Math.floor(p.passo) % 2;
+    let righe;
+    if (pulcino(p)) righe = notte ? arte.PULCINO_DORME : arte.PULCINO[passo];
+    else if (p.gallo) righe = notte
+      ? (p.domestico ? arte.GALLO_DORME_SPRITE : arte.GALLO_SELVATICO_DORME)
+      : (p.domestico ? arte.GALLO : arte.GALLO_SELVATICO)[passo];
+    else righe = notte
       ? (p.domestico ? arte.POLLO_DORME : arte.POLLO_SELVATICO_DORME)
-      : (p.domestico ? arte.POLLO : arte.POLLO_SELVATICO)[Math.floor(p.passo) % 2];
+      : (p.domestico ? arte.POLLO : arte.POLLO_SELVATICO)[passo];
     const cotto = cuoci(righe);
     p.sprite = p.destra ? cotto : riflesso(cotto);
     p.x = p.px - p.sprite.width / 2;

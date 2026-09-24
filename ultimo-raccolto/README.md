@@ -12,6 +12,41 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.19 — uova, gallo, pulcini e pollina
+
+L'ultima tappa dell'allevamento dei polli: quello che danno.
+
+**Gallo e galline.** Un pollo selvatico su quattro è un **gallo**: cresta
+grande e coda scura. Nello zaino è un «Gallo vivo», con le stesse regole del
+pollo, e resta gallo anche nel salvataggio.
+
+**Uova.** Una gallina nutrita quella notte fa **un uovo ogni due giorni**, non
+d'inverno, nel nido del pollaio del suo recinto (il meno pieno; sei al
+massimo). Senza pollaio, o col nido pieno, l'uovo è perso. A mani vuote
+davanti al pollaio: *Prendi le uova*. L'uovo crudo sfama 0,15 e dura quattro
+giorni; **si cuoce al fuoco** come la carne, e cotto sfama 0,35 e dura due.
+
+**Cova e pulcini.** Se nel recinto c'è un gallo e nel nido restano delle uova,
+**ogni notte la cova avanza, e alla terza un uovo diventa un pulcino** accanto
+al pollaio. Prendere le uova azzera la cova, e d'inverno si ferma: **ogni
+pulcino è un uovo non mangiato**, la stessa scelta dei semi. Il pulcino è
+giallo, mangia come gli altri e conta nel riparo d'inverno; non si prende e
+non si uccide. **In quattro giorni è adulto**, gallo o gallina.
+
+**Pollina.** Ogni notte un recinto con dei polli ne lascia una nel pollaio,
+fino a sei. **Con la zappa in mano** davanti al pollaio: *Raccogli la
+pollina*. Si sparge sull'orto come la cenere: un punto di fertilità, e sulla
+terra già grassa non serve. Cenere e pollina adesso sono i due concimi.
+
+Il pollaio non si smonta con dentro delle uova: prima si prendono.
+
+**Le bestie.** Non entrano nel recinto a rubare i polli, come previsto
+all'inizio: a mezzanotte, con il cancello aperto, i polli scappano già da
+soli, ed è lo stesso rischio detto una volta sola.
+
+Il mattino dice anche le buone notizie del pollaio: un pulcino nato, un
+pulcino cresciuto, le uova nel nido.
+
 ## M7.18.18 — il pollo e il pollaio
 
 La seconda tappa dell'allevamento.
@@ -1651,7 +1686,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.18**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.19**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -2397,9 +2432,9 @@ prenderà il numero della tappa in cui arriva. M7.19 è libera per quello che
 viene dopo M7.18.
 
 **L'allevamento è cominciato dallo steccato** (M7.18.16) e dal pollo
-(M7.18.18): il recinto tiene l'orto al sicuro dalle bestie e dentro gli
-animali, il pollaio li nutre e li ripara. Resta la tappa di uova, pollina per
-l'orto e riproduzione.
+(M7.18.18), e si è chiuso con uova, gallo, pulcini e pollina (M7.18.19): il
+recinto tiene l'orto al sicuro dalle bestie e dentro gli animali, il pollaio
+li nutre, li ripara, raccoglie le uova e il concime per l'orto.
 
 **Il salvataggio stava fuori da questa scala** e si è incastrato qui, dopo le
 stagioni: era il momento giusto, perché un posto che sparisce chiudendo la
