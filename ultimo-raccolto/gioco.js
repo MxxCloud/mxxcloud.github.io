@@ -73,7 +73,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.20";
+const VERSIONE = "M7.18.21";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1111,7 +1111,7 @@ function leggiComandi() {
   // un tasto solo per una regola sola, e il promemoria accanto allo zaino dice
   // di volta in volta cosa toglierebbe.
   if (comandi.appenaPremuto("spegni")) {
-    const esito = azioni.smontaDavanti(eroe);
+    const esito = azioni.smontaDavanti(eroe, cosaInMano());
     if (esito?.tipo === "smontato") {
       suono.suona(POSA, { tono: esito.cosa === "porta" ? 0.85 : 1 });
       // "Smontato: cassa" e non "cassa smontata": è la stessa forma di
@@ -1486,7 +1486,7 @@ function aggiorna(passo) {
   // Quello che farebbe la X, chiesto dove si chiede quello che farebbe la
   // barra: sono due tasti che guardano lo stesso tassello, e tenerli in due
   // momenti diversi del fotogramma vorrebbe dire due risposte diverse.
-  smontaggioCorrente = mondoFermo() ? null : azioni.smontaggioPossibile(eroe);
+  smontaggioCorrente = mondoFermo() ? null : azioni.smontaggioPossibile(eroe, cosaInMano());
 
   if (messaggio) {
     messaggio.vita -= passo / 2.2;

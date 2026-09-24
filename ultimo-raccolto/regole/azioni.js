@@ -295,6 +295,9 @@ function sulTassello(eroe, cosaInMano, indice) {
       impedito: gelato ?? (bisogni.livello("sete") >= 1 ? "non hai sete" : null) };
   }
 
+  const sottoUnArredo = gestoDelPavimento(b, cosaInMano);
+  if (sottoUnArredo) return sottoUnArredo;
+
   // Di giorno due ore; la notte fino alle sette. X smonta il letto.
   if (LETTI.has(b.oggetto)) {
     return { tipo: "dormi", verbo: tempo.eNotte() ? "Dormi fino alle 7" : "Riposa 2 ore", bersaglio: b };
@@ -608,12 +611,13 @@ function sulTassello(eroe, cosaInMano, indice) {
 
   // Il pavimento non si posa come le altre cose: non prende il posto di
   // niente, ci va sotto. Vuole una casella libera — sopra non ci dev'essere
-  // niente, nemmeno un mucchio — e un posto chiuso: è quello che fa di una
-  // stanza una casa, e all'aperto sarebbe un pezzo di legno in mezzo al prato.
+  // niente, nemmeno un mucchio — o un arredo (vedi SOTTO_LE_ASSI), e un posto
+  // chiuso: è quello che fa di una stanza una casa, e all'aperto sarebbe un
+  // pezzo di legno in mezzo al prato.
   if (cosaInMano && CATALOGO[cosaInMano]?.pavimento && posabile(b)) {
     const gesto = { tipo: "pavimenta", verbo: "Posa il pavimento", cosa: cosaInMano, bersaglio: b };
     if (mappa.pavimentoIn(b.tx, b.ty)) return { ...gesto, impedito: "c'è già il pavimento" };
-    if (riparo.stanzaDi(b.tx, b.ty) === null) return { ...gesto, impedito: "il pavimento va posato al chiuso" };
+    if (!alChiusoSotto(b.tx, b.ty)) return { ...gesto, impedito: "il pavimento va posato al chiuso" };
     return gesto;
   }
 
@@ -668,6 +672,34 @@ function occupato(tx, ty, eroe) {
   return [eroe, ...entita.tutte(), ...fauna.tutte(), ...polli.tutte()].some(e => e &&
     e.px + urti.LARGHEZZA / 2 > tx * TASSELLO && e.px - urti.LARGHEZZA / 2 < (tx + 1) * TASSELLO &&
     e.py > ty * TASSELLO && e.py - urti.ALTEZZA < (ty + 1) * TASSELLO);
+}
+
+// Gli arredi sotto cui si possono infilare le assi senza smontarli, da
+// M7.18.21: i letti, il banco, la cassa e i fuochi. Prima il pavimento voleva
+// la casella vuota, e una cassa piena o un focolare acceso — che non si
+// smontano — lo tenevano fuori per sempre dal tassello su cui stavano. Porte,
+// muri, steccati e cancelli no: sono pareti, e il pavimento sta dentro.
+const SOTTO_LE_ASSI = new Set([OGGETTO.GIACIGLIO, OGGETTO.GIACIGLIO_PELLI, OGGETTO.LETTO, OGGETTO.BANCO, OGGETTO.CASSA,
+  OGGETTO.FOCOLARE_SPENTO, OGGETTO.FOCOLARE_ACCESO, OGGETTO.FALO_SPENTO, OGGETTO.FALO_ACCESO]);
+
+// Il pavimento sotto una cassa va al chiuso come quello su una casella vuota.
+// Ma la cassa è solida, cioè per stanzaDi() è una parete: si allaga come se
+// sul tassello non ci fosse, che è quello che sarà una volta posate le assi.
+function alChiusoSotto(tx, ty) {
+  return riparo.allaga(tx, ty, (x, y) => (x !== tx || y !== ty) && mappa.chiudeIn(x, y)).chiusa;
+}
+
+// Le assi in mano davanti a un arredo: la barra le posa sotto. Sta in cima a
+// sulTassello, perché dopo la cassa si aprirebbe e il letto farebbe dormire.
+function gestoDelPavimento(b, cosaInMano) {
+  if (!cosaInMano || !CATALOGO[cosaInMano]?.pavimento) return null;
+  if (!SOTTO_LE_ASSI.has(b.oggetto)) return null;
+  // Con le assi già posate la barra torna a fare quello che fa sempre: aprire
+  // la cassa, dormire, attizzare. Avere il pavimento in mano non deve
+  // chiudere una cassa.
+  if (mappa.pavimentoIn(b.tx, b.ty)) return null;
+  return { tipo: "pavimenta", verbo: "Posa il pavimento", cosa: cosaInMano, bersaglio: b,
+    impedito: alChiusoSotto(b.tx, b.ty) ? null : "il pavimento va posato al chiuso" };
 }
 
 function posabile(b) {
@@ -844,9 +876,20 @@ function voceDelCampo(oggetto) {
   return null;
 }
 
-export function smontaggioPossibile(eroe) {
+// Con l'ascia in mano, da M7.18.21, la X fa leva sulle assi e le solleva anche
+// da sotto quello che ci sta sopra, che resta dov'è: una cassa piena e un
+// focolare acceso non si smontano, e senza l'ascia il pavimento sotto di loro
+// sarebbe stato lì per sempre. L'ascia e non le mani nude perché così la X a
+// mani vuote resta quella di sempre, prima quello che sta sopra e poi le assi;
+// e il promemoria accanto allo zaino dice quale dei due gesti farà.
+function sollevaConLAscia(b, cosaInMano) {
+  return cosaInMano === "ascia" && b.oggetto !== OGGETTO.NESSUNO && mappa.pavimentoIn(b.tx, b.ty) !== null;
+}
+
+export function smontaggioPossibile(eroe, cosaInMano = null) {
   const b = bersaglio(eroe);
-  const voce = SMONTAGGI[b.oggetto]
+  const voce = (sollevaConLAscia(b, cosaInMano) ? PAVIMENTO_SOLLEVATO : null)
+    ?? SMONTAGGI[b.oggetto]
     ?? (b.oggetto === OGGETTO.NESSUNO && mappa.pavimentoIn(b.tx, b.ty) ? PAVIMENTO_SOLLEVATO : null)
     ?? voceDelCampo(b.oggetto);
   if (!voce) return null;
@@ -874,6 +917,14 @@ function perche(b, voce) {
   // e perderlo per aver premuto il tasto accanto sarebbe la trappola più
   // stupida del campo.
   if (voce.orto) return orto.eMatura(b.oggetto) || b.oggetto === OGGETTO.A_SEME ? "prima raccogli" : null;
+  // Le assi sotto una cassa piena o un fuoco acceso: quello che c'è sopra non
+  // si tocca, quindi i suoi motivi per non smontarlo qui non contano.
+  // Tranne il letto: si posa solo sulle assi, e toglierle da sotto vorrebbe
+  // dire un letto che non si sarebbe potuto posare lì.
+  if (voce.pavimento && CATALOGO[SMONTAGGI[b.oggetto]?.cosa]?.mobile) {
+    return `il ${CATALOGO[SMONTAGGI[b.oggetto].cosa].nome.toLowerCase()} sta sulle assi: prima smontalo`;
+  }
+  if (voce.pavimento) return inventario.spazioPer(voce.cosa) < 1 ? "zaino pieno: getta qualcosa con G" : null;
   if (b.oggetto === OGGETTO.CASSA && !contenitori.eVuota(b.tx, b.ty)) return "prima svuotala";
   // L'essiccatoio: è il terzo caso, e ha la stessa forma dei primi due. Dentro
   // c'è roba tua, e smontare il telaio con la carne appesa vorrebbe dire farla
@@ -897,8 +948,8 @@ function perche(b, voce) {
 
 // Il gesto vero. Restituisce cosa è successo, come agisci(): un rifiuto non è
 // il silenzio, è una frase da far leggere.
-export function smontaDavanti(eroe) {
-  const azione = smontaggioPossibile(eroe);
+export function smontaDavanti(eroe, cosaInMano = null) {
+  const azione = smontaggioPossibile(eroe, cosaInMano);
   if (!azione) return null;
   if (azione.impedito) return { tipo: "impedito", messaggio: azione.impedito };
 
@@ -910,9 +961,10 @@ export function smontaDavanti(eroe) {
   }
   inventario.aggiungi(azione.cosa, 1);
   // Smontare quello che sta sopra lascia il pavimento dov'è (vedi
-  // modifiche.js); sollevare il pavimento lo deve dire.
+  // modifiche.js); sollevare il pavimento lo deve dire, e lascia sopra quello
+  // che c'era, con tutto quello che il tassello se ne ricordava.
   mappa.cambiaTassello(tx, ty, azione.pavimento
-    ? { oggetto: OGGETTO.NESSUNO, pavimento: undefined }
+    ? { ...modifiche.di(tx, ty), oggetto: azione.bersaglio.oggetto, pavimento: undefined }
     : { oggetto: OGGETTO.NESSUNO });
   bisogni.consuma("stanchezza", FATICA_SMONTAGGIO);
   return { tipo: "smontato", cosa: azione.cosa, detto: azione.detto, tx, ty };
@@ -1400,11 +1452,12 @@ function esegui(eroe, cosaInMano, indice, azione) {
     return { tipo: "porta", aperta: apre, tx, ty };
   }
 
-  // Le assi vanno sotto: la casella resta vuota, con il pavimento scritto
-  // accanto all'oggetto che non c'è.
+  // Le assi vanno sotto: il pavimento si scrive accanto all'oggetto, che sia
+  // la casella vuota o un arredo. Dell'arredo resta tutto quello che il
+  // tassello si ricordava — la legna del focolare, per dirne una.
   if (azione.tipo === "pavimenta") {
     if (!inventario.togli(azione.cosa, 1)) return null;
-    mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO, pavimento: CATALOGO[azione.cosa].pavimento });
+    mappa.cambiaTassello(tx, ty, { ...modifiche.di(tx, ty), oggetto: azione.bersaglio.oggetto, pavimento: CATALOGO[azione.cosa].pavimento });
     return { tipo: "pavimenta", tx, ty, cosa: azione.cosa };
   }
 
