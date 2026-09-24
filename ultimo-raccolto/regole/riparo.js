@@ -157,25 +157,52 @@ export function murato(tx, ty) {
 // di chi deve tenere qualcosa dentro o fuori — le bestie dall'orto, e più
 // avanti gli animali allevati.
 const recinzione = (tx, ty) => mappa.chiudeIn(tx, ty) || mappa.recintaIn(tx, ty);
-const recinti = new Map();
-let revisioneRecinti = -1;
-let semeRecinti = null;
+// Lo stesso recinto contando anche il cancello aperto: è la forma del
+// recinto, a prescindere da com'è rimasto il cancello.
+const recinzioneConCancello = (tx, ty) => recinzione(tx, ty) || mappa.oggettoDi(tx, ty) === OGGETTO.CANCELLO_APERTO;
+const eSteccato = (tx, ty) => mappa.recintaIn(tx, ty) || mappa.oggettoDi(tx, ty) === OGGETTO.CANCELLO_APERTO;
 
-export function recintato(tx, ty) {
-  const r = modifiche.revisione();
-  const s = mappa.semeCorrente().nome;
-  if (r !== revisioneRecinti || s !== semeRecinti || recinti.size > 8192) {
-    recinti.clear();
-    revisioneRecinti = r;
-    semeRecinti = s;
-  }
-  const noto = recinti.get(`${tx},${ty}`);
-  if (noto !== undefined) return noto;
-  const { tasselli, chiusa } = allaga(tx, ty, recinzione);
-  const risposta = chiusa && pareti(tasselli, recinzione).some(p => mappa.recintaIn(p.tx, p.ty));
-  for (const t of tasselli) recinti.set(`${t.tx},${t.ty}`, risposta);
-  if (tasselli.length === 0) recinti.set(`${tx},${ty}`, risposta);
-  return risposta;
+// Un verdetto per tutto lo spazio allagato, ricordato finché il mondo non
+// cambia — lo stesso patto di murato().
+function ricordato(parete, conta) {
+  const noti = new Map();
+  let revisione = -1;
+  let seme = null;
+  return (tx, ty) => {
+    const r = modifiche.revisione();
+    const s = mappa.semeCorrente().nome;
+    if (r !== revisione || s !== seme || noti.size > 8192) {
+      noti.clear();
+      revisione = r;
+      seme = s;
+    }
+    const noto = noti.get(`${tx},${ty}`);
+    if (noto !== undefined) return noto;
+    const { tasselli, chiusa } = allaga(tx, ty, parete);
+    const risposta = chiusa && pareti(tasselli, parete).some(p => conta(p.tx, p.ty));
+    for (const t of tasselli) noti.set(`${t.tx},${t.ty}`, risposta);
+    if (tasselli.length === 0) noti.set(`${tx},${ty}`, risposta);
+    return risposta;
+  };
+}
+
+export const recintato = ricordato(recinzione, mappa.recintaIn);
+
+// Dentro lo steccato, anche se il cancello è rimasto aperto: è la domanda di
+// chi posa un pollo. Entrare, posarlo e uscire a chiudere è il gesto giusto,
+// e dire "scappa" a chi l'ha appena messo dentro sarebbe una trappola. Il
+// cancello aperto conta la notte: a mezzanotte vale recintato(), e chi l'ha
+// lasciato aperto trova il recinto vuoto (vedi polli.js).
+export const dentroLoSteccato = ricordato(recinzioneConCancello, eSteccato);
+
+// Il recinto che contiene questo tassello: i tasselli dentro e le sue pareti,
+// o null se il tassello non è recintato. Le pareti comprendono anche quello
+// che ingombra dentro il recinto — un pollaio è solido, e l'allagamento gli
+// gira attorno — ed è così che i polli trovano il loro (vedi polli.js).
+export function recintoDi(tx, ty) {
+  if (!recintato(tx, ty)) return null;
+  const { tasselli } = allaga(tx, ty, recinzione);
+  return { tasselli, pareti: pareti(tasselli, recinzione) };
 }
 
 // C'è un focolare acceso dentro questa stanza?

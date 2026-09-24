@@ -330,6 +330,19 @@ export const RICETTE = [
       { cosa: "fibra", quante: 2 },
     ],
   },
+  // Il pollaio (M7.18.18): riparo, mangiatoia e nido. Del secondo gradino,
+  // come tutto quello che tiene in vita qualcosa per te: il filo di lino lega
+  // il tetto.
+  {
+    id: "pollaio",
+    banco: true,
+    produce: { cosa: "pollaio", quante: 1 },
+    costo: [
+      { cosa: "legna", quante: 4 },
+      { cosa: "fibra", quante: 4 },
+      { cosa: "filo", quante: 2 },
+    ],
+  },
   // La zuppa è del secondo gradino senza bisogno di cambiarle il costo: vuole
   // un fuoco acceso, un secchio e due verdure dell'orto, cioè una zappa e dei
   // giorni di innaffiature. Niente di quello che chiede si raccoglie a mani

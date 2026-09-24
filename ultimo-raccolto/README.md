@@ -12,6 +12,47 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.18 — il pollo e il pollaio
+
+La seconda tappa dell'allevamento.
+
+**Dove si trova.** Attorno alle rovine delle case e delle fattorie vivono polli
+inselvatichiti — bruni, gli animali di chi se n'è andato. Compaiono vicino a
+una rovina, fuori dallo schermo, due al massimo alla volta. **Di giorno
+scappano**; **di notte dormono** accovacciati e si prendono a mani nude con la
+barra — di notte, cioè quando fuori ci sono gli infetti.
+
+**Il pollo vivo nello zaino** occupa una casella e **regge una notte sola**:
+preso oggi, alla mezzanotte il mattino avvisa, alla successiva muore e resta
+una carne cruda. Non si mette in una cassa. Si posa con la barra (o con G)
+davanti ai piedi: **dentro lo steccato diventa tuo** — bianco — anche col
+cancello ancora aperto; fuori scappa.
+
+**Il recinto la notte.** A mezzanotte un pollo allevato fuori da un recinto
+chiuso torna selvatico: **il cancello va chiuso la sera**. Chi lo lascia aperto
+trova il recinto vuoto.
+
+**Il pollaio** si fa al banco (4 legne, 4 fibre, 2 fili di lino) e **va messo
+in un recinto**. È la mangiatoia: con un seme, una bacca o un fagiolo in mano
+la barra ne mette uno dentro, fino a dodici; a mani vuote lo si guarda e dice
+quanto mangime c'è e quanti polli ci mangiano. Si smonta con la X solo vuoto.
+
+**Ogni notte ogni pollo mangia uno dal pollaio del suo recinto.** Un giorno
+senza è fame — il mattino lo dice — **due di fila e muore**. Il mangime fa
+concorrenza a te e all'orto: è questa la spesa del pollo.
+
+**D'inverno un pollaio ne ripara quattro**; gli altri, e tutti quelli di un
+recinto senza pollaio, muoiono di freddo.
+
+**Con un'arma in mano** — lancia o ascia — la barra tira il collo al pollo,
+allevato o selvatico: una carne cruda.
+
+Il mattino dice, in quest'ordine: i polli morti di freddo, di fame, quello
+morto nello zaino, quelli scappati; e fra gli avvisi di domani, i polli che
+hanno fame e il pollo nello zaino che non passa un'altra notte.
+
+Uova, pollina per l'orto e riproduzione sono la tappa dopo.
+
 ## M7.18.17 — lo steccato vuole la fibra
 
 Lo steccato costa **2 legne, 2 rami e 2 fibre**: la fibra lega le traverse ai
@@ -1610,7 +1651,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.17**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.18**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -2355,10 +2396,10 @@ non è detto che entri nel gioco. Se ci entrerà, quello che potrebbe misurare
 prenderà il numero della tappa in cui arriva. M7.19 è libera per quello che
 viene dopo M7.18.
 
-**L'allevamento è cominciato dallo steccato** (M7.18.16): il recinto tiene
-l'orto al sicuro dalle bestie e, più avanti, terrà dentro gli animali. Le
-tappe dopo sono il pollo — trovarlo, portarlo, il pollaio e il mangime — e poi
-uova, pollina per l'orto e riproduzione.
+**L'allevamento è cominciato dallo steccato** (M7.18.16) e dal pollo
+(M7.18.18): il recinto tiene l'orto al sicuro dalle bestie e dentro gli
+animali, il pollaio li nutre e li ripara. Resta la tappa di uova, pollina per
+l'orto e riproduzione.
 
 **Il salvataggio stava fuori da questa scala** e si è incastrato qui, dopo le
 stagioni: era il momento giusto, perché un posto che sparisce chiudendo la

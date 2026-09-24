@@ -989,6 +989,101 @@ export const CANCELLO_ICONA = [
   "............",
 ];
 
+// --- il pollo e il pollaio (M7.18.18) ---------------------------------------
+
+// La gallina, di profilo verso destra: cresta rossa, becco arancio. Bianca
+// quella allevata; bruna quella inselvatichita, che è la stessa gallina
+// rimasta sola da un anno — si distinguono a colpo d'occhio, ed è la
+// differenza che conta: una scappa, l'altra è tua.
+const GALLINA_A = [
+  "......tt..",
+  ".....zzr..",
+  ".....zzzu.",
+  "z...zzzz..",
+  "zz.zzzzz..",
+  "zzzzzzzz..",
+  ".zzzzzzz..",
+  "..zzzzz...",
+  "...u..u...",
+];
+const GALLINA_B = [
+  "......tt..",
+  ".....zzr..",
+  ".....zzzu.",
+  "z...zzzz..",
+  "zz.zzzzz..",
+  "zzzzzzzz..",
+  ".zzzzzzz..",
+  "..zzzzz...",
+  "....uu....",
+];
+// Di notte dorme accovacciata, con la testa nelle piume: più bassa, e senza
+// zampe. È quello che dice che adesso si lascia prendere.
+const GALLINA_DORME = [
+  "..........",
+  "..........",
+  "......tt..",
+  ".....zzz..",
+  "z...zzzzu.",
+  "zzzzzzzz..",
+  "zzzzzzzz..",
+  ".zzzzzzz..",
+  "..........",
+];
+const bruna = (righe) => righe.map(r => r.replaceAll("z", "c"));
+export const POLLO = [GALLINA_A, GALLINA_B];
+export const POLLO_DORME = GALLINA_DORME;
+export const POLLO_SELVATICO = [bruna(GALLINA_A), bruna(GALLINA_B)];
+export const POLLO_SELVATICO_DORME = bruna(GALLINA_DORME);
+
+export const POLLO_ICONA = [
+  "............",
+  "............",
+  ".......tt...",
+  "......zzzr..",
+  "......zzzzu.",
+  ".z...zzzzz..",
+  ".zz.zzzzzz..",
+  ".zzzzzzzzz..",
+  "..zzzzzzzz..",
+  "...zzzzzz...",
+  "....u..u....",
+  "............",
+];
+
+// Il pollaio: una casetta di assi col tetto, e un buco scuro da cui si entra.
+export const POLLAIO = [
+  "......gggg......",
+  "....gghhhhgg....",
+  "..gghhhhhhhhgg..",
+  "gghhhhhhhhhhhhgg",
+  "hhhhhhhhhhhhhhhh",
+  ".wwwwwwwwwwwwww.",
+  ".wcwwwwwwwwwwcw.",
+  ".wcwwwrrrrwwwcw.",
+  ".wcwwrrrrrrwwcw.",
+  ".wcwwrrrrrrwwcw.",
+  ".wcww5555555wcw.",
+  ".wcwwwwwwwwwwcw.",
+  ".wwwwwwwwwwwwww.",
+  ".gg..........gg.",
+];
+
+export const POLLAIO_ICONA = [
+  "............",
+  ".....gg.....",
+  "...gghhgg...",
+  ".gghhhhhhgg.",
+  "hhhhhhhhhhhh",
+  ".wwwwwwwwww.",
+  ".wcwrrrrwcw.",
+  ".wcwrrrrwcw.",
+  ".wcw5555wcw.",
+  ".wwwwwwwwww.",
+  ".gg......gg.",
+  "............",
+];
+
 export const CANNA = [
  "............",".........h..","........hB..",".......h.B..",
  "......h..B..",".....h...B..","....h....B..","...h.....B..",

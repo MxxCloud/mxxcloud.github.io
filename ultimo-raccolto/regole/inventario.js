@@ -58,7 +58,9 @@ export function mettiIn(fila, cosa, quantita, dal, usi, massimo) {
   const pila = CATALOGO[cosa]?.pila ?? 1;
   // Solo il cibo porta una data. Darla anche alla legna vorrebbe dire
   // scrivere nel salvataggio un numero per casella che non serve a nessuno.
-  const deperibile = CATALOGO[cosa]?.dura !== undefined;
+  // "datato": porta il giorno senza guastarsi, come il pollo vivo, a cui il
+  // giorno della cattura dice quando muore (vedi polli.js).
+  const deperibile = CATALOGO[cosa]?.dura !== undefined || CATALOGO[cosa]?.datato === true;
   const quando = deperibile ? (dal ?? tempo.giornoCorrente()) : undefined;
   let resto = quantita;
 

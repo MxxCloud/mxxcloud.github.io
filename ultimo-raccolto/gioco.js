@@ -26,6 +26,7 @@ import * as freddo from "./regole/freddo.js";
 import * as fiamma from "./regole/fiamma.js";
 import * as addosso from "./regole/addosso.js";
 import * as fauna from "./regole/fauna.js";
+import * as polli from "./regole/polli.js";
 import * as infetti from "./regole/infetti.js";
 import * as riparo from "./regole/riparo.js";
 import * as chiasso from "./regole/chiasso.js";
@@ -72,7 +73,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.17";
+const VERSIONE = "M7.18.18";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -347,7 +348,7 @@ const ARRIVO = {
 // chi chiama deve poter dire "l'inverno ha preso l'orto" invece di due
 // messaggi che si coprono a vicenda.
 function vestiLaValle() {
-  const acquaCambiata = acqua.aggiorna([...entita.tutte(), ...fauna.tutte()]);
+  const acquaCambiata = acqua.aggiorna([...entita.tutte(), ...fauna.tutte(), ...polli.tutte()]);
   if (acquaCambiata.riportati.includes(eroe)) {
     pesca.interrompi();
     annuncia("il disgelo ti riporta a riva", "#8fb8d8");
@@ -872,6 +873,11 @@ function leggiLaCassa() {
   const indice = versoLaCassa ? cassaScelta - contenitori.CASELLE : cassaScelta;
   const esito = contenitori.sposta(tx, ty, versoLaCassa, indice);
   if (!esito) return;
+  if (esito.tipo === "vivo") {
+    suono.suona(NEGATO);
+    annuncia("un pollo vivo non sta in una cassa", "#c0705f");
+    return;
+  }
   if (esito.tipo === "pieno") {
     suono.suona(NEGATO);
     annuncia(versoLaCassa ? "la cassa è piena" : "zaino pieno", "#c0705f");
@@ -1092,6 +1098,9 @@ function leggiComandi() {
     if (esito?.tipo === "gettato") {
       suono.suona(POSA);
       annuncia(`posato per terra: ${esito.quante} ${nomeDi(esito.cosa)}`, "#c9b189");
+    } else if (esito?.tipo === "polloLiberato") {
+      suono.suona(POSA);
+      annuncia(esito.nelRecinto ? "il pollo è nel recinto" : "il pollo scappa", esito.nelRecinto ? "#9ec97e" : "#c9b189");
     } else if (esito?.tipo === "nonCePosto") {
       suono.suona(NEGATO);
       annuncia("davanti non c'è posto", "#c0705f");
@@ -1184,6 +1193,28 @@ function leggiComandi() {
   }
   // Guardare è l'unica azione che non cambia niente, e serve a questo: la
   // fiamma è uguale con una legna e con quattro, quindi il conto va chiesto.
+  // I polli e il pollaio (M7.18.18).
+  if (esito.tipo === "polloPreso") {
+    suono.suona(PRESO);
+    annuncia("preso: un pollo vivo regge una notte nello zaino", "#9ec97e");
+  }
+  if (esito.tipo === "polloUcciso") {
+    suono.suona(PRESO);
+    annuncia(esito.nelloZaino ? "+1 carne cruda" : "zaino pieno: la carne è persa", esito.nelloZaino ? "#9ec97e" : "#c0705f");
+  }
+  if (esito.tipo === "polloLiberato") {
+    suono.suona(POSA);
+    annuncia(esito.nelRecinto ? "il pollo è nel recinto" : "il pollo scappa", esito.nelRecinto ? "#9ec97e" : "#c9b189");
+  }
+  if (esito.tipo === "nutrito") {
+    suono.suona(POSA);
+    annuncia(`pollaio: ${esito.mangime}/${esito.massimo} mangime`, "#9ec97e");
+  }
+  if (esito.tipo === "pollaioGuardato") {
+    suono.suona(SCELTA);
+    const quanti = esito.polli === 1 ? "1 pollo" : `${esito.polli} polli`;
+    annuncia(`pollaio: ${esito.mangime}/${esito.massimo} mangime, ${quanti}`, esito.mangime > 0 ? "#c9b189" : "#c0705f");
+  }
   if (esito.tipo === "guardato") {
     suono.suona(SCELTA);
     annuncia(esito.legna > 0
@@ -1368,6 +1399,7 @@ function aggiorna(passo) {
     // Anche le bestie, e dopo di loro: si sono mosse tutte, adesso si guarda
     // chi è finito dentro chi.
     fauna.sgomitano(eroe);
+    polli.aggiorna(passo, eroe);
     const morsi = infetti.raccogliIMorsi(eroe);
     if (morsi.morsi > 0) {
       lampoDanno = DURATA_LAMPO;
@@ -1447,7 +1479,8 @@ function aggiorna(passo) {
     if (messaggio.vita <= 0) messaggio = null;
   }
 
-  const { cresciute, appassite, seccate, alBuio, alChiuso, assetate, aSeme, mangiate, spentiLegna, spentiPioggia, torceFinite, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
+  const { polliNelloZaino, polloDomani, polliScappati, polliAffamati, polliDiFame, polliDiFreddo,
+    cresciute, appassite, seccate, alBuio, alChiuso, assetate, aSeme, mangiate, spentiLegna, spentiPioggia, torceFinite, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
 
   const arrivata = vestiLaValle();
 
@@ -1455,7 +1488,13 @@ function aggiorna(passo) {
   // dire vederne uno — l'ultimo, che non è detto sia il più importante.
   // L'ordine è quello di gravità, e la stagione che si porta via il campo si
   // dice in una frase sola invece che in due che si coprono.
-  if (appassite > 0 && arrivata) annuncia(`${arrivata}: l'orto è morto`, "#c0705f");
+  // I polli per primi: un animale morto è la notizia più grave del mattino, e
+  // ognuna ha il suo rimedio — il pollaio, il mangime, il recinto.
+  if (polliDiFreddo > 0) annuncia(`il freddo si è portato via dei polli: ${polliDiFreddo}`, "#c0705f");
+  else if (polliDiFame > 0) annuncia(`dei polli sono morti di fame: ${polliDiFame}`, "#c0705f");
+  else if (polliNelloZaino > 0) annuncia("il pollo nello zaino è morto", "#c0705f");
+  else if (polliScappati > 0) annuncia(`dei polli sono scappati: ${polliScappati}`, "#c0705f");
+  else if (appassite > 0 && arrivata) annuncia(`${arrivata}: l'orto è morto`, "#c0705f");
   // La sete prima del marcire: è l'unica delle due che si poteva evitare
   // stamattina con un secchio, e sapere quale delle due è stata insegna cosa
   // fare domani.
@@ -1492,6 +1531,9 @@ function aggiorna(passo) {
   // Le piante assetate vengono prima del cibo in scadenza: tutte e due
   // parlano di domani, ma il cibo si mangia oggi e la pianta no — senza un
   // secchio stanotte è morta.
+  // Gli avvisi dei polli: parlano di stanotte, come la sete.
+  else if (polliAffamati > 0) annuncia(`i polli hanno fame: ${polliAffamati}`, "#c9b189");
+  else if (polloDomani > 0) annuncia("il pollo nello zaino non passa un'altra notte", "#c9b189");
   else if (assetate > 0) annuncia(`l'orto ha sete: ${assetate}`, "#c9b189");
   else if (inScadenza > 0) annuncia("del cibo sta per guastarsi", "#c9b189");
   else if (aSeme > 0) annuncia(`l'orto è andato a seme: ${aSeme}`, "#c9b189");
@@ -1556,7 +1598,7 @@ function disegna() {
 
   inPiedi.length = 0;
   for (const o of oggetti) inPiedi.push(o);
-  for (const e of [...entita.daDisegnare(), ...fauna.daDisegnare()]) {
+  for (const e of [...entita.daDisegnare(), ...fauna.daDisegnare(), ...polli.daDisegnare()]) {
     if (schermo.visibile(e.x, e.y, e.sprite.width, e.sprite.height)) inPiedi.push(e);
   }
   // Chi ha i piedi più in basso è più vicino a chi guarda, quindi va disegnato
@@ -1940,6 +1982,7 @@ if (parametri.has("diagnostica")) {
     meteo,
     infetti,
     fauna,
+    polli,
     addosso,
     infetto,
     chiasso,

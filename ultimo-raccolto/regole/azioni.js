@@ -27,6 +27,7 @@ import * as freddo from "./freddo.js";
 import * as pesca from "./pesca.js";
 import * as riparo from "./riparo.js";
 import * as decadimento from "./decadimento.js";
+import * as polli from "./polli.js";
 
 const { TASSELLO } = schermo;
 
@@ -230,6 +231,16 @@ export function azionePossibile(eroe, cosaInMano, indice) {
     return { tipo: "combatti", verbo: addosso.specie ? "Colpisci " + fauna.SPECIE[addosso.specie].nome : "Colpisci", nemico: addosso };
   }
 
+  // Il pollo davanti: con un'arma in mano gli si tira il collo, a mani nude
+  // lo si prende — e il selvatico, di giorno, scappa (vedi polli.js).
+  const pollo = polli.davanti(eroe);
+  if (pollo) {
+    if (cosaInMano && attrezzoServe(cosaInMano, "combatti") && strumento(cosaInMano, indice, "combatti")) {
+      return { tipo: "uccidiPollo", verbo: "Tira il collo al pollo", pollo };
+    }
+    return { tipo: "prendiPollo", verbo: "Prendi il pollo", pollo, impedito: polli.perche(pollo) };
+  }
+
   // Una carcassa resta per terra due giorni, e in quei due giorni copre quello
   // che ha davanti. Passa davanti al mondo finché c'è da lavorarci; quando il
   // lavoro non si può fare — manca l'ascia, o non c'è posto per quello che ne
@@ -352,6 +363,18 @@ function sulTassello(eroe, cosaInMano, indice) {
   // tasto una volta sola, per quattro giorni, vorrebbe dire una casa che non
   // chiede niente — cioè un monumento, che è quello che decadimento.js dice di
   // non voler costruire.
+  // Il pollaio: con del mangime in mano lo si riempie, uno per volta come la
+  // legna nel focolare; altrimenti lo si guarda, e dice quanto ne resta e
+  // quanti polli ci mangiano — il conto che decide se domani avranno fame.
+  if (b.oggetto === OGGETTO.POLLAIO) {
+    const mangime = polli.mangimeNel(b.tx, b.ty);
+    if (cosaInMano && polli.MANGIMI.has(cosaInMano)) {
+      return { tipo: "nutri", verbo: `Dai da mangiare (${mangime}/${polli.MANGIME_MASSIMO})`, cosa: cosaInMano, bersaglio: b,
+        impedito: mangime >= polli.MANGIME_MASSIMO ? "il pollaio è pieno" : null };
+    }
+    return { tipo: "guardaPollaio", verbo: "Guarda il pollaio", bersaglio: b, mangime, polli: polli.nelRecintoDi(b.tx, b.ty) };
+  }
+
   if (decadimento.siCarica(b.oggetto)) {
     const legna = decadimento.legnaNel(b.tx, b.ty);
     const capienza = decadimento.capienzaDi(b.oggetto);
@@ -577,6 +600,13 @@ function sulTassello(eroe, cosaInMano, indice) {
   }
 
   const posa = cosaInMano && CATALOGO[cosaInMano]?.posa;
+  // Il pollo in mano si posa davanti ai piedi: dentro un recinto diventa tuo,
+  // fuori scappa. Il tasto lo dice prima, perché liberarlo per sbaglio vuol
+  // dire perderlo.
+  if (cosaInMano === "pollo" && b.oggetto === OGGETTO.NESSUNO) {
+    const posto = polli.doveLiberare(b.tx, b.ty);
+    if (posto) return { tipo: "liberaPollo", verbo: posto.nelRecinto ? "Metti il pollo nel recinto" : "Libera il pollo", bersaglio: b };
+  }
   if (posa !== undefined && posa !== null && posabile(b)) {
     // I mobili si posano solo sul pavimento di legno. Il primo è il letto.
     if (CATALOGO[cosaInMano].mobile && !mappa.pavimentoIn(b.tx, b.ty))
@@ -598,6 +628,9 @@ function sulTassello(eroe, cosaInMano, indice) {
     // prima coppia di regole di posa che si spiegano a vicenda.
     if (cosaInMano === "essiccatoio" && riparo.stanzaDi(b.tx, b.ty) !== null)
       return { tipo: "posa", bersaglio: b, impedito: "l'essiccatoio vuole aria" };
+    // Il pollaio sta dentro un recinto: è lì che stanno i polli che ripara.
+    if (cosaInMano === "pollaio" && !riparo.recintato(b.tx, b.ty))
+      return { tipo: "posa", bersaglio: b, impedito: "il pollaio va messo in un recinto" };
     return { tipo: "posa", verbo: "Posa", cosa: cosaInMano, bersaglio: b,
       impedito: ["muro", "porta", "steccato", "cancello"].includes(cosaInMano) && occupato(b.tx, b.ty, eroe) ? "passaggio occupato" : null };
   }
@@ -613,7 +646,7 @@ function zappabile(terreno) {
 
 function occupato(tx, ty, eroe) {
   // Comprende l'eroe anche nei collaudi senza registro delle entità.
-  return [eroe, ...entita.tutte(), ...fauna.tutte()].some(e => e &&
+  return [eroe, ...entita.tutte(), ...fauna.tutte(), ...polli.tutte()].some(e => e &&
     e.px + urti.LARGHEZZA / 2 > tx * TASSELLO && e.px - urti.LARGHEZZA / 2 < (tx + 1) * TASSELLO &&
     e.py > ty * TASSELLO && e.py - urti.ALTEZZA < (ty + 1) * TASSELLO);
 }
@@ -695,6 +728,12 @@ function deponiVicino(tx, ty, cosa, quante, dal) {
 export function getta(eroe, indice) {
   const casella = inventario.contenuto()[indice];
   if (!casella) return null;
+  // Un pollo vivo non si butta in un mucchio: si posa, con la stessa regola
+  // della barra.
+  if (casella.cosa === "pollo") {
+    const { tx, ty } = bersaglio(eroe);
+    return polli.libera(tx, ty, indice) ?? { tipo: "nonCePosto" };
+  }
 
   const { tx, ty } = bersaglio(eroe);
   if (!deponi(tx, ty, casella.cosa, casella.quantita, casella.dal, casella.usi, casella.massimo)) {
@@ -750,6 +789,7 @@ const SMONTAGGI = {
   [OGGETTO.STECCATO]: { cosa: "steccato", verbo: "Smonta lo steccato" },
   [OGGETTO.CANCELLO]: { cosa: "cancello", verbo: "Smonta il cancello" },
   [OGGETTO.CANCELLO_APERTO]: { cosa: "cancello", verbo: "Smonta il cancello" },
+  [OGGETTO.POLLAIO]: { cosa: "pollaio", verbo: "Smonta il pollaio" },
 };
 
 // Gli stati dell'essiccatoio in cui c'è dentro della carne.
@@ -820,6 +860,11 @@ function perche(b, voce) {
   // c'è roba tua, e smontare il telaio con la carne appesa vorrebbe dire farla
   // sparire — di nuovo un ripostiglio travestito da struttura.
   if (ESSICCATOIO_PIENO.has(b.oggetto)) return `prima ritira ${SECCABILI[stesoIn(b.tx, b.ty)].quello}`;
+  // Il pollaio come il focolare: il mangime dentro non torna indietro
+  // cambiando idea, si aspetta che finisca.
+  if (b.oggetto === OGGETTO.POLLAIO && polli.mangimeNel(b.tx, b.ty) > 0) {
+    return `c'è ancora mangime: ${polli.mangimeNel(b.tx, b.ty)}/${polli.MANGIME_MASSIMO}`;
+  }
   if (NOME_DEL_FUOCO[b.oggetto] && decadimento.legnaNel(b.tx, b.ty) > 0) {
     return `il ${NOME_DEL_FUOCO[b.oggetto]} è acceso: ${decadimento.legnaNel(b.tx, b.ty)}/${decadimento.capienzaDi(b.oggetto)}`;
   }
@@ -1069,6 +1114,8 @@ function esegui(eroe, cosaInMano, indice, azione) {
   if (azione.tipo === "pesca") return pesca.inizia(eroe, azione.bersaglio.tx, azione.bersaglio.ty, indice);
 
   if (azione.tipo === "macella" || azione.tipo === "spoglia") return fauna.macella(azione.carcassa);
+  if (azione.tipo === "prendiPollo") return polli.prendi(azione.pollo);
+  if (azione.tipo === "uccidiPollo") return polli.uccidi(azione.pollo);
 
   if (azione.tipo === "combatti") {
     const esito = (azione.nemico.specie ? fauna : infetti).colpisci(azione.nemico, dannoDi(strumento(cosaInMano, indice, "combatti")));
@@ -1156,6 +1203,16 @@ function esegui(eroe, cosaInMano, indice, azione) {
   if (azione.tipo === "guarda") {
     return { tipo: "guardato", tx, ty, legna: azione.legna, massimo: azione.capienza, fuoco: azione.fuoco };
   }
+
+  if (azione.tipo === "guardaPollaio") {
+    return { tipo: "pollaioGuardato", mangime: azione.mangime, massimo: polli.MANGIME_MASSIMO, polli: azione.polli };
+  }
+  if (azione.tipo === "nutri") {
+    if (!inventario.togli(azione.cosa, 1)) return null;
+    polli.nutri(tx, ty);
+    return { tipo: "nutrito", mangime: polli.mangimeNel(tx, ty), massimo: polli.MANGIME_MASSIMO };
+  }
+  if (azione.tipo === "liberaPollo") return polli.libera(tx, ty, indice);
 
   if (azione.tipo === "carica") {
     if (!inventario.togli(azione.cosa, azione.quante)) return null;

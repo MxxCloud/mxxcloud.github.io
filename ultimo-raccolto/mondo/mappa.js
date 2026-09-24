@@ -191,6 +191,9 @@ const CATALOGO_OGGETTI = {
   [OGGETTO.CANCELLO]: { sprite: coseArte.CANCELLO, solido: true, recinta: true },
   [OGGETTO.CANCELLO_APERTO]: { sprite: coseArte.CANCELLO_APERTO, solido: false },
 
+  // Il pollaio ferma come un mobile: è una casetta.
+  [OGGETTO.POLLAIO]: { sprite: coseArte.POLLAIO, solido: true },
+
   // Una torcia piantata è luce fissa che costa molto meno di un falò, e non
   // ferma: è un bastone, ci si passa accanto.
   [OGGETTO.TORCIA_PIANTATA]: {

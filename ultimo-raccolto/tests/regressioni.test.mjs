@@ -11,6 +11,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import * as pesca from '../regole/pesca.js';
+import * as polli from '../regole/polli.js';
 import * as acqua from '../regole/acqua.js';
 import * as urti from '../entita/urti.js';
 import { GHIACCIO } from '../arte/sprite-terreno.js';
@@ -53,6 +54,7 @@ function reset() {
   fiamma.reimposta();
   addosso.reimposta();
   fauna.reimposta();
+  polli.reimposta();
   meteo.reimposta();
   pesca.interrompi(); mappa.impostaGelo(false); orto.impostaBestie(false);
   riparo.reimposta(); tempo.reimposta(); bisogni.reimposta(); salute.reimposta();
@@ -3742,4 +3744,139 @@ test('un infetto sfonda lo steccato e il cancello chiuso in tre colpi',()=>{
     assert.equal(infetti.raccogliGliSfondamenti()[0]?.ceduto,true,String(oggetto));
     assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.NESSUNO);
   }
+});
+
+// M7.18.18 — il pollo e il pollaio.
+// Un pollo posato davanti al superstite (tx+1,ty), preso il giorno dato.
+function unPollo(giorno=tempo.giornoCorrente()) {
+  inventario.aggiungi('pollo',1,giorno);
+  const i=inventario.contenuto().findIndex(c=>c?.cosa==='pollo');
+  return polli.libera(tx+1,ty,i);
+}
+
+test('il pollo selvatico di giorno scappa, di notte si prende a mani nude',()=>{
+  tempo.impostaGiorno(5);tempo.impostaOra(12);
+  assert.equal(unPollo().nelRecinto,false);
+  assert.equal(azioni.azionePossibile(eroe,null).tipo,'prendiPollo');
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,'di giorno scappa: prendilo di notte');
+  tempo.impostaOra(23);
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,null);
+  assert.equal(azioni.agisci(eroe,null).tipo,'polloPreso');
+  assert.equal(inventario.quante('pollo'),1);assert.equal(polli.tutte().length,0);
+  assert.equal(inventario.contenuto().find(c=>c?.cosa==='pollo').dal,5);
+});
+
+test('nello zaino il pollo regge una notte, alla seconda muore e resta la carne',()=>{
+  tempo.impostaGiorno(5);inventario.aggiungi('pollo',1,5);
+  tempo.impostaGiorno(6);let r=polli.nuovoGiorno();
+  assert.equal(r.avvisoZaino,1);assert.equal(inventario.quante('pollo'),1);
+  tempo.impostaGiorno(7);r=polli.nuovoGiorno();
+  assert.equal(r.mortiNelloZaino,1);assert.equal(inventario.quante('pollo'),0);assert.equal(inventario.quante('carne_cruda'),1);
+});
+
+test('posato in un recinto il pollo è tuo; fuori, a mezzanotte, torna selvatico',()=>{
+  tempo.impostaGiorno(5);tempo.impostaOra(12);
+  recinto(tx,ty);
+  inventario.aggiungi('pollo',1,5);
+  assert.equal(azioni.azionePossibile(eroe,'pollo',0).verbo,'Metti il pollo nel recinto');
+  assert.equal(azioni.agisci(eroe,'pollo',0).nelRecinto,true);
+  const p=polli.tutte()[0];assert.equal(p.domestico,true);
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,null,'il tuo si prende anche di giorno');
+  // Il cancello resta aperto e il pollo esce: a mezzanotte non è più tuo.
+  p.px=(tx+6.5)*16;p.py=(ty+0.75)*16;
+  tempo.impostaGiorno(6);const r=polli.nuovoGiorno();
+  assert.equal(r.scappati,1);assert.equal(p.domestico,false);
+});
+
+test('un pollo vivo non si mette in una cassa, e con G si posa invece di finire in un mucchio',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CASSA});
+  inventario.aggiungi('pollo',1,1);
+  assert.equal(contenitori.sposta(tx+1,ty,true,0).tipo,'vivo');
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.NESSUNO});
+  assert.equal(azioni.getta(eroe,0).tipo,'polloLiberato');assert.equal(inventario.quante('pollo'),0);
+  assert.equal(polli.tutte().length,1);
+});
+
+test('con un’arma in mano si tira il collo al pollo e resta una carne',()=>{
+  tempo.impostaOra(12);unPollo();
+  inventario.aggiungi('lancia',1);
+  const i=inventario.contenuto().findIndex(c=>c?.cosa==='lancia');
+  assert.equal(azioni.azionePossibile(eroe,'lancia',i).verbo,'Tira il collo al pollo');
+  assert.equal(azioni.agisci(eroe,'lancia',i).tipo,'polloUcciso');
+  assert.equal(inventario.quante('carne_cruda'),1);assert.equal(polli.tutte().length,0);
+});
+
+test('il pollaio si fa al banco, va messo in un recinto, si riempie un mangime alla volta e si smonta solo vuoto',()=>{
+  const r=ricette.RICETTE.find(x=>x.id==='pollaio');
+  assert.equal(r.banco,true);
+  assert.deepEqual(r.costo,[{cosa:'legna',quante:4},{cosa:'fibra',quante:4},{cosa:'filo',quante:2}]);
+  inventario.aggiungi('pollaio',1);
+  assert.equal(azioni.azionePossibile(eroe,'pollaio',0).impedito,'il pollaio va messo in un recinto');
+  recinto(tx,ty);
+  assert.equal(azioni.agisci(eroe,'pollaio',0).tipo,'posa');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.POLLAIO);
+  inventario.aggiungi('semi',3);
+  const i=inventario.contenuto().findIndex(c=>c?.cosa==='semi');
+  assert.equal(azioni.azionePossibile(eroe,'semi',i).verbo,'Dai da mangiare (0/12)');
+  assert.equal(azioni.agisci(eroe,'semi',i).mangime,1);assert.equal(inventario.quante('semi'),2);
+  assert.equal(azioni.smontaggioPossibile(eroe).impedito,"c'è ancora mangime: 1/12");
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.POLLAIO});
+  assert.equal(azioni.smontaggioPossibile(eroe).impedito,null);
+});
+
+// Un recinto con un pollaio a destra dell'eroe e n polli allevati dentro.
+function allevamento(n,mangime) {
+  recinto(tx,ty);
+  modifiche.imposta(tx,ty-1,mangime?{oggetto:OGGETTO.POLLAIO,mangime}:{oggetto:OGGETTO.POLLAIO});
+  for(let i=0;i<n;i++){inventario.aggiungi('pollo',1,1);const k=inventario.contenuto().findIndex(c=>c?.cosa==='pollo');polli.libera(tx-1+(i%3),ty+1,k);}
+  assert.equal(polli.tutte().filter(p=>p.domestico).length,n);
+}
+
+test('un mangime per pollo a notte: un giorno senza è fame, due di fila e muore',()=>{
+  tempo.impostaGiorno(5);allevamento(2,1);
+  let r=(tempo.impostaGiorno(6),polli.nuovoGiorno());
+  assert.equal(r.affamati,1);assert.equal(r.mortiDiFame,0);assert.equal(polli.mangimeNel(tx,ty-1),0);
+  r=(tempo.impostaGiorno(7),polli.nuovoGiorno());
+  assert.equal(r.mortiDiFame,1);assert.equal(r.affamati,1);assert.equal(polli.tutte().length,1);
+});
+
+test('d’inverno un pollaio ne ripara quattro, e senza pollaio muoiono tutti di freddo',()=>{
+  tempo.impostaGiorno(8);allevamento(5,12);
+  let r=(tempo.impostaGiorno(9),polli.nuovoGiorno());
+  assert.equal(r.mortiDiFreddo,1);assert.equal(polli.tutte().length,4);
+  modifiche.imposta(tx,ty-1,{oggetto:OGGETTO.NESSUNO});
+  r=(tempo.impostaGiorno(10),polli.nuovoGiorno());
+  assert.equal(r.mortiDiFreddo,4);assert.equal(polli.tutte().length,0);
+});
+
+test('i polli e il mangime si salvano, e il salvataggio li controlla',()=>{
+  tempo.impostaGiorno(5);allevamento(2,3);
+  const stato=salvataggio.istantanea(eroe,0);
+  assert.equal(salvataggio.valido(stato),true);
+  assert.equal(stato.polli.polli.length,2);
+  polli.reimposta();
+  assert.ok(salvataggio.applica(stato));
+  assert.equal(polli.tutte().filter(p=>p.domestico).length,2);
+  const storto=structuredClone(stato);storto.polli.polli[0].fame=5;
+  assert.equal(salvataggio.valido(storto),false);
+  const valida=m=>{const t=structuredClone(stato);t.modifiche=[{tx:tx+1,ty,...m}];return salvataggio.valido(t);};
+  assert.ok(valida({oggetto:OGGETTO.POLLAIO,mangime:12}));
+  assert.equal(valida({oggetto:OGGETTO.POLLAIO,mangime:13}),false);
+  assert.equal(valida({oggetto:OGGETTO.CASSA,mangime:2}),false);
+});
+
+test('col cancello aperto il pollo posato dentro è tuo, ma se il cancello resta aperto a mezzanotte scappa',()=>{
+  tempo.impostaGiorno(5);tempo.impostaOra(12);
+  recinto(tx,ty,OGGETTO.CANCELLO_APERTO);
+  assert.equal(riparo.recintato(tx+1,ty),false);assert.equal(riparo.dentroLoSteccato(tx+1,ty),true);
+  inventario.aggiungi('pollo',1,5);
+  assert.equal(azioni.azionePossibile(eroe,'pollo',0).verbo,'Metti il pollo nel recinto');
+  azioni.agisci(eroe,'pollo',0);
+  assert.equal(polli.tutte()[0].domestico,true);
+  tempo.impostaGiorno(6);
+  assert.equal(polli.nuovoGiorno().scappati,1);
+  // Fuori dallo steccato, invece, scappa subito.
+  polli.reimposta();modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.NESSUNO});
+  inventario.aggiungi('pollo',1,6);
+  assert.equal(azioni.azionePossibile(eroe,'pollo',0).verbo,'Libera il pollo');
 });
