@@ -2300,6 +2300,13 @@ non è detto che entri nel gioco. Se ci entrerà, quello che potrebbe misurare
 prenderà il numero della tappa in cui arriva. M7.19 è libera per quello che
 viene dopo M7.18.
 
+**Lo steccato è in attesa.** Da M7.18.14 un orto murato non cresce, quindi i
+muri non servono più a tenerlo al sicuro dalle bestie, e restano lo
+spaventapasseri e il fuoco. Lo steccato ferma le bestie ma non chiude il posto,
+e va fatto. Prima però deve avere un senso suo, altrimenti è uno
+spaventapasseri più caro. Il mestiere è ancora da decidere, e con lui il numero
+della tappa.
+
 **Il salvataggio stava fuori da questa scala** e si è incastrato qui, dopo le
 stagioni: era il momento giusto, perché un posto che sparisce chiudendo la
 scheda è tuo solo per una seduta, e l'orto e le stagioni valevano meno di
