@@ -3202,8 +3202,12 @@ test('d’estate e d’inverno le bestie restano nella prateria, e il seme non l
 test('lo spaventapasseri si fa a mani nude, si posa, sta in piedi e si smonta',()=>{
   const ricetta=ricette.RICETTE.find(r=>r.id==='spaventapasseri');
   assert.equal(ricetta.banco,undefined);
+  // Da M7.18.22: quattro rami e dieci fibre. Con quello di prima non basta.
+  assert.deepEqual(ricetta.costo,[{cosa:'ramo',quante:4},{cosa:'fibra',quante:10}]);
   inventario.aggiungi('ramo',2);inventario.aggiungi('fibra',4);
-  assert.ok(ricette.fai(ricetta).fatto);assert.equal(inventario.quante('spaventapasseri'),1);
+  assert.equal(ricette.fai(ricetta).fatto,false);
+  inventario.aggiungi('ramo',2);inventario.aggiungi('fibra',6);
+  assert.ok(ricette.fai(ricetta).fatto);assert.equal(inventario.quante('ramo'),0);assert.equal(inventario.quante('fibra'),0);assert.equal(inventario.quante('spaventapasseri'),1);
   const indice=inventario.contenuto().findIndex(c=>c?.cosa==='spaventapasseri');
   assert.equal(azioni.agisci(eroe,'spaventapasseri',indice).tipo,'posa');
   assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.SPAVENTAPASSERI);

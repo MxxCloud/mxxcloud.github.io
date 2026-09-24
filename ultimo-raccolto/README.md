@@ -12,6 +12,12 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.22 — lo spaventapasseri costa di più
+
+Lo spaventapasseri costa **4 rami e 10 fibre** invece di 2 rami e 4 fibre. Si
+fa ancora a mani nude, senza banco. Costava così poco che se ne piantava uno
+per campo senza pensarci, e la scelta con lo steccato non si poneva.
+
 ## M7.18.21 — le assi sotto gli arredi
 
 Il pavimento si posa anche **sotto un arredo già posato**: letti e giacigli,
@@ -1714,7 +1720,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.21**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.22**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

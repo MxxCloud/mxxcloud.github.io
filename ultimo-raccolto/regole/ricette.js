@@ -291,19 +291,20 @@ export const RICETTE = [
       { cosa: "filo", quante: 2 },
     ],
   },
-  // Lo spaventapasseri, a mani nude: due rami in croce e la fibra per farne
-  // un sacco. Costa poco di proposito — l'orto che protegge vale molto di più
-  // — ma costa, e va rifatto per ogni campo lontano dall'altro.
+  // Lo spaventapasseri, a mani nude: i rami per l'ossatura e la fibra per
+  // farne un sacco. Da M7.18.22 quattro rami e dieci fibre invece di due e
+  // quattro: costava così poco che se ne piantava uno per campo senza
+  // pensarci, e la scelta con lo steccato non si poneva.
   {
     id: "spaventapasseri",
     produce: { cosa: "spaventapasseri", quante: 1 },
     costo: [
-      { cosa: "ramo", quante: 2 },
-      { cosa: "fibra", quante: 4 },
+      { cosa: "ramo", quante: 4 },
+      { cosa: "fibra", quante: 10 },
     ],
   },
   // Lo steccato e il cancello (M7.18.16), al banco. Lo spaventapasseri costa
-  // due rami e copre un raggio di tre tasselli; il recinto costa legna per
+  // quattro rami e copre un raggio di tre tasselli; il recinto costa legna per
   // ogni pezzo ma copre tutto quello che ci sta dentro, grande quanto lo si
   // fa — e più avanti terrà dentro gli animali. Due modi di proteggere lo
   // stesso campo, e la scelta fra i due è quanto è grande il campo.
