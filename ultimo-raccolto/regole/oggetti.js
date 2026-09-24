@@ -283,6 +283,28 @@ export const CATALOGO = {
     pila: 2,
     posa: OGGETTO.GIACIGLIO_PELLI,
   },
+  // Il letto, il primo mobile. "Mobile" vuol dire che si posa solo sul
+  // pavimento di legno: un letto sulla terra battuta è un giaciglio con le
+  // gambe, e il pavimento è la differenza fra un riparo e una casa. Chi ci
+  // dorme guarisce tre volte più in fretta, e un'infezione non peggiora
+  // (vedi salute.js). Si impila a uno: se ne ha uno, dove si dorme.
+  letto: {
+    nome: "Letto",
+    icona: arte.LETTO_ICONA,
+    pila: 1,
+    posa: OGGETTO.LETTO,
+    mobile: true,
+  },
+  // Il pavimento di legno. Non è un oggetto sul tassello ma uno strato sotto:
+  // ci si cammina, e ci si posa sopra quello che si vuole (vedi modifiche.js).
+  // Si posa solo al chiuso e su una casella libera, e sulle sue assi il calore
+  // di un focolare spento resta fino al mattino (vedi freddo.js).
+  pavimento: {
+    nome: "Pavimento di legno",
+    icona: arte.PAVIMENTO_ICONA,
+    pila: 30,
+    pavimento: "legno",
+  },
   // Il falò. Si chiama "spento" e si posa spento, ed è la stessa frase del
   // focolare detta per il fuoco da viaggio: quello che porti nello zaino è la
   // fossa — tre pietre e due legni incrociati — e il fuoco lo accendi dove ti

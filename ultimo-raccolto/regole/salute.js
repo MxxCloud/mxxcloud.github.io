@@ -56,6 +56,14 @@ const CURA = 1 / (GIORNO * 3);
 // poco per farci finta di niente fino alla primavera.
 const DANNO_INFEZIONE = 1 / (GIORNO * 4);
 
+// Il letto. Dormendoci si guarisce tre volte più in fretta — un giorno invece
+// di tre — e un'infezione non toglie salute finché si dorme: non la cura, per
+// quello resta la benda, ma chi torna a casa morso non peggiora nel sonno.
+// È la cosa che nessun altro posto dà, ed è per questo che il letto vuole il
+// pavimento: la terra battuta è umida, fredda e piena di quello che fa
+// ammalare, e il pavimento è la differenza fra un riparo e una casa.
+const CURA_NEL_LETTO = 3;
+
 // Come si racconta la morte. La causa non è un dettaglio di colore: senza,
 // una schermata di morte dice "sei morto" e lascia al giocatore il compito di
 // indovinare cosa avrebbe dovuto fare diversamente.
@@ -182,7 +190,7 @@ export function moltiplicatoreFreddo(protetto = false) {
   return esposizioneFreddo >= 30 ? 3 : esposizioneFreddo >= 15 ? 2 : 1;
 }
 
-export function avanza(passo, { vuoti = [], alFreddo = false, protetto = false, mite = false } = {}) {
+export function avanza(passo, { vuoti = [], alFreddo = false, protetto = false, mite = false, nelLetto = false } = {}) {
   if (morto || !Number.isFinite(passo) || passo <= 0) return null;
 
   for (const quale of vuoti) ferisci(quale, DANNO_VUOTO * passo);
@@ -203,14 +211,14 @@ export function avanza(passo, { vuoti = [], alFreddo = false, protetto = false, 
     // Elimina soltanto il rumore di somma dei fotogrammi vicino alle soglie.
     for (const soglia of [15,30]) if (Math.abs(esposizioneFreddo-soglia)<1e-9) esposizioneFreddo=soglia;
   } else esposizioneFreddo = 0;
-  if (infezione) ferisci("infezione", DANNO_INFEZIONE * passo);
+  if (infezione && !nelLetto) ferisci("infezione", DANNO_INFEZIONE * passo);
 
   // Si guarisce solo quando non manca niente, non si gela e non si è
   // infetti. Non è una cura a metà: o il corpo ha tutto quello che gli serve,
   // o sta pagando. Ed è il motivo per cui l'infezione va curata e non
   // aspettata — finché c'è, niente si rimargina.
   if (vuoti.length === 0 && !alFreddo && !infezione) {
-    livello = limita(livello + CURA * passo);
+    livello = limita(livello + CURA * (nelLetto ? CURA_NEL_LETTO : 1) * passo);
   }
 
   return controllaLaMorte();

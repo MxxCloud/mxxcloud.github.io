@@ -104,6 +104,10 @@ const CATALOGO_OGGETTI = {
   // un materasso per terra non è un ostacolo.
   [OGGETTO.GIACIGLIO]: { sprite: coseArte.GIACIGLIO_STESO, solido: false },
   [OGGETTO.GIACIGLIO_PELLI]: { sprite: coseArte.GIACIGLIO_PELLI_STESO, solido: false },
+  // Il letto non ferma, come il giaciglio: ci si sdraia sopra. E non chiude
+  // una stanza, perché non ferma — un letto messo di traverso in una porta non
+  // fa di una casa due case.
+  [OGGETTO.LETTO]: { sprite: coseArte.LETTO, solido: false },
 
   // L'orto. Nessuno di questi ferma: ci si deve poter camminare in mezzo per
   // innaffiarlo. "Bagnabile" dice alla cottura di guardare se il tassello è
@@ -345,6 +349,14 @@ export function oggettoGenerato(tx, ty) {
 // colpito non potrebbe nemmeno tremare.
 export function annotaTassello(tx, ty, cambio) {
   modifiche.imposta(tx, ty, cambio);
+}
+
+// Il pavimento di questo tassello, o null. Sta nelle modifiche accanto
+// all'oggetto e non al suo posto, perché sopra un pavimento si posa: un letto,
+// una cassa, un fuoco (vedi modifiche.js, che lo tiene fermo mentre sopra
+// cambia tutto il resto).
+export function pavimentoIn(tx, ty) {
+  return modifiche.di(tx, ty)?.pavimento ?? null;
 }
 
 // Cambia un tassello e butta via il settore che lo conteneva, così alla
@@ -595,7 +607,11 @@ function cuociSettore(sx, sy) {
 
       pennello.drawImage(tasselloDi(tx, ty, terreno), x * TASSELLO, y * TASSELLO);
       sfrangia(pennello, leggi, x, y, tx, ty, terreno);
-      fiorisci(pennello, tx, ty, terreno, x, y);
+      // Il pavimento copre il terreno e le sue frange, e ci si dipinge sopra
+      // il resto: un fiore fra le assi di casa sarebbe il prato che passa
+      // attraverso il legno.
+      if (pavimentoIn(tx, ty)) pennello.drawImage(cuoci(coseArte.PAVIMENTO_LEGNO, tavolozzaMondo), x * TASSELLO, y * TASSELLO);
+      else fiorisci(pennello, tx, ty, terreno, x, y);
 
       const oggetto = oggettoDi(tx, ty);
       if (oggetto !== OGGETTO.NESSUNO) {

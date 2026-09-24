@@ -213,6 +213,27 @@ export const RICETTE = [
       { cosa: "fibra", quante: 3 },
     ],
   },
+  // Il pavimento: una legna per tassello, fatto a tre per volta. È il primo
+  // passo da riparo a casa, e il letto ci si posa sopra.
+  {
+    id: "pavimento",
+    banco: true,
+    produce: { cosa: "pavimento", quante: 3 },
+    costo: [{ cosa: "legna", quante: 3 }],
+  },
+  // Il letto: la cornice di legno, la paglia dentro, e il filo di lino per
+  // cucire la fodera. Costa più di ogni altro letto, e rende quello che nessun
+  // altro rende — si guarisce (vedi salute.js).
+  {
+    id: "letto",
+    banco: true,
+    produce: { cosa: "letto", quante: 1 },
+    costo: [
+      { cosa: "legna", quante: 10 },
+      { cosa: "fibra", quante: 15 },
+      { cosa: "filo", quante: 8 },
+    ],
+  },
   // La lancia risponde a una cosa che il gioco aveva e non risolveva: da M6
   // combattere vuol dire scambiare colpi, perché la propria portata è venti e
   // il loro braccio ne arriva a tredici — cioè si è sempre dentro il loro

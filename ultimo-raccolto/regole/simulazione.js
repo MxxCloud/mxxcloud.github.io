@@ -19,7 +19,9 @@ export function resoconto() {
   return risultato;
 }
 
-export function avanza(secondi, { eroe = null, dorme = false, corre = false, siMuove = false, alFreddo = () => false } = {}) {
+// "nelLetto" dice che si dorme in un letto e non su un giaciglio: vale solo
+// finché si dorme, e cambia la salute (vedi salute.js), non il riposo.
+export function avanza(secondi, { eroe = null, dorme = false, nelLetto = false, corre = false, siMuove = false, alFreddo = () => false } = {}) {
   if (!Number.isFinite(secondi) || secondi <= 0) return 0;
   let trascorsi = 0;
   while (secondi > 1e-10 && !salute.eMorto()) {
@@ -51,6 +53,7 @@ export function avanza(secondi, { eroe = null, dorme = false, corre = false, siM
       alFreddo: Boolean(che),
       protetto,
       mite: che === "bagnato",
+      nelLetto: dorme && nelLetto,
     });
     if (dormendo) bisogni.passanoSecondi(passo);
     else bisogni.avanza(passo, { corre, siMuove });

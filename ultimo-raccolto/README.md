@@ -12,6 +12,42 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.13 — il pavimento e il letto
+
+Fino a qui una casa era quattro muri e un focolare: riparava e scaldava, ma
+non c'era niente che la facesse diversa da un buco nella roccia. Il pavimento è
+quella differenza, e il letto è la prima cosa che ci si posa sopra.
+
+**Il pavimento di legno.** Si fa al banco, **tre legna per tre assi**, cioè una
+legna per tassello. Si posa **solo al chiuso** e **su una casella libera** —
+sopra non ci dev'essere niente, nemmeno un mucchio. Poi ci si cammina, e sopra
+si posa quello che si vuole: una cassa, un fuoco, un letto. Non è un oggetto sul
+tassello ma uno strato sotto, e resta dov'è mentre sopra cambia tutto il resto.
+Sulle assi non si zappa e non crescono fiori. Con **X**, quando sopra non c'è
+più niente, **si solleva** e torna nello zaino.
+
+**Il calore che resta.** Il focolare finisce la legna a mezzanotte, cioè nel
+momento peggiore: un minuto prima la stanza era calda, un minuto dopo si gela
+con sette ore di notte davanti. Adesso **il focolare spento stanotte resta
+tiepido fino alle sette**, e **sulle caselle col pavimento** la stanza resta
+calda. Sulla terra battuta no: il tepore è delle assi, ed è il motivo per fare
+il pavimento dove si dorme. Per il sonno vale la regola di sempre — il letto
+entro tre tasselli dal focolare e senza muri in mezzo — con il focolare tiepido
+al posto di quello acceso. Il falò non lascia tepore; riaccendere il focolare
+lo riscrive da capo.
+
+**I mobili, e il letto.** I mobili si posano **solo sul pavimento di legno**, e
+il primo è il letto: al banco, **10 legna, 15 fibra e 8 fili di lino**. Chi ci
+dorme:
+
+- **guarisce tre volte più in fretta**, un giorno invece di tre, finché non
+  manca niente e non si gela;
+- se è **infetto, l'infezione non gli toglie salute** mentre dorme. Non
+  guarisce e non si cura: per quello resta la benda.
+
+Per il riposo vale come il giaciglio di pelli. Si smonta con X, e il pavimento
+resta.
+
 ## M7.18.12 — il fondo del camino tiene dieci ceneri
 
 Un fuoco che brucia lascia una cenere al giorno, e il fondo ne teneva tre. Il
@@ -1491,7 +1527,7 @@ una delle cose che si andranno a fare.
 
 ## A che punto è
 
-È finita **M7.18.12**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.13**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

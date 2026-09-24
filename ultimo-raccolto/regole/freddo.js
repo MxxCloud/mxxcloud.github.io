@@ -26,6 +26,7 @@ import * as riparo from "./riparo.js";
 import * as tempo from "./tempo.js";
 import * as stagioni from "./stagioni.js";
 import * as mappa from "../mondo/mappa.js";
+import * as decadimento from "./decadimento.js";
 import { vistaLibera } from "../mondo/ostacoli.js";
 import * as schermo from "../motore/schermo.js";
 
@@ -93,8 +94,27 @@ export function tipo(eroe) {
   riparo.aggiorna(0, tx, ty);
   const stanza = riparo.stanza();
   if (stanza && riparo.caldaDentro(stanza)) return null;
+  if (stanza && sulTepore(tx, ty, stanza)) return null;
 
   return notteInvernale || nevicata ? "gelo" : "bagnato";
+}
+
+// Il pavimento di legno tiene il calore del focolare spento fino al mattino.
+//
+// Solo sulle assi, e non in tutta la stanza: il tepore è della casella su cui
+// si sta, ed è il motivo per fare il pavimento dove si dorme. Il focolare deve
+// essere di questa stanza, entro un tassello dal suo pavimento come per
+// caldaDentro — è solido, quindi l'allagamento gli gira attorno.
+function sulTepore(tx, ty, stanza) {
+  if (!mappa.pavimentoIn(tx, ty)) return false;
+  for (const t of stanza) {
+    for (let dy = -1; dy <= 1; dy += 1) {
+      for (let dx = -1; dx <= 1; dx += 1) {
+        if (decadimento.tiepido(t.tx + dx, t.ty + dy)) return true;
+      }
+    }
+  }
+  return false;
 }
 
 // Il predicato di sempre, per chi deve solo sapere se si gela: l'indicatore
@@ -107,10 +127,16 @@ export function alFreddo(eroe) {
 // Lo stesso raggio di tre tasselli usato dal calore; le pareti separano i posti.
 // "Un fuoco vero" è quello che scalda, chiesto al catalogo: il falò o il
 // focolare, e domani qualunque altra cosa che scaldi davvero.
+//
+// Sul pavimento di legno il focolare spento stanotte vale ancora come fuoco,
+// fino al mattino e con la stessa regola di quando bruciava: entro tre
+// tasselli e senza muri in mezzo. Chi dorme sulle assi non deve svegliarsi
+// male perché a mezzanotte è finita la legna.
 export function fuocoPerRiposo(letto) {
   const tx=Math.floor(letto.px/TASSELLO),ty=Math.floor(letto.py/TASSELLO);
+  const sulleAssi=mappa.pavimentoIn(tx,ty)!==null;
   for(let y=ty-RAGGIO_FUOCO;y<=ty+RAGGIO_FUOCO;y++)for(let x=tx-RAGGIO_FUOCO;x<=tx+RAGGIO_FUOCO;x++) {
-    if(!mappa.scaldaIn(x,y))continue;
+    if(!mappa.scaldaIn(x,y)&&!(sulleAssi&&decadimento.tiepido(x,y)))continue;
     if(vistaLibera(letto,{px:(x+0.5)*TASSELLO,py:(y+0.5)*TASSELLO}))return true;
   }
   return false;

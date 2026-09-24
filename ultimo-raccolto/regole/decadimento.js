@@ -73,8 +73,11 @@ const FUOCHI = {
 //
 // La stagione si legge all'alba, cioè quando si brucia: conta quella in cui ci
 // si sveglia, non quella in cui si era caricato.
+// "tepore": il focolare, quando finisce la legna, lascia la pietra calda fino
+// al mattino (vedi tiepido più sotto). Il falò no: è una fossa all'aperto, e
+// la cenere si raffredda subito.
 const FOCOLAI = {
-  [OGGETTO.FOCOLARE_ACCESO]: { capienza: 4, spento: OGGETTO.FOCOLARE_SPENTO },
+  [OGGETTO.FOCOLARE_ACCESO]: { capienza: 4, spento: OGGETTO.FOCOLARE_SPENTO, tepore: true },
   [OGGETTO.FALO_ACCESO]: { capienza: 2, spento: OGGETTO.FALO_SPENTO },
 };
 
@@ -97,6 +100,18 @@ export function accesoDi(oggetto) {
 
 export function siCarica(oggetto) {
   return capienzaDi(oggetto) !== null;
+}
+
+// Il focolare su questo tassello si è spento stanotte e tiene ancora caldo?
+//
+// La legna finisce a mezzanotte, che è il momento peggiore: prima c'era una
+// stanza calda, un minuto dopo una stanza al gelo con sette ore di notte
+// davanti. Il focolare spento resta tiepido fino al mattino — fino alle sette,
+// l'ora a cui ci si sveglia — e a chi sta sul pavimento di legno basta (vedi
+// freddo.js). Riaccenderlo lo riscrive da capo, e il tepore non serve più.
+export function tiepido(tx, ty) {
+  if (mappa.oggettoDi(tx, ty) !== OGGETTO.FOCOLARE_SPENTO) return false;
+  return modifiche.di(tx, ty)?.tepore === tempo.giornoCorrente() && tempo.oraCorrente() < tempo.ALBA_PIENA;
 }
 
 export function legnaAlGiorno() {
@@ -312,7 +327,7 @@ export function nuovoGiorno() {
       // il fuoco regge un altro giorno, perché anche l'ultima legna brucia.
       const cenere = Math.min(CENERE_MASSIMA, (cambio.cenere ?? 0) + 1);
       if (resta >= 1) modifiche.imposta(tx, ty, { ...cambio, legna: resta, cenere });
-      else spenti.push({ tx, ty, diventa: focolaio.spento, cenere });
+      else spenti.push({ tx, ty, diventa: focolaio.spento, cenere, tepore: focolaio.tepore ? giorno : undefined });
       return;
     }
 
@@ -366,8 +381,12 @@ export function nuovoGiorno() {
     mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.ESSICCATOIO_PRONTO, quante, cosa });
   }
 
-  for (const { tx, ty, diventa, cenere } of spenti) {
-    mappa.cambiaTassello(tx, ty, cenere ? { oggetto: diventa, cenere } : { oggetto: diventa });
+  for (const { tx, ty, diventa, cenere, tepore } of spenti) {
+    mappa.cambiaTassello(tx, ty, {
+      oggetto: diventa,
+      ...(cenere ? { cenere } : {}),
+      ...(tepore !== undefined ? { tepore } : {}),
+    });
   }
   for (const { tx, ty } of svuotati) {
     mappa.cambiaTassello(tx, ty, { oggetto: OGGETTO.NESSUNO });

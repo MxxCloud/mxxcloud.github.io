@@ -221,6 +221,13 @@ function modificaValida(v) {
   if (!presente(v, "patito", b => b === true && orto.eColtura(v.oggetto))) return false;
   // La cenere sul fondo di un fuoco, da una a dieci, e solo in un fuoco.
   if (!presente(v, "cenere", n => intero(n) && n >= 1 && n <= decadimento.CENERE_MASSIMA && decadimento.siCarica(v.oggetto))) return false;
+  // Il pavimento: di legno, e con l'oggetto scritto accanto — senza, sul
+  // tassello tornerebbe quello che ci mette la generazione, cioè magari un
+  // albero sopra le assi. E non sotto un campo: sulle assi non si zappa.
+  if (!presente(v, "pavimento", p => p === "legno" && v.oggetto !== undefined && !orto.eDelCampo(v.oggetto))) return false;
+  // Il tepore del focolare spento: il giorno in cui si è spento, e solo su un
+  // focolare spento (vedi decadimento.tiepido).
+  if (!presente(v, "tepore", n => positivo(n) && v.oggetto === OGGETTO.FOCOLARE_SPENTO)) return false;
   // Quale coltura, e a che passo della sua fila. Il passo deve cadere sullo
   // stadio che il tassello dice di essere — o sull'ultimo, per quella andata
   // a seme — perché è da lì che riparte la crescita: un passo avanti rispetto

@@ -3361,3 +3361,149 @@ test('Esc e il tasto di cancellazione vogliono dire indietro',()=>{
   assert.match(sorgente,/Escape: "indietro", Backspace: "indietro"/);
   assert.match(sorgente,/"suono", "indietro",/);
 });
+
+// --- M7.18.13: il pavimento di legno e il letto ------------------------------
+
+test('il pavimento resta sotto quello che si posa, si toglie e si riscrive',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.NESSUNO,pavimento:'legno'});
+  // Chi riscrive il tassello da capo non lo sa, e il pavimento resta.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CASSA});
+  assert.equal(mappa.pavimentoIn(tx+1,ty),'legno');
+  mappa.cambiaTassello(tx+1,ty,{oggetto:OGGETTO.NESSUNO});
+  assert.equal(mappa.pavimentoIn(tx+1,ty),'legno');
+  // Anche tornando alla generazione: sotto c'è una casella vuota, non un albero.
+  mappa.cambiaTassello(tx+1,ty,null);
+  assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.NESSUNO,pavimento:'legno'});
+  // Lo toglie solo chi lo nomina.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.NESSUNO,pavimento:undefined});
+  assert.equal(mappa.pavimentoIn(tx+1,ty),null);
+  assert.equal(Object.hasOwn(modifiche.di(tx+1,ty),'pavimento'),false);
+});
+test('il pavimento si posa solo al chiuso e su una casella libera, e ci si posa e cammina sopra',()=>{
+  stanza();inventario.aggiungi('pavimento',3);
+  // Col muro crollato non è un posto chiuso.
+  modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.MURO_ROTTO});
+  assert.equal(azioni.azionePossibile(eroe,'pavimento',0).impedito,'il pavimento va posato al chiuso');
+  modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.MURO});
+  const gesto=azioni.azionePossibile(eroe,'pavimento',0);
+  assert.equal(gesto.tipo,'pavimenta');assert.equal(gesto.impedito ?? null,null);
+  assert.equal(azioni.agisci(eroe,'pavimento',0).tipo,'pavimenta');
+  assert.equal(mappa.pavimentoIn(tx+1,ty),'legno');assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.NESSUNO);
+  assert.equal(inventario.quante('pavimento'),2);assert.equal(mappa.solidoIn(tx+1,ty),false);
+  assert.equal(azioni.azionePossibile(eroe,'pavimento',0).impedito,"c'è già il pavimento");
+  // Su una casella occupata non si posa: prima si toglie quello che c'è.
+  modifiche.imposta(tx+1,ty-1,{oggetto:OGGETTO.BANCO});
+  assert.notEqual(azioni.azionePossibile({...eroe,...pos(tx+1,ty),guarda:'su'},'pavimento',0)?.tipo,'pavimenta');
+  // Sulle assi non si zappa.
+  inventario.aggiungi('zappa',1);
+  const zappa=inventario.contenuto().findIndex(c=>c?.cosa==='zappa');
+  assert.notEqual(azioni.azionePossibile(eroe,'zappa',zappa)?.tipo,'zappa');
+  // Ci si posa sopra una cassa, e smontandola il pavimento resta; poi si solleva.
+  inventario.aggiungi('cassa',1);
+  const cassa=inventario.contenuto().findIndex(c=>c?.cosa==='cassa');
+  assert.equal(azioni.agisci(eroe,'cassa',cassa).tipo,'posa');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.CASSA);assert.equal(mappa.pavimentoIn(tx+1,ty),'legno');
+  eroe={...eroe,...pos(tx,ty),guarda:'destra'};
+  assert.equal(azioni.smontaDavanti(eroe).tipo,'smontato');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.NESSUNO);assert.equal(mappa.pavimentoIn(tx+1,ty),'legno');
+  assert.equal(azioni.smontaggioPossibile(eroe).verbo,'Solleva il pavimento');
+  assert.equal(azioni.smontaDavanti(eroe).cosa,'pavimento');
+  assert.equal(mappa.pavimentoIn(tx+1,ty),null);assert.equal(inventario.quante('pavimento'),3);
+});
+test('il letto è un mobile: si posa solo sul pavimento di legno, e ci si dorme',()=>{
+  stanza();inventario.aggiungi('letto',1);
+  const senza=azioni.azionePossibile(eroe,'letto',0);
+  assert.equal(senza.tipo,'posa');assert.match(senza.impedito,/serve il pavimento di legno/);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.NESSUNO,pavimento:'legno'});
+  assert.equal(azioni.agisci(eroe,'letto',0).tipo,'posa');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.LETTO);assert.equal(mappa.solidoIn(tx+1,ty),false);
+  assert.equal(azioni.azionePossibile(eroe,null).tipo,'dormi');
+  assert.equal(azioni.smontaggioPossibile(eroe).verbo,'Smonta il letto');
+});
+test('pavimento e letto si fanno al banco: tre legna per tre assi, e legna, fibra e filo per il letto',()=>{
+  const pav=ricette.RICETTE.find(r=>r.id==='pavimento'),letto=ricette.RICETTE.find(r=>r.id==='letto');
+  assert.deepEqual(pav.costo,[{cosa:'legna',quante:3}]);assert.deepEqual(pav.produce,{cosa:'pavimento',quante:3});
+  assert.deepEqual(letto.costo,[{cosa:'legna',quante:10},{cosa:'fibra',quante:15},{cosa:'filo',quante:8}]);
+  assert.equal(pav.banco,true);assert.equal(letto.banco,true);
+  inventario.aggiungi('legna',3);
+  assert.equal(ricette.fai(pav).perche,'banco');
+  assert.equal(ricette.fai(pav,true).fatto,true);assert.equal(inventario.quante('pavimento'),3);
+  assert.equal(CATALOGO.letto.mobile,true);assert.equal(CATALOGO.pavimento.pavimento,'legno');
+});
+test('nel letto si guarisce tre volte più in fretta, e l’infezione non toglie salute nel sonno',()=>{
+  salute.ferita(0.5,'animali');salute.avanza(100,{});vicino(salute.livelloCorrente(),0.5+100/900);
+  salute.reimposta();salute.ferita(0.5,'animali');salute.avanza(100,{nelLetto:true});vicino(salute.livelloCorrente(),0.5+300/900);
+  salute.reimposta();salute.infettati();salute.avanza(100,{});vicino(salute.livelloCorrente(),1-100/1200);
+  salute.reimposta();salute.infettati();salute.avanza(100,{nelLetto:true});vicino(salute.livelloCorrente(),1);
+  assert.equal(salute.eInfetto(),true,'non la cura: per quello resta la benda');
+});
+test('dormire nel letto guarisce più che sul giaciglio, per tutta la notte',()=>{
+  // Dalle dieci di sera alle sette: nove ore, cioè 112,5 secondi. In una notte
+  // serena fuori dall'estate e dall'inverno, perché nessun bisogno si vuoti e
+  // non si geli: la guarigione vuole che non manchi niente.
+  let giorno=1;
+  while(meteo.evento(giorno)!=='sereno'||['estate','inverno'].includes(stagioni.stagioneDi(giorno)))giorno++;
+  const notte=(oggetto)=>{
+    reset();stanza();tempo.impostaGiorno(giorno);tempo.impostaOra(22);
+    modifiche.imposta(tx+1,ty,{oggetto,pavimento:'legno'});
+    salute.ferita(0.5,'animali');
+    const esito=azioni.agisci(eroe,null);assert.equal(esito.tipo,'dormi');
+    return salute.livelloCorrente();
+  };
+  vicino(notte(OGGETTO.GIACIGLIO),0.5+112.5/900,1e-6);
+  vicino(notte(OGGETTO.LETTO),0.5+3*112.5/900,1e-6);
+});
+test('il focolare spento a mezzanotte tiene caldo sulle assi fino al mattino',()=>{
+  // Una notte d'inverno: il focolare ha l'ultima legna e la finisce a mezzanotte.
+  stanzaGrande();
+  modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.FOCOLARE_ACCESO,legna:2});
+  tempo.impostaGiorno(9);tempo.impostaOra(23.9);simulazione.avanza(5);
+  assert.equal(tempo.giornoCorrente(),10);
+  assert.equal(mappa.oggettoDi(tx-2,ty),OGGETTO.FOCOLARE_SPENTO);
+  assert.equal(modifiche.di(tx-2,ty).tepore,10);
+  // Sulla terra si gela, sulle assi no.
+  eroe={...eroe,...pos(tx+2,ty)};assert.equal(freddo.alFreddo(eroe),true);
+  modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.NESSUNO,pavimento:'legno'});assert.equal(freddo.alFreddo(eroe),false);
+  // Il letto sulle assi, entro tre tasselli dal focolare, dorme al caldo.
+  const letto={px:(tx+0.5)*16,py:(ty+0.75)*16};
+  assert.equal(freddo.fuocoPerRiposo(letto),false);
+  modifiche.imposta(tx,ty,{oggetto:OGGETTO.LETTO,pavimento:'legno'});assert.equal(freddo.fuocoPerRiposo(letto),true);
+  // Fino alle sette: poi il tepore è finito (e comunque è giorno).
+  assert.equal(decadimento.tiepido(tx-2,ty),true);
+  tempo.impostaOra(7.5);assert.equal(decadimento.tiepido(tx-2,ty),false);
+  tempo.impostaGiorno(11);tempo.impostaOra(2);assert.equal(decadimento.tiepido(tx-2,ty),false,'la notte dopo no');
+  tempo.impostaGiorno(10);
+  // Riaccenderlo lo riscrive da capo.
+  tempo.impostaOra(2);inventario.aggiungi('legna',1);
+  const davanti={...pos(tx-1,ty),guarda:'sinistra'};
+  assert.equal(azioni.agisci(davanti,'legna',0).tipo,'carica');
+  assert.equal(modifiche.di(tx-2,ty).tepore,undefined);
+});
+test('il falò spento non lascia tepore',()=>{
+  stanzaGrande();
+  modifiche.imposta(tx-2,ty,{oggetto:OGGETTO.FALO_ACCESO,legna:2});
+  modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.NESSUNO,pavimento:'legno'});
+  tempo.impostaGiorno(9);tempo.impostaOra(23.9);simulazione.avanza(5);
+  assert.equal(mappa.oggettoDi(tx-2,ty),OGGETTO.FALO_SPENTO);assert.equal(modifiche.di(tx-2,ty).tepore,undefined);
+  eroe={...eroe,...pos(tx+2,ty)};assert.equal(freddo.alFreddo(eroe),true);
+});
+test('pavimento e tepore si salvano solo dove hanno senso, e il pavimento ferma la ricrescita',()=>{
+  const stato=salvataggio.istantanea(eroe,0);
+  const valida=m=>{stato.modifiche=[{tx:tx+1,ty,...m}];return salvataggio.valido(stato);};
+  assert.ok(valida({oggetto:OGGETTO.NESSUNO,pavimento:'legno'}));
+  assert.ok(valida({oggetto:OGGETTO.LETTO,pavimento:'legno'}));
+  assert.ok(valida({oggetto:OGGETTO.FOCOLARE_SPENTO,tepore:10}));
+  assert.equal(valida({oggetto:OGGETTO.NESSUNO,pavimento:'pietra'}),false);
+  assert.equal(valida({pavimento:'legno'}),false,'senza oggetto tornerebbe la generazione');
+  assert.equal(valida({oggetto:OGGETTO.TERRA_ZAPPATA,pavimento:'legno'}),false,'sulle assi non si zappa');
+  assert.equal(valida({oggetto:OGGETTO.FALO_SPENTO,tepore:10}),false);
+  // E torna com'era dopo un salvataggio.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.LETTO,pavimento:'legno'});
+  const pieno=salvataggio.istantanea(eroe,0);modifiche.svuota();assert.ok(salvataggio.applica(pieno));
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.LETTO);assert.equal(mappa.pavimentoIn(tx+1,ty),'legno');
+  // Un tassello di bosco col pavimento non ricresce, nemmeno all'aperto.
+  const p=strappato(OGGETTO.ALBERO);
+  modifiche.imposta(p.tx,p.ty,{oggetto:OGGETTO.NESSUNO,pavimento:'legno'});
+  tempo.impostaGiorno(primoDi('estate',20));ricrescita.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(p.tx,p.ty),OGGETTO.NESSUNO);
+});
