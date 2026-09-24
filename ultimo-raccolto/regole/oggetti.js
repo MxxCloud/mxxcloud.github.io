@@ -611,15 +611,15 @@ export const RACCOLTA = {
     resa: [{ cosa: "rapa", quante: 1 }],
   },
   // La matura lasciata andare a seme: niente da mangiare, la radice è
-  // diventata legno, ma tre semi — cioè tre tasselli per la prossima volta.
-  // Uno ogni tre va lasciato qui per tenere l'orto com'è, e ogni seme in più è
-  // un campo che si allarga.
+  // diventata legno, ma sei semi da M7.18.23 (erano tre) — la resa vera la
+  // dice colture.js per ogni coltura. Uno va ripiantato per tenere l'orto
+  // com'è, e gli altri sono campi nuovi o mangime per i polli.
   [OGGETTO.A_SEME]: {
     verbo: "Raccogli i semi",
     colpi: 1,
     voce: "erba",
     scheggie: ["v", "x", "g"],
-    resa: [{ cosa: "semi", quante: 3 }],
+    resa: [{ cosa: "semi", quante: 6 }],
   },
 
   // Un campo morto si ripulisce, e qualcosa rende: gli steli secchi sono

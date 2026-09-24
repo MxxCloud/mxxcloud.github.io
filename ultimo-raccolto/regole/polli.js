@@ -16,7 +16,9 @@
 //   cancello aperto se ne va, e fuori dal recinto a mezzanotte torna
 //   selvatico;
 // - mangia ogni giorno dal pollaio: un seme, una bacca o un fagiolo a testa.
-//   Un giorno senza è un giorno di fame, due di fila e muore;
+//   Un giorno senza è un giorno di fame, due di fila e muore. In primavera e
+//   d'estate, da M7.18.23, razzola: quattro tasselli di prato nel recinto
+//   sfamano un pollo senza mangime;
 // - d'inverno senza pollaio muore di freddo, e un pollaio ne ripara quattro.
 //
 // E da M7.18.19 quello che dà:
@@ -64,6 +66,8 @@ export const UOVA_MASSIME = 6;
 export const POLLINA_MASSIMA = 6;
 export const NOTTI_DI_COVA = 3;
 export const GIORNI_DA_PULCINO = 4;
+// Quanti tasselli di prato sfamano un pollo che razzola (M7.18.23).
+export const PRATO_PER_POLLO = 4;
 // Ogni quanti giorni una gallina nutrita fa un uovo.
 export const GIORNI_PER_UOVO = 2;
 // Quanti selvatici su cento sono galli.
@@ -340,6 +344,34 @@ export function nelRecintoDi(tx, ty) {
   return 0;
 }
 
+// Il prato di un recinto: i tasselli liberi d'erba o di sterpaglia. Non la
+// terra battuta, non l'orto, non le assi — lì non c'è niente da beccare.
+function pratoDi(recinto) {
+  return recinto.tasselli.filter(({ tx, ty }) => {
+    if (mappa.oggettoDi(tx, ty) !== OGGETTO.NESSUNO || mappa.pavimentoIn(tx, ty)) return false;
+    const t = mappa.terrenoNaturaleDi(tx, ty);
+    return t === TERRENO.ERBA || t === TERRENO.STERPAGLIA;
+  }).length;
+}
+
+// Quanti polli sfama da sé il recinto, a razzolare. Solo in primavera e
+// d'estate: d'autunno l'erba è secca, d'inverno è sotto il gelo, e per metà
+// dell'anno si vive del mangime messo da parte.
+function sfamaIlPrato(recinto, stagione = stagioni.stagioneCorrente()) {
+  if (stagione !== "primavera" && stagione !== "estate") return 0;
+  return Math.floor(pratoDi(recinto) / PRATO_PER_POLLO);
+}
+
+// Quanti polli sfama il prato del recinto accanto al pollaio, per dirlo a chi
+// lo guarda.
+export function pratoAccantoA(tx, ty) {
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const recinto = riparo.recintoDi(tx + dx, ty + dy);
+    if (recinto) return sfamaIlPrato(recinto);
+  }
+  return 0;
+}
+
 // --- la mezzanotte ------------------------------------------------------------
 
 // Da chiamare a ogni cambio di giorno. Restituisce cosa è successo, perché
@@ -389,9 +421,17 @@ export function nuovoGiorno() {
     const qui = polli.filter(q => q.domestico && dentro.has(`${Math.floor(q.px / 16)},${Math.floor(q.py / 16)}`));
     const pollai = recinto.pareti.filter(t => mappa.oggettoDi(t.tx, t.ty) === OGGETTO.POLLAIO);
 
-    // Si mangia dal pollaio che ne ha di più, uno per pollo.
+    // Prima razzolano, finché il prato basta (M7.18.23); gli altri mangiano
+    // dal pollaio che ne ha di più, uno per pollo.
     const nutriti = new Set();
+    let prato = sfamaIlPrato(recinto, stagioni.stagioneDi(giorno));
     for (const q of qui) {
+      if (prato > 0) {
+        prato -= 1;
+        q.fame = 0;
+        nutriti.add(q);
+        continue;
+      }
       const pieno = pollai.filter(t => mangimeNel(t.tx, t.ty) > 0)
         .sort((a, b) => mangimeNel(b.tx, b.ty) - mangimeNel(a.tx, a.ty))[0];
       if (pieno) {

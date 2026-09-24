@@ -38,6 +38,13 @@ const { SEMINATO: S, GERMOGLIO: G, CRESCIUTA: C, MATURA: M } = OGGETTO;
 //   nella terra non fa semi, marcisce;
 // - gelo: se d'inverno si ferma invece di morire;
 // - ingrassa: se il raccolto ridà fertilità alla terra invece di toglierla.
+// Quanti semi rende una pianta andata a seme. Erano tre fino a M7.18.23: tolto
+// quello da ripiantare, un campo lasciato a seme rendeva due semi ogni sei
+// giorni, e due polli ne mangiano due al giorno — servivano sei campi per un
+// pollaio. Con sei ne basta più o meno uno per pollo. La pianta a seme resta
+// una rinuncia: non dà il raccolto, e la terra si stanca lo stesso.
+export const SEMI_DA_UNA_PIANTA = 6;
+
 export const COLTURE = {
   rapa: {
     nome: "rapa", seme: "semi", verbo: "Semina",
@@ -45,7 +52,7 @@ export const COLTURE = {
     stadi: [S, G, C, M],
     sete: 3,
     raccolto: [{ cosa: "rapa", quante: 1 }],
-    aSeme: [{ cosa: "semi", quante: 3 }],
+    aSeme: [{ cosa: "semi", quante: SEMI_DA_UNA_PIANTA }],
     gelo: false,
     quando: "le rape si seminano in primavera, d'estate e d'autunno",
   },
@@ -84,7 +91,7 @@ export const COLTURE = {
     stadi: [S, G, C, C, M],
     sete: 3,
     raccolto: [{ cosa: "cavolo", quante: 1 }],
-    aSeme: [{ cosa: "semi_cavolo", quante: 3 }],
+    aSeme: [{ cosa: "semi_cavolo", quante: SEMI_DA_UNA_PIANTA }],
     gelo: true,
     quando: "il cavolo si semina in primavera e d'autunno",
   },
@@ -97,7 +104,7 @@ export const COLTURE = {
     stadi: [S, G, C, C, M],
     sete: 3,
     raccolto: [{ cosa: "filo", quante: 4 }],
-    aSeme: [{ cosa: "semi_lino", quante: 3 }],
+    aSeme: [{ cosa: "semi_lino", quante: SEMI_DA_UNA_PIANTA }],
     gelo: false,
     quando: "il lino si semina in primavera e d'estate",
   },

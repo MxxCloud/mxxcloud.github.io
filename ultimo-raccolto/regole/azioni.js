@@ -392,7 +392,7 @@ function sulTassello(eroe, cosaInMano, indice) {
         impedito: mangime >= polli.MANGIME_MASSIMO ? "il pollaio è pieno" : null };
     }
     return { tipo: "guardaPollaio", verbo: "Guarda il pollaio", bersaglio: b, mangime, polli: polli.nelRecintoDi(b.tx, b.ty),
-      uova, pollina };
+      uova, pollina, prato: polli.pratoAccantoA(b.tx, b.ty) };
   }
 
   if (decadimento.siCarica(b.oggetto)) {
@@ -1278,7 +1278,7 @@ function esegui(eroe, cosaInMano, indice, azione) {
 
   if (azione.tipo === "guardaPollaio") {
     return { tipo: "pollaioGuardato", mangime: azione.mangime, massimo: polli.MANGIME_MASSIMO, polli: azione.polli,
-      pollina: azione.pollina };
+      pollina: azione.pollina, prato: azione.prato };
   }
   if (azione.tipo === "nutri") {
     if (!inventario.togli(azione.cosa, 1)) return null;
