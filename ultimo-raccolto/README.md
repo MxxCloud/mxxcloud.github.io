@@ -12,11 +12,16 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.17 — lo steccato vuole la fibra
+
+Lo steccato costa **2 legne, 2 rami e 2 fibre**: la fibra lega le traverse ai
+pali. Senza, un recinto si pagava con un albero e un cespuglio.
+
 ## M7.18.16 — lo steccato e il cancello
 
 La prima tappa dell'allevamento: il recinto.
 
-- **Steccato** al banco (2 legne, 2 rami); **cancello** al banco (3 legne, 2
+- **Steccato** al banco (2 legne, 2 rami, 2 fibre — da M7.18.17); **cancello** al banco (3 legne, 2
   rami, 2 fibre). Si posano come il muro e la porta e si tolgono con la X.
 - Il cancello **si apre e si chiude con la barra**, come la porta: da aperto si
   passa, e non si chiude addosso a qualcuno.
@@ -1605,7 +1610,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.16**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.17**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
