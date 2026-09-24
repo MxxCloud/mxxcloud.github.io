@@ -5,11 +5,11 @@
 // — finché la fame non esiste, un giorno vale l'altro e non c'è motivo di
 // fare qualcosa adesso invece che dopo.
 //
-// Non ci sono morale né ferite: quelli vanno con gli infetti, dove hanno una
-// causa. Il freddo invece una causa ce l'aveva già — l'inverno — e sta in
-// freddo.js, non qui: non è una barra che si svuota, è una condizione in cui
-// ci si trova. Tre indicatori sono già il massimo che un giocatore tiene
-// d'occhio mentre fa altro.
+// Non ci sono ferite: sono arrivate con gli infetti, dove hanno una causa
+// (vedi salute.js). Né morale, che non è in programma. Il freddo invece una
+// causa ce l'aveva già — l'inverno — e sta in freddo.js, non qui: non è una
+// barra che si svuota, è una condizione in cui ci si trova. Tre indicatori
+// sono già il massimo che un giocatore tiene d'occhio mentre fa altro.
 
 import * as riposo from "./riposo.js";
 import * as tempo from "./tempo.js";
