@@ -73,7 +73,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.18";
+const VERSIONE = "M7.18.19";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1173,7 +1173,7 @@ function leggiComandi() {
   if (esito.tipo === "semina") { suono.suona(SEMINA); annuncia("seminato", "#9ec97e"); }
   if (esito.tipo === "innaffia") { suono.suona(ACQUA); annuncia("innaffiato", "#8fb8d8"); }
   if (esito.tipo === "interra") { suono.suona(ZAPPA); annuncia("interrata: la terra è più grassa", "#9ec97e"); }
-  if (esito.tipo === "spargi") { suono.suona(SEMINA); annuncia("cenere sparsa: la terra è più grassa", "#9ec97e"); }
+  if (esito.tipo === "spargi") { suono.suona(SEMINA); annuncia(`${esito.cosa ?? "cenere"} sparsa: la terra è più grassa`, "#9ec97e"); }
   if (esito.tipo === "cenere") { suono.suona(PRESO); annuncia(`+${esito.quante} cenere`, "#c9b189"); }
   // Dormire non ha voce, ed è l'unico gesto che non ne ha: fra il tasto e il
   // risveglio passano ore di gioco, e un suono attaccato a quel momento
@@ -1196,7 +1196,19 @@ function leggiComandi() {
   // I polli e il pollaio (M7.18.18).
   if (esito.tipo === "polloPreso") {
     suono.suona(PRESO);
-    annuncia("preso: un pollo vivo regge una notte nello zaino", "#9ec97e");
+    annuncia(`preso: ${esito.gallo ? "un gallo" : "un pollo"} vivo regge una notte nello zaino`, "#9ec97e");
+  }
+  if (esito.tipo === "uovaPrese") {
+    suono.suona(PRESO);
+    annuncia(`+${esito.quante} ${esito.quante === 1 ? "uovo" : "uova"}`, "#9ec97e");
+  }
+  if (esito.tipo === "pollinaPresa") {
+    suono.suona(PRESO);
+    annuncia(`+${esito.quante} pollina: spargila sull'orto`, "#9ec97e");
+  }
+  if (esito.tipo === "zainoPieno") {
+    suono.suona(NEGATO);
+    annuncia("zaino pieno: getta qualcosa con G", "#c0705f");
   }
   if (esito.tipo === "polloUcciso") {
     suono.suona(PRESO);
@@ -1204,7 +1216,8 @@ function leggiComandi() {
   }
   if (esito.tipo === "polloLiberato") {
     suono.suona(POSA);
-    annuncia(esito.nelRecinto ? "il pollo è nel recinto" : "il pollo scappa", esito.nelRecinto ? "#9ec97e" : "#c9b189");
+    const chi = esito.gallo ? "il gallo" : "il pollo";
+    annuncia(esito.nelRecinto ? `${chi} è nel recinto` : `${chi} scappa`, esito.nelRecinto ? "#9ec97e" : "#c9b189");
   }
   if (esito.tipo === "nutrito") {
     suono.suona(POSA);
@@ -1213,7 +1226,8 @@ function leggiComandi() {
   if (esito.tipo === "pollaioGuardato") {
     suono.suona(SCELTA);
     const quanti = esito.polli === 1 ? "1 pollo" : `${esito.polli} polli`;
-    annuncia(`pollaio: ${esito.mangime}/${esito.massimo} mangime, ${quanti}`, esito.mangime > 0 ? "#c9b189" : "#c0705f");
+    const pollina = esito.pollina > 0 ? `, ${esito.pollina} pollina` : "";
+    annuncia(`pollaio: ${esito.mangime}/${esito.massimo} mangime, ${quanti}${pollina}`, esito.mangime > 0 ? "#c9b189" : "#c0705f");
   }
   if (esito.tipo === "guardato") {
     suono.suona(SCELTA);
@@ -1479,7 +1493,7 @@ function aggiorna(passo) {
     if (messaggio.vita <= 0) messaggio = null;
   }
 
-  const { polliNelloZaino, polloDomani, polliScappati, polliAffamati, polliDiFame, polliDiFreddo,
+  const { uovaDeposte, pulciniNati, pulciniCresciuti, polliNelloZaino, polloDomani, polliScappati, polliAffamati, polliDiFame, polliDiFreddo,
     cresciute, appassite, seccate, alBuio, alChiuso, assetate, aSeme, mangiate, spentiLegna, spentiPioggia, torceFinite, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
 
   const arrivata = vestiLaValle();
@@ -1538,6 +1552,10 @@ function aggiorna(passo) {
   else if (inScadenza > 0) annuncia("del cibo sta per guastarsi", "#c9b189");
   else if (aSeme > 0) annuncia(`l'orto è andato a seme: ${aSeme}`, "#c9b189");
   else if (cresciute > 0) annuncia("l'orto è cresciuto", "#9ec97e");
+  // Le buone notizie del pollaio, dopo quelle dell'orto.
+  else if (pulciniNati > 0) annuncia(pulciniNati === 1 ? "è nato un pulcino" : `sono nati dei pulcini: ${pulciniNati}`, "#9ec97e");
+  else if (pulciniCresciuti.length > 0) annuncia(`un pulcino è cresciuto: ${pulciniCresciuti[0]}`, "#9ec97e");
+  else if (uovaDeposte > 0) annuncia(`nel pollaio ci sono uova: +${uovaDeposte}`, "#9ec97e");
   // Ultima di tutte, perché è l'unica buona notizia che non riguarda una cosa
   // che il giocatore ha fatto: la valle si è rimessa a posto da sola.
   else if (tornati > 0) annuncia(`la valle è ricresciuta: ${tornati}`, "#7fae63");

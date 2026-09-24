@@ -229,6 +229,10 @@ function modificaValida(v) {
   if (!presente(v, "buio", n => n === 1 && orto.eColtura(v.oggetto))) return false;
   // Il mangime del pollaio, da uno al pieno, e solo in un pollaio.
   if (!presente(v, "mangime", n => intero(n) && n >= 1 && n <= polli.MANGIME_MASSIMO && v.oggetto === OGGETTO.POLLAIO)) return false;
+  // Il nido, la cova e la pollina: solo in un pollaio, e dentro i loro tetti.
+  if (!presente(v, "uova", n => intero(n) && n >= 1 && n <= polli.UOVA_MASSIME && v.oggetto === OGGETTO.POLLAIO)) return false;
+  if (!presente(v, "cova", n => intero(n) && n >= 1 && n < polli.NOTTI_DI_COVA && v.oggetto === OGGETTO.POLLAIO)) return false;
+  if (!presente(v, "pollina", n => intero(n) && n >= 1 && n <= polli.POLLINA_MASSIMA && v.oggetto === OGGETTO.POLLAIO)) return false;
   // La cenere sul fondo di un fuoco, da una a dieci, e solo in un fuoco.
   if (!presente(v, "cenere", n => intero(n) && n >= 1 && n <= decadimento.CENERE_MASSIMA && decadimento.siCarica(v.oggetto))) return false;
   // Il pavimento: di legno, e con l'oggetto scritto accanto — senza, sul

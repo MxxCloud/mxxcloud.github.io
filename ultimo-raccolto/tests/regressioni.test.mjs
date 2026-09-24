@@ -3880,3 +3880,113 @@ test('col cancello aperto il pollo posato dentro è tuo, ma se il cancello resta
   inventario.aggiungi('pollo',1,6);
   assert.equal(azioni.azionePossibile(eroe,'pollo',0).verbo,'Libera il pollo');
 });
+
+// M7.18.19 — uova, gallo, pulcini, pollina.
+// Un recinto con pollaio sopra l'eroe; le galline e il gallo dati, posati in fila.
+function pollame({galline=1,galli=0,mangime=12}={}) {
+  recinto(tx,ty);
+  modifiche.imposta(tx,ty-1,{oggetto:OGGETTO.POLLAIO,mangime});
+  const cose=[...Array(galline).fill('pollo'),...Array(galli).fill('gallo')];
+  cose.forEach((cosa,i)=>{inventario.aggiungi(cosa,1,1);const k=inventario.contenuto().findIndex(c=>c?.cosa===cosa);polli.libera(tx-1+(i%3),ty+1,k);});
+}
+const notteDi=(giorno)=>{tempo.impostaGiorno(giorno);return polli.nuovoGiorno();};
+
+test('la gallina nutrita fa un uovo ogni due giorni, non d’inverno, e affamata no',()=>{
+  tempo.impostaGiorno(1);pollame({galline:1,mangime:12});
+  assert.equal(notteDi(2).uova,1);assert.equal(polli.uovaNel(tx,ty-1),1);
+  assert.equal(notteDi(3).uova,0,'il giorno dopo no');
+  assert.equal(notteDi(4).uova,1);
+  modifiche.imposta(tx,ty-1,{oggetto:OGGETTO.POLLAIO});
+  assert.equal(notteDi(6).uova,0,'senza mangime niente uova');
+  modifiche.imposta(tx,ty-1,{oggetto:OGGETTO.POLLAIO,mangime:12});
+  assert.equal(notteDi(10).uova,0,'d’inverno niente uova');
+});
+
+test('il nido tiene sei uova, e senza pollaio l’uovo è perso',()=>{
+  tempo.impostaGiorno(1);pollame({galline:1});
+  modifiche.imposta(tx,ty-1,{oggetto:OGGETTO.POLLAIO,mangime:12,uova:6});
+  const r=notteDi(2);assert.equal(r.uova,0);assert.equal(r.uovaPerse,1);assert.equal(polli.uovaNel(tx,ty-1),6);
+});
+
+test('le uova si prendono a mani vuote, si cuociono e si mangiano',()=>{
+  recinto(tx,ty);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.POLLAIO,uova:3,cova:2});
+  assert.equal(azioni.azionePossibile(eroe,null).verbo,'Prendi le uova (3)');
+  assert.equal(azioni.agisci(eroe,null).quante,3);
+  assert.equal(inventario.quante('uovo'),3);assert.equal(polli.uovaNel(tx+1,ty),0);
+  assert.equal(modifiche.di(tx+1,ty).cova,undefined,'prenderle azzera la cova');
+  assert.equal(CATALOGO.uovo.cuoce,'uovo_cotto');
+  assert.ok(CATALOGO.uovo_cotto.commestibile.fame>CATALOGO.uovo.commestibile.fame);
+});
+
+test('con un gallo le uova del nido si covano e alla terza notte nasce un pulcino; senza gallo no',()=>{
+  tempo.impostaGiorno(1);pollame({galline:1,galli:1});
+  modifiche.imposta(tx,ty-1,{oggetto:OGGETTO.POLLAIO,mangime:12,uova:2});
+  notteDi(2);assert.equal(modifiche.di(tx,ty-1).cova,1);
+  notteDi(3);assert.equal(modifiche.di(tx,ty-1).cova,2);
+  const r=notteDi(4);assert.equal(r.nati,1);
+  const pulcino=polli.tutte().find(p=>polli.pulcino(p));
+  assert.ok(pulcino);assert.equal(pulcino.domestico,true);assert.equal(riparo.recintato(Math.floor(pulcino.px/16),Math.floor(pulcino.py/16)),true);
+  // Senza gallo la cova non comincia.
+  polli.reimposta();pollame({galline:1});
+  modifiche.imposta(tx,ty-1,{oggetto:OGGETTO.POLLAIO,mangime:12,uova:2});
+  notteDi(2);notteDi(3);assert.equal(notteDi(4).nati,0);
+  assert.equal(modifiche.di(tx,ty-1).cova,undefined);
+});
+
+test('il pulcino cresce in quattro giorni e non si prende né si uccide',()=>{
+  tempo.impostaGiorno(1);pollame({galline:0});
+  polli.ripristina({attesa:30,sequenza:0,polli:[{px:(tx+1.5)*16,py:(ty+0.75)*16,domestico:true,seme:3,dx:0,dy:0,giro:0,destra:true,passo:0,fame:0,gallo:false,eta:0,deposto:null}]});
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,'è un pulcino: lascialo crescere');
+  inventario.aggiungi('lancia',1);const i=inventario.contenuto().findIndex(c=>c?.cosa==='lancia');
+  assert.equal(azioni.azionePossibile(eroe,'lancia',i).impedito,'è un pulcino: lascialo crescere');
+  for(const g of [2,3,4])notteDi(g);
+  assert.equal(polli.pulcino(polli.tutte()[0]),true);
+  const r=notteDi(5);
+  assert.equal(r.cresciuti.length,1);assert.equal(polli.pulcino(polli.tutte()[0]),false);
+  assert.equal(polli.tutte()[0].gallo,true,'seme dispari: gallo');
+});
+
+test('la pollina si accumula nel pollaio, si raccoglie con la zappa e concima come la cenere',()=>{
+  tempo.impostaGiorno(1);pollame({galline:1});
+  for(let g=2;g<=9;g++)notteDi(g===9?9:g);
+  assert.equal(polli.pollinaNel(tx,ty-1),polli.POLLINA_MASSIMA,'si ferma al massimo');
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.POLLAIO,pollina:3});
+  inventario.aggiungi('zappa',1);const z=inventario.contenuto().findIndex(c=>c?.cosa==='zappa');
+  assert.equal(azioni.azionePossibile(eroe,'zappa',z).verbo,'Raccogli la pollina (3)');
+  assert.equal(azioni.agisci(eroe,'zappa',z).quante,3);assert.equal(inventario.quante('pollina'),3);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.TERRA_ZAPPATA,fertilita:1});
+  const p=inventario.contenuto().findIndex(c=>c?.cosa==='pollina');
+  assert.equal(azioni.azionePossibile(eroe,'pollina',p).verbo,'Spargi la pollina');
+  azioni.agisci(eroe,'pollina',p);
+  assert.equal(orto.fertilitaDi(modifiche.di(tx+1,ty)),2);assert.equal(inventario.quante('pollina'),2);
+});
+
+test('il gallo resta gallo nello zaino e nel salvataggio, e il salvataggio controlla nido e cova',()=>{
+  tempo.impostaGiorno(5);tempo.impostaOra(23);
+  polli.ripristina({attesa:30,sequenza:0,polli:[{px:(tx+1.5)*16,py:(ty+0.75)*16,domestico:false,seme:3,dx:0,dy:0,giro:0,destra:true,passo:0,fame:0,gallo:true,eta:null,deposto:null}]});
+  assert.equal(azioni.agisci(eroe,null).gallo,true);assert.equal(inventario.quante('gallo'),1);
+  assert.equal(contenitori.sposta(tx,ty,true,inventario.contenuto().findIndex(c=>c?.cosa==='gallo')).tipo,'vivo');
+  recinto(tx,ty);
+  const i=inventario.contenuto().findIndex(c=>c?.cosa==='gallo');
+  assert.equal(azioni.azionePossibile(eroe,'gallo',i).verbo,'Metti il gallo nel recinto');
+  azioni.agisci(eroe,'gallo',i);assert.equal(polli.tutte()[0].gallo,true);
+  const stato=salvataggio.istantanea(eroe,0);
+  polli.reimposta();salvataggio.applica(stato);assert.equal(polli.tutte()[0].gallo,true);
+  const valida=m=>{const t=structuredClone(stato);t.modifiche=[{tx:tx+3,ty,...m}];return salvataggio.valido(t);};
+  assert.ok(valida({oggetto:OGGETTO.POLLAIO,uova:6,cova:2,pollina:6}));
+  assert.equal(valida({oggetto:OGGETTO.POLLAIO,uova:7}),false);
+  assert.equal(valida({oggetto:OGGETTO.POLLAIO,cova:3}),false);
+  assert.equal(valida({oggetto:OGGETTO.CASSA,pollina:1}),false);
+  const storto=structuredClone(stato);storto.polli.polli[0].eta=9;assert.equal(salvataggio.valido(storto),false);
+});
+
+test('un selvatico su quattro, circa, è un gallo',()=>{
+  mappa.inizializza('valle-2');const f=mappa.laFattoria();
+  let galli=0,tutti=0;
+  for(let d=0;d<40;d++){polli.reimposta();const e={px:(f.tx+0.5)*16+250+d*7,py:(f.ty+0.75)*16+80,guarda:'giu'};
+    for(let k=0;k<6;k++)polli.aggiorna(30,e);
+    for(const p of polli.tutte()){tutti++;if(p.gallo)galli++;}}
+  assert.ok(tutti>=20,'ne nascono: '+tutti);
+  assert.ok(galli>0 && galli<tutti/2,`galli ${galli} su ${tutti}`);
+});
