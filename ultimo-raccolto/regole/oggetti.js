@@ -350,6 +350,11 @@ export const CATALOGO = {
   // cancello come la porta, perché un recinto ha un ingresso.
   steccato: { nome: "Steccato", icona: arte.STECCATO_ICONA, pila: 20, posa: OGGETTO.STECCATO },
   cancello: { nome: "Cancello", icona: arte.CANCELLO_ICONA, pila: 3, posa: OGGETTO.CANCELLO },
+  // Il pollo vivo: una casella per pollo, perché un pollo non si impila. Non
+  // si mangia e non si mette in una cassa; si posa con la barra, e dentro un
+  // recinto diventa tuo (vedi polli.js). Nello zaino regge una notte sola.
+  pollo: { nome: "Pollo vivo", icona: arte.POLLO_ICONA, pila: 1, datato: true },
+  pollaio: { nome: "Pollaio", icona: arte.POLLAIO_ICONA, pila: 1, posa: OGGETTO.POLLAIO },
   // La lancia. Colpisce meno di un'ascia e arriva molto più lontano, ed è
   // tutta qui la scelta: tre colpi tenendolo a distanza, o due lasciandogli
   // dare il suo.

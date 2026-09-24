@@ -9,8 +9,10 @@ import * as salute from "./salute.js";
 import * as orto from "./orto.js";
 import * as decadimento from "./decadimento.js";
 import * as ricrescita from "./ricrescita.js";
+import * as polli from "./polli.js";
 
-const vuoto = () => ({ cresciute: 0, appassite: 0, seccate: 0, alBuio: 0, alChiuso: 0, assetate: 0, aSeme: 0, mangiate: 0, spentiLegna: 0, spentiPioggia: 0, torceFinite: 0, guaste: 0, inScadenza: 0, tornati: 0, risvegliForzati: 0 });
+const vuoto = () => ({ polliNelloZaino: 0, polloDomani: 0, polliScappati: 0, polliAffamati: 0, polliDiFame: 0, polliDiFreddo: 0,
+  cresciute: 0, appassite: 0, seccate: 0, alBuio: 0, alChiuso: 0, assetate: 0, aSeme: 0, mangiate: 0, spentiLegna: 0, spentiPioggia: 0, torceFinite: 0, guaste: 0, inScadenza: 0, tornati: 0, risvegliForzati: 0 });
 let eventi = vuoto();
 
 export function resoconto() {
@@ -85,6 +87,14 @@ export function avanza(secondi, { eroe = null, dorme = false, nelLetto = false, 
       eventi.guaste += lasciato.guaste;
       eventi.inScadenza = lasciato.inScadenza;
       eventi.tornati += ricrescita.nuovoGiorno();
+      const pollame = polli.nuovoGiorno();
+      eventi.polliNelloZaino += pollame.mortiNelloZaino;
+      eventi.polliScappati += pollame.scappati;
+      eventi.polliDiFame += pollame.mortiDiFame;
+      eventi.polliDiFreddo += pollame.mortiDiFreddo;
+      // Come le assetate: lo stato di stamattina.
+      eventi.polloDomani = pollame.avvisoZaino;
+      eventi.polliAffamati = pollame.affamati;
     }
   }
   return trascorsi;

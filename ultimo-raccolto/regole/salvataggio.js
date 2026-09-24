@@ -25,6 +25,7 @@ import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
 import * as esplorato from "./esplorato.js";
 import * as fauna from "./fauna.js";
+import * as polli from "./polli.js";
 import * as addosso from "./addosso.js";
 import * as meteo from "./meteo.js";
 import * as orto from "./orto.js";
@@ -101,6 +102,8 @@ export function istantanea(eroe, casellaScelta) {
     infezione: salute.eInfetto(),
     bagnato: meteo.livelloBagnato(),
     fauna: fauna.istantanea(),
+    // I polli, selvatici e allevati: gli allevati sono roba tua quanto l'orto.
+    polli: polli.istantanea(),
     addosso: addosso.istantanea(),
     // Copie e non riferimenti: l'array dello zaino continua a vivere e a
     // cambiare mentre il salvataggio aspetta di essere scritto.
@@ -224,6 +227,8 @@ function modificaValida(v) {
   // Una notte al chiuso: vale uno e basta — alla seconda la pianta non c'è
   // più — e solo su una pianta.
   if (!presente(v, "buio", n => n === 1 && orto.eColtura(v.oggetto))) return false;
+  // Il mangime del pollaio, da uno al pieno, e solo in un pollaio.
+  if (!presente(v, "mangime", n => intero(n) && n >= 1 && n <= polli.MANGIME_MASSIMO && v.oggetto === OGGETTO.POLLAIO)) return false;
   // La cenere sul fondo di un fuoco, da una a dieci, e solo in un fuoco.
   if (!presente(v, "cenere", n => intero(n) && n >= 1 && n <= decadimento.CENERE_MASSIMA && decadimento.siCarica(v.oggetto))) return false;
   // Il pavimento: di legno, e con l'oggetto scritto accanto — senza, sul
@@ -287,6 +292,7 @@ export function valido(stato) {
   if (!presente(stato, "esposizioneFreddo", n => Number.isFinite(n) && n >= 0 && n <= 30)) return false;
   if (!presente(stato, "riposo", riposo.statoValido)) return false;
   if (!presente(stato, "fauna", fauna.statoValido)) return false;
+  if (!presente(stato, "polli", polli.statoValido)) return false;
   if (!presente(stato, "addosso", addosso.statoValido)) return false;
   if (!presente(stato, "bagnato", livelloValido)) return false;
   if (!presente(stato, "salute", livelloValido) || !presente(stato, "infezione", v => typeof v === "boolean")) return false;
@@ -351,6 +357,7 @@ export function applica(stato) {
   salute.ripristina(stato.salute, stato.infezione === true, stato.esposizioneFreddo);
   inventario.ripristina(stato.inventario);
   fauna.ripristina(stato.fauna);
+  polli.ripristina(stato.polli);
   addosso.ripristina(stato.addosso);
   esplorato.ripristina(stato.esplorato);
 

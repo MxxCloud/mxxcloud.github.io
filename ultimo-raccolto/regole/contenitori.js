@@ -277,6 +277,8 @@ export function sposta(tx, ty, versoLaCassa, indice) {
   if (versoLaCassa) {
     const casella = inventario.contenuto()[indice];
     if (!casella) return null;
+    // Un pollo vivo in una cassa chiusa non è un posto dove tenerlo.
+    if (casella.cosa === "pollo") return { tipo: "vivo" };
     const resto = inventario.mettiIn(fila, casella.cosa, casella.quantita, casella.dal, casella.usi, casella.massimo);
     if (resto === casella.quantita) return { tipo: "pieno" };
     // Si toglie dallo zaino esattamente quello che è entrato, e il resto resta

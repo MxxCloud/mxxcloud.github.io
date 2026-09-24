@@ -114,6 +114,9 @@ export const OGGETTO = {
   STECCATO: 34,
   CANCELLO: 35,
   CANCELLO_APERTO: 36,
+  // Il pollaio (M7.18.18): riparo, mangiatoia e nido dei polli, dentro un
+  // recinto. Il mangime sta nelle modifiche, come la legna nel focolare.
+  POLLAIO: 37,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati
