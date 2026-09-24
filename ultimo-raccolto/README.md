@@ -2239,7 +2239,6 @@ Da qui viene l'ordine, che non è quello immaginato all'inizio:
 | **M7.16** | L'orto si paga | I semi si guadagnano lasciando andare a seme, le piante hanno sete, un tassello non sfama più da solo. *Qui l'orto smette di essere una rendita.* |
 | **M7.17** | Cinque colture | Rapa, patata, fagioli, cavolo e lino: stagioni, rese e mestieri diversi, e semi da cercare nelle rovine. |
 | **M7.18** | La terra si stanca | La fertilità del tassello, la rotazione, il compost e la cenere, e le bestie che di notte mangiano l'orto. |
-| **M7.19** | Il morale | Quanto tieni al tuo posto — che a quel punto esiste. |
 | **M8** | Superstiti, abilità, rifinitura | |
 
 Le tappe con un numero in più — M7.5.1, M7.7.1, M7.8.1, M7.9.1, M7.9.2, M7.11.1 —
@@ -2264,17 +2263,14 @@ infetti, perché è qui che hanno una causa. Il motivo è lo stesso che ordina
 tutta la scala — un sistema che non risponde a nessuna domanda è peggio di un
 sistema che manca.
 
-**Il morale è passato a M7**, e non è un rinvio: è il posto giusto. Quello
-che il morale può misurare in questo gioco è quanto tieni al tuo posto — un
-fuoco acceso, un orto curato, un letto — e quel posto comincia a esistere
-davvero con la costruzione. Un morale oggi sarebbe un quarto numero che dice
-"è notte e ti inseguono", cioè quello che schermo e orecchie dicono già.
-
-Il suo numero però è cambiato più volte: da M5 a M7.6, a M7.13, a M7.16, a
-M7.19. Non perché slitti — ogni volta che toccava a lui è emerso qualcosa che
-aveva più bisogno di esistere, l'acqua, il cielo, l'usura, la caccia, e un orto
-che rendeva troppo per essere una cosa da curare. Il numero non è una
-data, è una posizione in fila, e questa fila si è allungata dal di dentro.
+**Il morale non è in programma.** È passato da M5 a M7, poi di tappa in tappa
+fino a M7.19, e ogni volta che toccava a lui è emerso qualcosa che aveva più
+bisogno di esistere: l'acqua, il cielo, l'usura, la caccia, un orto che
+rendeva troppo, un letto. Adesso non ha più un numero: resta un'eventualità, e
+non è detto che entri nel gioco. Se ci entrerà, quello che potrebbe misurare
+è quanto tieni al tuo posto — un fuoco acceso, un orto curato, un letto — e
+prenderà il numero della tappa in cui arriva. M7.19 è libera per quello che
+viene dopo M7.18.
 
 **Il salvataggio stava fuori da questa scala** e si è incastrato qui, dopo le
 stagioni: era il momento giusto, perché un posto che sparisce chiudendo la
@@ -2309,9 +2305,7 @@ alzare è un muro che si è già capito a cosa serve.
 contenitori non erano un pezzo della costruzione fra gli altri, erano la
 condizione di un debito scritto tre volte nel progetto. Farli da soli li fa
 arrivare con la cosa che sbloccano — il guasto — invece che in mezzo a muri e
-riparo, dove sarebbero stati una cassa in più da costruire. Il morale resta per
-ultimo e non è un rinvio: quello che può misurare è quanto tieni al tuo posto,
-e un posto con dentro una cassa e niente altro è ancora un accampamento.
+riparo, dove sarebbero stati una cassa in più da costruire.
 
 ## Comandi
 
