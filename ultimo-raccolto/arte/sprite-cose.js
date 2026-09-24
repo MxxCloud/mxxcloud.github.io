@@ -475,41 +475,47 @@ export const LETTO_ICONA = [
   "............",
 ];
 
-// Il pavimento di legno: quattro assi per tassello, con le giunture sfalsate
-// perché una fila di tasselli non si legga come una griglia. Copre il
-// tassello tutto — si stende sopra l'erba e i suoi bordi — e sta sotto tutto
-// quello che ci si posa.
+// Il pavimento di legno: quattro assi per tassello, per il verso della
+// lunghezza, con le testate sfalsate perché una fila di tasselli non si legga
+// come una griglia. Copre il tassello tutto — si stende sopra l'erba e i suoi
+// bordi — e sta sotto tutto quello che ci si posa.
+//
+// In verticale e chiaro da M7.18.20. Fino a lì le assi erano orizzontali e
+// dello stesso marrone scuro di casse e banchi, e le loro doghe orizzontali ci
+// si confondevano sopra: un mobile su un pavimento si deve vedere. Un tono
+// solo più chiaro non bastava — il banco, visto in gioco, si perdeva ancora —
+// e allora il legno è quello chiaro della paglia.
 export const PAVIMENTO_LEGNO = [
-  "hhhhhhhhhhghhhhh",
-  "hhwhhhhhhhghhhhh",
-  "hhhhhhhwhhghhhwh",
-  "gggggggggggggggg",
-  "ccccgcccccccccwc",
-  "cwccgccccccwcccc",
-  "ccccgccccccccccc",
-  "gggggggggggggggg",
-  "hhhhhhhhhhhhhghh",
-  "hhhhwhhhhhhhhghh",
-  "hhhhhhhhhwhhhghh",
-  "gggggggggggggggg",
-  "cccccccgcccccccc",
-  "ccwccccgccccwccc",
-  "cccccccgcccccccc",
-  "gggggggggggggggg",
+  "444w444w444w444w",
+  "444w444w454w444w",
+  "444w444wwwww444w",
+  "454w444w444w444w",
+  "444w444w444w444w",
+  "wwww444w444w454w",
+  "444w444w444w444w",
+  "444w454w444w444w",
+  "444w444w444wwwww",
+  "444w444w444w444w",
+  "444w444w445w444w",
+  "444wwwww444w444w",
+  "444w444w444w445w",
+  "454w444w444w444w",
+  "444w445w444w444w",
+  "444w444w444w444w",
 ];
 
 export const PAVIMENTO_ICONA = [
   "............",
   "............",
-  "..hhhhhhgh..",
-  "..hwhhhhgh..",
-  "..gggggggg..",
-  "..ccgccccc..",
-  "..ccgcccwc..",
-  "..gggggggg..",
-  "..hhhhhghh..",
-  "..hwhhhghh..",
-  "..gggggggg..",
+  "..44w44w44..",
+  "..44w44w54..",
+  "..54w44www..",
+  "..44w44w44..",
+  "..www45w44..",
+  "..44w44w44..",
+  "..44w44w45..",
+  "..44www44w..",
+  "............",
   "............",
 ];
 
