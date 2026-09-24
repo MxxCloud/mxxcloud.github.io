@@ -73,7 +73,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.22";
+const VERSIONE = "M7.18.23";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1227,7 +1227,11 @@ function leggiComandi() {
     suono.suona(SCELTA);
     const quanti = esito.polli === 1 ? "1 pollo" : `${esito.polli} polli`;
     const pollina = esito.pollina > 0 ? `, ${esito.pollina} pollina` : "";
-    annuncia(`pollaio: ${esito.mangime}/${esito.massimo} mangime, ${quanti}${pollina}`, esito.mangime > 0 ? "#c9b189" : "#c0705f");
+    // Il prato si dice solo quando sfama qualcuno: d'autunno e d'inverno, o in
+    // un recinto spoglio, "prato per 0" sarebbe rumore.
+    const prato = esito.prato > 0 ? `, prato per ${esito.prato}` : "";
+    const sazi = esito.mangime > 0 || esito.prato >= esito.polli;
+    annuncia(`pollaio: ${esito.mangime}/${esito.massimo} mangime, ${quanti}${prato}${pollina}`, sazi ? "#c9b189" : "#c0705f");
   }
   if (esito.tipo === "guardato") {
     suono.suona(SCELTA);

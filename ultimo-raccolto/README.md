@@ -12,6 +12,32 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.23 — più semi, e i polli razzolano
+
+Mantenere i polli costava troppo in semi. Una rapa lasciata andare a seme ne
+dava 3 dopo circa sei giorni, e uno andava ripiantato: restavano circa 0,35
+semi al giorno per campo. Due polli ne mangiano 2 al giorno, quindi servivano
+circa sei campi solo per il mangime.
+
+**Sei semi per pianta.** Rapa, cavolo e lino andati a seme rendono **6 semi**
+invece di 3. Ora un campo a seme lascia circa 0,85 semi al giorno, più o meno
+uno per pollo. Resta una rinuncia: la pianta a seme non dà il raccolto e la
+terra si stanca lo stesso. Patata e fagioli non cambiano, perché il loro seme
+è il raccolto (3 per 1).
+
+**I polli razzolano.** In **primavera e d'estate**, ogni **4 tasselli di
+prato** dentro il recinto sfamano un pollo senza mangime, pulcini compresi. Il
+prato è erba o sterpaglia libera: terra battuta, orto, assi e il tassello del
+pollaio non contano. Chi razzola conta come nutrito, quindi la gallina fa le
+uova. Chi resta senza prato mangia dal pollaio come prima. **D'autunno e
+d'inverno non si razzola**: si vive del mangime messo da parte d'estate.
+Guardando il pollaio si legge anche «prato per N», quando il prato sfama
+qualcuno.
+
+Un recinto grande costa più steccato, ma per metà dell'anno fa risparmiare i
+semi. È la versione più semplice: se risulta poco impegnativa, si può
+inasprire più avanti.
+
 ## M7.18.22 — lo spaventapasseri costa di più
 
 Lo spaventapasseri costa **4 rami e 10 fibre** invece di 2 rami e 4 fibre. Si
@@ -1720,7 +1746,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.22**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.23**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

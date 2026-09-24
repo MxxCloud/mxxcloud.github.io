@@ -2772,7 +2772,7 @@ test('offline la navigazione trova la pagina precaricata con la versione',async(
 // Mezzanotte fra ieri e questo giorno: è tutto quello che l'orto guarda.
 function notte(giorno) { tempo.impostaGiorno(giorno); return orto.nuovoGiorno(); }
 
-test('la matura dà una rapa e niente semi, quella a seme tre semi e niente da mangiare',()=>{
+test('la matura dà una rapa e niente semi, quella a seme sei semi e niente da mangiare',()=>{
   // Rendeva due rape e due semi: ogni seme ne ridava due insieme al cibo, e
   // l'orto cresceva da solo come un interesse composto.
   modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.MATURA,maturata:1});
@@ -2781,7 +2781,8 @@ test('la matura dà una rapa e niente semi, quella a seme tre semi e niente da m
   modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.A_SEME,maturata:1});
   assert.equal(azioni.azionePossibile(eroe,null).verbo,'Raccogli i semi');
   assert.equal(azioni.agisci(eroe,null).tipo,'raccolto');
-  assert.equal(inventario.quante('semi'),3);assert.equal(inventario.quante('rapa'),1);
+  // Sei da M7.18.23: con tre un pollaio voleva sei campi a seme.
+  assert.equal(inventario.quante('semi'),6);assert.equal(inventario.quante('rapa'),1);
 });
 test('la matura lasciata lì va a seme in due giorni, e in altri due si secca',()=>{
   tempo.impostaGiorno(13);modifiche.imposta(tx,ty,{oggetto:OGGETTO.MATURA,maturata:13});
@@ -2938,10 +2939,12 @@ test('ogni coltura rende il suo raccolto, e a seme i suoi semi',()=>{
     for(const [cosa,quante] of Object.entries(atteso))assert.equal(inventario.quante(cosa),quante,`${coltura}: ${cosa}`);
   };
   prova('lino',OGGETTO.MATURA,{filo:4,fibra:0});
-  prova('lino',OGGETTO.A_SEME,{semi_lino:3,filo:0});
+  prova('lino',OGGETTO.A_SEME,{semi_lino:6,filo:0});
   prova('cavolo',OGGETTO.MATURA,{cavolo:1});
-  prova('cavolo',OGGETTO.A_SEME,{semi_cavolo:3,cavolo:0});
+  prova('cavolo',OGGETTO.A_SEME,{semi_cavolo:6,cavolo:0});
+  // Patata e fagioli non cambiano: il raccolto è anche il seme.
   prova('fagioli',OGGETTO.MATURA,{fagioli:3});
+  prova('patata',OGGETTO.MATURA,{patata:3});
 });
 test('patata e fagioli non vanno a seme: il loro seme è il raccolto, e dopo quattro giorni marciscono',()=>{
   tempo.impostaGiorno(13);modifiche.imposta(tx,ty,{oggetto:OGGETTO.MATURA,coltura:'patata',passo:5,maturata:13});
@@ -4056,4 +4059,48 @@ test('un selvatico su quattro, circa, è un gallo',()=>{
     for(const p of polli.tutte()){tutti++;if(p.gallo)galli++;}}
   assert.ok(tutti>=20,'ne nascono: '+tutti);
   assert.ok(galli>0 && galli<tutti/2,`galli ${galli} su ${tutti}`);
+});
+
+// M7.18.23 — i polli razzolano. Il recinto di pollame() va messo su un prato
+// vero: si cerca vicino un punto con i nove tasselli d'erba o di sterpaglia.
+function suUnPrato() {
+  const erboso=(x,y)=>[TERRENO.ERBA,TERRENO.STERPAGLIA].includes(mappa.terrenoNaturaleDi(x,y));
+  for(let r=0;r<40;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
+    const x=tx+dx,y=ty+dy;let ok=true;
+    for(let j=-1;j<=1&&ok;j++)for(let i=-1;i<=1&&ok;i++)ok=erboso(x+i,y+j);
+    if(ok){tx=x;ty=y;eroe={...eroe,...pos(tx,ty+3)};return;}
+  }
+  throw new Error('nessun prato vicino');
+}
+const fameDi=()=>polli.tutte().filter(p=>p.domestico&&p.fame>0).length;
+
+test("in primavera e d'estate i polli razzolano: quattro tasselli di prato sfamano un pollo",()=>{
+  suUnPrato();tempo.impostaGiorno(1);
+  // Due polli, pollaio vuoto, otto tasselli di prato (il nono è il pollaio).
+  pollame({galline:1,galli:1,mangime:0});
+  const r=notteDi(2);
+  assert.equal(r.affamati,0);assert.equal(fameDi(),0);
+  assert.equal(r.uova,1,'la gallina che razzola fa le uova');
+  // Il pollaio lo dice a chi lo guarda.
+  const guardato=azioni.azionePossibile({...eroe,...pos(tx,ty-2),guarda:'giu'},'pietra');
+  assert.equal(guardato.tipo,'guardaPollaio');assert.equal(guardato.prato,2);
+  // Quattro tasselli sotto le assi o zappati: il prato basta per uno solo.
+  modifiche.imposta(tx-1,ty-1,{oggetto:OGGETTO.NESSUNO,pavimento:'legno'});
+  modifiche.imposta(tx+1,ty-1,{oggetto:OGGETTO.NESSUNO,pavimento:'legno'});
+  modifiche.imposta(tx-1,ty,{oggetto:OGGETTO.TERRA_ZAPPATA});
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.TERRA_ZAPPATA});
+  assert.equal(notteDi(3).affamati,1);
+  // E con il mangime nel pollaio mangia l'altro.
+  modifiche.imposta(tx,ty-1,{oggetto:OGGETTO.POLLAIO,mangime:3});
+  assert.equal(notteDi(4).affamati,0);assert.equal(polli.mangimeNel(tx,ty-1),2);
+});
+
+test("d'autunno e d'inverno non si razzola: si vive del mangime",()=>{
+  suUnPrato();tempo.impostaGiorno(5);
+  pollame({galline:1,galli:1,mangime:0});
+  assert.equal(notteDi(6).affamati,2,'autunno');
+  assert.equal(azioni.azionePossibile({...eroe,...pos(tx,ty-2),guarda:'giu'},null).prato,0);
+  suUnPrato();polli.reimposta();tempo.impostaGiorno(9);
+  pollame({galline:1,galli:1,mangime:0});
+  assert.equal(notteDi(10).affamati,2,'inverno');
 });
