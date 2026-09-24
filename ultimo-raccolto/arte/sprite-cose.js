@@ -900,6 +900,94 @@ export const PORTA_ICONA = [
   "..dggggggd..",
 ];
 
+// --- lo steccato e il cancello ---------------------------------------------
+
+// Due pali e due traverse che arrivano ai bordi: messi in fila, le traverse
+// si toccano e lo steccato si legge come uno solo. Basso, più basso di un
+// muro, perché sopra ci si vede — ed è la differenza che il gioco fa fra i due.
+export const STECCATO = [
+  "................",
+  ".ww..........ww.",
+  ".wh..........wh.",
+  ".wh..........wh.",
+  "wwwwwwwwwwwwwwww",
+  "hhhhhhhhhhhhhhhh",
+  ".wh..........wh.",
+  ".wh..........wh.",
+  ".wh..........wh.",
+  "wwwwwwwwwwwwwwww",
+  "hhhhhhhhhhhhhhhh",
+  ".wh..........wh.",
+  ".wh..........wh.",
+  ".gg..........gg.",
+];
+
+// Il cancello: i pali ai bordi e in mezzo un'anta di assi verticali, che è
+// quello che lo distingue dallo steccato a colpo d'occhio.
+export const CANCELLO = [
+  "................",
+  "ww............ww",
+  "wh............wh",
+  "whwwwwwwwwwwwwwh",
+  "whc.c.c.c.c.c.wh",
+  "whc.c.c.c.c.c.wh",
+  "whwwwwwwwwwwwwwh",
+  "whc.c.c.c.c.c.wh",
+  "whc.c.c.c.c.c.wh",
+  "whc.c.c.c.c.c.wh",
+  "whwwwwwwwwwwwwwh",
+  "wh............wh",
+  "wh............wh",
+  "gg............gg",
+];
+
+// Aperto, l'anta è accostata al palo di sinistra, vista di taglio.
+export const CANCELLO_APERTO = [
+  "................",
+  "ww............ww",
+  "wh............wh",
+  "whww..........wh",
+  "whcw..........wh",
+  "whcw..........wh",
+  "whww..........wh",
+  "whcw..........wh",
+  "whcw..........wh",
+  "whcw..........wh",
+  "whww..........wh",
+  "wh............wh",
+  "wh............wh",
+  "gg............gg",
+];
+
+export const STECCATO_ICONA = [
+  "............",
+  "............",
+  ".w..w..w..w.",
+  ".h..h..h..h.",
+  "wwwwwwwwwwww",
+  "hhhhhhhhhhhh",
+  ".h..h..h..h.",
+  "wwwwwwwwwwww",
+  "hhhhhhhhhhhh",
+  ".h..h..h..h.",
+  ".g..g..g..g.",
+  "............",
+];
+
+export const CANCELLO_ICONA = [
+  "............",
+  ".ww......ww.",
+  ".whwwwwwwwh.",
+  ".whc.c.c.wh.",
+  ".whc.c.c.wh.",
+  ".whwwwwwwwh.",
+  ".whc.c.c.wh.",
+  ".whc.c.c.wh.",
+  ".whwwwwwwwh.",
+  ".wh......wh.",
+  ".gg......gg.",
+  "............",
+];
 
 export const CANNA = [
  "............",".........h..","........hB..",".......h.B..",

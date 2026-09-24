@@ -427,8 +427,10 @@ function riposo(giorno) {
 // comportamento. Il tiro è delle coordinate e del giorno, come tutto il resto
 // del mondo: la stessa notte nello stesso orto va sempre allo stesso modo.
 //
-// Protegge l'orto uno spaventapasseri a tre tasselli o un fuoco acceso a tre
-// tasselli. Fino a M7.18.13 bastavano anche dei muri; da M7.18.14 un orto
+// Protegge l'orto uno spaventapasseri a tre tasselli, un fuoco acceso a tre
+// tasselli, o uno steccato tutto attorno (M7.18.16): lo spaventapasseri costa
+// poco e copre un raggio, il recinto costa legna e copre tutto quello che sta
+// dentro, grande quanto si vuole — finché il cancello resta chiuso. Fino a M7.18.13 bastavano anche dei muri; da M7.18.14 un orto
 // murato non cresce, quindi la stanza chiusa protegge soltanto la notte di
 // grazia prima che appassisca (vedi nuovoGiorno).
 export const PROBABILITA_BESTIE = 0.5;
@@ -451,7 +453,7 @@ export function protetta(tx, ty) {
       if (mappa.oggettoDi(tx + dx, ty + dy) === OGGETTO.SPAVENTAPASSERI) return true;
     }
   }
-  return mappa.fuocoVicino(tx, ty, r) || meteo.coperto(tx, ty);
+  return mappa.fuocoVicino(tx, ty, r) || meteo.coperto(tx, ty) || riparo.recintato(tx, ty);
 }
 
 function bestie(giorno) {

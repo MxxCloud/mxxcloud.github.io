@@ -270,13 +270,19 @@ export function raccogliIMorsi(eroe) {
 // rispondere costa meno che rifare la parete, il che è esattamente la scelta
 // che questa tappa vuole mettere lì.
 //
-// Muro e porta e nient'altro: sono le due cose costruite apposta per essere
-// prese a colpi. Una cassa o un banco messi di traverso fermano e non si
+// Muro, porta e — da M7.18.16 — steccato e cancello, e nient'altro: sono le
+// cose costruite apposta per stare sul passaggio. Una cassa o un banco messi di traverso fermano e non si
 // rompono, ed è giusto così — costano tre volte tanto, e chi ha fatto quel
 // conto sa già quello che sta facendo.
 const SFONDABILI = {
   [OGGETTO.MURO]: { colpi: 8, diventa: OGGETTO.MURO_ROTTO, scheggie: ["e", "f", "d"] },
   [OGGETTO.PORTA]: { colpi: 5, diventa: OGGETTO.NESSUNO, scheggie: ["w", "h", "g"] },
+  // Lo steccato e il cancello chiuso: legno leggero, tre colpi. Senza, un
+  // recinto sarebbe un rifugio gratis contro la notte — fermerebbe chi ti
+  // insegue senza aver speso una pietra. Serve a tenere fuori le bestie e
+  // dentro gli animali, non a tenere fuori gli infetti.
+  [OGGETTO.STECCATO]: { colpi: 3, diventa: OGGETTO.NESSUNO, scheggie: ["w", "h", "g"] },
+  [OGGETTO.CANCELLO]: { colpi: 3, diventa: OGGETTO.NESSUNO, scheggie: ["w", "h", "g"] },
 };
 
 // Contro cosa sta spingendo. Non lo sa lui — un infetto non sa cos'è un muro —

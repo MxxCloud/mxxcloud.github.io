@@ -3646,3 +3646,99 @@ test('il salvataggio accetta la fertilità sul prato solo se è stanca',()=>{
   assert.equal(valida({oggetto:OGGETTO.NESSUNO,fertilita:2}),false);
   assert.equal(valida({oggetto:OGGETTO.NESSUNO,fertilita:3}),false);
 });
+
+// M7.18.16 — lo steccato e il cancello.
+// Un recinto di steccato 5×5 attorno al tassello (cx,cy), a distanza dal
+// superstite, con il cancello sul lato destro.
+function recinto(cx,cy,cancello=OGGETTO.CANCELLO) {
+  for(let y=cy-2;y<=cy+2;y++)for(let x=cx-2;x<=cx+2;x++)
+    modifiche.imposta(x,y,{oggetto:Math.abs(x-cx)===2||Math.abs(y-cy)===2?OGGETTO.STECCATO:OGGETTO.NESSUNO});
+  modifiche.imposta(cx+2,cy,{oggetto:cancello});
+}
+
+test('steccato e cancello si fanno al banco e si posano',()=>{
+  const steccato=ricette.RICETTE.find(r=>r.id==='steccato'),cancello=ricette.RICETTE.find(r=>r.id==='cancello');
+  assert.equal(steccato.banco,true);assert.equal(cancello.banco,true);
+  inventario.aggiungi('legna',5);inventario.aggiungi('ramo',4);inventario.aggiungi('fibra',2);
+  assert.equal(ricette.fai(steccato,true).fatto,true);assert.equal(ricette.fai(cancello,true).fatto,true);
+  inventario.svuota();inventario.aggiungi('steccato',2);
+  assert.equal(azioni.agisci(eroe,'steccato',0).tipo,'posa');
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.STECCATO);
+  assert.equal(mappa.solidoIn(tx+1,ty),true,'ferma i piedi');
+  assert.equal(mappa.chiudeIn(tx+1,ty),false,'ma non è una parete');
+  assert.equal(mappa.recintaIn(tx+1,ty),true);
+});
+
+test('il cancello si apre e si chiude come la porta, e si smonta con la X',()=>{
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CANCELLO,colpi:2});
+  assert.equal(azioni.azionePossibile(eroe,null).verbo,'Apri');
+  azioni.agisci(eroe,null);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.CANCELLO_APERTO);assert.equal(mappa.solidoIn(tx+1,ty),false);
+  assert.equal(modifiche.di(tx+1,ty).colpi,2,'si tiene i colpi presi');
+  entita.aggiungi({tipo:'giocatore',...pos(tx+1,ty)});
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,'passaggio occupato');
+  entita.svuota();
+  assert.equal(azioni.azionePossibile(eroe,null).verbo,'Chiudi');
+  azioni.agisci(eroe,null);assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.CANCELLO);
+  assert.equal(azioni.smontaggioPossibile(eroe).verbo,'Smonta il cancello');
+  azioni.smontaDavanti(eroe);assert.equal(inventario.quante('cancello'),1);assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.NESSUNO);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.STECCATO});
+  azioni.smontaDavanti(eroe);assert.equal(inventario.quante('steccato'),1);
+});
+
+test('un recinto è chiuso dallo steccato e dal cancello chiuso, non da un cancello aperto o da un buco',()=>{
+  const cx=tx,cy=ty;assert.equal(riparo.allaga(cx,cy).chiusa,false,'campo aperto');
+  recinto(cx,cy);
+  assert.equal(riparo.recintato(cx,cy),true);
+  assert.equal(riparo.stanzaDi(cx,cy),null,'non è una stanza');
+  assert.equal(riparo.murato(cx,cy),false,'e non è murato');
+  modifiche.imposta(cx+2,cy,{oggetto:OGGETTO.CANCELLO_APERTO});
+  assert.equal(riparo.recintato(cx,cy),false,'cancello aperto');
+  recinto(cx,cy);modifiche.imposta(cx,cy-2,{oggetto:OGGETTO.NESSUNO});
+  assert.equal(riparo.recintato(cx,cy),false,'un buco');
+});
+
+test('una radura fra alberi e sassi non è un recinto',()=>{
+  for(const [dx,dy,o] of [[1,0,OGGETTO.ALBERO],[-1,0,OGGETTO.ALBERO],[0,1,OGGETTO.SASSO],[0,-1,OGGETTO.ALBERO]])
+    modifiche.imposta(tx+dx,ty+dy,{oggetto:o});
+  assert.equal(riparo.allaga(tx,ty).chiusa,true);
+  assert.equal(riparo.recintato(tx,ty),false);
+});
+
+test('l’orto dentro un recinto cresce, si bagna di pioggia, e le bestie non lo toccano finché il cancello è chiuso',()=>{
+  const cx=tx,cy=ty;assert.equal(riparo.allaga(cx,cy).chiusa,false,'campo aperto');
+  recinto(cx,cy);
+  tempo.impostaGiorno(5);
+  modifiche.imposta(cx,cy,{oggetto:OGGETTO.GERMOGLIO,bagnato:true});
+  const r=notte(6);assert.equal(r.cresciute,1);assert.equal(r.alChiuso,0);
+  assert.equal(meteo.coperto(cx,cy),false,'sotto il cielo');
+  // Le bestie: le stesse notti del collaudo di M7.18.
+  orto.impostaBestie(true);
+  const pianta=()=>modifiche.imposta(cx,cy,{oggetto:OGGETTO.CRESCIUTA,fertilita:3});
+  modifiche.imposta(cx+2,cy,{oggetto:OGGETTO.CANCELLO_APERTO});
+  const notti=[];
+  for(const giorno of [6,7,8,14,15,16]){pianta();tempo.impostaGiorno(giorno-1);if(notte(giorno).mangiate===1)notti.push(giorno);}
+  assert.ok(notti.length>=1,'con il cancello aperto la bestia entra');
+  modifiche.imposta(cx+2,cy,{oggetto:OGGETTO.CANCELLO});
+  pianta();tempo.impostaGiorno(notti[0]-1);
+  assert.equal(notte(notti[0]).mangiate,0,'recinto chiuso');
+  assert.equal(mappa.oggettoDi(cx,cy),OGGETTO.CRESCIUTA);
+});
+
+test('dentro un recinto fa freddo come fuori: non è un riparo',()=>{
+  const cx=tx,cy=ty;assert.equal(riparo.allaga(cx,cy).chiusa,false,'campo aperto');recinto(cx,cy);
+  const dentro={...pos(cx,cy),guarda:'giu'};
+  tempo.impostaGiorno(10);tempo.impostaOra(12);riparo.reimposta();riparo.aggiorna(1,cx,cy);
+  assert.equal(riparo.alChiuso(),false);
+  assert.equal(freddo.alFreddo(dentro),true);
+});
+
+test('un infetto sfonda lo steccato e il cancello chiuso in tre colpi',()=>{
+  for(const oggetto of [OGGETTO.STECCATO,OGGETTO.CANCELLO]){
+    entita.svuota();
+    modifiche.imposta(tx+1,ty,{oggetto,colpi:2});
+    entita.aggiungi({tipo:'infetto',...pos(tx+2,ty),px:(tx+2)*16+5,sfonda:true,richiamo:{x:eroe.px,y:eroe.py}});
+    assert.equal(infetti.raccogliGliSfondamenti()[0]?.ceduto,true,String(oggetto));
+    assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.NESSUNO);
+  }
+});

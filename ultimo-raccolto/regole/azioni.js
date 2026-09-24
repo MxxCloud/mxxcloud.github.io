@@ -316,10 +316,12 @@ function sulTassello(eroe, cosaInMano, indice) {
   // su X, come smontare una cassa — due gesti diversi su due tasti diversi, e
   // soprattutto: il tasto che si preme di notte con qualcuno alle calcagna non
   // deve poter portare via la porta.
-  if (b.oggetto === OGGETTO.PORTA) {
+  // Il cancello dello steccato si apre e si chiude come la porta: è la stessa
+  // cosa in un altro posto.
+  if (b.oggetto === OGGETTO.PORTA || b.oggetto === OGGETTO.CANCELLO) {
     return { tipo: "porta", verbo: "Apri", bersaglio: b };
   }
-  if (b.oggetto === OGGETTO.PORTA_APERTA) {
+  if (b.oggetto === OGGETTO.PORTA_APERTA || b.oggetto === OGGETTO.CANCELLO_APERTO) {
     return { tipo: "porta", verbo: "Chiudi", bersaglio: b,
       impedito: occupato(b.tx, b.ty, eroe) ? "passaggio occupato" : null };
   }
@@ -597,7 +599,7 @@ function sulTassello(eroe, cosaInMano, indice) {
     if (cosaInMano === "essiccatoio" && riparo.stanzaDi(b.tx, b.ty) !== null)
       return { tipo: "posa", bersaglio: b, impedito: "l'essiccatoio vuole aria" };
     return { tipo: "posa", verbo: "Posa", cosa: cosaInMano, bersaglio: b,
-      impedito: (cosaInMano === "muro" || cosaInMano === "porta") && occupato(b.tx, b.ty, eroe) ? "passaggio occupato" : null };
+      impedito: ["muro", "porta", "steccato", "cancello"].includes(cosaInMano) && occupato(b.tx, b.ty, eroe) ? "passaggio occupato" : null };
   }
   return null;
 }
@@ -745,6 +747,9 @@ const SMONTAGGI = {
   [OGGETTO.ESSICCATOIO_CARICO]: { cosa: "essiccatoio", verbo: "Smonta l'essiccatoio" },
   [OGGETTO.ESSICCATOIO_PRONTO]: { cosa: "essiccatoio", verbo: "Smonta l'essiccatoio" },
   [OGGETTO.SPAVENTAPASSERI]: { cosa: "spaventapasseri", verbo: "Smonta lo spaventapasseri" },
+  [OGGETTO.STECCATO]: { cosa: "steccato", verbo: "Smonta lo steccato" },
+  [OGGETTO.CANCELLO]: { cosa: "cancello", verbo: "Smonta il cancello" },
+  [OGGETTO.CANCELLO_APERTO]: { cosa: "cancello", verbo: "Smonta il cancello" },
 };
 
 // Gli stati dell'essiccatoio in cui c'è dentro della carne.
@@ -1292,7 +1297,8 @@ function esegui(eroe, cosaInMano, indice, azione) {
   }
 
   if (azione.tipo === "porta") {
-    const apre = azione.bersaglio.oggetto === OGGETTO.PORTA;
+    const apre = azione.bersaglio.oggetto === OGGETTO.PORTA || azione.bersaglio.oggetto === OGGETTO.CANCELLO;
+    const cancello = azione.bersaglio.oggetto === OGGETTO.CANCELLO || azione.bersaglio.oggetto === OGGETTO.CANCELLO_APERTO;
     // Si tiene quello che c'era scritto sul tassello, e non è pignoleria: lì
     // dentro ci sono i colpi che la porta ha già preso. Una porta mezza
     // sfondata che si rimette a nuovo aprendola e richiudendola sarebbe il
@@ -1300,7 +1306,9 @@ function esegui(eroe, cosaInMano, indice, azione) {
     const dati = modifiche.di(tx, ty) ?? {};
     mappa.cambiaTassello(tx, ty, {
       ...dati,
-      oggetto: apre ? OGGETTO.PORTA_APERTA : OGGETTO.PORTA,
+      oggetto: cancello
+        ? (apre ? OGGETTO.CANCELLO_APERTO : OGGETTO.CANCELLO)
+        : (apre ? OGGETTO.PORTA_APERTA : OGGETTO.PORTA),
     });
     // Chiudendola ci si fa da parte, come dopo aver posato una cassa: si sta
     // sul tassello davanti mentre il riquadro d'urto sborda, e senza questa

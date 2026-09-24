@@ -12,6 +12,29 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.16 — lo steccato e il cancello
+
+La prima tappa dell'allevamento: il recinto.
+
+- **Steccato** al banco (2 legne, 2 rami); **cancello** al banco (3 legne, 2
+  rami, 2 fibre). Si posano come il muro e la porta e si tolgono con la X.
+- Il cancello **si apre e si chiude con la barra**, come la porta: da aperto si
+  passa, e non si chiude addosso a qualcuno.
+- Steccato e cancello chiuso **fermano i piedi**, ma **non chiudono il posto**:
+  fra le assi passano la luce, l'aria e la pioggia. Un recinto non è una
+  stanza: dentro fa freddo come fuori, piove, e l'orto cresce.
+- **Un orto dentro un recinto è al sicuro dalle bestie** di notte. Recinto è
+  un posto chiuso da steccato, cancello chiuso e, se servono, muri o alberi,
+  con almeno un pezzo di steccato fra le pareti: una radura fra gli alberi non
+  lo è. **Un cancello lasciato aperto, o un buco, e la bestia entra.**
+- Il senso rispetto allo spaventapasseri: lo spaventapasseri costa due rami e
+  copre un raggio di tre tasselli; il recinto costa legna per ogni pezzo, ma
+  copre tutto quello che ci sta dentro, grande quanto lo si fa. E più avanti
+  terrà dentro gli animali.
+- **Gli infetti lo sfondano in tre colpi**, steccato e cancello chiuso: è legno
+  leggero. Serve a tenere fuori le bestie, non a fare un rifugio gratis contro
+  la notte.
+
 ## M7.18.15 — il campo si toglie con la X
 
 Il campo è roba tua, e adesso si toglie come tutto quello che hai costruito:
@@ -1582,7 +1605,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.15**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.16**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -2327,12 +2350,10 @@ non è detto che entri nel gioco. Se ci entrerà, quello che potrebbe misurare
 prenderà il numero della tappa in cui arriva. M7.19 è libera per quello che
 viene dopo M7.18.
 
-**Lo steccato è in attesa.** Da M7.18.14 un orto murato non cresce, quindi i
-muri non servono più a tenerlo al sicuro dalle bestie, e restano lo
-spaventapasseri e il fuoco. Lo steccato ferma le bestie ma non chiude il posto,
-e va fatto. Prima però deve avere un senso suo, altrimenti è uno
-spaventapasseri più caro. Il mestiere è ancora da decidere, e con lui il numero
-della tappa.
+**L'allevamento è cominciato dallo steccato** (M7.18.16): il recinto tiene
+l'orto al sicuro dalle bestie e, più avanti, terrà dentro gli animali. Le
+tappe dopo sono il pollo — trovarlo, portarlo, il pollaio e il mangime — e poi
+uova, pollina per l'orto e riproduzione.
 
 **Il salvataggio stava fuori da questa scala** e si è incastrato qui, dopo le
 stagioni: era il momento giusto, perché un posto che sparisce chiudendo la

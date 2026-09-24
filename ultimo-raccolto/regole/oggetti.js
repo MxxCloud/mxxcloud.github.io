@@ -346,6 +346,10 @@ export const CATALOGO = {
   // La porta si impila a tre come la cassa, e per la stessa ragione: quello
   // che conta è dove la metti. Un recinto ha un ingresso, non cinque.
   porta: { nome: "Porta", icona: arte.PORTA_ICONA, pila: 3, posa: OGGETTO.PORTA },
+  // Lo steccato si impila come il muro, perché se ne posa una fila; il
+  // cancello come la porta, perché un recinto ha un ingresso.
+  steccato: { nome: "Steccato", icona: arte.STECCATO_ICONA, pila: 20, posa: OGGETTO.STECCATO },
+  cancello: { nome: "Cancello", icona: arte.CANCELLO_ICONA, pila: 3, posa: OGGETTO.CANCELLO },
   // La lancia. Colpisce meno di un'ascia e arriva molto più lontano, ed è
   // tutta qui la scelta: tre colpi tenendolo a distanza, o due lasciandogli
   // dare il suo.

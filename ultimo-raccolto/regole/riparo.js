@@ -53,8 +53,10 @@ export function stanzaDi(tx, ty) {
 // dentro. Quando esce, i tasselli toccati sono tutti all'aperto, perché sono
 // collegati al punto da cui è uscita: chi deve chiederlo per molti tasselli
 // insieme può ricordarselo invece di riallagare (vedi ricrescita.js).
-export function allaga(tx, ty) {
-  if (mappa.chiudeIn(tx, ty)) return { tasselli: [], chiusa: false };
+// "parete" dice cosa ferma l'acqua. Per le stanze è chiudeIn(); il recinto
+// ci aggiunge lo steccato (vedi recintato più sotto).
+export function allaga(tx, ty, parete = mappa.chiudeIn) {
+  if (parete(tx, ty)) return { tasselli: [], chiusa: false };
 
   const visti = new Set([`${tx},${ty}`]);
   const tasselli = [{ tx, ty }];
@@ -69,7 +71,7 @@ export function allaga(tx, ty) {
       const y = qui.ty + dy;
       const k = `${x},${y}`;
       if (visti.has(k)) continue;
-      if (mappa.chiudeIn(x, y)) continue;
+      if (parete(x, y)) continue;
       // Uscita trovata: oltre il limite non è più una stanza, ed è inutile
       // continuare a contare la valle.
       if (tasselli.length >= LIMITE) return { tasselli, chiusa: false };
@@ -84,7 +86,7 @@ export function allaga(tx, ty) {
 
 // I tasselli che chiudono questa stanza, una volta ciascuno: quello che
 // l'allagamento ha trovato attorno senza poterci entrare.
-export function pareti(stanza) {
+export function pareti(stanza, parete = mappa.chiudeIn) {
   const viste = new Set();
   const trovate = [];
   for (const { tx, ty } of stanza) {
@@ -92,7 +94,7 @@ export function pareti(stanza) {
       const x = tx + dx;
       const y = ty + dy;
       const k = `${x},${y}`;
-      if (viste.has(k) || !mappa.chiudeIn(x, y)) continue;
+      if (viste.has(k) || !parete(x, y)) continue;
       viste.add(k);
       trovate.push({ tx: x, ty: y });
     }
@@ -143,6 +145,36 @@ export function murato(tx, ty) {
   // Un tassello che è esso stesso una parete non entra nell'allagamento:
   // la risposta per lui si scrive a parte.
   if (tasselli.length === 0) verdetti.set(`${tx},${ty}`, risposta);
+  return risposta;
+}
+
+// Un recinto: un posto chiuso da steccato, cancello chiuso e le pareti di
+// sempre, con almeno un pezzo di steccato fra le pareti — come per il murato,
+// una radura fra gli alberi non è un recinto finché qualcuno non ci pianta
+// un palo. Il cancello aperto lo apre: è da lì che le bestie entrano.
+//
+// Non è una stanza: dentro piove, fa freddo e l'orto cresce. È la domanda
+// di chi deve tenere qualcosa dentro o fuori — le bestie dall'orto, e più
+// avanti gli animali allevati.
+const recinzione = (tx, ty) => mappa.chiudeIn(tx, ty) || mappa.recintaIn(tx, ty);
+const recinti = new Map();
+let revisioneRecinti = -1;
+let semeRecinti = null;
+
+export function recintato(tx, ty) {
+  const r = modifiche.revisione();
+  const s = mappa.semeCorrente().nome;
+  if (r !== revisioneRecinti || s !== semeRecinti || recinti.size > 8192) {
+    recinti.clear();
+    revisioneRecinti = r;
+    semeRecinti = s;
+  }
+  const noto = recinti.get(`${tx},${ty}`);
+  if (noto !== undefined) return noto;
+  const { tasselli, chiusa } = allaga(tx, ty, recinzione);
+  const risposta = chiusa && pareti(tasselli, recinzione).some(p => mappa.recintaIn(p.tx, p.ty));
+  for (const t of tasselli) recinti.set(`${t.tx},${t.ty}`, risposta);
+  if (tasselli.length === 0) recinti.set(`${tx},${ty}`, risposta);
   return risposta;
 }
 
