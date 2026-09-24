@@ -1573,6 +1573,13 @@ e si riparte con un nuovo superstite nella stessa valle. Perdere fa male senza
 cancellare il lavoro di ore, e recuperare la propria roba dal proprio cadavere è
 una delle cose che si andranno a fare.
 
+**Nel dubbio, la severità.** Quando una regola può andare in due modi, si sceglie
+quello più duro per chi sopravvive: la terra stanca resta stanca anche
+rizappandola, rabboccare l'essiccatoio fa ripartire il conto, al chiuso l'orto
+muore. Ogni scorciatoia che rende la valle più facile va chiusa. Però una regola
+severa si annuncia prima, sul tasto o al mattino: una punizione che non si
+vede arrivare è una trappola.
+
 ## A che punto è
 
 È finita **M7.18.15**. Il ciclo di gioco è quello che il pilastro promette: **di
