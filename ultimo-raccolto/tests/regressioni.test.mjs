@@ -45,6 +45,7 @@ import * as ortoArte from '../arte/sprite-orto.js';
 import * as arteCose from '../arte/sprite-cose.js';
 import { OGGETTO, TERRENO } from '../mondo/generazione.js';
 import * as generazione from '../mondo/generazione.js';
+import * as arteOggetti from '../arte/sprite-oggetti.js';
 import { CATALOGO, RACCOLTA } from '../regole/oggetti.js';
 import { vistaLibera, fattoreSuono } from '../mondo/ostacoli.js';
 import * as sprite from '../arte/sprite-cose.js';
@@ -98,8 +99,9 @@ test('le cinque piante sono rettangolari, diverse e lasciano accesso ai punti ut
       visitati.add(k);coda.push([x-1,y],[x+1,y],[x,y-1],[x,y+1]);
     }
     for(let y=0;y<h;y++)for(let x=0;x<w;x++){
-      // 's' da M7.18.30: le piante inselvatichite dell'orto abbandonato.
-      assert.ok(' .cvotgaf%s'.includes(l.pianta[y][x]));
+      // 's' da M7.18.30: le piante inselvatichite dell'orto abbandonato; 'p'
+      // da M7.18.31, il suo spaventapasseri rotto.
+      assert.ok(' .cvotgaf%sp'.includes(l.pianta[y][x]));
       if('cvotgf'.includes(l.pianta[y][x]))assert.ok([[x-1,y],[x+1,y],[x,y-1],[x,y+1]].some(p=>visitati.has(p.join(','))),l.id);
     }
   }
@@ -4322,8 +4324,11 @@ function valle(seme){
 }
 test("le piante selvatiche nascono solo dove prima non c'era niente, ognuna sul suo terreno",()=>{
   // Le impronte di alberi, sassi, cespugli e rovine misurate con la
-  // generazione di M7.18.29: non si è spostato niente.
-  const impronte=[[12345,1752206296,8823],[777,2028556980,7358]];
+  // generazione di M7.18.29: non si è spostato niente. Per il seme 777 è
+  // rimisurata a M7.18.31, quando alcuni piccoli luoghi sono diventati orti
+  // (vedi DIVENTA_ORTO in rovine.js): con DIVENTA_ORTO a zero torna quella
+  // di M7.18.29, 2028556980 su 7358 oggetti.
+  const impronte=[[12345,1752206296,8823],[777,167087167,7363]];
   const TERRENI={[OGGETTO.SPIGHE_SELVATICHE]:TERRENO.STERPAGLIA,[OGGETTO.LINO_SELVATICO]:TERRENO.SABBIA,[OGGETTO.CAVOLO_SELVATICO]:TERRENO.ROCCIA};
   for(const [seme,h,n] of impronte){
     const v=valle(seme);assert.equal(v.h,h,'seme '+seme);assert.equal(v.n,n,'seme '+seme);
@@ -4406,4 +4411,47 @@ test('una pianta selvatica raccolta torna il primo giorno di primavera, e si sal
   assert.equal(mappa.oggettoDi(x,y),OGGETTO.NESSUNO);
   tempo.impostaGiorno(9);ricrescita.nuovoGiorno();assert.equal(mappa.oggettoDi(x,y),OGGETTO.NESSUNO,"d'inverno no");
   tempo.impostaGiorno(13);ricrescita.nuovoGiorno();assert.equal(mappa.oggettoDi(x,y),OGGETTO.SPIGHE_SELVATICHE);
+});
+
+// M7.18.31 — gli orti abbandonati si trovano.
+test('gli orti abbandonati sono quasi il doppio, e la natura non cala',()=>{
+  let celle=0,orti=0;
+  for(const seme of ['valle-1','valle-2','valle-3','prova']){
+    mappa.inizializza(seme);
+    for(let cy=-10;cy<=10;cy++)for(let cx=-10;cx<=10;cx++){celle++;if(mappa.rovinaNellaCella(cx,cy)?.luogo==='orto')orti++;}
+  }
+  // Erano il 5,4 per cento delle celle; un quinto dei piccoli luoghi.
+  const pc=100*orti/celle;
+  assert.ok(pc>8&&pc<11,`orti ${pc.toFixed(1)}%`);
+});
+test("ogni orto abbandonato ha il suo spaventapasseri rotto: alto, non ferma e non si raccoglie",()=>{
+  assert.ok(arteOggetti.SPAVENTAPASSERI_ROTTO.length>16,'più alto di un tassello');
+  let visti=0;
+  for(let seme=1;seme<=20&&visti<6;seme++){
+    generazione.preparaRovine(seme);
+    for(let cy=-4;cy<=4;cy++)for(let cx=-4;cx<=4;cx++){
+      const r=generazione.rovinaNellaCella(cx,cy);
+      if(r?.luogo!=='orto')continue;
+      const segni=r.pianta.join('').split('p').length-1;
+      assert.equal(segni,1);
+      const y=r.pianta.findIndex(riga=>riga.includes('p')),x=r.pianta[y].indexOf('p');
+      const tx=r.tx0+x,ty=r.ty0+y;
+      assert.equal(generazione.oggettoIn(tx,ty,seme,generazione.terrenoIn(tx,ty,seme)),OGGETTO.SPAVENTAPASSERI_ROTTO);
+      visti++;
+    }
+  }
+  assert.ok(visti>=4);
+  // Nella valle del gioco: non ferma, e la barra non ci fa niente.
+  const r=trovaLuogo('orto'),p=segnoNelLuogo(r,'p');
+  assert.equal(mappa.oggettoDi(p.tx,p.ty),OGGETTO.SPAVENTAPASSERI_ROTTO);
+  assert.equal(mappa.solidoIn(p.tx,p.ty),false);
+  assert.equal(azioni.azionePossibile({...pos(p.tx-1,p.ty),guarda:'destra'},null),null);
+  assert.equal(azioni.smontaggioPossibile({...pos(p.tx-1,p.ty),guarda:'destra'}),null);
+});
+test('sulla mappa grande l\'orto abbandonato ha un segno suo, verde e più grande',()=>{
+  const sorgente=readFileSync(new URL('../interfaccia/mappa.js',import.meta.url),'utf8');
+  assert.match(sorgente,/const ORTO = "#9ec97e";/);
+  assert.match(sorgente,/const colore = orto \? ORTO/);
+  assert.match(sorgente,/segnale\(x, y, colore, rovina\.luogo && !orto \? 2 : 3\)/);
+  assert.match(sorgente,/VERDE ORTI/,'e la legenda lo dice');
 });
