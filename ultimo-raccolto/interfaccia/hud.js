@@ -557,9 +557,12 @@ export function disegnaPromemoria(p, barra, cosaInMano, indice, smontaggio = nul
     // Rotto non vuol più dire "non puoi": vuol dire "vale come un pugno". Il
     // promemoria deve dire quello, perché è la differenza fra un giocatore che
     // preme la barra e uno che la smette di premere.
-    righe.push(usi === 0
-      ? "ROTTO: VALE COME LE MANI NUDE"
-      : "DURATA " + usi + "/" + inventario.massimoDi(attrezzo));
+    // L'annaffiatoio non si consuma, si svuota: la sua "durata" è l'acqua.
+    righe.push(CATALOGO[cosaInMano]?.acqua
+      ? "ACQUA " + usi + "/" + inventario.massimoDi(attrezzo)
+      : usi === 0
+        ? "ROTTO: VALE COME LE MANI NUDE"
+        : "DURATA " + usi + "/" + inventario.massimoDi(attrezzo));
   }
 
   // Il promemoria del mangiare compare solo con qualcosa di commestibile in

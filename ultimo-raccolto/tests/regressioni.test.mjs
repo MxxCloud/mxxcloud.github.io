@@ -153,7 +153,7 @@ test('carro e tronchi richiedono lavoro, consumano ascia e stamina e non ricresc
 test('bottino dei piccoli luoghi tematico, modesto e stabile alla riapertura',()=>{
   // Da M7.17 i luoghi di chi viaggiava hanno i fagioli, e l'orto i semi
   // della rapa e del cavolo e qualche patata.
-  const ammessi={carro:['fibra','legna','fagioli','benda'],pozzo:['secchio','fibra','pietra'],bruciato:['fibra','benda','fagioli','conserva'],boscaioli:['legna','ramo','ascia'],orto:['semi','semi_cavolo','patata','fibra','zappa']};
+  const ammessi={carro:['fibra','legna','fagioli','benda'],pozzo:['secchio','fibra','pietra'],bruciato:['fibra','benda','fagioli','conserva'],boscaioli:['legna','ramo','ascia'],orto:['semi','semi_cavolo','patata','grano','fibra','zappa']};
   for(const l of LUOGHI) {
     const r=trovaLuogo(l.id),p=segnoNelLuogo(r,'c');
     const prima=contenitori.contenutoDi(p.tx,p.ty),pile=prima.filter(Boolean);
@@ -4159,4 +4159,121 @@ test('lo steccato si disegna secondo i vicini: da solo o in fila orizzontale com
   // Sedici disegni fissi: lo stesso vicinato dà lo stesso oggetto, che è
   // quello che cuoci() ricorda.
   assert.equal(arteCose.steccatoVerso(true,true,false,false),verticale);
+});
+
+// M7.18.25 — l'annaffiatoio.
+const casellaDi=(cosa)=>inventario.contenuto().findIndex(c=>c?.cosa===cosa);
+test("l'annaffiatoio si fa al banco con un secchio, due legne e due fili",()=>{
+  const r=ricette.RICETTE.find(r=>r.id==='annaffiatoio');
+  assert.equal(r.banco,true);
+  assert.deepEqual(r.costo,[{cosa:'secchio',quante:1},{cosa:'legna',quante:2},{cosa:'filo',quante:2}]);
+  inventario.aggiungi('secchio',1);inventario.aggiungi('legna',2);inventario.aggiungi('filo',2);
+  assert.equal(ricette.fai(r).perche,'banco');
+  assert.equal(ricette.fai(r,true).fatto,true);assert.equal(inventario.quante('annaffiatoio'),1);
+  assert.equal(inventario.quante('secchio'),0);
+  assert.equal(CATALOGO.annaffiatoio_pieno.durata,4);assert.equal(CATALOGO.annaffiatoio_pieno.commestibile,undefined);
+  // La riparazione non c'è: si svuota, non si consuma.
+  assert.equal(ricette.RICETTE.some(r=>r.ripara==='annaffiatoio_pieno'),false);
+});
+test("l'annaffiatoio si riempie alla riva e al pozzo, e il pozzo gelato no",()=>{
+  allaRiva();inventario.aggiungi('annaffiatoio',1);
+  let i=casellaDi('annaffiatoio');
+  assert.equal(azioni.azionePossibile(eroe,'annaffiatoio',i).verbo,"Riempi l'annaffiatoio");
+  assert.equal(azioni.agisci(eroe,'annaffiatoio',i).annaffiatoio,true);
+  // Resta nella sua casella, cioè in mano, pieno.
+  assert.deepEqual(inventario.contenuto()[i],{cosa:'annaffiatoio_pieno',quantita:1,usi:4});
+  // Pieno del tutto non c'è niente da riempire: alla riva si beve, come con le mani vuote.
+  bisogni.consuma('sete',0.5);
+  assert.equal(azioni.azionePossibile(eroe,'annaffiatoio_pieno',i).tipo,'bevi');
+  inventario.contenuto()[i].usi=1;
+  assert.equal(azioni.azionePossibile(eroe,'annaffiatoio_pieno',i).tipo,'riempi');
+  // Il pozzo, anche d'inverno; gelato no.
+  reset();inventario.aggiungi('annaffiatoio',1);i=casellaDi('annaffiatoio');
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.POZZO});
+  assert.equal(azioni.azionePossibile(eroe,'annaffiatoio',i).verbo,'Attingi acqua');
+  assert.equal(azioni.agisci(eroe,'annaffiatoio',i).tipo,'riempi');
+  assert.equal(inventario.contenuto()[i].cosa,'annaffiatoio_pieno');
+  // Col gelo il pozzo è gelato, e la riva è ghiaccio.
+  inventario.contenuto()[i]={cosa:'annaffiatoio',quantita:1};
+  tempo.impostaGiorno(9);acqua.aggiorna();
+  assert.equal(azioni.azionePossibile(eroe,'annaffiatoio',i).impedito,'il pozzo è gelato');
+  allaRiva();i=casellaDi('annaffiatoio');
+  assert.equal(azioni.azionePossibile(eroe,'annaffiatoio',i).impedito,'ghiaccio: cerca acqua aperta');
+  tempo.impostaGiorno(1);acqua.aggiorna();
+});
+test("l'annaffiatoio bagna tre tasselli per gesto, quattro gesti e torna vuoto",()=>{
+  tempo.impostaGiorno(1);
+  inventario.aggiungi('annaffiatoio_pieno',1);const i=casellaDi('annaffiatoio_pieno');
+  // Guardando a destra: il tassello davanti e i due sopra e sotto.
+  for(const y of [ty-1,ty,ty+1])modifiche.imposta(tx+1,y,{oggetto:OGGETTO.TERRA_ZAPPATA});
+  const gesto=azioni.azionePossibile(eroe,'annaffiatoio_pieno',i);
+  assert.equal(gesto.tipo,'innaffia');assert.equal(gesto.verbo,'Innaffia (3)');
+  const esito=azioni.agisci(eroe,'annaffiatoio_pieno',i);
+  assert.equal(esito.quanti,3);assert.equal(esito.vuoto,false);
+  for(const y of [ty-1,ty,ty+1])assert.equal(modifiche.di(tx+1,y).bagnato,true);
+  assert.equal(inventario.contenuto()[i].usi,3);
+  // Già bagnati: niente gesto, e niente acqua sprecata.
+  assert.notEqual(azioni.azionePossibile(eroe,'annaffiatoio_pieno',i)?.tipo,'innaffia');
+  // Un tassello solo da bagnare fra i tre: conta uno, ma costa lo stesso un'innaffiata.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.TERRA_ZAPPATA});
+  assert.equal(azioni.azionePossibile(eroe,'annaffiatoio_pieno',i).verbo,'Innaffia (1)');
+  // Il prato non si bagna.
+  modifiche.imposta(tx+1,ty-1,{oggetto:OGGETTO.NESSUNO});modifiche.imposta(tx+1,ty+1,{oggetto:OGGETTO.NESSUNO});
+  assert.equal(azioni.azionePossibile(eroe,'annaffiatoio_pieno',i).verbo,'Innaffia (1)');
+  for(let n=0;n<3;n++){
+    modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.TERRA_ZAPPATA});
+    const e=azioni.agisci(eroe,'annaffiatoio_pieno',i);
+    assert.equal(e.tipo,'innaffia');assert.equal(e.vuoto,n===2);
+  }
+  assert.deepEqual(inventario.contenuto()[i],{cosa:'annaffiatoio',quantita:1});
+  // Guardando in su il ventaglio è in orizzontale.
+  inventario.contenuto()[i]={cosa:'annaffiatoio_pieno',quantita:1,usi:4};
+  for(const x of [tx-1,tx,tx+1])modifiche.imposta(x,ty-1,{oggetto:OGGETTO.TERRA_ZAPPATA});
+  assert.equal(azioni.agisci({...eroe,guarda:'su'},'annaffiatoio_pieno',i).quanti,3);
+  for(const x of [tx-1,tx,tx+1])assert.equal(modifiche.di(x,ty-1).bagnato,true);
+});
+test("il promemoria dice l'acqua dell'annaffiatoio, non la durata",()=>{
+  const hud=readFileSync(new URL('../interfaccia/hud.js',import.meta.url),'utf8');
+  assert.match(hud,/CATALOGO\[cosaInMano\]\?\.acqua\s*\?\s*"ACQUA "/);
+  assert.equal(CATALOGO.annaffiatoio_pieno.acqua,true);
+});
+
+// M7.18.25 — il grano.
+test('il grano si semina in tre stagioni, cresce in quattro innaffiature e rende sei chicchi',()=>{
+  tempo.impostaGiorno(1);zappato();inventario.aggiungi('grano',2);
+  const i=casellaDi('grano');
+  assert.equal(azioni.azionePossibile(eroe,'grano',i).verbo,'Semina');
+  assert.equal(azioni.agisci(eroe,'grano',i).tipo,'semina');
+  assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.SEMINATO,coltura:'grano',passo:0});
+  const visti=[];
+  for(let giorno=2;giorno<=5;giorno++){unGiorno(tx+1,ty,giorno);visti.push(modifiche.di(tx+1,ty).oggetto);}
+  assert.deepEqual(visti,[OGGETTO.GERMOGLIO,OGGETTO.CRESCIUTA,OGGETTO.CRESCIUTA,OGGETTO.MATURA]);
+  inventario.svuota();
+  assert.equal(azioni.agisci(eroe,null).tipo,'raccolto');assert.equal(inventario.quante('grano'),6);
+  // D'autunno sì, d'inverno no.
+  tempo.impostaGiorno(6);zappato();inventario.aggiungi('grano',1);
+  assert.equal(azioni.azionePossibile(eroe,'grano',casellaDi('grano')).impedito ?? null,null);
+  tempo.impostaGiorno(10);zappato();
+  assert.equal(azioni.azionePossibile(eroe,'grano',casellaDi('grano')).impedito,"d'inverno non germoglia");
+});
+test('il grano regge la sete, non si mangia crudo, non si guasta e nutre i polli',()=>{
+  assert.equal(colture.di('grano').sete,4);assert.ok(colture.di('grano').sete>colture.di('rapa').sete);
+  assert.equal(colture.di('grano').aSeme,null);assert.equal(colture.dalSeme('grano'),'grano');
+  assert.equal(CATALOGO.grano.commestibile,undefined);assert.equal(CATALOGO.grano.dura,undefined);
+  inventario.aggiungi('grano',1);assert.equal(azioni.consuma('grano',casellaDi('grano'))?.tipo==='consumato',false);
+  assert.ok(polli.MANGIMI.has('grano'));
+  recinto(tx,ty);modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.POLLAIO});
+  const i=casellaDi('grano');
+  assert.equal(azioni.azionePossibile(eroe,'grano',i).verbo,'Dai da mangiare (0/12)');
+  assert.equal(azioni.agisci(eroe,'grano',i).tipo,'nutrito');assert.equal(polli.mangimeNel(tx+1,ty),1);
+});
+test('il grano ha i suoi disegni e si salva',()=>{
+  const stadi=ortoArte.tuttiIDisegni().filter(d=>d.coltura==='grano').map(d=>d.stadio);
+  for(const s of ['SEMINATO','GERMOGLIO','CRESCIUTA','MATURA'])assert.ok(stadi.includes(s),s);
+  const stato=salvataggio.istantanea(eroe,0);
+  stato.modifiche=[{tx:tx+1,ty,oggetto:OGGETTO.CRESCIUTA,coltura:'grano',passo:2}];
+  assert.ok(salvataggio.valido(stato));
+  inventario.aggiungi('grano',3);inventario.aggiungi('annaffiatoio_pieno',1);inventario.contenuto()[casellaDi('annaffiatoio_pieno')].usi=2;
+  const salvato=salvataggio.istantanea(eroe,0);assert.ok(salvataggio.applica(salvato));
+  assert.equal(inventario.quante('grano'),3);assert.equal(inventario.contenuto()[casellaDi('annaffiatoio_pieno')].usi,2);
 });

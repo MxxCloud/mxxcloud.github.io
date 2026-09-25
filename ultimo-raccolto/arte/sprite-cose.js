@@ -567,6 +567,55 @@ export const SECCHIO_PIENO = [
   "............",
 ];
 
+// L'annaffiatoio (M7.18.25): il secchio con il manico sopra e il becco lungo
+// verso l'alto. Lo stesso metallo e la stessa acqua del secchio, perché è un
+// secchio: si deve capire a colpo d'occhio che cosa lo riempie.
+export const ANNAFFIATOIO = [
+  "............",
+  "...ssss.....",
+  "..s....s....",
+  ".ssssssss..s",
+  ".s......s.s.",
+  ".s......ss..",
+  ".s......s...",
+  ".s......s...",
+  ".s......s...",
+  ".ssssssss...",
+  "............",
+  "............",
+];
+
+export const ANNAFFIATOIO_PIENO = [
+  "............",
+  "...ssss.....",
+  "..s....s....",
+  ".ssssssss..s",
+  ".s333333s.s.",
+  ".s222222ss..",
+  ".s222222s...",
+  ".s222222s...",
+  ".s222222s...",
+  ".ssssssss...",
+  "............",
+  "............",
+];
+
+// Il grano (M7.18.25): una spiga dorata sullo stelo.
+export const GRANO = [
+  "............",
+  ".....5......",
+  "....545.....",
+  ".....5......",
+  "....545.....",
+  ".....5......",
+  "....545.....",
+  ".....4......",
+  ".....4......",
+  ".....4......",
+  "............",
+  "............",
+];
+
 export const SEMI = [
   "............",
   "............",

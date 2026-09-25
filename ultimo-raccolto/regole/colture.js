@@ -1,14 +1,14 @@
 // Le colture: che cosa si pianta, quando, quanto beve e che cosa rende.
 //
 // Fino a M7.16 l'orto sapeva fare una cosa sola, la rapa, e le regole erano
-// scritte per lei dentro orto.js. Adesso ce ne sono cinque, e ognuna è la
+// scritte per lei dentro orto.js. Adesso ce ne sono sei, e ognuna è la
 // stessa macchina con numeri diversi: gli stadi sono gli stessi oggetti per
 // tutte — seminato, germoglio, cresciuta, matura, a seme — e quello che
 // cambia sta qui. Un tassello si ricorda la sua coltura nel campo "coltura";
 // senza, è una rapa, così un campo di un salvataggio di prima resta quello
 // che era.
 //
-// Le cinque non sono cinque versioni della stessa cosa. Ognuna risponde a una
+// Le sei non sono sei versioni della stessa cosa. Ognuna risponde a una
 // domanda diversa, ed è per questo che vale la pena scegliere:
 //
 // - la rapa è la tuttofare: tre stagioni, quattro giorni, i semi a parte;
@@ -19,7 +19,8 @@
 // - il cavolo regge il gelo: d'inverno non muore, si ferma, e quello maturo è
 //   l'unica cosa fresca di gennaio;
 // - il lino non si mangia: rende filo, cioè bende, lenze e pelli cucite, e
-//   contende al cibo lo spazio dell'orto.
+//   contende al cibo lo spazio dell'orto;
+// - il grano non si mangia crudo: è il mangime del pollaio, e non si guasta.
 
 import { OGGETTO } from "../mondo/generazione.js";
 
@@ -107,6 +108,22 @@ export const COLTURE = {
     aSeme: [{ cosa: "semi_lino", quante: SEMI_DA_UNA_PIANTA }],
     gelo: false,
     quando: "il lino si semina in primavera e d'estate",
+  },
+  // Il grano (M7.18.25) è per il pollaio. Il mangime veniva dai semi
+  // dell'orto, cioè ogni pollo nutrito era una rapa in meno; il grano è
+  // fatto apposta. Il seme è il chicco, come per patata e fagioli: sei da
+  // uno, e tolto quello da ripiantare ne restano cinque. Regge la sete come la
+  // patata — un giorno dimenticato non lo secca — e non si guasta, quindi è la
+  // scorta per l'inverno, quando i polli non razzolano. Crudo non si mangia.
+  grano: {
+    nome: "grano", seme: "grano", verbo: "Semina",
+    stagioni: ["primavera", "estate", "autunno"],
+    stadi: [S, G, C, C, M],
+    sete: 4,
+    raccolto: [{ cosa: "grano", quante: 6 }],
+    aSeme: null,
+    gelo: false,
+    quando: "il grano si semina in primavera, d'estate e d'autunno",
   },
 };
 
