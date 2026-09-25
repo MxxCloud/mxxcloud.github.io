@@ -1055,6 +1055,66 @@ export const CANCELLO_APERTO = [
   "gg............gg",
 ];
 
+// Il cancello in una fila verticale (M7.18.26). I due disegni qui sopra sono
+// fatti per una fila orizzontale, con i pali ai bordi di sinistra e di
+// destra; in un lato verticale del recinto si leggevano come un pezzo di
+// traverso. Qui il cancello sta sullo stesso palo in mezzo dello steccato
+// verticale (vedi steccatoCollegato): chiuso è un'anta con le assi di
+// traverso fra il palo di sopra e quello di sotto; aperto l'anta è girata
+// sul cardine di sopra, e in mezzo resta il passaggio vuoto. Come per lo
+// steccato, il palo arriva al bordo del tassello solo verso un vicino.
+function cancelloVerticale(aperto, n, s) {
+  const alto = n ? ["......wwhh......", "......wwhh......"] : ["................", "......wwww......"];
+  const basso = s ? "......wwhh......" : "......gggg......";
+  if (!aperto) {
+    return [
+      ...alto,
+      ".....wwwwww.....",
+      ".....wccccw.....",
+      ".....w....h.....",
+      ".....wccccw.....",
+      ".....w....h.....",
+      ".....wwwwww.....",
+      ".....wccccw.....",
+      ".....w....h.....",
+      ".....wccccw.....",
+      ".....w....h.....",
+      ".....wwwwww.....",
+      "......wwhh......",
+      "......wwhh......",
+      basso,
+    ];
+  }
+  return [
+    ...alto,
+    "......wwhhwwwwww",
+    "......wwhhc.c.cw",
+    "......wwhhc.c.cw",
+    "......wwhhwwwwww",
+    "......gggg......",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "......wwww......",
+    "......wwhh......",
+    "......wwhh......",
+    basso,
+  ];
+}
+
+// Fatti una volta sola, come gli steccati: [aperto][n][s].
+const CANCELLI_VERTICALI = [false, true].map((aperto) =>
+  [false, true].map((n) => [false, true].map((s) => cancelloVerticale(aperto, n, s))));
+
+// Il disegno del cancello per i suoi vicini: verticale quando la fila corre
+// in su e in giù e non di fianco, altrimenti quello di sempre.
+export function cancelloVerso(aperto, n, s, e, o) {
+  if ((n || s) && !e && !o) return CANCELLI_VERTICALI[aperto ? 1 : 0][n ? 1 : 0][s ? 1 : 0];
+  return aperto ? CANCELLO_APERTO : CANCELLO;
+}
+
 export const STECCATO_ICONA = [
   "............",
   "............",

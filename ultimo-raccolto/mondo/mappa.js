@@ -670,6 +670,12 @@ function cuociSettore(sx, sy) {
           : oggetto === OGGETTO.STECCATO
             ? coseArte.steccatoVerso(collegaSteccato(tx, ty - 1), collegaSteccato(tx, ty + 1),
               collegaSteccato(tx + 1, ty), collegaSteccato(tx - 1, ty))
+          // E da M7.18.26 anche il cancello, che in una fila verticale si
+          // gira con lei.
+          : oggetto === OGGETTO.CANCELLO || oggetto === OGGETTO.CANCELLO_APERTO
+            ? coseArte.cancelloVerso(oggetto === OGGETTO.CANCELLO_APERTO,
+              collegaSteccato(tx, ty - 1), collegaSteccato(tx, ty + 1),
+              collegaSteccato(tx + 1, ty), collegaSteccato(tx - 1, ty))
             : voce.sprite;
         const fotogrammi = voce.fotogrammi
           ? voce.fotogrammi.map((f) => cuoci(f, tavolozza))
