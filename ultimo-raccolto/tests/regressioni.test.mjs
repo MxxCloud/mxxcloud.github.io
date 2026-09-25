@@ -4278,8 +4278,8 @@ test('il grano ha i suoi disegni e si salva',()=>{
   assert.equal(inventario.quante('grano'),3);assert.equal(inventario.contenuto()[casellaDi('annaffiatoio_pieno')].usi,2);
 });
 
-// M7.18.26 — anche il cancello si gira con la fila; da M7.18.27 lungo uguale.
-test('il cancello in una fila verticale è quello orizzontale girato, lungo uguale',()=>{
+// M7.18.26 — anche il cancello si gira con la fila; da M7.18.28 visto di taglio.
+test('il cancello in una fila verticale si vede di taglio: lungo da palo a palo, più sottile dello steccato',()=>{
   assert.equal(arteCose.cancelloVerso(false,false,false,true,true),arteCose.CANCELLO);
   assert.equal(arteCose.cancelloVerso(true,false,false,false,false),arteCose.CANCELLO_APERTO);
   // Con vicini di fianco resta orizzontale anche se ne ha sopra o sotto.
@@ -4287,17 +4287,18 @@ test('il cancello in una fila verticale è quello orizzontale girato, lungo ugua
   const chiuso=arteCose.cancelloVerso(false,true,true,false,false),aperto=arteCose.cancelloVerso(true,true,false,false,false);
   assert.equal(chiuso,arteCose.CANCELLO_VERTICALE);assert.equal(aperto,arteCose.CANCELLO_VERTICALE_APERTO);
   for(const d of [chiuso,aperto]){assert.equal(d.length,16);assert.ok(d.every(r=>r.length===16));}
-  // L'anta è lunga quanto quella orizzontale: le righe fra i due pali sono
-  // tante quante le colonne fra i due pali di quella orizzontale.
-  const orizzontale=arteCose.CANCELLO[4].slice(2,14).length;
-  const verticale=chiuso.filter(r=>/c/.test(r)||/^\.\.\.\.w\.\./.test(r)).length;
-  assert.equal(verticale,orizzontale);
-  // E le assi sono le stesse, di traverso: la riga dell'anta orizzontale
-  // letta in colonna.
-  const colonna=(d,x)=>d.map(r=>r[x]).join('');
-  assert.equal(colonna(chiuso,5).slice(2,14),arteCose.CANCELLO[4].slice(2,14));
+  // L'anta è lunga quanto quella orizzontale: dodici righe fra i due pali.
+  const anta=chiuso.filter(r=>/^\.{7}w[ch]\.{7}$/.test(r)).length;
+  assert.equal(anta,arteCose.CANCELLO[4].slice(2,14).length);
+  // Ed è più sottile del palo dello steccato verticale.
+  const pieni=(r)=>[...r].filter(c=>c!=='.').length;
+  assert.ok(pieni(chiuso[8])<pieni(arteCose.steccatoVerso(true,true,false,false)[8]));
   // I pali arrivano ai due bordi, e ai lati del tassello non c'è niente.
-  for(const d of [chiuso,aperto]){assert.notEqual(d[0][7],'.');assert.notEqual(d[15][7],'.');assert.equal(d[8][0],'.');assert.equal(d[8][15],'.');}
-  // Chiuso l'anta sbarra il passaggio; aperto in mezzo si vede la terra.
+  assert.notEqual(chiuso[0][7],'.');assert.notEqual(chiuso[15][7],'.');assert.notEqual(aperto[15][7],'.');
+  for(const d of [chiuso,aperto]){assert.equal(d[8][0],'.');assert.equal(d[8][15],'.');}
+  // Chiuso l'anta sbarra il passaggio; aperto in mezzo si vede la terra, e
+  // l'anta sta di fianco al cardine, sottile anche lei.
   assert.notEqual(chiuso[8][7],'.');assert.equal(aperto[8][7],'.');
+  assert.ok(aperto.slice(0,2).every(r=>r.slice(10)!=='......'));
+  assert.ok(aperto.slice(2).every(r=>r.slice(10)==='......'));
 });

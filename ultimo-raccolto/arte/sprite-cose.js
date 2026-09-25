@@ -1060,25 +1060,24 @@ export const CANCELLO_APERTO = [
 // destra; in un lato verticale del recinto si leggevano come un pezzo di
 // traverso.
 //
-// Da M7.18.27 è lo stesso cancello girato di un quarto, e basta: la prima
-// versione aveva un'anta più corta e stretta sul palo dello steccato, e
-// accanto a quello orizzontale sembrava un pezzetto. Qui l'anta è lunga
-// uguale — dodici pixel fra i due pali — con le stesse tre traverse e le
-// stesse assi a righe alterne, solo di traverso; i pali stanno sopra e sotto
-// invece che a sinistra e a destra, larghi quanto l'anta, e si attaccano al
-// palo dello steccato di sopra e di sotto. Aperto, l'anta si vede di taglio
-// accostata al palo di sopra, come quella orizzontale sta accostata al palo
-// di sinistra, e in mezzo resta il passaggio.
-const PALO_VERTICALE = ["....wwwwwwww....", "....hhhhhhhh...."];
-const ANTA_CHIUSA = Array.from({ length: 12 }, (_, i) => (i % 2 === 0 ? "....wccwcccw...." : "....w..w...w...."));
+// Da M7.18.28 è visto dall'alto com'è davvero: di taglio. Un cancello visto
+// per lungo è lo spessore delle sue assi, cioè una linea più sottile del
+// palo dello steccato — due pixel contro quattro — lunga da un palo
+// all'altro, con le assi scure e chiare a righe alterne perché si legga come
+// un'anta e non come un altro pezzo di steccato. La prima versione (M7.18.26)
+// era corta e M7.18.27 era larga quanto quella orizzontale: vista di faccia,
+// in una fila che si vede di taglio. I due pali, sopra e sotto, sono quelli
+// dello steccato. Aperto, l'anta gira sul cardine di sopra e resta di taglio
+// anche lei, una linea sottile che esce di fianco; in mezzo il passaggio.
+const PALO_VERTICALE = ["......wwhh......", "......wwhh......"];
+const ANTA_DI_TAGLIO = Array.from({ length: 12 }, (_, i) => (i % 2 === 0 ? ".......wc......." : ".......wh......."));
 
-export const CANCELLO_VERTICALE = [...PALO_VERTICALE, ...ANTA_CHIUSA, ...PALO_VERTICALE];
+export const CANCELLO_VERTICALE = [...PALO_VERTICALE, ...ANTA_DI_TAGLIO, ...PALO_VERTICALE];
 
 export const CANCELLO_VERTICALE_APERTO = [
-  ...PALO_VERTICALE,
-  "....wccwcccw....",
-  "....wwwwwwww....",
-  ...Array(10).fill("................"),
+  "......wwhhwwwwww",
+  "......wwhhchchch",
+  ...Array(12).fill("................"),
   ...PALO_VERTICALE,
 ];
 
