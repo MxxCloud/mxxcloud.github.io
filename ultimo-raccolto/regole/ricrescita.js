@@ -43,6 +43,12 @@ const RITORNO = {
   // Il bosco dopo, quando la primavera ha finito: un albero che torna con i
   // cespugli sembrerebbe un cespuglio più alto.
   [OGGETTO.ALBERO]: "estate",
+  // Le piante selvatiche (M7.18.30) con i cespugli: sono la fonte di semi che
+  // la valle ridà, una volta l'anno.
+  [OGGETTO.SPIGHE_SELVATICHE]: "primavera",
+  [OGGETTO.LINO_SELVATICO]: "primavera",
+  [OGGETTO.CAVOLO_SELVATICO]: "primavera",
+  [OGGETTO.PATATA_SELVATICA]: "primavera",
 };
 
 // Una modifica è "un tassello svuotato e basta" solo se non porta altro.

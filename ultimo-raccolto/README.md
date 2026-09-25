@@ -12,6 +12,39 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.30 — i semi che la valle ridà
+
+Fino a qui l'unica fonte di semi che si rinnovava era il cespuglio, e solo
+per la rapa. Cavolo, lino, grano e patata venivano dalle casse, che si
+svuotano una volta: un campo perso per la sete o per l'inverno era perso per
+sempre, se non restava una casa da frugare. Adesso la valle ne ridà un po'
+ogni anno, in due modi.
+
+**Le piante selvatiche.** Crescono per conto loro, ognuna sul suo terreno, e
+si raccolgono con un colpo come i cespugli:
+
+| Pianta | Dove | Cosa dà |
+|---|---|---|
+| Spighe selvatiche | sterpaglia | 1 fibra; 2 grano (estate 50%, autunno 35%, primavera 10%) |
+| Lino selvatico | sabbia della riva | 1 fibra; 2 semi di lino (estate e autunno 40%, primavera 10%) |
+| Cavolo selvatico | fra le rocce | 2 semi di cavolo (estate 40%, primavera 30%, autunno 20%) |
+| Patata inselvatichita | solo negli orti abbandonati | 1 patata (estate e autunno 60%, primavera 20%) |
+
+D'inverno i semi non escono mai. Come per i cespugli, quello che una pianta
+dà dipende dalla stagione e dal tassello, non dal caso. Se non dà niente, il
+messaggio lo dice. Una pianta raccolta **torna il primo giorno di
+primavera**. Sono poche, meno dei cespugli: un rimedio da cercare, non un
+campo gratis.
+
+Nascono solo su tasselli che prima erano vuoti. Alberi, sassi, cespugli e
+rovine restano esattamente dove stavano.
+
+**Gli orti inselvatichiti.** In ogni orto abbandonato la prima fila delle
+aiuole non è più morta: sono **4 piante inselvatichite**, tutte della stessa
+coltura, cioè quella di chi lo coltivava (grano, lino, cavolo o patata). Ogni
+orto ha sempre la sua, e sapere dov'è «l'orto del lino» è una cosa che si
+impara girando. La seconda fila resta di piante morte.
+
 ## M7.18.29 — i semi tornano tre
 
 Rapa, cavolo e lino andati a seme rendono di nuovo **3 semi**, come prima di
@@ -1852,7 +1885,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.29**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.30**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

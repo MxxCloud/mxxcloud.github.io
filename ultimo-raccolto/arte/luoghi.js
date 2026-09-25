@@ -1,6 +1,7 @@
 // Piccole tracce di chi viveva nella valle. Separati da PIANTE: aggiungerli
 // non cambia gli indici, le posizioni e il bottino delle vecchie case.
-// v carro, o pozzo, t tronco bruciato/tagliato, g giaciglio, a orto appassito.
+// v carro, o pozzo, t tronco bruciato/tagliato, g giaciglio, a orto appassito,
+// s orto inselvatichito (M7.18.30: una coltura per orto, vedi generazione.js).
 export const LUOGHI = [
   { id: "carro", nome: "Carro rovesciato", pianta: [
     "  .....  ",
@@ -33,7 +34,7 @@ export const LUOGHI = [
   ] },
   { id: "orto", nome: "Orto abbandonato", pianta: [
     " %%...%% ",
-    "..aa.aa..",
+    "..ss.ss..",
     "..aa.aa..",
     ".......c.",
     " %%...%% ",

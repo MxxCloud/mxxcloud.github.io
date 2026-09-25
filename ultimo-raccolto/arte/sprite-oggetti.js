@@ -99,6 +99,70 @@ export const MURO_ROTTO = [
   ".dddddddddddddd.",
 ];
 
+// Le piante selvatiche (M7.18.30). Più basse e più rade del cespuglio, con i
+// colori delle colture da cui vengono, perché si riconoscano da lontano: le
+// spighe bionde, il lino coi fiori azzurri, il cavolo verde chiaro, la patata
+// scura coi fiori bianchi.
+export const SPIGHE_SELVATICHE = [
+  "................",
+  "...5.....5......",
+  "..545...545..5..",
+  "...5..5..5..545.",
+  "...4.545.4...5..",
+  "...4..5..4...4..",
+  "..4...4...4..4..",
+  "..4..4....4.4...",
+  "...4.4...4..4...",
+  "....44..4..4....",
+  "....x44x4x4x....",
+  "...xx.xxxx.xx...",
+];
+
+export const LINO_SELVATICO = [
+  "................",
+  "....C......C....",
+  "...CyC....CyC...",
+  "....y..C...y....",
+  "....y.CyC..y..C.",
+  "...y...y...y.CyC",
+  "...y...y..y...y.",
+  "....y..y..y..y..",
+  "....y.y...y.y...",
+  ".....yy..y.y....",
+  "......yxxyy.....",
+  ".....xx..xx.....",
+];
+
+export const CAVOLO_SELVATICO = [
+  "................",
+  "................",
+  "................",
+  "......E..E......",
+  "....E.ExxE.E....",
+  "...EEExEExEEE...",
+  "..EExxEEEExxEE..",
+  ".EEEEEExxEEEEEE.",
+  "..EExEEEEEExEE..",
+  "...xEEExxEEEx...",
+  "....xxxxxxxx....",
+  "................",
+];
+
+export const PATATA_SELVATICA = [
+  "................",
+  "................",
+  ".....z....z.....",
+  "....zvz..zvz....",
+  "...xxzxxxxzxx...",
+  "..xyxxxyxxxxyx..",
+  ".xxxyxxxxyxxxxx.",
+  ".xyxxxxyxxxxyxx.",
+  "..xxxyxxxxyxxx..",
+  "...xxxxxxxxxx...",
+  "....xxxxxxxx....",
+  "................",
+];
+
 export const CESPUGLIO = [
   "................",
   "......jjjj......",
