@@ -51,6 +51,12 @@ const CATALOGO_OGGETTI = {
   [OGGETTO.ALBERO]: { sprite: oggettiArte.ALBERO, solido: true },
   [OGGETTO.SASSO]: { sprite: oggettiArte.SASSO, solido: true },
   [OGGETTO.CESPUGLIO]: { sprite: oggettiArte.CESPUGLIO, solido: false },
+  // Le piante selvatiche (M7.18.30) si attraversano come il cespuglio: sono
+  // erba alta, non un ostacolo.
+  [OGGETTO.SPIGHE_SELVATICHE]: { sprite: oggettiArte.SPIGHE_SELVATICHE, solido: false },
+  [OGGETTO.LINO_SELVATICO]: { sprite: oggettiArte.LINO_SELVATICO, solido: false },
+  [OGGETTO.CAVOLO_SELVATICO]: { sprite: oggettiArte.CAVOLO_SELVATICO, solido: false },
+  [OGGETTO.PATATA_SELVATICA]: { sprite: oggettiArte.PATATA_SELVATICA, solido: false },
 
   // Il falò acceso ferma: ci si cammina attorno, non dentro. Quello spento no
   // — è cenere, e restare bloccati da un mucchio di cenere sarebbe assurdo.

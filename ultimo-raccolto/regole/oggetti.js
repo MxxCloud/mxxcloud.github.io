@@ -581,6 +581,53 @@ export const RACCOLTA = {
       },
     ],
   },
+  // Le piante selvatiche (M7.18.30): la fonte di semi che si rinnova. Fino a
+  // qui l'unica era il cespuglio, e solo per la rapa; cavolo, lino, grano e
+  // patata venivano dalle casse, che si svuotano una volta, e un campo perso
+  // per la sete era perso per sempre se non restava una casa da frugare.
+  // Come il cespuglio: un colpo, la resa che dipende dalla stagione — i semi
+  // quando la pianta ha fiorito, d'inverno niente — e tornano in primavera.
+  // Poco per volta: sono un rimedio da cercare, non un campo gratis.
+  [OGGETTO.SPIGHE_SELVATICHE]: {
+    verbo: "Raccogli le spighe",
+    colpi: 1,
+    voce: "erba",
+    scheggie: ["5", "4", "x"],
+    resa: [
+      { cosa: "fibra", quante: 1 },
+      { cosa: "grano", quante: 2, probabilita: { estate: 0.5, autunno: 0.35, inverno: 0, primavera: 0.1 } },
+    ],
+  },
+  [OGGETTO.LINO_SELVATICO]: {
+    verbo: "Strappa il lino",
+    colpi: 1,
+    voce: "erba",
+    scheggie: ["y", "C", "x"],
+    resa: [
+      { cosa: "fibra", quante: 1 },
+      { cosa: "semi_lino", quante: 2, probabilita: { estate: 0.4, autunno: 0.4, inverno: 0, primavera: 0.1 } },
+    ],
+  },
+  // Il cavolo selvatico non si mangia: è foglia dura di scogliera. Dà i semi,
+  // e fiorisce prima degli altri.
+  [OGGETTO.CAVOLO_SELVATICO]: {
+    verbo: "Raccogli il cavolo selvatico",
+    colpi: 1,
+    voce: "erba",
+    scheggie: ["E", "x", "v"],
+    resa: [
+      { cosa: "semi_cavolo", quante: 2, probabilita: { estate: 0.4, autunno: 0.2, inverno: 0, primavera: 0.3 } },
+    ],
+  },
+  [OGGETTO.PATATA_SELVATICA]: {
+    verbo: "Scava la patata",
+    colpi: 1,
+    voce: "erba",
+    scheggie: ["x", "b", "z"],
+    resa: [
+      { cosa: "patata", quante: 1, probabilita: { estate: 0.6, autunno: 0.6, inverno: 0, primavera: 0.2 } },
+    ],
+  },
   [OGGETTO.TORCIA_PIANTATA]: {
     verbo: "Raccogli",
     colpi: 1,

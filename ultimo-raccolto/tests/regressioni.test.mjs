@@ -44,6 +44,7 @@ import * as colture from '../regole/colture.js';
 import * as ortoArte from '../arte/sprite-orto.js';
 import * as arteCose from '../arte/sprite-cose.js';
 import { OGGETTO, TERRENO } from '../mondo/generazione.js';
+import * as generazione from '../mondo/generazione.js';
 import { CATALOGO, RACCOLTA } from '../regole/oggetti.js';
 import { vistaLibera, fattoreSuono } from '../mondo/ostacoli.js';
 import * as sprite from '../arte/sprite-cose.js';
@@ -97,7 +98,8 @@ test('le cinque piante sono rettangolari, diverse e lasciano accesso ai punti ut
       visitati.add(k);coda.push([x-1,y],[x+1,y],[x,y-1],[x,y+1]);
     }
     for(let y=0;y<h;y++)for(let x=0;x<w;x++){
-      assert.ok(' .cvotgaf%'.includes(l.pianta[y][x]));
+      // 's' da M7.18.30: le piante inselvatichite dell'orto abbandonato.
+      assert.ok(' .cvotgaf%s'.includes(l.pianta[y][x]));
       if('cvotgf'.includes(l.pianta[y][x]))assert.ok([[x-1,y],[x+1,y],[x,y-1],[x,y+1]].some(p=>visitati.has(p.join(','))),l.id);
     }
   }
@@ -4302,4 +4304,106 @@ test('il cancello in una fila verticale si vede di taglio: lungo da palo a palo,
   assert.notEqual(chiuso[8][7],'.');assert.equal(aperto[8][7],'.');
   assert.ok(aperto.slice(0,2).every(r=>r.slice(10)!=='......'));
   assert.ok(aperto.slice(2).every(r=>r.slice(10)==='......'));
+});
+
+// M7.18.30 — le piante selvatiche e gli orti inselvatichiti.
+const SELVATICHE=[OGGETTO.SPIGHE_SELVATICHE,OGGETTO.LINO_SELVATICO,OGGETTO.CAVOLO_SELVATICO,OGGETTO.PATATA_SELVATICA];
+const GIA_NELLA_VALLE=new Set([OGGETTO.ALBERO,OGGETTO.SASSO,OGGETTO.CESPUGLIO,OGGETTO.CASSA,OGGETTO.MURO,OGGETTO.MURO_ROTTO,
+  OGGETTO.CARRO,OGGETTO.POZZO,OGGETTO.TRONCO,OGGETTO.GIACIGLIO,OGGETTO.FALO_SPENTO]);
+function valle(seme){
+  generazione.preparaRovine(seme);
+  let h=0,n=0;const piante=[];
+  for(let y=-120;y<120;y++)for(let x=-120;x<120;x++){
+    const t=generazione.terrenoIn(x,y,seme),o=generazione.oggettoIn(x,y,seme,t);
+    if(GIA_NELLA_VALLE.has(o)){h=(Math.imul(h,31)+(x*7919+y*104729+o*13))|0;n++;}
+    if(SELVATICHE.includes(o))piante.push({x,y,o,t});
+  }
+  return {h,n,piante};
+}
+test("le piante selvatiche nascono solo dove prima non c'era niente, ognuna sul suo terreno",()=>{
+  // Le impronte di alberi, sassi, cespugli e rovine misurate con la
+  // generazione di M7.18.29: non si è spostato niente.
+  const impronte=[[12345,1752206296,8823],[777,2028556980,7358]];
+  const TERRENI={[OGGETTO.SPIGHE_SELVATICHE]:TERRENO.STERPAGLIA,[OGGETTO.LINO_SELVATICO]:TERRENO.SABBIA,[OGGETTO.CAVOLO_SELVATICO]:TERRENO.ROCCIA};
+  for(const [seme,h,n] of impronte){
+    const v=valle(seme);assert.equal(v.h,h,'seme '+seme);assert.equal(v.n,n,'seme '+seme);
+    const fuori=v.piante.filter(p=>generazione.luogoIn(p.x,p.y)===null);
+    for(const o of Object.keys(TERRENI).map(Number))assert.ok(fuori.some(p=>p.o===o),'ci sono: '+o);
+    for(const p of fuori){
+      assert.notEqual(p.o,OGGETTO.PATATA_SELVATICA,'la patata solo negli orti');
+      assert.equal(p.t,TERRENI[p.o]);
+    }
+    // Poche: meno dei cespugli.
+    assert.ok(v.piante.length<n/4);
+  }
+});
+test('ogni orto abbandonato ha quattro piante inselvatichite di una coltura sola, e gli orti non sono tutti uguali',()=>{
+  const colture=new Set();let orti=0;
+  for(let seme=1;seme<=40&&orti<12;seme++){
+    generazione.preparaRovine(seme);
+    for(let cy=-4;cy<=4;cy++)for(let cx=-4;cx<=4;cx++){
+      const r=generazione.rovinaNellaCella(cx,cy);
+      if(r?.luogo!=='orto')continue;
+      orti++;
+      const qui=[];
+      for(let y=0;y<r.altezza;y++)for(let x=0;x<r.larghezza;x++){
+        if(r.pianta[y][x]!=='s')continue;
+        const tx=r.tx0+x,ty=r.ty0+y;
+        qui.push(generazione.oggettoIn(tx,ty,seme,generazione.terrenoIn(tx,ty,seme)));
+      }
+      assert.equal(qui.length,4);
+      assert.equal(new Set(qui).size,1,'una coltura per orto');
+      assert.ok(SELVATICHE.includes(qui[0]));
+      // Sempre la stessa, a ogni lettura.
+      const [px,py]=[r.tx0+r.pianta[1].indexOf('s'),r.ty0+1];
+      assert.equal(generazione.oggettoIn(px,py,seme,generazione.terrenoIn(px,py,seme)),qui[0]);
+      colture.add(qui[0]);
+    }
+  }
+  assert.ok(orti>=4,'orti trovati: '+orti);
+  assert.ok(colture.size>=3,'colture diverse: '+colture.size);
+});
+test("le piante selvatiche danno semi d'estate e d'inverno solo la fibra, o niente",()=>{
+  const raccogli=(oggetto,giorno)=>{
+    tempo.impostaGiorno(giorno);inventario.svuota();
+    for(let i=0;i<20;i++){
+      const x=tx-40+i*2,y=ty+40;
+      modifiche.imposta(x+1,y,{oggetto});
+      const e={...pos(x,y),guarda:'destra'};
+      assert.equal(azioni.agisci(e,null)?.tipo,'raccolto');
+      assert.equal(mappa.oggettoDi(x+1,y),OGGETTO.NESSUNO);
+    }
+    return (cosa)=>inventario.quante(cosa);
+  };
+  let q=raccogli(OGGETTO.SPIGHE_SELVATICHE,2);
+  assert.equal(q('fibra'),20);assert.ok(q('grano')>0&&q('grano')<40);
+  q=raccogli(OGGETTO.SPIGHE_SELVATICHE,10);assert.equal(q('fibra'),20);assert.equal(q('grano'),0);
+  q=raccogli(OGGETTO.LINO_SELVATICO,2);assert.equal(q('fibra'),20);assert.ok(q('semi_lino')>0);
+  q=raccogli(OGGETTO.CAVOLO_SELVATICO,2);assert.ok(q('semi_cavolo')>0);
+  q=raccogli(OGGETTO.CAVOLO_SELVATICO,10);assert.equal(q('semi_cavolo'),0);
+  q=raccogli(OGGETTO.PATATA_SELVATICA,6);assert.ok(q('patata')>0);
+  // Il verbo dice cosa si fa.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.PATATA_SELVATICA});
+  assert.equal(azioni.azionePossibile(eroe,null).verbo,'Scava la patata');
+  // E il messaggio quando non c'è niente.
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/non c'era niente da prendere/);
+});
+test('una pianta selvatica raccolta torna il primo giorno di primavera, e si salva',()=>{
+  let trovata=null;
+  for(let r=1;r<80&&!trovata;r++)for(let dy=-r;dy<=r&&!trovata;dy++)for(let dx=-r;dx<=r;dx++){
+    if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;
+    const x=tx+dx,y=ty+dy;
+    if(mappa.oggettoGenerato(x,y)===OGGETTO.SPIGHE_SELVATICHE){trovata={x,y};break;}
+  }
+  assert.ok(trovata,'spighe vicino alla fattoria');
+  const {x,y}=trovata;
+  assert.equal(mappa.oggettoDi(x,y),OGGETTO.SPIGHE_SELVATICHE);
+  tempo.impostaGiorno(6);
+  assert.equal(azioni.agisci({...pos(x-1,y),guarda:'destra'},null)?.tipo,'raccolto');
+  assert.equal(mappa.oggettoDi(x,y),OGGETTO.NESSUNO);
+  const stato=salvataggio.istantanea(eroe,0);assert.ok(salvataggio.applica(stato));
+  assert.equal(mappa.oggettoDi(x,y),OGGETTO.NESSUNO);
+  tempo.impostaGiorno(9);ricrescita.nuovoGiorno();assert.equal(mappa.oggettoDi(x,y),OGGETTO.NESSUNO,"d'inverno no");
+  tempo.impostaGiorno(13);ricrescita.nuovoGiorno();assert.equal(mappa.oggettoDi(x,y),OGGETTO.SPIGHE_SELVATICHE);
 });

@@ -117,6 +117,14 @@ export const OGGETTO = {
   // Il pollaio (M7.18.18): riparo, mangiatoia e nido dei polli, dentro un
   // recinto. Il mangime sta nelle modifiche, come la legna nel focolare.
   POLLAIO: 37,
+  // Le piante selvatiche (M7.18.30): la fonte di semi che la valle ridà ogni
+  // anno, come i cespugli. Le spighe nella sterpaglia, il lino sulla riva, il
+  // cavolo fra le rocce; la patata solo negli orti abbandonati, dove qualcuno
+  // l'aveva piantata e i tuberi dimenticati ributtano da soli.
+  SPIGHE_SELVATICHE: 38,
+  LINO_SELVATICO: 39,
+  CAVOLO_SELVATICO: 40,
+  PATATA_SELVATICA: 41,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati
@@ -220,6 +228,20 @@ const COSTRUITO = {
   a: OGGETTO.APPASSITA,
 };
 
+// L'orto abbandonato (M7.18.30): le piante della prima fila delle aiuole non
+// sono morte, sono inselvatichite, e sono tutte della stessa coltura — quella
+// che ci coltivava chi se n'è andato. Quale lo dice l'origine dell'orto,
+// quindi un orto ha sempre la sua, e sapere dov'è "l'orto del lino" è una
+// cosa che si impara girando.
+const INSELVATICHITE = [OGGETTO.SPIGHE_SELVATICHE, OGGETTO.LINO_SELVATICO, OGGETTO.CAVOLO_SELVATICO, OGGETTO.PATATA_SELVATICA];
+
+function inselvatichitaIn(x, y, seme) {
+  const r = luogoIn(x, y);
+  if (!r) return OGGETTO.APPASSITA;
+  const quale = Math.floor(impronta(r.tx0, r.ty0, scarto(seme, 11)) * INSELVATICHITE.length);
+  return INSELVATICHITE[Math.min(quale, INSELVATICHITE.length - 1)];
+}
+
 export function rovinaNellaCella(cx, cy) {
   return rovine.nellaCella(cx, cy, adatto);
 }
@@ -252,6 +274,7 @@ export function oggettoIn(x, y, seme, terreno) {
   // TERRA, che non produce niente, ma un muro deve poter stare anche dove il
   // rumore avrebbe messo un bosco.
   const segno = rovine.tasselloDi(x, y, adatto);
+  if (segno === "s") return inselvatichitaIn(x, y, seme);
   if (segno !== null) return COSTRUITO[segno] ?? OGGETTO.NESSUNO;
 
   const sorte = impronta(x, y, scarto(seme, 3));
@@ -267,14 +290,22 @@ export function oggettoIn(x, y, seme, terreno) {
     return OGGETTO.NESSUNO;
   }
 
+  // Le piante selvatiche (M7.18.30) stanno in fette della sorte che fino a
+  // M7.18.29 non davano niente: alberi, sassi e cespugli restano dov'erano, e
+  // cambiano solo tasselli vuoti.
   if (terreno === TERRENO.STERPAGLIA) {
     if (sorte < 0.05) return OGGETTO.CESPUGLIO;
+    if (sorte < 0.07) return OGGETTO.SPIGHE_SELVATICHE;
     if (sorte > 0.993) return OGGETTO.SASSO;
     return OGGETTO.NESSUNO;
   }
 
   if (terreno === TERRENO.ROCCIA && sorte < 0.08) return OGGETTO.SASSO;
+  // Il cavolo selvatico cresce davvero sulle rocce: è una pianta di scogliera.
+  if (terreno === TERRENO.ROCCIA && sorte < 0.1) return OGGETTO.CAVOLO_SELVATICO;
   if (terreno === TERRENO.SABBIA && sorte > 0.99) return OGGETTO.SASSO;
+  // E il lino sulla riva, vicino all'acqua.
+  if (terreno === TERRENO.SABBIA && sorte < 0.05) return OGGETTO.LINO_SELVATICO;
 
   return OGGETTO.NESSUNO;
 }
