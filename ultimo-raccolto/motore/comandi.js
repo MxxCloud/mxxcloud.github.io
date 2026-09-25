@@ -8,7 +8,7 @@
 export const AZIONI = [
   "su", "giu", "sinistra", "destra", "usa", "corri", "ricette", "minimappa",
   "consuma", "getta", "partita", "esporta", "importa", "spegni", "mappa",
-  "suono", "indietro",
+  "suono", "indietro", "aiuto",
 ];
 
 // Otto caselle, otto tasti: la selezione con la rotellina o con Q/E costringe
@@ -48,6 +48,9 @@ const MAPPA = {
   // ogni menu vuol dire "indietro", e il tasto di cancellazione è quello che
   // cerca chi ha la mano sulla parte destra della tastiera.
   Escape: "indietro", Backspace: "indietro",
+  // "H" come help: la lista dei comandi, da M7.18.24. Era sparita con la
+  // schermata iniziale, che aveva preso il posto di quella che li elencava.
+  KeyH: "aiuto",
 };
 
 for (let i = 1; i <= CASELLE; i += 1) MAPPA[`Digit${i}`] = `casella${i}`;

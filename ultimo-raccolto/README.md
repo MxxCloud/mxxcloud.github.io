@@ -12,6 +12,34 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.24 — tre difetti piccoli
+
+**Il pulcino fuori dal recinto non passa la notte.** Un pulcino uscito dal
+recinto tornava selvatico e restava pulcino per sempre, perché cresce solo nel
+recinto. Adesso, se a mezzanotte è fuori, muore, e il mattino lo dice fra le
+brutte notizie. È la regola severa: da solo, un pulcino non se la cava. Un
+pulcino già selvatico, rimasto in un salvataggio di prima, muore alla prima
+mezzanotte.
+
+**Lo steccato si collega ai vicini.** C'era un solo disegno, orizzontale, e
+una fila verticale sembrava una pila di pezzetti staccati. Adesso ogni pezzo
+guarda i quattro vicini che recintano, cioè steccato e cancello (anche
+aperto). Con un vicino sopra o sotto diventa un palo che arriva fino al bordo,
+con le traverse solo verso i vicini di fianco, e gli angoli si chiudono da
+soli. Un pezzo da solo, o in fila orizzontale, resta com'era. Cambia solo il
+disegno: il recinto, la collisione e il cancello no.
+
+**I comandi tornano visibili.** La schermata iniziale di M7.18.5 aveva preso
+il posto di quella che elencava i tasti, e da allora la lista non si vedeva
+più. Adesso sta in due posti:
+- nella schermata iniziale, alla voce **«Comandi»**: la barra o Esc riportano
+  al titolo;
+- in partita, con il tasto **H**: il mondo si ferma finché la lista è aperta,
+  e si chiude con H, Esc o la barra.
+
+La lista è una sola, aggiornata con Esc e con la X che, con l'ascia in mano,
+solleva il pavimento. Il promemoria accanto allo zaino nomina H.
+
 ## M7.18.23 — più semi, e i polli razzolano
 
 Mantenere i polli costava troppo in semi. Una rapa lasciata andare a seme ne
@@ -1746,7 +1774,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.23**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.24**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -2543,7 +2571,8 @@ riparo, dove sarebbero stati una cassa in più da costruire.
 | `E` | mangiare, fasciarsi con una benda, o indossare quello che hai in mano; a mani vuote, togliere quello che hai addosso |
 | `G` | posare per terra la casella scelta, davanti ai piedi |
 | `C` | aprire e chiudere le costruzioni, e chiudere la cassa |
-| `X` | smontare quello che hai davanti e che hai costruito tu: porta, giaciglio, banco, cassa, focolare. Anche la cassa aperta, dal suo pannello |
+| `X` | smontare quello che hai davanti e che hai costruito tu: porta, giaciglio, banco, cassa, focolare. Anche la cassa aperta, dal suo pannello. Con l'ascia in mano, sollevare il pavimento da sotto un arredo |
+| `H` | la lista dei comandi, in partita; nella schermata iniziale è la voce «Comandi» |
 | `frecce` | dentro le costruzioni e la cassa: scegliere |
 | `M` | accendere e spegnere la minimappa |
 | `TAB` | la mappa di quello che hai visto |
