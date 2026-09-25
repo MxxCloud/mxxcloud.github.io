@@ -1058,60 +1058,35 @@ export const CANCELLO_APERTO = [
 // Il cancello in una fila verticale (M7.18.26). I due disegni qui sopra sono
 // fatti per una fila orizzontale, con i pali ai bordi di sinistra e di
 // destra; in un lato verticale del recinto si leggevano come un pezzo di
-// traverso. Qui il cancello sta sullo stesso palo in mezzo dello steccato
-// verticale (vedi steccatoCollegato): chiuso è un'anta con le assi di
-// traverso fra il palo di sopra e quello di sotto; aperto l'anta è girata
-// sul cardine di sopra, e in mezzo resta il passaggio vuoto. Come per lo
-// steccato, il palo arriva al bordo del tassello solo verso un vicino.
-function cancelloVerticale(aperto, n, s) {
-  const alto = n ? ["......wwhh......", "......wwhh......"] : ["................", "......wwww......"];
-  const basso = s ? "......wwhh......" : "......gggg......";
-  if (!aperto) {
-    return [
-      ...alto,
-      ".....wwwwww.....",
-      ".....wccccw.....",
-      ".....w....h.....",
-      ".....wccccw.....",
-      ".....w....h.....",
-      ".....wwwwww.....",
-      ".....wccccw.....",
-      ".....w....h.....",
-      ".....wccccw.....",
-      ".....w....h.....",
-      ".....wwwwww.....",
-      "......wwhh......",
-      "......wwhh......",
-      basso,
-    ];
-  }
-  return [
-    ...alto,
-    "......wwhhwwwwww",
-    "......wwhhc.c.cw",
-    "......wwhhc.c.cw",
-    "......wwhhwwwwww",
-    "......gggg......",
-    "................",
-    "................",
-    "................",
-    "................",
-    "................",
-    "......wwww......",
-    "......wwhh......",
-    "......wwhh......",
-    basso,
-  ];
-}
+// traverso.
+//
+// Da M7.18.27 è lo stesso cancello girato di un quarto, e basta: la prima
+// versione aveva un'anta più corta e stretta sul palo dello steccato, e
+// accanto a quello orizzontale sembrava un pezzetto. Qui l'anta è lunga
+// uguale — dodici pixel fra i due pali — con le stesse tre traverse e le
+// stesse assi a righe alterne, solo di traverso; i pali stanno sopra e sotto
+// invece che a sinistra e a destra, larghi quanto l'anta, e si attaccano al
+// palo dello steccato di sopra e di sotto. Aperto, l'anta si vede di taglio
+// accostata al palo di sopra, come quella orizzontale sta accostata al palo
+// di sinistra, e in mezzo resta il passaggio.
+const PALO_VERTICALE = ["....wwwwwwww....", "....hhhhhhhh...."];
+const ANTA_CHIUSA = Array.from({ length: 12 }, (_, i) => (i % 2 === 0 ? "....wccwcccw...." : "....w..w...w...."));
 
-// Fatti una volta sola, come gli steccati: [aperto][n][s].
-const CANCELLI_VERTICALI = [false, true].map((aperto) =>
-  [false, true].map((n) => [false, true].map((s) => cancelloVerticale(aperto, n, s))));
+export const CANCELLO_VERTICALE = [...PALO_VERTICALE, ...ANTA_CHIUSA, ...PALO_VERTICALE];
+
+export const CANCELLO_VERTICALE_APERTO = [
+  ...PALO_VERTICALE,
+  "....wccwcccw....",
+  "....wwwwwwww....",
+  ...Array(10).fill("................"),
+  ...PALO_VERTICALE,
+];
 
 // Il disegno del cancello per i suoi vicini: verticale quando la fila corre
-// in su e in giù e non di fianco, altrimenti quello di sempre.
+// in su e in giù e non di fianco, altrimenti quello di sempre. Come quello
+// orizzontale, arriva da bordo a bordo qualunque siano i vicini.
 export function cancelloVerso(aperto, n, s, e, o) {
-  if ((n || s) && !e && !o) return CANCELLI_VERTICALI[aperto ? 1 : 0][n ? 1 : 0][s ? 1 : 0];
+  if ((n || s) && !e && !o) return aperto ? CANCELLO_VERTICALE_APERTO : CANCELLO_VERTICALE;
   return aperto ? CANCELLO_APERTO : CANCELLO;
 }
 
