@@ -4278,19 +4278,26 @@ test('il grano ha i suoi disegni e si salva',()=>{
   assert.equal(inventario.quante('grano'),3);assert.equal(inventario.contenuto()[casellaDi('annaffiatoio_pieno')].usi,2);
 });
 
-// M7.18.26 — anche il cancello si gira con la fila.
-test('il cancello in una fila verticale si disegna verticale, chiuso e aperto; in orizzontale resta com\'era',()=>{
+// M7.18.26 — anche il cancello si gira con la fila; da M7.18.27 lungo uguale.
+test('il cancello in una fila verticale è quello orizzontale girato, lungo uguale',()=>{
   assert.equal(arteCose.cancelloVerso(false,false,false,true,true),arteCose.CANCELLO);
   assert.equal(arteCose.cancelloVerso(true,false,false,false,false),arteCose.CANCELLO_APERTO);
   // Con vicini di fianco resta orizzontale anche se ne ha sopra o sotto.
   assert.equal(arteCose.cancelloVerso(false,true,true,true,false),arteCose.CANCELLO);
-  const chiuso=arteCose.cancelloVerso(false,true,true,false,false),aperto=arteCose.cancelloVerso(true,true,true,false,false);
+  const chiuso=arteCose.cancelloVerso(false,true,true,false,false),aperto=arteCose.cancelloVerso(true,true,false,false,false);
+  assert.equal(chiuso,arteCose.CANCELLO_VERTICALE);assert.equal(aperto,arteCose.CANCELLO_VERTICALE_APERTO);
   for(const d of [chiuso,aperto]){assert.equal(d.length,16);assert.ok(d.every(r=>r.length===16));}
-  // Il palo arriva ai due bordi, come lo steccato verticale, e ai lati del
-  // tassello non c'è niente: le traverse orizzontali sono sparite.
-  for(const d of [chiuso,aperto]){assert.notEqual(d[0][7],'.');assert.notEqual(d[15][7],'.');assert.equal(d[8][0],'.');}
+  // L'anta è lunga quanto quella orizzontale: le righe fra i due pali sono
+  // tante quante le colonne fra i due pali di quella orizzontale.
+  const orizzontale=arteCose.CANCELLO[4].slice(2,14).length;
+  const verticale=chiuso.filter(r=>/c/.test(r)||/^\.\.\.\.w\.\./.test(r)).length;
+  assert.equal(verticale,orizzontale);
+  // E le assi sono le stesse, di traverso: la riga dell'anta orizzontale
+  // letta in colonna.
+  const colonna=(d,x)=>d.map(r=>r[x]).join('');
+  assert.equal(colonna(chiuso,5).slice(2,14),arteCose.CANCELLO[4].slice(2,14));
+  // I pali arrivano ai due bordi, e ai lati del tassello non c'è niente.
+  for(const d of [chiuso,aperto]){assert.notEqual(d[0][7],'.');assert.notEqual(d[15][7],'.');assert.equal(d[8][0],'.');assert.equal(d[8][15],'.');}
   // Chiuso l'anta sbarra il passaggio; aperto in mezzo si vede la terra.
   assert.notEqual(chiuso[8][7],'.');assert.equal(aperto[8][7],'.');
-  // In fondo a una fila il palo finisce con l'ombra, senza vicino sotto.
-  assert.equal(arteCose.cancelloVerso(false,true,false,false,false)[15],'......gggg......');
 });

@@ -12,6 +12,17 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.27 — il cancello verticale lungo uguale
+
+Il cancello verticale di M7.18.26 era più corto e stretto di quello
+orizzontale, e accanto a lui sembrava un pezzetto. Adesso è **lo stesso
+cancello girato di un quarto**: l'anta è lunga dodici pixel fra i due pali,
+come quella orizzontale, con le stesse tre traverse e le stesse assi, solo
+di traverso. I pali stanno sopra e sotto invece che ai lati, e si attaccano
+al palo dello steccato. Aperto, l'anta si vede di taglio accostata al palo di
+sopra, come quella orizzontale sta accostata al palo di sinistra, e in mezzo
+resta il passaggio.
+
 ## M7.18.26 — il cancello si gira con la fila
 
 Da M7.18.24 lo steccato si collega ai vicini, ma il cancello aveva un solo
@@ -1821,7 +1832,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.26**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.27**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
