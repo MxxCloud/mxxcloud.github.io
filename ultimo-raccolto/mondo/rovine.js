@@ -183,9 +183,22 @@ function risolvi(cx, cy, adatto) {
 // stessa valle si sarebbe ottenuta togliendo soltanto dei luoghi che nessuno
 // ha ancora visto.
 export const QUOTA_LUOGHI = 0.43;
+
+// Gli orti abbandonati, più spesso degli altri luoghi (M7.18.31). Da
+// M7.18.30 sono una fonte di semi, ed erano un luogo su cinque, cioè circa una
+// cella su sedici: chi li cercava non li trovava. Una parte degli altri
+// piccoli luoghi diventa un orto — la quota dei luoghi resta la stessa, quindi
+// la natura non cala: una fascia nuova sopra QUOTA_LUOGHI l'avrebbe portata
+// sotto il 42 per cento (vedi il collaudo "la valle resta più natura").
+// Misurati su 441 celle per quattro semi: dal 5,4 al 9,3 per cento delle
+// celle, e l'orto più vicino alla fattoria sta fra i 24 e i 97 tasselli.
+export const DIVENTA_ORTO = 0.15;
+const ORTO = LUOGHI.find((l) => l.id === "orto");
+
 function piccoloLuogo(cx, cy, adatto) {
   if ((cx === 0 && cy === 0) || impronta(cx, cy, scarto(semeCorrente, 31)) >= QUOTA_LUOGHI) return null;
-  const luogo = LUOGHI[Math.floor(impronta(cx, cy, scarto(semeCorrente, 32)) * LUOGHI.length)];
+  const tirato = LUOGHI[Math.floor(impronta(cx, cy, scarto(semeCorrente, 32)) * LUOGHI.length)];
+  const luogo = impronta(cx, cy, scarto(semeCorrente, 34)) < DIVENTA_ORTO ? ORTO : tirato;
   const specchiato = impronta(cx, cy, scarto(semeCorrente, 33)) < 0.5;
   const pianta = specchiato ? luogo.pianta.map(r => [...r].reverse().join("")) : luogo.pianta;
   const { larghezza, altezza } = misuraDi(pianta);

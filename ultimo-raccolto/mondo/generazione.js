@@ -125,6 +125,10 @@ export const OGGETTO = {
   LINO_SELVATICO: 39,
   CAVOLO_SELVATICO: 40,
   PATATA_SELVATICA: 41,
+  // Lo spaventapasseri rotto dell'orto abbandonato (M7.18.31): un segno del
+  // posto, alto, che si vede da lontano. Non si raccoglie e non spaventa più
+  // niente.
+  SPAVENTAPASSERI_ROTTO: 42,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati
@@ -226,6 +230,7 @@ const COSTRUITO = {
   t: OGGETTO.TRONCO,
   g: OGGETTO.GIACIGLIO,
   a: OGGETTO.APPASSITA,
+  p: OGGETTO.SPAVENTAPASSERI_ROTTO,
 };
 
 // L'orto abbandonato (M7.18.30): le piante della prima fila delle aiuole non

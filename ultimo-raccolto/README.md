@@ -12,6 +12,26 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.31 — gli orti abbandonati si trovano
+
+Gli orti abbandonati, che da M7.18.30 sono una fonte di semi, erano difficili
+da trovare. Su 441 celle attorno alla fattoria erano **una cella su 16**
+(il 5,4%), piccoli, bassi, e sulla mappa segnati come un carro qualunque.
+Tre rimedi:
+
+- **Più orti.** Una parte degli altri piccoli luoghi (il 15%) diventa un orto.
+  Su quattro valli gli orti passano dal **5,4% al 9,3%** delle celle, e il più
+  vicino alla fattoria sta fra i 24 e i 97 tasselli. La quota dei luoghi resta
+  la stessa, quindi la valle non si riempie: la natura resta sopra il 42%.
+  Qualche carro, pozzo o accampamento che non si era ancora visto è diventato
+  un orto.
+- **Uno spaventapasseri rotto** al centro di ogni orto, fra i muretti: storto,
+  senza cappello, più alto di un tassello, così si vede sopra l'erba da
+  lontano. Non si raccoglie e non spaventa più niente: è il segno del posto.
+- **Sulla mappa grande** (TAB) l'orto già visto ha un segno suo, **verde e
+  più grande** degli altri luoghi, e la legenda lo dice. Come sempre la mappa
+  segna solo quello che hai visto.
+
 ## M7.18.30 — i semi che la valle ridà
 
 Fino a qui l'unica fonte di semi che si rinnovava era il cespuglio, e solo
@@ -1885,7 +1905,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.30**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.31**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

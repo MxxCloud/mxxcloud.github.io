@@ -163,6 +163,37 @@ export const PATATA_SELVATICA = [
   "................",
 ];
 
+// Lo spaventapasseri rotto dell'orto abbandonato (M7.18.31): storto, senza
+// cappello, con la testa di paglia caduta di lato e gli stracci sbiaditi. È
+// più alto di un tassello apposta: l'orto è piccolo e basso, e senza qualcosa
+// che sporga sopra l'erba ci si passava accanto senza vederlo. Fa da faro.
+export const SPAVENTAPASSERI_ROTTO = [
+  "................",
+  "...........55...",
+  "..........5g5g5.",
+  "..........55555.",
+  "...........5g5..",
+  "..........gh....",
+  "..4.......gh....",
+  "...44....gh..4..",
+  ".....44..gh.44..",
+  ".......44gh44...",
+  "........9gh99...",
+  ".......99gh.9...",
+  ".......9gh99.9..",
+  "......9.gh..9...",
+  "........gh......",
+  ".......gh.......",
+  ".......gh.......",
+  ".......gh.......",
+  "......gh........",
+  "......gh........",
+  "......gh........",
+  "......gh........",
+  "......gh........",
+  ".....dghd.......",
+];
+
 export const CESPUGLIO = [
   "................",
   "......jjjj......",

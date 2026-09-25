@@ -57,6 +57,9 @@ const CATALOGO_OGGETTI = {
   [OGGETTO.LINO_SELVATICO]: { sprite: oggettiArte.LINO_SELVATICO, solido: false },
   [OGGETTO.CAVOLO_SELVATICO]: { sprite: oggettiArte.CAVOLO_SELVATICO, solido: false },
   [OGGETTO.PATATA_SELVATICA]: { sprite: oggettiArte.PATATA_SELVATICA, solido: false },
+  // Lo spaventapasseri rotto degli orti abbandonati (M7.18.31): non ferma,
+  // come quello del giocatore.
+  [OGGETTO.SPAVENTAPASSERI_ROTTO]: { sprite: oggettiArte.SPAVENTAPASSERI_ROTTO, solido: false },
 
   // Il falò acceso ferma: ci si cammina attorno, non dentro. Quello spento no
   // — è cenere, e restare bloccati da un mucchio di cenere sarebbe assurdo.
