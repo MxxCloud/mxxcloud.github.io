@@ -4104,3 +4104,59 @@ test("d'autunno e d'inverno non si razzola: si vive del mangime",()=>{
   pollame({galline:1,galli:1,mangime:0});
   assert.equal(notteDi(10).affamati,2,'inverno');
 });
+
+// M7.18.24 — il pulcino fuori dal recinto non passa la notte.
+test('un pulcino fuori dal recinto a mezzanotte muore; dentro cresce, e un pollo adulto scappa soltanto',()=>{
+  tempo.impostaGiorno(1);pollame({galline:0});
+  const base={domestico:true,seme:3,dx:0,dy:0,giro:0,destra:true,passo:0,fame:0,gallo:false,deposto:null};
+  polli.ripristina({attesa:30,sequenza:0,polli:[
+    {...base,px:(tx+1.5)*16,py:(ty+0.75)*16,eta:0},
+    {...base,px:(tx+6.5)*16,py:(ty+0.75)*16,eta:1},
+    {...base,px:(tx+7.5)*16,py:(ty+0.75)*16,eta:null},
+    // Un pulcino già selvatico, da un salvataggio di prima: non cresceva più.
+    {...base,domestico:false,px:(tx+8.5)*16,py:(ty+0.75)*16,eta:2},
+  ]});
+  const r=notteDi(2);
+  assert.equal(r.pulciniPersi,2);assert.equal(r.scappati,1);
+  const restano=polli.tutte();
+  assert.equal(restano.length,2);
+  assert.equal(restano.filter(p=>polli.pulcino(p)).length,1,'quello nel recinto resta');
+  assert.equal(restano.find(p=>polli.pulcino(p)).eta,1,'e cresce');
+  assert.equal(restano.find(p=>!polli.pulcino(p)).domestico,false);
+});
+
+// M7.18.24 — i comandi tornano visibili.
+test('la lista dei comandi nomina ogni tasto del gioco, e H la apre',()=>{
+  const sorgente=readFileSync(new URL('../motore/comandi.js',import.meta.url),'utf8');
+  assert.match(sorgente,/KeyH: "aiuto"/);
+  assert.match(sorgente,/"suono", "indietro", "aiuto",/);
+  // La lista sta in hud.js, che nel collaudo non si carica (disegna su una
+  // tela): si legge dal sorgente.
+  const hud=readFileSync(new URL('../interfaccia/hud.js',import.meta.url),'utf8');
+  const lista=hud.slice(hud.indexOf('export const COMANDI'),hud.indexOf('export function disegnaComandi'));
+  const tasti=[...lista.matchAll(/\["([^"]+)", "/g)].map(m=>m[1]);
+  for(const t of ['WASD  FRECCE','MAIUSC','SPAZIO','1-8','C','E','G','X','M','TAB','V','P','H','ESC','F3'])assert.ok(tasti.includes(t),t);
+  assert.match(hud,/titolo: \(\) => \["AVVIA NUOVA PARTITA", "CARICA PARTITA", "COMANDI"\]/);
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/const VOCI_TITOLO = \["nuova", "carica", "comandi"\]/);
+  assert.match(gioco,/comandiAperti \|\| iniziale !== null/,'il mondo si ferma mentre si leggono');
+});
+
+// M7.18.24 — lo steccato si collega ai vicini.
+test('lo steccato si disegna secondo i vicini: da solo o in fila orizzontale come prima, in verticale un palo unito',()=>{
+  const alto=['................','................',...arteCose.STECCATO];
+  assert.deepEqual(arteCose.steccatoVerso(false,false,false,false),alto);
+  assert.deepEqual(arteCose.steccatoVerso(false,false,true,true),alto);
+  const verticale=arteCose.steccatoVerso(true,true,false,false);
+  assert.equal(verticale.length,16);
+  // Il palo arriva ai due bordi, e non ci sono traverse ai lati.
+  assert.notEqual(verticale[0][7],'.');assert.notEqual(verticale[15][7],'.');
+  assert.ok(verticale.every(r=>r[0]==='.'&&r[15]==='.'));
+  // L'angolo in basso a destra: palo verso sud, traverse verso est e basta.
+  const angolo=arteCose.steccatoVerso(false,true,true,false);
+  assert.equal(angolo[0][7],'.');assert.notEqual(angolo[15][7],'.');
+  assert.notEqual(angolo[6][15],'.');assert.equal(angolo[6][0],'.');
+  // Sedici disegni fissi: lo stesso vicinato dà lo stesso oggetto, che è
+  // quello che cuoci() ricorda.
+  assert.equal(arteCose.steccatoVerso(true,true,false,false),verticale);
+});

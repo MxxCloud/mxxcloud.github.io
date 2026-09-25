@@ -73,7 +73,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.23";
+const VERSIONE = "M7.18.24";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -103,6 +103,8 @@ const SEME = parametri.get("seme") || "valle-1";
 let eroe = null;
 let casellaScelta = 0;
 let ricetteAperte = false;
+// La lista dei comandi aperta con H in partita (M7.18.24).
+let comandiAperti = false;
 let ricettaScelta = 0;
 // Se c'è un banco a portata, chiesto una volta all'apertura del pannello e non
 // a ogni fotogramma. Si può: con il pannello aperto il mondo è fermo e il
@@ -237,7 +239,7 @@ function avviaNuovaPartita(giorno) {
 // invece di restare tre condizioni ricopiate in tre punti: la quarta sarebbe
 // stata la prima a essere dimenticata da qualche parte.
 function mondoFermo() {
-  return ricetteAperte || iniziale !== null || partitaAperta || mappaAperta
+  return ricetteAperte || comandiAperti || iniziale !== null || partitaAperta || mappaAperta
     || cassaAperta !== null || mortoDi !== null;
 }
 
@@ -253,6 +255,7 @@ function muori(causa) {
   // un messaggio che svanisce dietro di essa sarebbe rumore.
   messaggio = null;
   ricetteAperte = false;
+  comandiAperti = false;
   partitaAperta = false;
   // La cassa si chiude senza far rumore: il coperchio è un gesto, e morire non
   // è un gesto.
@@ -889,7 +892,7 @@ function leggiLaCassa() {
 // --- la schermata iniziale -------------------------------------------------
 
 // Le voci del titolo, nell'ordine in cui si leggono.
-const VOCI_TITOLO = ["nuova", "carica"];
+const VOCI_TITOLO = ["nuova", "carica", "comandi"];
 
 // Su e giù scelgono, la barra o invio confermano, Esc torna indietro. È lo
 // stesso modo di muoversi del pannello delle ricette: un menu solo da
@@ -922,10 +925,24 @@ function leggiLIniziale() {
     return;
   }
 
+  // La lista dei comandi si chiude come si apre, con la barra, o con Esc; e
+  // si torna sulla sua voce.
+  if (iniziale === "comandi") {
+    if (comandi.appenaPremuto("usa") || comandi.appenaPremuto("indietro") || comandi.appenaPremuto("aiuto")) {
+      iniziale = "titolo";
+      rigaIniziale = VOCI_TITOLO.indexOf("comandi");
+    }
+    return;
+  }
+
   if (iniziale === "titolo") {
     scorri(VOCI_TITOLO.length);
     if (!comandi.appenaPremuto("usa")) return;
     suono.sblocca();
+    if (VOCI_TITOLO[rigaIniziale] === "comandi") {
+      iniziale = "comandi";
+      return;
+    }
     if (VOCI_TITOLO[rigaIniziale] === "carica") {
       partitaAperta = true;
       caricaDalTitolo = true;
@@ -992,6 +1009,20 @@ function leggiComandi() {
   // una cassa sarebbe due schermate una sull'altra.
   if (cassaAperta) {
     leggiLaCassa();
+    return;
+  }
+
+  // La lista dei comandi, come le ricette, prende tutti i tasti finché è
+  // aperta: si chiude con H, con Esc o con la barra, e il mondo intanto sta
+  // fermo — si apre per leggere, non mentre qualcuno ti insegue.
+  if (comandi.appenaPremuto("aiuto") && !partitaAperta) {
+    comandiAperti = !comandiAperti;
+    ricetteAperte = false;
+    mappaAperta = false;
+    return;
+  }
+  if (comandiAperti) {
+    if (comandi.appenaPremuto("indietro") || comandi.appenaPremuto("usa")) comandiAperti = false;
     return;
   }
 
@@ -1497,7 +1528,7 @@ function aggiorna(passo) {
     if (messaggio.vita <= 0) messaggio = null;
   }
 
-  const { uovaDeposte, pulciniNati, pulciniCresciuti, polliNelloZaino, polloDomani, polliScappati, polliAffamati, polliDiFame, polliDiFreddo,
+  const { uovaDeposte, pulciniNati, pulciniCresciuti, polliNelloZaino, polloDomani, polliScappati, pulciniPersi, polliAffamati, polliDiFame, polliDiFreddo,
     cresciute, appassite, seccate, alBuio, alChiuso, assetate, aSeme, mangiate, spentiLegna, spentiPioggia, torceFinite, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
 
   const arrivata = vestiLaValle();
@@ -1511,6 +1542,8 @@ function aggiorna(passo) {
   if (polliDiFreddo > 0) annuncia(`il freddo si è portato via dei polli: ${polliDiFreddo}`, "#c0705f");
   else if (polliDiFame > 0) annuncia(`dei polli sono morti di fame: ${polliDiFame}`, "#c0705f");
   else if (polliNelloZaino > 0) annuncia("il pollo nello zaino è morto", "#c0705f");
+  else if (pulciniPersi > 0) annuncia(pulciniPersi === 1 ? "un pulcino fuori dal recinto non ha passato la notte"
+    : `dei pulcini fuori dal recinto non hanno passato la notte: ${pulciniPersi}`, "#c0705f");
   else if (polliScappati > 0) annuncia(`dei polli sono scappati: ${polliScappati}`, "#c0705f");
   else if (appassite > 0 && arrivata) annuncia(`${arrivata}: l'orto è morto`, "#c0705f");
   // La sete prima del marcire: è l'unica delle due che si poteva evitare
@@ -1723,6 +1756,10 @@ function disegnaInterfaccia() {
   // solo il pannello delle partite, se lo si è aperto per caricare, e i
   // messaggi, che dicono cosa è andato storto caricando.
   if (iniziale !== null) {
+    if (iniziale === "comandi") {
+      hud.disegnaComandi(p, "SPAZIO O ESC PER TORNARE");
+      return;
+    }
     hud.disegnaIniziale(p, {
       schermata: iniziale,
       riga: rigaIniziale,
@@ -1771,6 +1808,7 @@ function disegnaInterfaccia() {
   hud.disegnaMessaggio(p, messaggio);
   if (minimappaVisibile) minimappa.disegna(p);
   if (ricetteAperte) hud.disegnaRicette(p, { scelta: ricettaScelta, alBanco, alFuoco });
+  if (comandiAperti) hud.disegnaComandi(p, "H, ESC O SPAZIO PER CHIUDERE");
   if (cassaAperta) {
     hud.disegnaCassa(p, {
       contenuto: contenitori.contenutoDi(cassaAperta.tx, cassaAperta.ty),

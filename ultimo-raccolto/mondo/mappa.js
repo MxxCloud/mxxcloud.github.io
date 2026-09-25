@@ -378,7 +378,19 @@ export function pavimentoIn(tx, ty) {
 export function cambiaTassello(tx, ty, cambio) {
   if (cambio === null) modifiche.rimuovi(tx, ty);
   else modifiche.imposta(tx, ty, cambio);
-  settori.delete(chiave(Math.floor(tx / SETTORE), Math.floor(ty / SETTORE)));
+  // Anche i settori dei quattro vicini: uno steccato sul bordo di un settore
+  // cambia il disegno del pezzo accanto, che può stare nel settore di là. Di
+  // solito sono lo stesso settore, e buttarlo due volte non costa niente.
+  for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    settori.delete(chiave(Math.floor((tx + dx) / SETTORE), Math.floor((ty + dy) / SETTORE)));
+  }
+}
+
+// Con cosa si collega un pezzo di steccato: altro steccato e il cancello,
+// chiuso o aperto — un cancello aperto è ancora un pezzo della stessa fila.
+function collegaSteccato(tx, ty) {
+  const oggetto = oggettoDi(tx, ty);
+  return oggetto === OGGETTO.STECCATO || oggetto === OGGETTO.CANCELLO || oggetto === OGGETTO.CANCELLO_APERTO;
 }
 
 // Butta via tutti i settori cotti. Serve a chi cambia il mondo in blocco —
@@ -653,7 +665,12 @@ function cuociSettore(sx, sy) {
           : fertilita === 1 ? correttaDi(tavolozzaMondo, TERRA_STANCA)
           : tavolozzaMondo;
         const tavolozza = assetata ? correttaDi(terra, FOGLIE_ASSETATE) : terra;
-        const disegno = voce.stadio ? ortoArte.disegnoDi(modifiche.di(tx, ty)?.coltura, voce.stadio) : voce.sprite;
+        const disegno = voce.stadio ? ortoArte.disegnoDi(modifiche.di(tx, ty)?.coltura, voce.stadio)
+          // Lo steccato si collega ai pezzi accanto (vedi sprite-cose.js).
+          : oggetto === OGGETTO.STECCATO
+            ? coseArte.steccatoVerso(collegaSteccato(tx, ty - 1), collegaSteccato(tx, ty + 1),
+              collegaSteccato(tx + 1, ty), collegaSteccato(tx - 1, ty))
+            : voce.sprite;
         const fotogrammi = voce.fotogrammi
           ? voce.fotogrammi.map((f) => cuoci(f, tavolozza))
           : [cuoci(disegno, tavolozza)];

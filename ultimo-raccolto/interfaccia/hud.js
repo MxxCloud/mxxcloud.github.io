@@ -550,7 +550,7 @@ export function disegnaRicette(p, { scelta, alBanco, alFuoco = false }) {
 // costruire, perché niente sullo schermo nominava il tasto. Un sistema che
 // non si trova è come se non ci fosse.
 export function disegnaPromemoria(p, barra, cosaInMano, indice, smontaggio = null) {
-  const righe = ["C  COSTRUIRE"];
+  const righe = ["H  COMANDI", "C  COSTRUIRE"];
   const attrezzo = inventario.attrezzo(cosaInMano, indice);
   if (attrezzo) {
     const usi = inventario.usiRimasti(attrezzo);
@@ -609,7 +609,7 @@ export function disegnaPromemoria(p, barra, cosaInMano, indice, smontaggio = nul
 // Le voci di ogni passo, come si leggono. Il gioco ragiona per indici e nomi
 // interni; le parole stanno qui, dove si disegnano.
 const VOCI_INIZIALI = {
-  titolo: () => ["AVVIA NUOVA PARTITA", "CARICA PARTITA"],
+  titolo: () => ["AVVIA NUOVA PARTITA", "CARICA PARTITA", "COMANDI"],
   stagione: () => ["ESTATE", "AUTUNNO", "INVERNO", "PRIMAVERA"],
   giorno: () => ["GIORNO 1", "GIORNO 2", "GIORNO 3", "GIORNO 4"],
 };
@@ -668,6 +668,50 @@ export function disegnaIniziale(p, { schermata, riga, stagione, versione }) {
   // La versione in piccolo nell'angolo, dove non disturba: serve a una
   // domanda sola — "sto giocando l'ultima?" — e a quella risponde anche da lì.
   testo.disegna(p, versione, schermo.LARGHEZZA - 5 - testo.larghezza(versione), schermo.ALTEZZA - 9, BORDO);
+}
+
+// --- i comandi -------------------------------------------------------------
+
+// Tutti i tasti, in una lista sola. Fino a M7.18.4 si vedevano all'avvio; la
+// schermata iniziale li aveva fatti sparire, e da M7.18.24 stanno in due
+// posti — la voce «Comandi» del titolo e il tasto H in partita — che leggono
+// questa stessa lista, così non possono dire due cose diverse.
+export const COMANDI = [
+  ["WASD  FRECCE", "CAMMINARE"],
+  ["MAIUSC", "CORRERE"],
+  ["SPAZIO", "USARE CIÒ CHE HAI DAVANTI"],
+  ["1-8", "SCEGLIERE DALLO ZAINO"],
+  ["C", "COSTRUIRE"],
+  ["E", "MANGIARE, FASCIARTI, VESTIRTI"],
+  ["G", "POSARE PER TERRA CIÒ CHE HAI IN MANO"],
+  ["X", "SMONTARE CIÒ CHE HAI COSTRUITO"],
+  ["X  CON L'ASCIA", "SOLLEVARE IL PAVIMENTO"],
+  ["M", "MINIMAPPA"],
+  ["TAB", "LA MAPPA DI QUELLO CHE HAI VISTO"],
+  ["V", "IL VOLUME: MUTO, PIANO, FORTE"],
+  ["P", "SALVARE E CARICARE"],
+  ["H", "QUESTI COMANDI"],
+  ["ESC", "INDIETRO NEI MENU"],
+  ["F3", "DIAGNOSTICA"],
+];
+
+export function disegnaComandi(p, chiudi) {
+  const larghezza = 236;
+  const altezza = 22 + COMANDI.length * 9 + 20;
+  const x = Math.round((schermo.LARGHEZZA - larghezza) / 2);
+  const y = Math.round((schermo.ALTEZZA - altezza) / 2);
+
+  p.fillStyle = "rgb(8 9 12 / 0.72)";
+  p.fillRect(0, 0, schermo.LARGHEZZA, schermo.ALTEZZA);
+  riquadro(p, x, y, larghezza, altezza, FONDO_PIENO, BORDO);
+
+  testo.disegna(p, "COMANDI", x + 10, y + 8, CHIARO);
+  COMANDI.forEach(([tasto, cosa], i) => {
+    const ry = y + 22 + i * 9;
+    testo.disegna(p, tasto, x + 10, ry, BORDO_SCELTO);
+    testo.disegna(p, cosa, x + 86, ry, TENUE);
+  });
+  testo.disegna(p, chiudi, Math.round((schermo.LARGHEZZA - testo.larghezza(chiudi)) / 2), y + altezza - 11, GRIGIO);
 }
 
 // --- la partita: salvare e caricare ---------------------------------------

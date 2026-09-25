@@ -928,6 +928,47 @@ export const STECCATO = [
   ".gg..........gg.",
 ];
 
+// Lo steccato che si collega ai vicini, da M7.18.24. Il disegno di sopra ha
+// le traverse da bordo a bordo, e in orizzontale i pezzi si toccano; ma una
+// fila verticale era una pila di pezzetti staccati. Qui ogni pezzo guarda i
+// quattro vicini che recintano (steccato e cancello) e si disegna di
+// conseguenza:
+// - senza vicini sopra né sotto è il disegno di sempre, alto sedici righe
+//   invece di quattordici perché tutte le varianti devono poggiare uguali;
+// - con un vicino sopra o sotto è un palo in mezzo che arriva fino al bordo
+//   del tassello da quella parte, con le traverse solo verso i vicini di
+//   fianco. Le angolate vengono da sole.
+// Sedici disegni fatti una volta sola: cuoci() li ricorda per identità, e
+// rifarli a ogni settore vorrebbe dire ricuocerli ogni volta.
+const STECCATO_ALTO = ["................", "................", ...STECCATO];
+
+function steccatoCollegato(n, s, e, o) {
+  if (!n && !s) return STECCATO_ALTO;
+  const griglia = Array.from({ length: 16 }, () => Array(16).fill("."));
+  const traversa = (da, a) => {
+    for (let c = da; c <= a; c += 1) {
+      griglia[6][c] = "w"; griglia[7][c] = "h";
+      griglia[11][c] = "w"; griglia[12][c] = "h";
+    }
+  };
+  if (o) traversa(0, 6);
+  if (e) traversa(9, 15);
+  for (let r = n ? 0 : 2; r <= (s ? 15 : 14); r += 1) {
+    griglia[r][6] = "w"; griglia[r][7] = "w"; griglia[r][8] = "h"; griglia[r][9] = "h";
+  }
+  // La testa del palo e la sua ombra, dove il palo finisce.
+  if (!n) for (let c = 6; c <= 9; c += 1) griglia[1][c] = "w";
+  if (!s) for (let c = 6; c <= 9; c += 1) griglia[15][c] = "g";
+  return griglia.map((riga) => riga.join(""));
+}
+
+const STECCATI = Array.from({ length: 16 }, (_, m) => steccatoCollegato(m & 1, m & 2, m & 4, m & 8));
+
+// Il disegno dello steccato per i suoi vicini: nord, sud, est, ovest.
+export function steccatoVerso(n, s, e, o) {
+  return STECCATI[(n ? 1 : 0) | (s ? 2 : 0) | (e ? 4 : 0) | (o ? 8 : 0)];
+}
+
 // Il cancello: i pali ai bordi e in mezzo un'anta di assi verticali, che è
 // quello che lo distingue dallo steccato a colpo d'occhio.
 export const CANCELLO = [

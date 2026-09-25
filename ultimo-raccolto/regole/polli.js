@@ -380,7 +380,7 @@ export function pratoAccantoA(tx, ty) {
 export function nuovoGiorno() {
   const giorno = tempo.giornoCorrente();
   const esito = { mortiNelloZaino: 0, avvisoZaino: 0, scappati: 0, affamati: 0, mortiDiFame: 0, mortiDiFreddo: 0,
-    uova: 0, uovaPerse: 0, nati: 0, cresciuti: [] };
+    uova: 0, uovaPerse: 0, nati: 0, cresciuti: [], pulciniPersi: 0 };
   const nascite = [];
 
   // Nello zaino un pollo regge una notte: preso ieri, a questa mezzanotte è
@@ -397,13 +397,20 @@ export function nuovoGiorno() {
     }
   }
 
-  // Chi è fuori da un recinto a mezzanotte non è più tuo.
-  for (const p of polli) {
-    if (p.domestico && !riparo.recintato(Math.floor(p.px / 16), Math.floor(p.py / 16))) {
-      p.domestico = false;
-      p.fame = 0;
-      esito.scappati += 1;
+  // Chi è fuori da un recinto a mezzanotte non è più tuo. Il pulcino, da
+  // M7.18.24, non passa la notte: prima tornava selvatico e restava pulcino
+  // per sempre, perché cresce solo nel recinto. Da solo non se la cava.
+  for (let i = polli.length - 1; i >= 0; i -= 1) {
+    const p = polli[i];
+    if (p.domestico ? riparo.recintato(Math.floor(p.px / 16), Math.floor(p.py / 16)) : !pulcino(p)) continue;
+    if (pulcino(p)) {
+      polli.splice(i, 1);
+      esito.pulciniPersi += 1;
+      continue;
     }
+    p.domestico = false;
+    p.fame = 0;
+    esito.scappati += 1;
   }
 
   // Ogni recinto con i suoi polli e i suoi pollai.
