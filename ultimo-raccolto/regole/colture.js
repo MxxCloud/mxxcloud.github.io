@@ -39,12 +39,14 @@ const { SEMINATO: S, GERMOGLIO: G, CRESCIUTA: C, MATURA: M } = OGGETTO;
 //   nella terra non fa semi, marcisce;
 // - gelo: se d'inverno si ferma invece di morire;
 // - ingrassa: se il raccolto ridà fertilità alla terra invece di toglierla.
-// Quanti semi rende una pianta andata a seme. Erano tre fino a M7.18.23: tolto
-// quello da ripiantare, un campo lasciato a seme rendeva due semi ogni sei
-// giorni, e due polli ne mangiano due al giorno — servivano sei campi per un
-// pollaio. Con sei ne basta più o meno uno per pollo. La pianta a seme resta
-// una rinuncia: non dà il raccolto, e la terra si stanca lo stesso.
-export const SEMI_DA_UNA_PIANTA = 6;
+// Quanti semi rende una pianta andata a seme: tre. In M7.18.23 erano saliti a
+// sei, perché il mangime dei polli veniva dai semi e un pollaio voleva sei
+// campi a seme. Da M7.18.29 tornano tre: il mangime è il grano (M7.18.25),
+// coltivato apposta, e i semi delle altre colture servono di nuovo solo a
+// seminare — ogni seme in più è un campo che si allarga, e con sei l'orto
+// cresceva da solo. La pianta a seme resta una rinuncia: non dà il raccolto,
+// e la terra si stanca lo stesso.
+export const SEMI_DA_UNA_PIANTA = 3;
 
 export const COLTURE = {
   rapa: {

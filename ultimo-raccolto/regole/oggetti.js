@@ -622,15 +622,16 @@ export const RACCOLTA = {
     resa: [{ cosa: "rapa", quante: 1 }],
   },
   // La matura lasciata andare a seme: niente da mangiare, la radice è
-  // diventata legno, ma sei semi da M7.18.23 (erano tre) — la resa vera la
-  // dice colture.js per ogni coltura. Uno va ripiantato per tenere l'orto
-  // com'è, e gli altri sono campi nuovi o mangime per i polli.
+  // diventata legno, ma tre semi — la resa vera la dice colture.js per ogni
+  // coltura (sei fra M7.18.23 e M7.18.28, quando nutrivano anche i polli).
+  // Uno va ripiantato per tenere l'orto com'è, e ogni seme in più è un campo
+  // che si allarga.
   [OGGETTO.A_SEME]: {
     verbo: "Raccogli i semi",
     colpi: 1,
     voce: "erba",
     scheggie: ["v", "x", "g"],
-    resa: [{ cosa: "semi", quante: 6 }],
+    resa: [{ cosa: "semi", quante: 3 }],
   },
 
   // Un campo morto si ripulisce, e qualcosa rende: gli steli secchi sono
