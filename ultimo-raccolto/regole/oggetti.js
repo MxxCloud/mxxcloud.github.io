@@ -129,6 +129,14 @@ export const CATALOGO = {
     commestibile: { sete: 0.5 },
     diventa: "secchio",
   },
+  // L'annaffiatoio (M7.18.25): un secchio col becco. Vuoto e pieno come il
+  // secchio, ma il pieno tiene quattro innaffiate, e ognuna bagna tre
+  // tasselli (vedi azioni.js). L'acqua rimasta sono gli "usi" della casella,
+  // come la fiamma della torcia: la barretta sotto l'icona la mostra senza
+  // un disegno per ogni livello. "acqua" dice al promemoria di chiamarla così
+  // invece di "durata". Non si beve: è per l'orto.
+  annaffiatoio: { nome: "Annaffiatoio", icona: arte.ANNAFFIATOIO, pila: 1 },
+  annaffiatoio_pieno: { nome: "Annaffiatoio pieno", icona: arte.ANNAFFIATOIO_PIENO, pila: 1, durata: 4, acqua: true },
   // I semi della rapa. L'identificatore resta "semi" perché è quello scritto
   // in ogni salvataggio da M3 in poi; il nome è cambiato perché adesso di semi
   // ce ne sono tre, e "Semi" non diceva più quali.
@@ -237,6 +245,9 @@ export const CATALOGO = {
   // Lo spaventapasseri si posa accanto all'orto, e di notte le bestie non si
   // avvicinano a tre tasselli da lui (vedi orto.js).
   spaventapasseri: { nome: "Spaventapasseri", icona: arte.SPAVENTAPASSERI_ICONA, pila: 2, posa: OGGETTO.SPAVENTAPASSERI },
+  // Il grano (M7.18.25): il mangime del pollaio e il seme di sé stesso. Crudo
+  // non si mangia e non si guasta: sta in fondo a una cassa fino all'inverno.
+  grano: { nome: "Grano", icona: arte.GRANO, pila: 40 },
   semi_lino: { nome: "Semi di lino", icona: arte.SEMI_LINO, pila: 40 },
   // Il filo è quello che il lino rende, ed esiste per non essere fibra: la
   // fibra si strappa ai cespugli, il filo si coltiva. Cuce quello che la fibra

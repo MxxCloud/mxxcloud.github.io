@@ -291,6 +291,7 @@ function sulTassello(eroe, cosaInMano, indice) {
   if (b.oggetto === OGGETTO.POZZO) {
     const gelato = mappa.gelato() ? "il pozzo è gelato" : null;
     if (cosaInMano === "secchio") return { tipo: "riempi", verbo: "Attingi acqua", bersaglio: b, impedito: gelato };
+    if (daRiempire(cosaInMano, indice)) return { tipo: "riempi", verbo: "Attingi acqua", annaffiatoio: true, bersaglio: b, impedito: gelato };
     return { tipo: "bevi", verbo: "Bevi dal pozzo", bersaglio: b,
       impedito: gelato ?? (bisogni.livello("sete") >= 1 ? "non hai sete" : null) };
   }
@@ -522,7 +523,7 @@ function sulTassello(eroe, cosaInMano, indice) {
     return { tipo: "pesca", verbo: inCorso ? "Ritira la lenza" : "Pesca", bersaglio: b,
       impedito: inCorso ? null : pesca.impedimento(b.tx, b.ty) };
   }
-  if (terreno === TERRENO.GHIACCIO && (cosaInMano === "secchio" || bisogni.livello("sete") < 1)) {
+  if (terreno === TERRENO.GHIACCIO && (cosaInMano === "secchio" || ANNAFFIATOI.has(cosaInMano) || bisogni.livello("sete") < 1)) {
     return { tipo: "ghiaccio", impedito: "ghiaccio: cerca acqua aperta", bersaglio: b };
   }
 
@@ -531,6 +532,9 @@ function sulTassello(eroe, cosaInMano, indice) {
   // contesto, che costringerebbe a indovinare.
   if (acqua && cosaInMano === "secchio") {
     return { tipo: "riempi", verbo: "Riempi i secchi", bersaglio: b };
+  }
+  if (acqua && daRiempire(cosaInMano, indice)) {
+    return { tipo: "riempi", verbo: "Riempi l'annaffiatoio", annaffiatoio: true, bersaglio: b };
   }
   if (acqua) {
     if (bisogni.livello("sete") < 1) {
@@ -553,8 +557,8 @@ function sulTassello(eroe, cosaInMano, indice) {
     return gesto;
   }
 
-  // Il seme che si ha in mano decide la coltura: sono tre semi, una patata e
-  // un fagiolo, e ognuno pianta la sua.
+  // Il seme che si ha in mano decide la coltura: sono tre semi, una patata, un
+  // fagiolo e un chicco di grano, e ognuno pianta la sua.
   const semina = colture.dalSeme(cosaInMano);
   if (semina && b.oggetto === OGGETTO.TERRA_ZAPPATA) {
     const coltura = colture.di(semina);
@@ -591,6 +595,12 @@ function sulTassello(eroe, cosaInMano, indice) {
     const gia = modifiche.di(b.tx, b.ty)?.bagnato === true;
     if (!gia) return { tipo: "innaffia", verbo: "Innaffia", bersaglio: b };
     return null;
+  }
+  // L'annaffiatoio bagna il tassello davanti e i due ai suoi lati, e il tasto
+  // dice quanti: è l'unico modo di sapere prima se il gesto vale la sua acqua.
+  if (cosaInMano === "annaffiatoio_pieno") {
+    const bagnati = aVentaglio(eroe, b).filter(daBagnare);
+    if (bagnati.length > 0) return { tipo: "innaffia", verbo: `Innaffia (${bagnati.length})`, bagnati, annaffiatoio: true, bersaglio: b };
   }
 
   // Una pianta assetata lo dice a chi le sta davanti, con qualunque cosa in
@@ -658,6 +668,40 @@ function sulTassello(eroe, cosaInMano, indice) {
       impedito: ["muro", "porta", "steccato", "cancello"].includes(cosaInMano) && occupato(b.tx, b.ty, eroe) ? "passaggio occupato" : null };
   }
   return null;
+}
+
+// --- l'annaffiatoio (M7.18.25) -------------------------------------------
+//
+// Il secchio bagna un tassello, e un orto di dodici voleva dodici gesti e tre
+// viaggi al giorno: era diventato il lavoro più ripetitivo della valle.
+// L'annaffiatoio è un secchio col becco, e le due cose che cambiano sono
+// quanta acqua tiene — quattro innaffiate, gli "usi" della casella come la
+// fiamma di una torcia — e quanta terra prende per volta: il tassello davanti
+// e i due ai lati. Si riempie tutto in un colpo, alla riva o al pozzo, e
+// vuoto torna annaffiatoio come il secchio torna secchio.
+const ANNAFFIATOI = new Set(["annaffiatoio", "annaffiatoio_pieno"]);
+
+// L'annaffiatoio in mano, se c'è ancora acqua da metterci.
+function daRiempire(cosaInMano, indice) {
+  if (cosaInMano === "annaffiatoio") return true;
+  if (cosaInMano !== "annaffiatoio_pieno") return false;
+  const casella = inventario.attrezzo(cosaInMano, indice);
+  return casella !== null && inventario.usiRimasti(casella) < inventario.massimoDi(casella);
+}
+
+// Il tassello davanti e i due ai suoi lati, di traverso allo sguardo.
+function aVentaglio(eroe, b) {
+  const [dx, dy] = SCARTI[eroe.guarda] ?? SCARTI.giu;
+  return [-1, 0, 1].map((k) => {
+    const tx = b.tx + k * dy;
+    const ty = b.ty + k * dx;
+    return { tx, ty, oggetto: mappa.oggettoDi(tx, ty) };
+  });
+}
+
+// Un tassello che l'acqua cambierebbe: la stessa regola del secchio.
+function daBagnare(t) {
+  return orto.siPuoInnaffiare(t.oggetto) && modifiche.di(t.tx, t.ty)?.bagnato !== true;
 }
 
 // Si zappa dove cresce qualcosa di erbaceo, non sulla roccia né sulla
@@ -1346,6 +1390,16 @@ function esegui(eroe, cosaInMano, indice, azione) {
       dette: detteCosi(cosa, secche - resto) };
   }
 
+  // L'annaffiatoio si riempie nella sua casella, e resta in mano: toglierlo e
+  // aggiungerlo pieno lo potrebbe spostare in un'altra casella, e il tasto
+  // dopo sarebbe a mani vuote.
+  if (azione.tipo === "riempi" && azione.annaffiatoio) {
+    const fila = inventario.contenuto();
+    const casella = fila[indice];
+    if (!ANNAFFIATOI.has(casella?.cosa)) return null;
+    fila[indice] = { cosa: "annaffiatoio_pieno", quantita: 1, usi: CATALOGO.annaffiatoio_pieno.durata };
+    return { tipo: "riempi", annaffiatoio: true };
+  }
   if (azione.tipo === "riempi") {
     // Si riempiono tutti in una volta: andare avanti e indietro una volta per
     // secchio sarebbe una passeggiata obbligatoria, non una scelta.
@@ -1400,6 +1454,16 @@ function esegui(eroe, cosaInMano, indice, azione) {
     return { tipo: "semina", coltura: azione.coltura };
   }
 
+  if (azione.tipo === "innaffia" && azione.annaffiatoio) {
+    const fila = inventario.contenuto();
+    const casella = fila[indice];
+    if (casella?.cosa !== "annaffiatoio_pieno") return null;
+    for (const t of azione.bagnati) orto.innaffia(t.tx, t.ty, t.oggetto);
+    const restano = inventario.usiRimasti(casella) - 1;
+    if (restano > 0) casella.usi = restano;
+    else fila[indice] = { cosa: "annaffiatoio", quantita: 1 };
+    return { tipo: "innaffia", quanti: azione.bagnati.length, vuoto: restano <= 0 };
+  }
   if (azione.tipo === "innaffia") {
     if (!inventario.togli("secchio_pieno", 1)) return null;
     inventario.aggiungi("secchio", 1);

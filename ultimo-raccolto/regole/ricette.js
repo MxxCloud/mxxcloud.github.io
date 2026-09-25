@@ -213,6 +213,19 @@ export const RICETTE = [
       { cosa: "fibra", quante: 3 },
     ],
   },
+  // L'annaffiatoio (M7.18.25): il secchio è il corpo, il legno il becco, il
+  // filo lo sigilla. Al secondo gradino come l'essiccatoio: è la risposta a
+  // un orto grande, e un orto grande viene dopo il primo lino.
+  {
+    id: "annaffiatoio",
+    banco: true,
+    produce: { cosa: "annaffiatoio", quante: 1 },
+    costo: [
+      { cosa: "secchio", quante: 1 },
+      { cosa: "legna", quante: 2 },
+      { cosa: "filo", quante: 2 },
+    ],
+  },
   // Il pavimento: una legna per tassello, fatto a tre per volta. È il primo
   // passo da riparo a casa, e il letto ci si posa sopra.
   {

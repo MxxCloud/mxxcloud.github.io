@@ -73,7 +73,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.24";
+const VERSIONE = "M7.18.25";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1199,10 +1199,14 @@ function leggiComandi() {
   if (esito.tipo === "pesca") { suono.suona(ACQUA); annuncia("lenza in acqua: resta fermo", "#8fb8d8"); }
   if (esito.tipo === "pescaInterrotta") annuncia("lenza ritirata", "#c9b189");
   if (esito.tipo === "bevi") { suono.suona(SORSO); annuncia("bevi", "#8fb8d8"); }
-  if (esito.tipo === "riempi") { suono.suona(ACQUA); annuncia(`riempiti ${esito.quanti} secchi`, "#8fb8d8"); }
+  if (esito.tipo === "riempi") { suono.suona(ACQUA); annuncia(esito.annaffiatoio ? "annaffiatoio pieno" : `riempiti ${esito.quanti} secchi`, "#8fb8d8"); }
   if (esito.tipo === "zappa") { suono.suona(ZAPPA); annuncia("terra zappata", "#9ec97e"); }
   if (esito.tipo === "semina") { suono.suona(SEMINA); annuncia("seminato", "#9ec97e"); }
-  if (esito.tipo === "innaffia") { suono.suona(ACQUA); annuncia("innaffiato", "#8fb8d8"); }
+  if (esito.tipo === "innaffia") {
+    suono.suona(ACQUA);
+    annuncia(esito.quanti > 1 ? `innaffiati ${esito.quanti} tasselli${esito.vuoto ? ": annaffiatoio vuoto" : ""}`
+      : esito.vuoto ? "innaffiato: annaffiatoio vuoto" : "innaffiato", "#8fb8d8");
+  }
   if (esito.tipo === "interra") { suono.suona(ZAPPA); annuncia("interrata: la terra è più grassa", "#9ec97e"); }
   if (esito.tipo === "spargi") { suono.suona(SEMINA); annuncia(`${esito.cosa ?? "cenere"} sparsa: la terra è più grassa`, "#9ec97e"); }
   if (esito.tipo === "cenere") { suono.suona(PRESO); annuncia(`+${esito.quante} cenere`, "#c9b189"); }

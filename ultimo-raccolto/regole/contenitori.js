@@ -63,6 +63,8 @@ const BOTTINO = [
   // danno: il cavolo e il lino erano dell'orto di qualcuno, non della valle.
   { cosa: "semi_cavolo", da: 2, a: 3, peso: 2 },
   { cosa: "semi_lino", da: 2, a: 3, peso: 2 },
+  // E da M7.18.25 il grano, che chi teneva le galline teneva da parte.
+  { cosa: "grano", da: 2, a: 4, peso: 2 },
   { cosa: "benda", da: 1, a: 2, peso: 2 },
   { cosa: "bacche_secche", da: 2, a: 5, peso: 2 },
   { cosa: "torcia", da: 1, a: 2, peso: 2 },
@@ -129,6 +131,7 @@ const BOTTINO_LUOGHI = {
     { cosa: "semi", da: 2, a: 4, peso: 4 },
     { cosa: "semi_cavolo", da: 2, a: 3, peso: 2 },
     { cosa: "patata", da: 1, a: 2, peso: 2 },
+    { cosa: "grano", da: 2, a: 3, peso: 2 },
     { cosa: "fibra", da: 2, a: 3, peso: 2 },
     { cosa: "zappa", da: 1, a: 1, peso: 1 },
   ],

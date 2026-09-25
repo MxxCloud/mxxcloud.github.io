@@ -152,7 +152,7 @@ export const APPASSITA = [
 
 // --- le altre colture (M7.17) ----------------------------------------------
 //
-// Le rape qui sopra sono disegnate a mano; le altre quattro nascono da un
+// Le rape qui sopra sono disegnate a mano; le altre nascono da un
 // motivo di tre pixel di lato ripetuto sui nove posti dei solchi — tre file
 // per tre — che è il ritmo che fa riconoscere un orto (vedi l'inizio del
 // file). Scritte così, due piantine della stessa coltura sono per forza
@@ -271,6 +271,26 @@ const ALTRE = {
       "y5y",
       ".y.",
       ".y.",
+    ],
+  },
+  // Il grano (M7.18.25): fili d'erba fitti, poi steli alti, e alla fine le
+  // spighe dorate che si piegano. Da lontano un campo biondo.
+  grano: {
+    GERMOGLIO: [
+      "y.y",
+      ".y.",
+      "...",
+    ],
+    CRESCIUTA: [
+      "yxy",
+      "yxy",
+      ".x.",
+    ],
+    MATURA: [
+      "5.5",
+      "454",
+      "4.4",
+      ".4.",
     ],
   },
 };

@@ -12,6 +12,38 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.25 — l'annaffiatoio e il grano
+
+Due rimedi al lavoro ripetitivo dell'orto e del pollaio.
+
+**L'annaffiatoio.** Il secchio bagna un tassello per volta, e se ne portano al
+massimo quattro: un orto di dodici tasselli voleva tre viaggi e dodici gesti
+al giorno. L'annaffiatoio si fa al banco con **un secchio, due legne e due
+fili**. Si riempie alla riva o al pozzo, ma non al pozzo gelato né sul
+ghiaccio. Un annaffiatoio pieno:
+- ha **4 innaffiate**;
+- ogni innaffiata bagna **il tassello davanti e i due ai suoi lati**;
+- con un pieno si bagnano fino a 12 tasselli, e occupa una casella sola.
+
+Il tasto dice quanti tasselli bagnerà («Innaffia (3)»). I tasselli già
+bagnati o fuori dal campo non contano. La barretta sotto l'icona e il
+promemoria («ACQUA 3/4») dicono quanta acqua resta, e vuoto torna
+annaffiatoio. Non si beve.
+
+**Il grano.** Il mangime dei polli veniva dai semi dell'orto: ogni pollo
+nutrito era una rapa in meno. Il grano è la sesta coltura, fatta per il
+pollaio:
+- si semina in primavera, d'estate e d'autunno;
+- matura in **4 innaffiature** e rende **6 chicchi**. Il seme è il chicco,
+  quindi tolto quello da ripiantare ne restano 5;
+- **regge la sete** come la patata: un giorno dimenticato non lo secca;
+- **non si mangia crudo e non si guasta**: è la scorta per l'inverno, quando
+  i polli non razzolano;
+- il pollaio lo accetta come mangime.
+
+I primi chicchi si trovano nelle case e negli orti abbandonati. Farina e pane
+arriveranno più avanti.
+
 ## M7.18.24 — tre difetti piccoli
 
 **Il pulcino fuori dal recinto non passa la notte.** Un pulcino uscito dal
@@ -1774,7 +1806,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.24**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.25**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

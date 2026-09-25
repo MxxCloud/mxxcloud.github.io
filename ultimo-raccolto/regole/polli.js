@@ -76,7 +76,8 @@ const GALLI = 0.25;
 export const VIVI = new Set(["pollo", "gallo"]);
 // Cosa mangia un pollo: i semi e quello che si raccoglie a mani nude. Il
 // mangime fa concorrenza a te e all'orto, ed è questa la sua spesa.
-export const MANGIMI = new Set(["semi", "semi_cavolo", "semi_lino", "bacche", "fagioli"]);
+// Da M7.18.25 anche il grano, che è coltivato apposta.
+export const MANGIMI = new Set(["semi", "semi_cavolo", "semi_lino", "bacche", "fagioli", "grano"]);
 
 const polli = [];
 let attesa = OGNI_QUANTO;
