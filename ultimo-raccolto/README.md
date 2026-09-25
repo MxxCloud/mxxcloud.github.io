@@ -12,6 +12,15 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.29 — i semi tornano tre
+
+Rapa, cavolo e lino andati a seme rendono di nuovo **3 semi**, come prima di
+M7.18.23. Erano saliti a sei perché il mangime dei polli veniva dai semi
+dell'orto, e un pollaio voleva sei campi a seme. Da M7.18.25 per il pollaio
+c'è il **grano**, coltivato apposta, e i semi delle altre colture servono di
+nuovo solo a seminare. Con sei l'orto si allargava da solo. Il grano, la
+patata e i fagioli non cambiano, e i polli razzolano come prima.
+
 ## M7.18.28 — il cancello verticale visto di taglio
 
 Il cancello verticale di M7.18.27 era lungo giusto ma largo quanto quello
@@ -1843,7 +1852,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.28**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.29**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

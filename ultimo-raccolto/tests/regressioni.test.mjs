@@ -2772,7 +2772,7 @@ test('offline la navigazione trova la pagina precaricata con la versione',async(
 // Mezzanotte fra ieri e questo giorno: è tutto quello che l'orto guarda.
 function notte(giorno) { tempo.impostaGiorno(giorno); return orto.nuovoGiorno(); }
 
-test('la matura dà una rapa e niente semi, quella a seme sei semi e niente da mangiare',()=>{
+test('la matura dà una rapa e niente semi, quella a seme tre semi e niente da mangiare',()=>{
   // Rendeva due rape e due semi: ogni seme ne ridava due insieme al cibo, e
   // l'orto cresceva da solo come un interesse composto.
   modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.MATURA,maturata:1});
@@ -2781,8 +2781,9 @@ test('la matura dà una rapa e niente semi, quella a seme sei semi e niente da m
   modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.A_SEME,maturata:1});
   assert.equal(azioni.azionePossibile(eroe,null).verbo,'Raccogli i semi');
   assert.equal(azioni.agisci(eroe,null).tipo,'raccolto');
-  // Sei da M7.18.23: con tre un pollaio voleva sei campi a seme.
-  assert.equal(inventario.quante('semi'),6);assert.equal(inventario.quante('rapa'),1);
+  // Tre: sei fra M7.18.23 e M7.18.28, finché il mangime dei polli veniva
+  // dai semi; da M7.18.29 il mangime è il grano.
+  assert.equal(inventario.quante('semi'),3);assert.equal(inventario.quante('rapa'),1);
 });
 test('la matura lasciata lì va a seme in due giorni, e in altri due si secca',()=>{
   tempo.impostaGiorno(13);modifiche.imposta(tx,ty,{oggetto:OGGETTO.MATURA,maturata:13});
@@ -2939,9 +2940,9 @@ test('ogni coltura rende il suo raccolto, e a seme i suoi semi',()=>{
     for(const [cosa,quante] of Object.entries(atteso))assert.equal(inventario.quante(cosa),quante,`${coltura}: ${cosa}`);
   };
   prova('lino',OGGETTO.MATURA,{filo:4,fibra:0});
-  prova('lino',OGGETTO.A_SEME,{semi_lino:6,filo:0});
+  prova('lino',OGGETTO.A_SEME,{semi_lino:3,filo:0});
   prova('cavolo',OGGETTO.MATURA,{cavolo:1});
-  prova('cavolo',OGGETTO.A_SEME,{semi_cavolo:6,cavolo:0});
+  prova('cavolo',OGGETTO.A_SEME,{semi_cavolo:3,cavolo:0});
   // Patata e fagioli non cambiano: il raccolto è anche il seme.
   prova('fagioli',OGGETTO.MATURA,{fagioli:3});
   prova('patata',OGGETTO.MATURA,{patata:3});
