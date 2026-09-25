@@ -12,6 +12,21 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.26 — il cancello si gira con la fila
+
+Da M7.18.24 lo steccato si collega ai vicini, ma il cancello aveva un solo
+disegno, orizzontale. Adesso anche il cancello guarda i vicini che
+recintano: in una fila che corre in su e in giù, e non di fianco, si
+disegna **in verticale**, sullo stesso palo in mezzo dello steccato.
+- **Chiuso**, è un'anta con le assi di traverso fra il palo di sopra e
+  quello di sotto.
+- **Aperto**, l'anta è girata sul cardine di sopra, e in mezzo resta il
+  passaggio vuoto.
+
+Come per lo steccato, il palo arriva al bordo del tassello solo verso un
+vicino. In una fila orizzontale il cancello resta com'era. Cambia solo il
+disegno: aprire, chiudere e la tenuta del recinto sono gli stessi.
+
 ## M7.18.25 — l'annaffiatoio e il grano
 
 Due rimedi al lavoro ripetitivo dell'orto e del pollaio.
@@ -1806,7 +1821,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.25**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.26**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

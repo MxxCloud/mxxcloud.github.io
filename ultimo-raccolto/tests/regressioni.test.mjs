@@ -4277,3 +4277,20 @@ test('il grano ha i suoi disegni e si salva',()=>{
   const salvato=salvataggio.istantanea(eroe,0);assert.ok(salvataggio.applica(salvato));
   assert.equal(inventario.quante('grano'),3);assert.equal(inventario.contenuto()[casellaDi('annaffiatoio_pieno')].usi,2);
 });
+
+// M7.18.26 — anche il cancello si gira con la fila.
+test('il cancello in una fila verticale si disegna verticale, chiuso e aperto; in orizzontale resta com\'era',()=>{
+  assert.equal(arteCose.cancelloVerso(false,false,false,true,true),arteCose.CANCELLO);
+  assert.equal(arteCose.cancelloVerso(true,false,false,false,false),arteCose.CANCELLO_APERTO);
+  // Con vicini di fianco resta orizzontale anche se ne ha sopra o sotto.
+  assert.equal(arteCose.cancelloVerso(false,true,true,true,false),arteCose.CANCELLO);
+  const chiuso=arteCose.cancelloVerso(false,true,true,false,false),aperto=arteCose.cancelloVerso(true,true,true,false,false);
+  for(const d of [chiuso,aperto]){assert.equal(d.length,16);assert.ok(d.every(r=>r.length===16));}
+  // Il palo arriva ai due bordi, come lo steccato verticale, e ai lati del
+  // tassello non c'è niente: le traverse orizzontali sono sparite.
+  for(const d of [chiuso,aperto]){assert.notEqual(d[0][7],'.');assert.notEqual(d[15][7],'.');assert.equal(d[8][0],'.');}
+  // Chiuso l'anta sbarra il passaggio; aperto in mezzo si vede la terra.
+  assert.notEqual(chiuso[8][7],'.');assert.equal(aperto[8][7],'.');
+  // In fondo a una fila il palo finisce con l'ombra, senza vicino sotto.
+  assert.equal(arteCose.cancelloVerso(false,true,false,false,false)[15],'......gggg......');
+});
