@@ -12,6 +12,17 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.34 — gli orti abbandonati tornano comunque
+
+Gli orti abbandonati sono la base da cui si comincia a coltivare, quindi le
+loro piante **tornano comunque, il primo giorno di primavera**. Tornano anche
+su un tassello zappato, sulla terra stanca o dove c'è una pianta morta.
+Prima una casella lavorata (per esempio una pianta morta interrata con la
+zappa) restava del giocatore per sempre, e l'orto perdeva una pianta. Non
+tornano sopra quello che ci hai costruito, come una cassa o un fuoco, né
+sopra una tua coltura che sta ancora crescendo. Fuori dagli orti la terra
+zappata resta tua come prima.
+
 ## M7.18.33 — gli orti abbandonati seguono le stagioni
 
 - **D'inverno** le piante degli orti abbandonati seccano: si vedono come
@@ -1933,7 +1944,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.33**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.34**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
