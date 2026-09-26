@@ -26,7 +26,7 @@ import * as schermo from "../motore/schermo.js";
 import * as suono from "../motore/suono.js";
 import { generatore } from "../motore/casuale.js";
 import * as fauna from "./fauna.js";
-import { PASSO, PASSO_INFETTO, RESPIRO, CREPITIO, VERSO_BESTIA } from "../arte/voci.js";
+import { PASSO, PASSO_INFETTO, FISCHIO, CREPITIO, VERSO_BESTIA } from "../arte/voci.js";
 
 // Da quanto lontano si sente camminare qualcuno. Il numero viene dalla
 // geometria degli infetti e non dal gusto: nascono a 260 pixel come minimo,
@@ -38,8 +38,9 @@ import { PASSO, PASSO_INFETTO, RESPIRO, CREPITIO, VERSO_BESTIA } from "../arte/v
 const PORTATA_PASSI = 300;
 
 // Il verso porta più lontano dei piedi, ed è giusto: è il segnale forte, e
-// vale la pena che arrivi da oltre lo schermo.
-const PORTATA_RESPIRO = 380;
+// vale la pena che arrivi da oltre lo schermo. Da W0.4 è un fischio (vedi
+// arte/voci.js), e un fischio porta ancora meglio di un ringhio.
+const PORTATA_FISCHIO = 380;
 
 // Le bestie. Fino a qui la valle aveva i passi degli infetti, il loro respiro
 // a trecentottanta pixel e il crepitio del fuoco — e un bufalo da mezza
@@ -70,10 +71,10 @@ const VERSO_OGNI_ADDOSSO = [2.2, 4.2];
 // acustico che copre tutto il resto.
 const PORTATA_FUOCO = 210;
 
-// Ogni quanto ringhia chi ti sta inseguendo. Non spesso: un verso ogni due
+// Ogni quanto fischia chi ti sta inseguendo. Non spesso: un verso ogni due
 // secondi è un allarme, uno ogni quattro è una presenza — e la differenza è
 // se dopo un minuto lo si sente ancora o si è già smesso di ascoltare.
-const RESPIRO_OGNI = [2.6, 5.4];
+const FISCHIO_OGNI = [2.6, 5.4];
 
 // Ogni quanto scoppietta una fiamma. Corto e irregolare, perché un fuoco non
 // fa un suono continuo: ne fa tanti piccoli e ravvicinati, e la regolarità è
@@ -99,7 +100,7 @@ const ricordi = new WeakMap();
 function ricordoDi(e) {
   let r = ricordi.get(e);
   if (!r) {
-    r = { fotogramma: -1, respiro: fra(RESPIRO_OGNI) };
+    r = { fotogramma: -1, fischio: fra(FISCHIO_OGNI) };
     ricordi.set(e, r);
   }
   return r;
@@ -206,16 +207,16 @@ export function avanza(passo, eroe) {
 
     const r = ricordoDi(e);
     if (!e.preda) {
-      // Chi non ti sta inseguendo non ringhia, e il conto riparte: così il
+      // Chi non ti sta inseguendo non fischia, e il conto riparte: così il
       // primo verso arriva quando ti vede, non un istante dopo per caso.
-      r.respiro = fra(RESPIRO_OGNI);
+      r.fischio = fra(FISCHIO_OGNI);
       continue;
     }
-    r.respiro -= passo;
-    if (r.respiro > 0) continue;
-    r.respiro = fra(RESPIRO_OGNI);
-    const sentito = dove(eroe, e.px, e.py, PORTATA_RESPIRO);
-    if (sentito) suono.suona(RESPIRO, { ...sentito, tono: 0.88 + caso() * 0.28 });
+    r.fischio -= passo;
+    if (r.fischio > 0) continue;
+    r.fischio = fra(FISCHIO_OGNI);
+    const sentito = dove(eroe, e.px, e.py, PORTATA_FISCHIO);
+    if (sentito) suono.suona(FISCHIO, { ...sentito, tono: 0.88 + caso() * 0.28 });
   }
 
   bestie(passo, eroe);
@@ -242,7 +243,7 @@ function bestie(passo, eroe) {
     // non fra quattordici secondi. Senza questa riga il conto alla rovescia
     // della calma restava in piedi anche mentre l'orso ti arrivava addosso:
     // provato con un cervo, dodici secondi senza un fiato. È la stessa regola
-    // che gli infetti hanno qui sopra — chi non ti insegue non ringhia, e il
+    // che i banditi hanno qui sopra — chi non ti insegue non fischia, e il
     // conto riparte — letta dall'altra parte.
     if (addosso && !r.inquieta) r.verso = 0;
     r.inquieta = addosso;

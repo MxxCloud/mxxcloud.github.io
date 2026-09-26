@@ -675,20 +675,22 @@ export const MUCCHIO = [
 // sta in piedi, e una figura orizzontale si legge come "caduta" prima ancora
 // che si distingua cosa sia.
 //
-// Il viso usa l'ombra della pelle e non la luce: è l'unico posto del gioco in
-// cui la pelle è più scura del normale, e a questa dimensione il pallore è
-// l'unico modo di dire "morto" invece di "sdraiato".
+// Da Per un pugno di semi W0.4 è lo straniero: il cappello calato sulla
+// faccia, il poncho con la fascia chiara che adesso corre in verticale —
+// steso, l'orlo è di traverso — e gli stivali in fondo. Il cappello sul viso
+// fa il lavoro che faceva il pallore: a questa dimensione è l'unico modo di
+// dire "morto" invece di "sdraiato", e nel western lo si capisce da lontano.
 export const CADAVERE = [
   "................",
   "................",
   "................",
-  "....rrrr........",
-  "...rqqqqrrrrr...",
-  "..rqlmmlqoooor..",
-  "..rqllllqooonnnr",
-  "...rqqqqrrrnnnnr",
-  "....rrrr...rrrrr",
   "................",
+  "..rrrr..rrrrr...",
+  ".rMMMMrrOOQPOr..",
+  "rMNNNNMrOOQPOnnr",
+  "rMMMMMMrOOQPOnnr",
+  ".rrrrrrrrrrrrggr",
+  ".............rrr",
 ];
 
 // La benda: una fascia di tela arrotolata. Bianco sporco e non bianco pulito

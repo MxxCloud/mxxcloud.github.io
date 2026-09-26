@@ -72,7 +72,9 @@ export const CAUSE = {
   sete: "di sete",
   stanchezza: "di sfinimento",
   freddo: "di freddo",
-  infetti: "sbranato",
+  // Da Per un pugno di semi W0.4 chi colpisce di notte è un bandito, e non
+  // sbrana: la chiave resta "infetti" come nel resto del codice.
+  infetti: "ucciso da un bandito",
   animali: "ucciso da un animale",
   infezione: "d'infezione",
 };

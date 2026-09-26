@@ -4880,3 +4880,122 @@ test("Sad Hill e Cattle Corner: croci e binari si attraversano, la cisterna diss
   assert.equal(azioni.azionePossibile(accanto,null).impedito,'la cisterna è gelata');
   mappa.impostaGelo(false);
 });
+
+// --- Per un pugno di semi (W0.4): lo straniero e i banditi -------------------
+
+test("lo straniero ha il cappello e il poncho, e camminando il busto non si muove",async()=>{
+  const arte=await import('../arte/sprite-personaggi.js');
+  const {TAVOLOZZA_INFETTO}=await import('../arte/tavolozza.js');
+  for(const [nome,fotogrammi] of [['GIU',arte.GIU],['SU',arte.SU],['LATO',arte.LATO]]){
+    assert.equal(fotogrammi.length,4,nome);
+    for(const f of fotogrammi){
+      assert.equal(f.length,24,nome);assert.ok(f.every(r=>r.length===16),nome);
+      decodifica(f,TAVOLOZZA);decodifica(f,TAVOLOZZA_INFETTO);
+      // Cappello, viso e poncho sono gli stessi nei quattro fotogrammi: è quello
+      // che tiene ferma la mano (vedi MANO in giocatore.js).
+      assert.deepEqual(f.slice(0,17),fotogrammi[0].slice(0,17),nome);
+    }
+    const busto=fotogrammi[0].slice(0,17).join('');
+    // Il cappello (M, N), il poncho (O, P, Q), il viso di sotto o la nuca (R).
+    for(const c of 'MNOPQR')assert.ok(busto.includes(c),`${nome}: manca ${c}`);
+    // Sul busto non c'è più la camicia del superstite; le gambe sono i suoi jeans.
+    assert.doesNotMatch(busto,/[op]/,nome);
+    assert.match(fotogrammi[0].slice(17).join(''),/n/,nome);
+  }
+  // Il sigaro si vede solo di profilo: di fronte era un pixel arancione sul viso.
+  assert.match(arte.LATO[0].join(''),/TS/);
+  assert.doesNotMatch(arte.GIU[0].join('')+arte.SU[0].join(''),/[ST]/);
+});
+test("i banditi sono lo straniero con il fazzoletto sulla faccia, e senza sigaro",async()=>{
+  const arte=await import('../arte/sprite-personaggi.js');
+  const {TAVOLOZZA_INFETTO}=await import('../arte/tavolozza.js');
+  const rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+  // Il fazzoletto è rosso; lo straniero lì ha la barba di qualche giorno.
+  const [r,g,b]=rgb(TAVOLOZZA_INFETTO.R);assert.ok(r>g*2&&r>b*2,TAVOLOZZA_INFETTO.R);
+  const [br,bg]=rgb(TAVOLOZZA.R);assert.ok(bg>br*0.6,'la barba non è rossa');
+  // Più cupo delle bacche, che restano il rosso da cercare.
+  assert.ok(r<rgb(TAVOLOZZA.t)[0]);
+  // Cappello e poncho cambiano tinta: da lontano non sono lo straniero.
+  for(const c of 'MOQ')assert.notEqual(TAVOLOZZA_INFETTO[c],TAVOLOZZA[c],c);
+  // Il sigaro è trasparente, e di profilo non lascia un pixel sospeso davanti al viso.
+  assert.equal(TAVOLOZZA_INFETTO.S,null);assert.equal(TAVOLOZZA_INFETTO.T,null);
+  const d=decodifica(arte.LATO[0],TAVOLOZZA_INFETTO);
+  arte.LATO[0].forEach((riga,y)=>[...riga].forEach((c,x)=>{
+    if('ST'.includes(c))assert.equal(d.pixel[(y*16+x)*4+3],0,`${x},${y}`);
+  }));
+  // Nel codice restano infetti, cotti dallo stesso disegno: le regole non cambiano.
+  const sorgente=readFileSync(new URL('../entita/infetto.js',import.meta.url),'utf8');
+  assert.match(sorgente,/cuoci\(fotogrammi\[fotogramma\], TAVOLOZZA_INFETTO\)/);
+});
+test("con il poncho l'attrezzo in mano si vede in tutte e tre le direzioni",async()=>{
+  const {MANO}=await import('../entita/giocatore.js');
+  const arte=await import('../arte/sprite-personaggi.js');
+  const figure={giu:arte.GIU,su:arte.SU,lato:arte.LATO};
+  const impugnabili=Object.values(CATALOGO).filter(v=>v.impugnato).map(v=>v.impugnato);
+  assert.ok(impugnabili.length>=5,'torcia, ascia, zappa, lancia, canna');
+  assert.deepEqual(Object.keys(MANO).sort(),['giu','lato','su']);
+  for(const [direzione,mano] of Object.entries(MANO)) for(const imp of impugnabili){
+    const corpo=decodifica(figure[direzione][0]),attrezzo=decodifica(imp.righe);
+    const ax=mano.x-Math.floor(attrezzo.larghezza/2),ay=mano.y+(imp.scartoY??0);
+    let pieni=0,visti=0;
+    for(let y=0;y<attrezzo.altezza;y++)for(let x=0;x<attrezzo.larghezza;x++){
+      if(!attrezzo.pixel[(y*attrezzo.larghezza+x)*4+3])continue;
+      pieni++;
+      const cx=ax+x,cy=ay+y;
+      // Fuori dal telaio della figura non si disegna, e sotto il corpo non si vede.
+      if(cx<0||cy<0||cx>=corpo.larghezza||cy>=corpo.altezza)continue;
+      if(mano.dietro&&corpo.pixel[(cy*corpo.larghezza+cx)*4+3]>0)continue;
+      visti++;
+    }
+    assert.ok(visti>=pieni*0.6,`${direzione} ${imp.nome}: in vista ${visti} pixel su ${pieni}`);
+  }
+});
+test("chi ti insegue fischia, e le scritte parlano di banditi e di stranieri",async()=>{
+  const voci=await import('../arte/voci.js');
+  assert.equal(voci.RESPIRO,undefined);
+  assert.equal(voci.FISCHIO.onda,'sinusoide');
+  assert.ok(voci.FISCHIO.da>=1000&&voci.FISCHIO.a>voci.FISCHIO.da,'un fischio è alto e sale');
+  const leggi=(f)=>readFileSync(new URL('../'+f,import.meta.url),'utf8');
+  assert.match(leggi('regole/udito.js'),/suono\.suona\(FISCHIO, \{ \.\.\.sentito/);
+  assert.equal(salute.CAUSE.infetti,'ucciso da un bandito');
+  const hud=leggi('interfaccia/hud.js'),gioco=leggi('gioco.js');
+  assert.match(hud,/centrata\("SPAZIO  UN ALTRO STRANIERO"/);
+  assert.match(gioco,/"arriva un altro straniero"/);
+  assert.match(gioco,/annuncia\("un bandito ti ha visto"/);
+  // Nessuna scritta a schermo parla più di superstiti, di sbranati o di qualcosa.
+  const scritte=[...gioco.matchAll(/annuncia\(([^;]*)\);/g),...hud.matchAll(/centrata\(([^;]*)\);/g)].map(m=>m[1]).join('\n');
+  assert.ok(scritte.length>1000,'le scritte si leggono davvero');
+  assert.doesNotMatch(scritte,/superstite|SUPERSTITE|sbranato|qualcosa ti ha visto/);
+  assert.doesNotMatch(Object.values(salute.CAUSE).join(' '),/sbranato/);
+});
+test("il corpo steso è lo straniero, con il cappello sulla faccia",()=>{
+  const righe=sprite.CADAVERE.join('');
+  assert.equal(sprite.CADAVERE.length,10);assert.ok(sprite.CADAVERE.every(r=>r.length===16));
+  decodifica(sprite.CADAVERE);
+  for(const c of 'MNOQ')assert.ok(righe.includes(c),c);
+  // Né capelli né viso né camicia: il cappello copre la faccia.
+  assert.doesNotMatch(righe,/[qmlo]/);
+});
+test("rinascendo o riprendendo una partita al ranch, il suo nome non copre il messaggio che conta",()=>{
+  // Da W0.3 la fattoria di partenza si chiama «Ranch abbandonato», e il posto
+  // azzerato alla rinascita lo faceva annunciare al fotogramma dopo, sopra a
+  // «riprenditi quello che era tuo».
+  reset();
+  const ranch=mappa.rovinaNellaCella(0,0);
+  assert.ok(mappa.postoIn(ranch.tx0+10,ranch.ty0+3,3)?.chiave,'il ranch ha un nome, ed è per questo che serve');
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  const corpo=(nome)=>{const i=gioco.indexOf(`function ${nome}(`);assert.ok(i>=0,nome);return gioco.slice(i,gioco.indexOf('\n}\n',i));};
+  for(const nome of ['nuovoSuperstite','riprendi']){
+    const c=corpo(nome);
+    assert.doesNotMatch(c,/luogoAttuale = null/,nome);
+    // Dopo aver rifatto l'eroe, non prima: è il posto dove si risveglia.
+    const dopo=c.indexOf('luogoAttuale = chiaveDelPosto(eroe);');
+    assert.ok(dopo>c.indexOf('eroe = entita.aggiungi('),nome);
+  }
+  // La chiave è la stessa che il giro usa per annunciare.
+  const chiave=corpo('chiaveDelPosto');
+  assert.match(chiave,/mappa\.postoIn\(Math\.floor\(e\.px \/ TASSELLO\), Math\.floor\(e\.py \/ TASSELLO\), 3\)\?\.chiave/);
+  assert.match(gioco,/const posto = mappa\.postoIn\(Math\.floor\(eroe\.px \/ TASSELLO\), Math\.floor\(eroe\.py \/ TASSELLO\), 3\);/);
+  // Una partita nuova invece lo annuncia ancora: lì è il titolo d'apertura.
+  assert.doesNotMatch(corpo('avviaNuovaPartita'),/luogoAttuale/);
+});

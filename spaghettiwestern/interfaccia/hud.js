@@ -342,7 +342,9 @@ export function disegnaMorte(p, { causa, giorno, stagione, corpo }) {
   );
   if (corpo) centrata("TUTTO QUELLO CHE AVEVI ADDOSSO.", y + 56, GRIGIO);
 
-  centrata("SPAZIO  UN NUOVO SUPERSTITE", y + altezza - 13, BORDO_SCELTO);
+  // Uno straniero arriva da nessuna parte, e dopo di lui ne arriva un altro:
+  // è la stessa regola del superstite nuovo, detta col western (W0.4).
+  centrata("SPAZIO  UN ALTRO STRANIERO", y + altezza - 13, BORDO_SCELTO);
 }
 
 // --- orologio -------------------------------------------------------------

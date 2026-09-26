@@ -122,14 +122,25 @@ export const PASSO_INFETTO = {
 // Raddoppia l'esclamativo invece di sostituirlo: l'esclamativo dice «ti ha
 // visto», questo dice anche «da che parte». È quello che l'esclamativo non
 // poteva dire.
-export const RESPIRO = {
-  onda: "dente",
-  da: 84,
-  a: 58,
-  attacco: 0.06,
-  coda: 0.55,
-  filtro: { tipo: "passabasso", taglio: 460, a: 200, risonanza: 3.5 },
-  volume: 0.3,
+//
+// In Ultimo raccolto era un respiro rauco, un dente di sega basso che
+// scendeva. Da Per un pugno di semi W0.4 chi ti insegue è un bandito, e un
+// bandito che ti ha visto fischia agli altri: una sinusoide che sale, alta
+// abbastanza da tagliare il rumore della notte e breve come un richiamo.
+// Il tono che udito.js cambia a ogni verso fa sì che ognuno fischi un po' a
+// modo suo, e due fischi diversi vogliono dire due banditi.
+//
+// Il volume è la metà di quello del respiro, e non per timidezza: una
+// sinusoide a millecinquecento hertz è pura e l'orecchio la sente molto di
+// più di un dente di sega filtrato a quattrocento.
+export const FISCHIO = {
+  onda: "sinusoide",
+  da: 1150,
+  a: 1900,
+  attacco: 0.04,
+  coda: 0.42,
+  filtro: { tipo: "passabanda", taglio: 1500, risonanza: 0.7 },
+  volume: 0.15,
 };
 
 // --- lo scontro -----------------------------------------------------------

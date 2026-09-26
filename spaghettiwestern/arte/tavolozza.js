@@ -90,12 +90,34 @@ export const TAVOLOZZA = {
   l: "#a06e4e",
   m: "#c98f68",
 
-  // Vestiti del superstite: tessuto smorto, niente eroi.
+  // Vestiti del superstite: tessuto smorto, niente eroi. Da W0.4 sono i jeans
+  // dello straniero, sotto il poncho.
   n: "#3a3f52",
   o: "#4e566e",
   p: "#6b7490",
 
   q: "#33261c", // capelli
+
+  // Lo straniero (W0.4): cappello, poncho, barba e sigaro. Chiavi sue e non
+  // quelle del legno o della terra, che hanno colori quasi uguali: i banditi
+  // sono lo stesso disegno con un'altra tavolozza (vedi più in basso), e
+  // ridipingere il legno per vestire un bandito vorrebbe dire non poter più
+  // distinguere il cappello da una trave.
+  //
+  // Il poncho è scuro di proposito. La valle è ocra, gialla e bruna: un
+  // poncho color cammello ci sparirebbe dentro, e il superstite si leggeva
+  // bene proprio perché era l'unica macchia fredda. Qui la differenza la fa la
+  // luminosità, più la fascia chiara sull'orlo.
+  M: "#9a7a52", // cappello
+  N: "#3a2c20", // la fascia del cappello, e la sua ombra
+  O: "#5b4a33", // poncho
+  P: "#3f3223", // poncho, pieghe e punto
+  Q: "#cdb88a", // poncho, la fascia chiara
+  // La parte bassa del viso: la barba di qualche giorno, un filo più scura
+  // della pelle. È una chiave sola per i banditi, che lì hanno il fazzoletto.
+  R: "#b98160",
+  S: "#56402a", // il sigaro
+  T: "#e0913a", // la brace del sigaro
 
   // Il contorno non è nero pieno: sul fondo scuro del sito il nero puro
   // scaverebbe un buco, mentre questo grigio-blu resta un bordo.
@@ -137,7 +159,8 @@ export const TAVOLOZZA = {
   // bacche sono uno dei due colori che il giocatore deve trovare da solo, e
   // uno spruzzo di sangue acceso ogni volta che si colpisce qualcosa li
   // renderebbe un colore qualunque. Questo è sangue vecchio, che è anche
-  // quello che ci si aspetta da un corpo che cammina da mesi.
+  // quello che ci si aspetta da un corpo che cammina da mesi. Da W0.4 è il
+  // sangue dei banditi, e resta scuro per la stessa ragione delle bacche.
   A: "#5e2a24",
 
   // Il pesce secco, e le strisce di pesce appese all'essiccatoio: un blu
@@ -196,32 +219,53 @@ export const TERRA_SFINITA = {
   c: "#ab9d86",
 };
 
-// --- gli infetti ----------------------------------------------------------
+// --- i banditi ------------------------------------------------------------
 
-// Gli infetti non hanno disegni propri: sono il superstite cotto con questa.
-// Non è pigrizia ed è la cosa che dice di loro più di qualunque sprite nuovo
-// — la stessa sagoma, la stessa andatura, gli stessi vestiti, svuotati. Erano
-// come te, e il giocatore lo capisce senza che nessuno glielo scriva.
+// I banditi non hanno disegni propri: sono lo straniero cotto con questa. In
+// Ultimo raccolto erano gli infetti — il superstite svuotato, «era come te» —
+// e da Per un pugno di semi W0.4 sono i banditi della frontiera, con la
+// stessa idea girata dall'altra parte della legge: stesso cappello, stesso
+// poncho, la stessa andatura. Quello che li separa dallo straniero è un
+// fazzoletto sulla faccia. Nel codice si chiamano ancora infetti, come la
+// fattoria si chiama ancora fattoria: cambia quello che si vede, non le
+// regole.
 //
 // È anche la stessa scelta che dà le stagioni: la tavolozza è un parametro
-// della cottura, quindi un nemico intero costa sei righe invece di dodici
+// della cottura, quindi un nemico intero costa qualche riga invece di dodici
 // fotogrammi da disegnare a mano.
 //
-// Si toccano solo le sei chiavi che i personaggi usano davvero — contate, non
-// indovinate: contorno, capelli, pelle, due vesti e le scarpe.
+// Si toccano solo le chiavi che i personaggi usano davvero — contate, non
+// indovinate: contorno, capelli, pelle e la sua ombra, i jeans, gli stivali,
+// e le otto dello straniero.
 export const TAVOLOZZA_INFETTO = {
   ...TAVOLOZZA,
-  // Più scuro del contorno normale: di notte un infetto deve leggersi come un
+  // Più scuro del contorno normale: di notte un bandito deve leggersi come un
   // buco nel paesaggio prima ancora che se ne distingua la faccia.
   r: "#0b0c0f",
-  q: "#2a2a26",
-  // La pelle è l'unica cosa che si riconosce a colpo d'occhio a sedici pixel,
-  // quindi è dove sta tutto il lavoro: un grigio-verde che non assomiglia a
-  // nessuna pelle e nemmeno all'erba, che è l'altra cosa verde in giro.
-  m: "#8f9a7e",
-  n: "#2f3330",
-  o: "#454b44",
+  q: "#17140f",
+  // Fra il cappello e il fazzoletto restano solo gli occhi, e la pelle
+  // attorno: più bruciata dal sole di quella dello straniero.
+  m: "#a8785a",
+  l: "#7d5540",
+  n: "#3d3a36",
+  o: "#4d4944",
   g: "#241f1a",
+  // Il cappello nero con la fascia di borchie, e uno spolverino scuro al posto
+  // del poncho, con la fascia spenta.
+  M: "#26221e",
+  N: "#8b93a1",
+  O: "#34302b",
+  P: "#26231f",
+  Q: "#5a4d3c",
+  // Il fazzoletto. L'unica tinta accesa del bandito, e deve esserlo: di notte
+  // è la cosa che si vede prima della sagoma. È più cupo delle bacche, che
+  // restano il rosso da cercare.
+  R: "#8c2f25",
+  // Il sigaro no: sotto il fazzoletto non si fuma. Trasparente e non del
+  // colore del fazzoletto, perché di profilo sporge fuori dal viso, e lì
+  // sarebbe stato un pixel rosso sospeso nell'aria.
+  S: null,
+  T: null,
 };
 
 // --- le stagioni ----------------------------------------------------------

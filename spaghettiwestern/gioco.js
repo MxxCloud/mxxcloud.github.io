@@ -74,7 +74,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "W0.3";
+const VERSIONE = "W0.4";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -191,6 +191,20 @@ function cosaInMano() {
 
 function annuncia(testo, colore) {
   messaggio = { testo: testo.toUpperCase(), colore, vita: 1 };
+}
+
+// La chiave del posto in cui sta l'eroe, la stessa che il giro calcola per
+// annunciarne il nome.
+//
+// Serve a chi rimette l'eroe nel mondo — un superstite nuovo, una partita
+// ripresa — per dire che quel posto è già annunciato. Fino a W0.3 lì si
+// azzerava e basta, ed era innocuo finché la fattoria non aveva un nome: da
+// quando è il «Ranch abbandonato» il nome arrivava al fotogramma dopo e
+// copriva il messaggio che contava, «riprenditi quello che era tuo» o
+// «partita ripresa». Una partita nuova invece non passa di qui, e il ranch
+// lo annuncia ancora: lì è il titolo di apertura. (W0.4)
+function chiaveDelPosto(e) {
+  return mappa.postoIn(Math.floor(e.px / TASSELLO), Math.floor(e.py / TASSELLO), 3)?.chiave ?? null;
 }
 
 // Chiudere la schermata iniziale accende anche il suono.
@@ -314,10 +328,10 @@ function nuovoSuperstite() {
   // risveglia, e tenersela vorrebbe dire un superstite nuovo che non gela in
   // mezzo a un prato.
   riparo.reimposta();
-  luogoAttuale = null;
   entita.svuota();
   const partenza = doveSiComincia();
   eroe = entita.aggiungi(giocatore.crea(partenza.px, partenza.py));
+  luogoAttuale = chiaveDelPosto(eroe);
   schermo.centraSu(eroe.px, eroe.py);
 
   casellaScelta = 0;
@@ -336,7 +350,7 @@ function nuovoSuperstite() {
   mappaAperta = false;
   // La mappa non si perde morendo: è quello che ha visto il superstite di
   // prima, ma è anche l'unica cosa che il nuovo ha per ritrovarne il corpo.
-  annuncia(cera ? "riprenditi quello che era tuo" : "un nuovo superstite", "#9ec97e");
+  annuncia(cera ? "riprenditi quello che era tuo" : "arriva un altro straniero", "#9ec97e");
 }
 
 // --- le stagioni ----------------------------------------------------------
@@ -601,10 +615,10 @@ function riprendi(ripreso) {
   // della partita che si sta aprendo, e tenersela vorrebbe dire un caricamento
   // che per mezzo secondo non gela in mezzo alla neve.
   riparo.reimposta();
-  luogoAttuale = null;
   entita.svuota();
   eroe = entita.aggiungi(giocatore.crea(ripreso.eroe.px, ripreso.eroe.py));
   eroe.guarda = ripreso.eroe.guarda ?? "giu";
+  luogoAttuale = chiaveDelPosto(eroe);
   schermo.centraSu(eroe.px, eroe.py);
 
   casellaScelta = ripreso.casella;
@@ -1500,7 +1514,8 @@ function aggiorna(passo) {
     }
 
     if (morsi.infettato) annuncia("la ferita è sporca", "#9d7fb0");
-    else if (visto.appenaVisto && morsi.morsi === 0) annuncia("qualcosa ti ha visto", "#c0705f");
+    // Da W0.4 chi ti vede è un bandito, cioè qualcuno e non qualcosa.
+    else if (visto.appenaVisto && morsi.morsi === 0) annuncia("un bandito ti ha visto", "#c0705f");
 
     // L'udito dopo che tutti si sono mossi, perché quello che si sente dipende
     // da dove sono adesso. È l'altra metà di chiasso.js — quello misura quanto

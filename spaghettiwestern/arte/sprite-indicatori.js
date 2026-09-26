@@ -67,7 +67,9 @@ export const FREDDO = [
 
 // L'infezione: due archi di denti che si chiudono. Non una croce né una
 // fiala, che dicono "medicina" cioè il rimedio, mentre qui va detto il
-// problema — e il problema è che qualcosa ti ha morso.
+// problema — e il problema è che qualcosa ti ha morso. Da W0.4 è un bandito
+// che ti ha colpito e la ferita si è infettata: il segno resta, perché il
+// problema è lo stesso e la benda anche.
 export const INFEZIONE = [
   "xx...xx",
   ".x...x.",

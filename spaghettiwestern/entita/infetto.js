@@ -1,11 +1,15 @@
 // L'infetto: vaga, ti sente, ti raggiunge, ti colpisce.
 //
-// Non ha disegni propri. È il superstite cotto con un'altra tavolozza, ed è
+// Da Per un pugno di semi W0.4 si vede e si sente come un bandito, e
+// nell'interfaccia lo è; qui dentro si chiama ancora infetto, come le regole
+// che lo muovono, che sono rimaste quelle di Ultimo raccolto.
+//
+// Non ha disegni propri. È lo straniero cotto con un'altra tavolozza, ed è
 // la cosa che dice di lui più di qualunque sprite nuovo: stessa sagoma,
-// stessa andatura, stessi vestiti, svuotati. Era come te. Costa sei chiavi di
-// colore invece di dodici fotogrammi disegnati a mano, e la ragione per cui
-// si può fare è la stessa che dà le stagioni — la tavolozza è un parametro
-// della cottura.
+// stessa andatura, stesso cappello e stesso poncho, e un fazzoletto sulla
+// faccia. Potevi essere tu. Costa qualche chiave di colore invece di dodici
+// fotogrammi disegnati a mano, e la ragione per cui si può fare è la stessa
+// che dà le stagioni — la tavolozza è un parametro della cottura.
 //
 // Qui dentro non si sa cosa sia la paura, il rumore o il danno: sono regole,
 // e le entità stanno sotto le regole. Questo modulo riceve due campi riempiti
