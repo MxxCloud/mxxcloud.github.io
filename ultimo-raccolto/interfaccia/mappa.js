@@ -581,12 +581,42 @@ function luoghi(c, u, suCarta, inVista, nomi) {
       if (!inVista(punto)) continue;
       const tipo = rovina.luogo === "orto" ? "orto" : rovina.luogo === "pozzo" ? "pozzo" : rovina.luogo ? "luogo" : "rovina";
       segno(c, tipo, punto.x, punto.y, u);
-      if (rovina.nome) {
+      // Un orto visitato dice le sue piante (M7.18.40): due pallini accanto
+      // al segno, a ogni zoom, e i nomi al posto di «orto abbandonato».
+      const piante = tipo === "orto" && esplorato.ortoVisto(rovina) ? pianteDellOrto(rovina) : null;
+      if (piante) {
+        piante.forEach((pianta, i) => cerchio(c, punto.x + (4.6 + i * 3.8) * u, punto.y, 1.7 * u, PIANTE[pianta].colore));
+        nomi.push({ testo: piante.map((pianta) => PIANTE[pianta].nome).join(" · "), x: punto.x, y: punto.y + 3.6 * u, colore: ORTO });
+      } else if (rovina.nome) {
         const colore = tipo === "orto" ? ORTO : tipo === "pozzo" ? POZZO : LUOGO;
         nomi.push({ testo: rovina.nome.toUpperCase(), x: punto.x, y: punto.y + 3.6 * u, colore });
       }
     }
   }
+}
+
+// Le piante degli orti, con il loro colore sulla carta e il loro nome.
+const PIANTE = {
+  [OGGETTO.SPIGHE_SELVATICHE]: { colore: "#e8c547", nome: "GRANO" },
+  [OGGETTO.LINO_SELVATICO]: { colore: "#8f9cf0", nome: "LINO" },
+  [OGGETTO.PATATA_SELVATICA]: { colore: "#a0714a", nome: "PATATE" },
+  [OGGETTO.FAGIOLI_SELVATICI]: { colore: "#e0584a", nome: "FAGIOLI" },
+  [OGGETTO.CAVOLO_SELVATICO]: { colore: "#4fc0a8", nome: "CAVOLO" },
+};
+
+// Le due piante di un orto, prima fila e seconda: si leggono dal mondo sulla
+// prima casella di ogni fila, quindi sono quelle del sorteggio di questa
+// partita (M7.18.37), e per l'orto della fattoria fagioli e patate.
+const FILE = [["s", "b"], ["u", "q"]];
+export function pianteDellOrto(rovina) {
+  const piante = FILE.map((segni) => {
+    for (let y = 0; y < rovina.altezza; y += 1) {
+      const x = [...rovina.pianta[y]].findIndex((segno) => segni.includes(segno));
+      if (x >= 0) return mappa.oggettoGenerato(rovina.tx0 + x, rovina.ty0 + y);
+    }
+    return null;
+  });
+  return piante.every((pianta) => PIANTE[pianta]) ? piante : null;
 }
 
 // --- i segni --------------------------------------------------------------
@@ -751,7 +781,7 @@ const VOCI_LEGENDA = [
 ];
 
 function legenda(c, u, W, H) {
-  const y = H - 25 * u;
+  const y = H - 26 * u;
   const misura = 3.2 * u;
   c.font = `600 ${misura}px ${CARATTERE}`;
   const passi = VOCI_LEGENDA.map(([, nome]) => 7 * u + c.measureText(nome).width + 5 * u);
@@ -762,6 +792,18 @@ function legenda(c, u, W, H) {
     scrivi(c, nome, x + 7 * u, y, misura, GRIGIO);
     x += passi[i];
   });
+  // Sotto, i colori delle piante degli orti visitati.
+  const yPiante = H - 19.5 * u;
+  const vociPiante = Object.values(PIANTE);
+  const passiPiante = vociPiante.map(({ nome }) => 5 * u + c.measureText(nome).width + 5 * u);
+  let xp = (W - passiPiante.reduce((a, b) => a + b, 0)) / 2;
+  c.lineWidth = 0.8 * u;
+  c.strokeStyle = CONTORNO;
+  vociPiante.forEach(({ colore, nome }, i) => {
+    cerchio(c, xp + 2 * u, yPiante + misura / 2, 1.35 * u, colore);
+    scrivi(c, nome, xp + 5 * u, yPiante, misura, GRIGIO);
+    xp += passiPiante[i];
+  });
   const tasti = "WASD / FRECCE  SPOSTA      MAIUSC  PIÙ VELOCE      Q / E  ZOOM      SPAZIO  TORNA A TE      TAB  CHIUDI";
-  scrivi(c, tasti, W / 2, H - 13 * u, 3.2 * u, CHIARO, "center");
+  scrivi(c, tasti, W / 2, H - 12 * u, 3.2 * u, CHIARO, "center");
 }

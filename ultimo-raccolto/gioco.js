@@ -73,7 +73,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.39";
+const VERSIONE = "M7.18.40";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1527,6 +1527,8 @@ function aggiorna(passo) {
     const luogo = mappa.luogoIn(Math.floor(eroe.px / TASSELLO), Math.floor(eroe.py / TASSELLO), 3);
     const chiaveLuogo = luogo ? `${luogo.tx0},${luogo.ty0}` : null;
     if (chiaveLuogo && chiaveLuogo !== luogoAttuale) annuncia(luogo.nome, "#c9b189");
+    // Un orto a cui si arriva finisce sulla mappa con le sue piante (M7.18.40).
+    if (luogo?.luogo === "orto") esplorato.segnaOrto(luogo);
     luogoAttuale = chiaveLuogo;
 
     if (colpito) {

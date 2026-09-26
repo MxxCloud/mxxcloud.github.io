@@ -121,6 +121,10 @@ export function istantanea(eroe, casellaScelta) {
     // campo e si riapre con la mappa da rifare, che è la cosa giusta — non si
     // può inventare dove sia stato qualcuno.
     esplorato: esplorato.tutti(),
+    // Gli orti abbandonati visitati (M7.18.40), con lo stesso formato dei
+    // settori. Un salvataggio che non ce l'ha si riapre senza, e il formato
+    // non sale.
+    ortiVisti: esplorato.tuttiGliOrti(),
   };
 }
 
@@ -312,6 +316,8 @@ export function valido(stato) {
     if (typeof k !== "string" || !/^-?\d+,-?\d+$/.test(k)) return false;
     return k.split(",").every(n => intero(Number(n)));
   }))) return false;
+  if (!presente(stato, "ortiVisti", v => Array.isArray(v) && v.length <= 100000 &&
+    v.every(k => typeof k === "string" && /^-?\d+,-?\d+$/.test(k)))) return false;
   return true;
 }
 
@@ -370,6 +376,7 @@ export function applica(stato) {
   polli.ripristina(stato.polli);
   addosso.ripristina(stato.addosso);
   esplorato.ripristina(stato.esplorato);
+  esplorato.ripristinaOrti(stato.ortiVisti);
 
   return {
     eroe: stato.eroe,
