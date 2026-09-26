@@ -26,7 +26,7 @@
 
 import { impronta } from "../motore/casuale.js";
 import { PIANTE, FATTORIA, misuraDi } from "../arte/piante.js";
-import { LUOGHI } from "../arte/luoghi.js";
+import { LUOGHI, ORTO_DELLA_FATTORIA } from "../arte/luoghi.js";
 
 export const CELLA = 64;
 
@@ -102,6 +102,23 @@ export function quanteInMemoria() {
 // una fattoria che c'è sempre.
 const TENTATIVI_FATTORIA = 2500;
 
+// L'orto della fattoria (M7.18.36): subito a sud della casa, sotto le due
+// righe di campo, con il suo spaventapasseri davanti alla porta. È un annesso
+// e non un pezzo della pianta perché dev'essere un orto abbandonato come gli
+// altri — lo stesso luogo, con il suo nome, la sua cassa e il suo segno sulla
+// mappa — mentre la fattoria resta la fattoria: la partenza, il bottino delle
+// sue casse e il suo segno guardano soltanto lei.
+//
+// Il terreno sotto l'orto non si guarda, e di proposito. Chiedere che regga
+// anche lì spostava la fattoria in tre valli su otto di quelle dei collaudi, e
+// in una la faceva sparire: la fattoria di una partita già cominciata non può
+// cambiare posto. E l'orto sta in piedi comunque, perché la pianta decide il
+// terreno — dove c'è un suo segno c'è terra battuta — ed è attaccato al campo,
+// quindi ci si arriva sempre. Al peggio ha un muretto sulla riva.
+// La ricerca resta sulla misura della fattoria, quindi il tetto della spirale
+// è lo stesso: ty0 al più 43, e l'orto finisce a 56, dentro la cella.
+const ANNESSO = { dx: 0, dy: FATTORIA.length, ...misuraDi(ORTO_DELLA_FATTORIA) };
+
 function cercaLaFattoria(adatto) {
   const { larghezza, altezza } = misuraDi(FATTORIA);
   const limite = CELLA - Math.max(larghezza, altezza) - 1;
@@ -114,7 +131,11 @@ function cercaLaFattoria(adatto) {
         if (Math.max(tx0, ty0) !== raggio) continue;
         if (provati++ > TENTATIVI_FATTORIA) return null;
         if (reggeIlTerreno(tx0, ty0, larghezza, altezza, adatto)) {
-          return { tx0, ty0, pianta: FATTORIA, larghezza, altezza };
+          const annesso = {
+            tx0: tx0 + ANNESSO.dx, ty0: ty0 + ANNESSO.dy, pianta: ORTO_DELLA_FATTORIA,
+            larghezza: ANNESSO.larghezza, altezza: ANNESSO.altezza, luogo: ORTO.id, nome: ORTO.nome,
+          };
+          return { tx0, ty0, pianta: FATTORIA, larghezza, altezza, annesso };
         }
       }
     }
@@ -250,7 +271,10 @@ export function tasselloDi(tx, ty, adatto) {
   // dell'origine, e il mondo è infinito in tutte e quattro le direzioni.
   const rovina = nellaCella(Math.floor(tx / CELLA), Math.floor(ty / CELLA), adatto);
   if (!rovina) return null;
+  return segnoIn(rovina, tx, ty) ?? (rovina.annesso ? segnoIn(rovina.annesso, tx, ty) : null);
+}
 
+function segnoIn(rovina, tx, ty) {
   const dx = tx - rovina.tx0;
   const dy = ty - rovina.ty0;
   if (dx < 0 || dy < 0 || dx >= rovina.larghezza || dy >= rovina.altezza) return null;

@@ -338,21 +338,24 @@ export function disegna(p, eroe) {
   });
   for (const chiave of celleViste) {
     const [cx, cy] = chiave.split(",").map(Number);
-    const rovina = mappa.rovinaNellaCella(cx, cy);
-    if (!rovina) continue;
-    const tx = rovina.tx0 + (rovina.larghezza >> 1);
-    const ty = rovina.ty0 + (rovina.altezza >> 1);
-    // Una cella è più grande di un settore: si può aver visto la cella senza
-    // essere mai passati dove sta la casa, e segnare una cosa che non si è
-    // vista è il contrario di quello che questa mappa fa.
-    if (!esplorato.eVisto(Math.floor(tx / SETTORE), Math.floor(ty / SETTORE))) continue;
-    const { x, y } = suSchermo(tx, ty);
-    // L'orto abbandonato ha un segno suo, verde e più grande (M7.18.31): è
-    // l'unico luogo a cui si torna ogni anno, per i semi, e un puntino
-    // uguale a quello di un carro si perdeva.
-    const orto = rovina.luogo === "orto";
-    const colore = orto ? ORTO : rovina.luogo === "pozzo" ? "#8fb8d8" : rovina.luogo ? "#c79a62" : ROVINA;
-    segnale(x, y, colore, rovina.luogo && !orto ? 2 : 3);
+    const trovata = mappa.rovinaNellaCella(cx, cy);
+    if (!trovata) continue;
+    // La fattoria porta con sé il suo orto (M7.18.36), che ha il segno suo.
+    for (const rovina of [trovata, trovata.annesso].filter(Boolean)) {
+      const tx = rovina.tx0 + (rovina.larghezza >> 1);
+      const ty = rovina.ty0 + (rovina.altezza >> 1);
+      // Una cella è più grande di un settore: si può aver visto la cella senza
+      // essere mai passati dove sta la casa, e segnare una cosa che non si è
+      // vista è il contrario di quello che questa mappa fa.
+      if (!esplorato.eVisto(Math.floor(tx / SETTORE), Math.floor(ty / SETTORE))) continue;
+      const { x, y } = suSchermo(tx, ty);
+      // L'orto abbandonato ha un segno suo, verde e più grande (M7.18.31): è
+      // l'unico luogo a cui si torna ogni anno, per i semi, e un puntino
+      // uguale a quello di un carro si perdeva.
+      const orto = rovina.luogo === "orto";
+      const colore = orto ? ORTO : rovina.luogo === "pozzo" ? "#8fb8d8" : rovina.luogo ? "#c79a62" : ROVINA;
+      segnale(x, y, colore, rovina.luogo && !orto ? 2 : 3);
+    }
   }
 
   modifiche.perOgnuno((tx, ty, cambio) => {

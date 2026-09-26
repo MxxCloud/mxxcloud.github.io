@@ -233,7 +233,7 @@ const COSTRUITO = {
   g: OGGETTO.GIACIGLIO,
   a: OGGETTO.APPASSITA,
   p: OGGETTO.SPAVENTAPASSERI_ROTTO,
-  // L'orto della fattoria di partenza (M7.18.35): sempre fagioli e patate.
+  // L'orto della fattoria di partenza (M7.18.36): sempre fagioli e patate.
   b: OGGETTO.FAGIOLI_SELVATICI,
   q: OGGETTO.PATATA_SELVATICA,
 };
@@ -250,7 +250,7 @@ export const INSELVATICHITE = [OGGETTO.SPIGHE_SELVATICHE, OGGETTO.LINO_SELVATICO
 // Questa pianta sta in un orto abbandonato? Serve alla raccolta, che lì non
 // tira a sorte, al disegno, che d'inverno la mostra secca, e alla ricrescita.
 // Lo dice il segno della pianta sotto il tassello: le due file degli orti
-// abbandonati e quelle dell'orto della fattoria (M7.18.35).
+// abbandonati e quelle dell'orto della fattoria (M7.18.36).
 const SEGNI_DELL_ORTO = new Set(["s", "u", "b", "q"]);
 export function inselvatichitaNellOrto(x, y, oggetto) {
   return INSELVATICHITE.includes(oggetto) && SEGNI_DELL_ORTO.has(rovine.tasselloDi(x, y, adatto));
@@ -276,11 +276,12 @@ export function rovinaNellaCella(cx, cy) {
 
 // Identità del piccolo luogo solo entro la sua impronta (o il margine
 // richiesto per l'annuncio). Nessuna scansione del mondo circostante.
+// L'orto della fattoria (M7.18.36) è un luogo anche lui, attaccato alla
+// fattoria come annesso: si guarda lì quando la rovina della cella non lo è.
 export function luogoIn(tx, ty, margine = 0) {
   const r = rovinaNellaCella(Math.floor(tx / rovine.CELLA), Math.floor(ty / rovine.CELLA));
-  if (!r?.luogo || tx < r.tx0-margine || ty < r.ty0-margine ||
-      tx >= r.tx0+r.larghezza+margine || ty >= r.ty0+r.altezza+margine) return null;
-  return r;
+  return [r, r?.annesso].find((l) => l?.luogo && tx >= l.tx0-margine && ty >= l.ty0-margine &&
+    tx < l.tx0+l.larghezza+margine && ty < l.ty0+l.altezza+margine) ?? null;
 }
 
 // Dove comincia la partita: la fattoria, non l'origine delle coordinate.
