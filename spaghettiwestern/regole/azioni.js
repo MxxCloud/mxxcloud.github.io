@@ -252,12 +252,18 @@ export function azionePossibile(eroe, cosaInMano, indice) {
   // con qualunque altra cosa ci si sale sopra.
   const mio = cavalli.davanti(eroe);
   if (mio) {
+    // Col fieno o la biada in mano si imbocca (W0.7): un pasto al giorno.
+    if (cavalli.FORAGGI.has(cosaInMano)) {
+      return { tipo: "foraggia", verbo: `Dai ${cavalli.nomeDelForaggio(cosaInMano)}`, cosa: cosaInMano, cavallo: mio,
+        impedito: mio.pasto ? "ha già mangiato oggi" : null };
+    }
     if (cosaInMano === "lazo") {
       return mio.stato === "legato"
         ? { tipo: "slega", verbo: "Slega il cavallo", cavallo: mio }
         : { tipo: "lega", verbo: "Lega il cavallo", cavallo: mio };
     }
-    return { tipo: "monta", verbo: "Monta a cavallo", cavallo: mio };
+    // Affamato si monta lo stesso, e il tasto lo dice: non galopperà.
+    return { tipo: "monta", verbo: cavalli.affamato(mio) ? "Monta a cavallo (ha fame)" : "Monta a cavallo", cavallo: mio };
   }
 
   // Il pollo davanti: con un'arma in mano gli si tira il collo, a mani nude
@@ -399,6 +405,18 @@ function sulTassello(eroe, cosaInMano, indice) {
   // tasto una volta sola, per quattro giorni, vorrebbe dire una casa che non
   // chiede niente — cioè un monumento, che è quello che decadimento.js dice di
   // non voler costruire.
+  // La mangiatoia (W0.7), come il pollaio: col fieno o la biada in mano la si
+  // riempie, una razione per volta; altrimenti la si guarda, e dice quante
+  // razioni restano, quanti cavalli ci mangiano e quanti ne sfama il prato.
+  if (b.oggetto === OGGETTO.MANGIATOIA) {
+    const razioni = cavalli.razioniNella(b.tx, b.ty);
+    if (cavalli.FORAGGI.has(cosaInMano)) {
+      return { tipo: "riempiMangiatoia", verbo: `Metti ${cavalli.nomeDelForaggio(cosaInMano)} (${razioni}/${cavalli.RAZIONI_MASSIME})`,
+        cosa: cosaInMano, bersaglio: b, impedito: razioni >= cavalli.RAZIONI_MASSIME ? "la mangiatoia è piena" : null };
+    }
+    return { tipo: "guardaMangiatoia", verbo: "Guarda la mangiatoia", bersaglio: b, razioni,
+      ...cavalli.recintoDellaMangiatoia(b.tx, b.ty) };
+  }
   // Il pollaio: con del mangime in mano lo si riempie, uno per volta come la
   // legna nel focolare; altrimenti lo si guarda, e dice quanto ne resta e
   // quanti polli ci mangiano — il conto che decide se domani avranno fame.
@@ -694,6 +712,9 @@ function sulTassello(eroe, cosaInMano, indice) {
     // Il pollaio sta dentro un recinto: è lì che stanno i polli che ripara.
     if (cosaInMano === "pollaio" && !riparo.recintato(b.tx, b.ty))
       return { tipo: "posa", bersaglio: b, impedito: "il pollaio va messo in un recinto" };
+    // E la mangiatoia pure (W0.7): è lì che stanno i cavalli che sfama.
+    if (cosaInMano === "mangiatoia" && !riparo.recintato(b.tx, b.ty))
+      return { tipo: "posa", bersaglio: b, impedito: "la mangiatoia va messa in un recinto" };
     return { tipo: "posa", verbo: "Posa", cosa: cosaInMano, bersaglio: b,
       impedito: ["muro", "porta", "steccato", "cancello"].includes(cosaInMano) && occupato(b.tx, b.ty, eroe) ? "passaggio occupato" : null };
   }
@@ -915,6 +936,7 @@ const SMONTAGGI = {
   [OGGETTO.CANCELLO]: { cosa: "cancello", verbo: "Smonta il cancello" },
   [OGGETTO.CANCELLO_APERTO]: { cosa: "cancello", verbo: "Smonta il cancello" },
   [OGGETTO.POLLAIO]: { cosa: "pollaio", verbo: "Smonta il pollaio" },
+  [OGGETTO.MANGIATOIA]: { cosa: "mangiatoia", verbo: "Smonta la mangiatoia" },
 };
 
 // Gli stati dell'essiccatoio in cui c'è dentro della carne.
@@ -1012,6 +1034,10 @@ function perche(b, voce) {
     return `c'è ancora mangime: ${polli.mangimeNel(b.tx, b.ty)}/${polli.MANGIME_MASSIMO}`;
   }
   if (b.oggetto === OGGETTO.POLLAIO && polli.uovaNel(b.tx, b.ty) > 0) return "prima prendi le uova";
+  // La mangiatoia come il pollaio (W0.7): il fieno dentro si aspetta che finisca.
+  if (b.oggetto === OGGETTO.MANGIATOIA && cavalli.razioniNella(b.tx, b.ty) > 0) {
+    return `c'è ancora fieno: ${cavalli.razioniNella(b.tx, b.ty)}/${cavalli.RAZIONI_MASSIME}`;
+  }
   if (NOME_DEL_FUOCO[b.oggetto] && decadimento.legnaNel(b.tx, b.ty) > 0) {
     return `il ${NOME_DEL_FUOCO[b.oggetto]} è acceso: ${decadimento.legnaNel(b.tx, b.ty)}/${decadimento.capienzaDi(b.oggetto)}`;
   }
@@ -1272,6 +1298,10 @@ function esegui(eroe, cosaInMano, indice, azione) {
   if (azione.tipo === "lega") return cavalli.lega(azione.cavallo);
   if (azione.tipo === "slega") return cavalli.slega(azione.cavallo);
   if (azione.tipo === "monta") return cavalli.monta(azione.cavallo, eroe);
+  if (azione.tipo === "foraggia") {
+    if (!inventario.togli(azione.cosa, 1)) return null;
+    return { ...cavalli.nutri(azione.cavallo), cosa: azione.cosa };
+  }
 
   if (azione.tipo === "macella" || azione.tipo === "spoglia") return fauna.macella(azione.carcassa);
   if (azione.tipo === "prendiPollo") return polli.prendi(azione.pollo);
@@ -1364,6 +1394,15 @@ function esegui(eroe, cosaInMano, indice, azione) {
     return { tipo: "guardato", tx, ty, legna: azione.legna, massimo: azione.capienza, fuoco: azione.fuoco };
   }
 
+  if (azione.tipo === "guardaMangiatoia") {
+    return { tipo: "mangiatoiaGuardata", razioni: azione.razioni, massimo: cavalli.RAZIONI_MASSIME,
+      cavalli: azione.cavalli, prato: azione.prato };
+  }
+  if (azione.tipo === "riempiMangiatoia") {
+    if (!inventario.togli(azione.cosa, 1)) return null;
+    cavalli.riempi(tx, ty);
+    return { tipo: "mangiatoiaRiempita", cosa: azione.cosa, razioni: cavalli.razioniNella(tx, ty), massimo: cavalli.RAZIONI_MASSIME };
+  }
   if (azione.tipo === "guardaPollaio") {
     return { tipo: "pollaioGuardato", mangime: azione.mangime, massimo: polli.MANGIME_MASSIMO, polli: azione.polli,
       pollina: azione.pollina, prato: azione.prato };

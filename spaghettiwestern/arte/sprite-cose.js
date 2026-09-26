@@ -1302,6 +1302,44 @@ export const POLLAIO = [
   ".gg..........gg.",
 ];
 
+// La mangiatoia (Per un pugno di semi W0.7): una cassetta di assi su quattro
+// gambe, col fieno che sporge. Il fieno si vede sempre, anche quando è vuota:
+// quante razioni ci sono lo dice la barra, come la legna nel focolare, e un
+// disegno per ogni livello sarebbe una dozzina di oggetti per un numero.
+export const MANGIATOIA = [
+  "................",
+  "................",
+  "................",
+  "................",
+  "....5..5.4..5...",
+  "..5.45.454.545..",
+  ".g5454545454545g",
+  ".ghhhhhhhhhhhhhg",
+  ".gwwwwwwwwwwwwwg",
+  ".ghhhhhhhhhhhhhg",
+  ".gwwwwwwwwwwwwwg",
+  ".ggggggggggggggg",
+  "..gh.........hg.",
+  "..gh.........hg.",
+  "..gh.........hg.",
+  "..gg.........gg.",
+];
+
+export const MANGIATOIA_ICONA = [
+  "............",
+  "............",
+  "...5.4..5...",
+  ".5.454.545..",
+  "g545454545g.",
+  "ghhhhhhhhhg.",
+  "gwwwwwwwwwg.",
+  "ghhhhhhhhhg.",
+  "ggggggggggg.",
+  ".gh.....hg..",
+  ".gg.....gg..",
+  "............",
+];
+
 export const POLLAIO_ICONA = [
   "............",
   ".....gg.....",

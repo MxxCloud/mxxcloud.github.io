@@ -138,6 +138,10 @@ export const OGGETTO = {
   CISTERNA: 45,
   BINARI: 46,
   SETACCIO: 47,
+  // La mangiatoia (Per un pugno di semi W0.7): il fieno e la biada dei
+  // cavalli, dentro un recinto. Le razioni stanno nelle modifiche, come il
+  // mangime del pollaio.
+  MANGIATOIA: 48,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati

@@ -80,6 +80,18 @@ export const INFEZIONE = [
   "xx...xx",
 ];
 
+// Il fiato del cavallo (W0.7): un ferro di cavallo. Compare solo in sella,
+// sotto le tre barre dello straniero, perché è l'unico momento in cui conta.
+export const FERRO = [
+  ".xxxxx.",
+  "xx...xx",
+  "x.....x",
+  "x.....x",
+  "x.....x",
+  "xx...xx",
+  "xx...xx",
+];
+
 // Ti hanno visto. Un punto esclamativo e non un occhio: a sette pixel un
 // occhio diventa un anello, mentre questo si legge senza impararlo.
 //

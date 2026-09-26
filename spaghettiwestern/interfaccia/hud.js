@@ -249,7 +249,7 @@ function barra(p, y, icona, livello, colore) {
 // lette come quattro cose dello stesso peso.
 export function disegnaBisogni(
   p,
-  { salute = 1, alFreddo = false, infetto = false, inseguito = false } = {}
+  { salute = 1, alFreddo = false, infetto = false, inseguito = false, cavallo = null } = {}
 ) {
   barra(p, 5, indicatori.SALUTE, salute, coloreBisogno(salute));
 
@@ -277,6 +277,16 @@ export function disegnaBisogni(
   for (const quale of bisogni.ELENCO) {
     barra(p, y, ICONE_BISOGNI[quale], livelli[quale], coloreBisogno(livelli[quale]));
     y += PASSO_BARRA;
+  }
+
+  // Il fiato del cavallo (W0.7), staccato dalle tre dello straniero come la
+  // salute sopra di loro: è di un altro. Il ferro è rosso quando ha fame —
+  // allora non galoppa, qualunque cosa dica la barra — e la barra resta
+  // arancione finché è sfiancato, anche mentre si riempie.
+  if (cavallo) {
+    const colore = cavallo.sfiancato ? "#d8a44a" : coloreBisogno(cavallo.fiato);
+    barra(p, y + 3, indicatori.FERRO, cavallo.fiato, colore);
+    if (cavallo.fame > 0) p.drawImage(cuoci(indicatori.FERRO, tinta(ROSSO)), 5, y + 2);
   }
 }
 

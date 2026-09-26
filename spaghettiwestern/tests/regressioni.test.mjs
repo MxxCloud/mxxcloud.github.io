@@ -5307,5 +5307,118 @@ test("in partita il cavallo si muove, si disegna con la corda, si sente e si ann
   assert.match(leggi('regole/udito.js'),/passi\(eroe, eroe\.aCavallo \? ZOCCOLO : PASSO,/);
   const hud=leggi('interfaccia/hud.js');
   assert.match(hud,/\["MAIUSC", "CORRERE, O GALOPPARE A CAVALLO"\]/);assert.match(hud,/if \(aCavallo\) righe\.push\("MAIUSC  GALOPPA"\);/);
-  assert.match(leggi('regole/simulazione.js'),/eventi\.cavalliRubati \+= cavalli\.nuovoGiorno\(\)\.rubati;/);
+  // Da W0.7 la mezzanotte dei cavalli dice anche la fame: il conto dei rubati passa di lì.
+  assert.match(leggi('regole/simulazione.js'),/const scuderia = cavalli\.nuovoGiorno\(stagioni\.stagioneDi\(tempo\.giornoCorrente\(\)\)\);\n      eventi\.cavalliRubati \+= scuderia\.rubati;/);
+});
+
+// --- Per un pugno di semi (W0.7): la biada e il fiato ------------------------
+
+// Un cavallo tuo, libero, nel tassello (x,y).
+function cavalloMio(x,y,stato='libero'){
+  const h=cavalloSelvatico(60);cavalli.prendi(h);
+  const c=cavalli.tutte().at(-1);Object.assign(c,pos(x,y));
+  if(stato==='libero')cavalli.slega(c);
+  return c;
+}
+test("la mangiatoia si fa al banco, sta in un recinto, si riempie di fieno o di biada e si smonta vuota",()=>{
+  const ricetta=ricette.RICETTE.find(r=>r.id==='mangiatoia');
+  assert.equal(ricetta.banco,true);assert.deepEqual(ricetta.costo,[{cosa:'legna',quante:5},{cosa:'ramo',quante:2}]);
+  const voce=CATALOGO.mangiatoia;assert.equal(voce.posa,OGGETTO.MANGIATOIA);
+  assert.ok(voce.icona.length===12&&voce.icona.every(r=>r.length===12));decodifica(voce.icona);decodifica(sprite.MANGIATOIA);
+  assert.equal(mappa.solidoIn(tx+1,ty),false);
+  inventario.aggiungi('mangiatoia',1);
+  assert.equal(azioni.azionePossibile(eroe,'mangiatoia',0).impedito,'la mangiatoia va messa in un recinto');
+  // Dentro un recinto sì.
+  recinto(tx+1,ty-3);const dentro={...eroe,...pos(tx+1,ty-3),guarda:'su'};
+  assert.equal(azioni.azionePossibile(dentro,'mangiatoia',0).impedito,null);
+  assert.equal(azioni.agisci(dentro,'mangiatoia',0).tipo,'posa');
+  const m={tx:tx+1,ty:ty-4};
+  assert.equal(mappa.oggettoDi(m.tx,m.ty),OGGETTO.MANGIATOIA);assert.equal(mappa.solidoIn(m.tx,m.ty),true);
+  // Fieno e biada, una razione per volta.
+  inventario.aggiungi('fibra',3);inventario.aggiungi('grano',2);
+  const a=azioni.azionePossibile(dentro,'fibra',0);
+  assert.deepEqual([a.tipo,a.verbo],['riempiMangiatoia','Metti il fieno (0/12)']);
+  assert.equal(azioni.agisci(dentro,'fibra',0).razioni,1);assert.equal(inventario.quante('fibra'),2);
+  assert.equal(azioni.azionePossibile(dentro,'grano',0).verbo,'Metti la biada (1/12)');
+  assert.equal(azioni.agisci(dentro,'grano',0).razioni,2);
+  const g=azioni.azionePossibile(dentro,null,0);assert.equal(g.tipo,'guardaMangiatoia');assert.equal(g.razioni,2);
+  cavalloMio(tx,ty-2);
+  assert.equal(azioni.agisci(dentro,null,0).cavalli,1,'conta i cavalli del suo recinto');
+  // Piena non ne prende altre, e con dentro qualcosa non si smonta.
+  modifiche.imposta(m.tx,m.ty,{oggetto:OGGETTO.MANGIATOIA,razioni:cavalli.RAZIONI_MASSIME});
+  assert.equal(azioni.azionePossibile(dentro,'fibra',0).impedito,'la mangiatoia è piena');
+  assert.equal(azioni.smontaggioPossibile(dentro,null).impedito,"c'è ancora fieno: 12/12");
+  modifiche.imposta(m.tx,m.ty,{oggetto:OGGETTO.MANGIATOIA});
+  assert.equal(azioni.smontaggioPossibile(dentro,null).impedito,null);
+  // Le razioni si salvano, solo in una mangiatoia e dentro il tetto.
+  modifiche.imposta(m.tx,m.ty,{oggetto:OGGETTO.MANGIATOIA,razioni:3});
+  const stato=salvataggio.istantanea(eroe,0);assert.ok(salvataggio.valido(stato));
+  const trova=(st)=>st.modifiche.find(c=>c.tx===m.tx&&c.ty===m.ty);
+  const troppe=structuredClone(stato);trova(troppe).razioni=13;assert.equal(salvataggio.valido(troppe),false);
+  const altrove=structuredClone(stato);trova(altrove).oggetto=OGGETTO.POLLAIO;assert.equal(salvataggio.valido(altrove),false);
+});
+test("a mezzanotte il cavallo mangia dalla mangiatoia del suo recinto, al pascolo o dalla tua mano, e con due giorni di fame se ne va",()=>{
+  recinto(tx-12,ty);
+  modifiche.imposta(tx-13,ty-1,{oggetto:OGGETTO.MANGIATOIA,razioni:1});
+  const nel=cavalloMio(tx-12,ty),legato=cavalloMio(tx+2,ty,'legato');
+  // D'autunno non si pascola: quello nel recinto mangia dalla mangiatoia,
+  // quello alla corda resta a digiuno.
+  let e=cavalli.nuovoGiorno('autunno');
+  assert.deepEqual(e,{rubati:0,affamati:1,scappati:0});
+  assert.equal(nel.fame,0);assert.equal(cavalli.razioniNella(tx-13,ty-1),0);
+  assert.equal(legato.fame,1);assert.equal(cavalli.affamato(legato),true);
+  // Imboccato a mano: fieno in mano, davanti a lui.
+  Object.assign(legato,{px:eroe.px+16,py:eroe.py});inventario.aggiungi('fibra',2);
+  const a=azioni.azionePossibile(eroe,'fibra',0);
+  assert.deepEqual([a.tipo,a.verbo,a.impedito],['foraggia','Dai il fieno',null]);
+  assert.equal(azioni.agisci(eroe,'fibra',0).tipo,'cavalloNutrito');assert.equal(inventario.quante('fibra'),1);
+  assert.equal(azioni.azionePossibile(eroe,'fibra',0).impedito,'ha già mangiato oggi');
+  inventario.aggiungi('grano',1);assert.equal(azioni.azionePossibile(eroe,'grano',0).verbo,'Dai la biada');
+  // La mangiatoia è vuota: stanotte quello nel recinto ha fame, quello imboccato no.
+  e=cavalli.nuovoGiorno('autunno');
+  assert.equal(nel.fame,1);assert.equal(legato.fame,0);assert.equal(legato.pasto,false,'il pasto vale un giorno');
+  // D'inverno niente pascolo: il secondo giorno di fame quello nel recinto se
+  // ne va, e quello alla corda comincia ad aver fame.
+  e=cavalli.nuovoGiorno('inverno');
+  assert.deepEqual(e,{rubati:0,affamati:1,scappati:1});
+  assert.equal(cavalli.tutte().includes(nel),false);assert.equal(legato.fame,1);
+  // D'estate alla corda si pascola lungo la strada.
+  e=cavalli.nuovoGiorno('estate');assert.equal(legato.fame,0);assert.equal(e.affamati,0);
+});
+test("chi ha fame non galoppa, e il galoppo toglie il fiato fino a sfiancarlo",async()=>{
+  const c=cavalloMio(tx+1,ty,'legato');cavalli.monta(c,eroe);
+  assert.equal(cavalli.puoGaloppare(),true);
+  c.fame=1;assert.equal(cavalli.puoGaloppare(),false,'a digiuno no');c.fame=0;
+  const galoppo={...eroe,galoppa:true},trotto={...eroe,galoppa:false};
+  let sfiancato=false;
+  for(let i=0;i<15*60+2;i++)sfiancato||=cavalli.aggiorna(1/60,galoppo).sfiancato;
+  assert.ok(sfiancato,'detto una volta');assert.equal(c.fiato,0);assert.equal(cavalli.puoGaloppare(),false);
+  // Al trotto torna, e al terzo del fiato si riparte.
+  for(let i=0;i<7*60;i++)cavalli.aggiorna(1/60,trotto);
+  assert.equal(c.sfiancato,true);
+  for(let i=0;i<60;i++)cavalli.aggiorna(1/60,trotto);
+  assert.equal(c.sfiancato,false);assert.equal(cavalli.puoGaloppare(),true);
+  const leggi=(f)=>readFileSync(new URL('../'+f,import.meta.url),'utf8');
+  assert.match(leggi('gioco.js'),/eroe\.puoCorrere = eroe\.aCavallo \? cavalli\.puoGaloppare\(\) : bisogni\.puoCorrere\(\);/);
+  assert.match(leggi('entita/giocatore.js'),/if \(percorso < 0\.01\) e\.galoppa = false;/,'contro un muro non si galoppa');
+});
+test("i cavalli di W0.6 si riaprono sazi e freschi, e fame e fiato si salvano",()=>{
+  const c=cavalloMio(tx+1,ty);c.fame=1;c.fiato=0.4;c.sfiancato=true;c.pasto=true;
+  const stato=salvataggio.istantanea(eroe,0);assert.ok(salvataggio.valido(stato));
+  cavalli.reimposta();salvataggio.applica(stato);
+  assert.deepEqual(['fame','fiato','sfiancato','pasto'].map(k=>cavalli.tutte()[0][k]),[1,0.4,true,true]);
+  const vecchio=structuredClone(stato);for(const k of ['fame','fiato','pasto','sfiancato'])delete vecchio.cavalli.cavalli[0][k];
+  assert.ok(salvataggio.valido(vecchio));salvataggio.applica(vecchio);
+  assert.deepEqual(['fame','fiato','sfiancato','pasto'].map(k=>cavalli.tutte()[0][k]),[0,1,false,false]);
+  const storto=structuredClone(stato);storto.cavalli.cavalli[0].fame=2;assert.equal(salvataggio.valido(storto),false);
+  const troppo=structuredClone(stato);troppo.cavalli.cavalli[0].fiato=1.5;assert.equal(salvataggio.valido(troppo),false);
+});
+test("il fiato si vede in sella, e la fame si dice al mattino e montando",()=>{
+  const leggi=(f)=>readFileSync(new URL('../'+f,import.meta.url),'utf8');
+  const hud=leggi('interfaccia/hud.js'),gioco=leggi('gioco.js');
+  assert.match(hud,/barra\(p, y \+ 3, indicatori\.FERRO, cavallo\.fiato, colore\);/);
+  assert.match(gioco,/cavallo: cavalli\.montato\(\),/);
+  for(const scritta of ['il cavallo è sfiancato: va al trotto','a cavallo: ha fame, non galoppa','il cavallo affamato ha rotto la corda ed è scappato','il cavallo ha fame: dagli fieno o biada'])
+    assert.ok(gioco.includes(scritta),scritta);
+  assert.match(leggi('regole/simulazione.js'),/eventi\.cavalliAffamati = scuderia\.affamati;/);
 });

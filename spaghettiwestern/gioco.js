@@ -76,7 +76,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "W0.6";
+const VERSIONE = "W0.7";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1301,7 +1301,25 @@ function leggiComandi(passo) {
     // Si parte girati da dove si guardava, se era di lato: montare non deve
     // voltare il cavallo.
     if (eroe.guarda === "sinistra" || eroe.guarda === "destra") eroe.versoInSella = eroe.guarda;
-    annuncia("a cavallo: maiusc per galoppare", "#9ec97e");
+    const sotto = cavalli.montato();
+    annuncia(sotto && cavalli.affamato(sotto) ? "a cavallo: ha fame, non galoppa" : "a cavallo: maiusc per galoppare",
+      sotto && cavalli.affamato(sotto) ? "#c9b189" : "#9ec97e");
+  }
+  // Il fieno e la biada (W0.7).
+  if (esito.tipo === "cavalloNutrito") {
+    suono.suona(MANGIA, { tono: 0.7 });
+    annuncia(esito.affamato ? "mangia: domani galopperà di nuovo" : "mangia: il pasto di oggi è fatto", "#9ec97e");
+  }
+  if (esito.tipo === "mangiatoiaRiempita") {
+    suono.suona(POSA);
+    annuncia(`mangiatoia: ${esito.razioni}/${esito.massimo} razioni`, "#9ec97e");
+  }
+  if (esito.tipo === "mangiatoiaGuardata") {
+    suono.suona(SCELTA);
+    const quanti = esito.cavalli === 1 ? "1 cavallo" : `${esito.cavalli} cavalli`;
+    const prato = esito.prato > 0 ? `, prato per ${esito.prato}` : "";
+    const sazi = esito.razioni > 0 || esito.prato >= esito.cavalli;
+    annuncia(`mangiatoia: ${esito.razioni}/${esito.massimo} razioni, ${quanti}${prato}`, sazi ? "#c9b189" : "#c0705f");
   }
   if (esito.tipo === "scesoDaCavallo") {
     suono.suona(POSA);
@@ -1476,7 +1494,9 @@ function aggiorna(passo) {
     // galoppo non chiede fiato.
     eroe.aCavallo = cavalli.montato() !== null;
     eroe.fattoreVelocita = eroe.aCavallo ? meteo.fattoreVelocita(eroe) : bisogni.fattoreVelocita() * meteo.fattoreVelocita(eroe);
-    eroe.puoCorrere = eroe.aCavallo || bisogni.puoCorrere();
+    // Il galoppo è del cavallo (W0.7): vuole che abbia mangiato e che abbia
+    // fiato. A piedi la corsa resta dello straniero.
+    eroe.puoCorrere = eroe.aCavallo ? cavalli.puoGaloppare() : bisogni.puoCorrere();
     for (const e of entita.tutte()) if (e.tipo === "infetto") e.fattoreMeteo = meteo.fattoreVelocita(e);
     entita.aggiorna(passo);
 
@@ -1547,6 +1567,7 @@ function aggiorna(passo) {
     const scuderia = cavalli.aggiorna(passo, eroe);
     cavalli.sgomitano(eroe);
     if (scuderia.slegati > 0) annuncia("il cavallo si è slegato: è rimasto indietro", "#c9b189");
+    if (scuderia.sfiancato) annuncia("il cavallo è sfiancato: va al trotto", "#c9b189");
     const morsi = infetti.raccogliIMorsi(eroe);
     if (morsi.morsi > 0) {
       lampoDanno = DURATA_LAMPO;
@@ -1660,7 +1681,7 @@ function aggiorna(passo) {
     if (messaggio.vita <= 0) messaggio = null;
   }
 
-  const { cavalliRubati, uovaDeposte, pulciniNati, pulciniCresciuti, polliNelloZaino, polloDomani, polliScappati, pulciniPersi, polliAffamati, polliDiFame, polliDiFreddo,
+  const { cavalliRubati, cavalliScappati, cavalliAffamati, uovaDeposte, pulciniNati, pulciniCresciuti, polliNelloZaino, polloDomani, polliScappati, pulciniPersi, polliAffamati, polliDiFame, polliDiFreddo,
     cresciute, appassite, seccate, alBuio, alChiuso, assetate, aSeme, mangiate, spentiLegna, spentiPioggia, torceFinite, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
 
   const arrivata = vestiLaValle();
@@ -1675,6 +1696,11 @@ function aggiorna(passo) {
   // del mattino, e il rimedio è uno solo — il recinto chiuso.
   if (cavalliRubati > 0) annuncia(cavalliRubati === 1 ? "stanotte i banditi ti hanno rubato il cavallo"
     : `stanotte i banditi ti hanno rubato ${cavalliRubati} cavalli`, "#c0705f");
+  // Poi la fame (W0.7): chi se n'è andato, e chi stamattina non galopperà.
+  else if (cavalliScappati > 0) annuncia(cavalliScappati === 1 ? "il cavallo affamato ha rotto la corda ed è scappato"
+    : `dei cavalli affamati sono scappati: ${cavalliScappati}`, "#c0705f");
+  else if (cavalliAffamati > 0) annuncia(cavalliAffamati === 1 ? "il cavallo ha fame: dagli fieno o biada"
+    : `dei cavalli hanno fame: ${cavalliAffamati}`, "#c9b189");
   else if (polliDiFreddo > 0) annuncia(`il freddo si è portato via dei polli: ${polliDiFreddo}`, "#c0705f");
   else if (polliDiFame > 0) annuncia(`dei polli sono morti di fame: ${polliDiFame}`, "#c0705f");
   else if (polliNelloZaino > 0) annuncia("il pollo nello zaino è morto", "#c0705f");
@@ -1983,6 +2009,8 @@ function disegnaInterfaccia() {
     alFreddo: Boolean(gelando),
     infetto: salute.eInfetto(),
     inseguito: infetti.inseguono() > 0 || fauna.tutte().some(e => e.stato === "aggressivo"),
+    // Il fiato del cavallo, solo in sella (W0.7).
+    cavallo: cavalli.montato(),
   });
   hud.disegnaOrologio(p, {
     giorno: tempo.giornoCorrente(),
