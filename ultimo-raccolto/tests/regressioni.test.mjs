@@ -4311,7 +4311,7 @@ test('il cancello in una fila verticale si vede di taglio: lungo da palo a palo,
 });
 
 // M7.18.30 — le piante selvatiche e gli orti inselvatichiti.
-const SELVATICHE=[OGGETTO.SPIGHE_SELVATICHE,OGGETTO.LINO_SELVATICO,OGGETTO.CAVOLO_SELVATICO,OGGETTO.PATATA_SELVATICA];
+const SELVATICHE=[OGGETTO.SPIGHE_SELVATICHE,OGGETTO.LINO_SELVATICO,OGGETTO.CAVOLO_SELVATICO,OGGETTO.PATATA_SELVATICA,OGGETTO.FAGIOLI_SELVATICI];
 const GIA_NELLA_VALLE=new Set([OGGETTO.ALBERO,OGGETTO.SASSO,OGGETTO.CESPUGLIO,OGGETTO.CASSA,OGGETTO.MURO,OGGETTO.MURO_ROTTO,
   OGGETTO.CARRO,OGGETTO.POZZO,OGGETTO.TRONCO,OGGETTO.GIACIGLIO,OGGETTO.FALO_SPENTO]);
 function valle(seme){
@@ -4324,7 +4324,7 @@ function valle(seme){
   }
   return {h,n,piante};
 }
-test("le piante selvatiche nascono solo dove prima non c'era niente, ognuna sul suo terreno",()=>{
+test("le piante selvatiche nascono solo negli orti abbandonati, e alberi, sassi e rovine non si spostano",()=>{
   // Le impronte di alberi, sassi, cespugli e rovine misurate con la
   // generazione di M7.18.29: non si è spostato niente. Per il seme 777 è
   // rimisurata a M7.18.31, quando alcuni piccoli luoghi sono diventati orti
@@ -4333,19 +4333,14 @@ test("le piante selvatiche nascono solo dove prima non c'era niente, ognuna sul 
   // M7.18.36 per i muretti e la cassa dell'orto della fattoria: senza l'annesso
   // tornano 1752206296 su 8823 e 167087167 su 7363.
   const impronte=[[12345,-1755284879,8831],[777,-187510781,7364]];
-  const TERRENI={[OGGETTO.SPIGHE_SELVATICHE]:TERRENO.STERPAGLIA,[OGGETTO.LINO_SELVATICO]:TERRENO.SABBIA,[OGGETTO.CAVOLO_SELVATICO]:TERRENO.ROCCIA};
   for(const [seme,h,n] of impronte){
     const v=valle(seme);assert.equal(v.h,h,'seme '+seme);assert.equal(v.n,n,'seme '+seme);
-    // Fuori dagli orti: quelli abbandonati e, da M7.18.36, quello della fattoria.
+    // Da M7.18.38 fuori dagli orti (quelli abbandonati e quello della
+    // fattoria) non ce n'è nessuna: né spighe sulla sterpaglia, né lino sulla
+    // riva, né cavolo sulle rocce.
     const fuori=v.piante.filter(p=>!generazione.inselvatichitaNellOrto(p.x,p.y,p.o));
-    for(const o of Object.keys(TERRENI).map(Number))assert.ok(fuori.some(p=>p.o===o),'ci sono: '+o);
-    for(const p of fuori){
-      assert.notEqual(p.o,OGGETTO.PATATA_SELVATICA,'la patata solo negli orti');
-      assert.notEqual(p.o,OGGETTO.FAGIOLI_SELVATICI,'i fagioli solo negli orti');
-      assert.equal(p.t,TERRENI[p.o]);
-    }
-    // Poche: meno dei cespugli.
-    assert.ok(v.piante.length<n/4);
+    assert.deepEqual(fuori,[],'seme '+seme);
+    assert.ok(v.piante.length>=8,'negli orti sì: '+v.piante.length);
   }
 });
 test('ogni orto abbandonato ha otto piante inselvatichite, due varietà una per fila, fra grano, lino, patate, fagioli e cavolo',()=>{
@@ -4408,18 +4403,20 @@ test('una pianta selvatica raccolta torna il primo giorno di primavera, e si sal
   for(let r=1;r<80&&!trovata;r++)for(let dy=-r;dy<=r&&!trovata;dy++)for(let dx=-r;dx<=r;dx++){
     if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;
     const x=tx+dx,y=ty+dy;
-    if(mappa.oggettoGenerato(x,y)===OGGETTO.SPIGHE_SELVATICHE){trovata={x,y};break;}
+    // Da M7.18.38 le piante selvatiche stanno solo negli orti: la prima di un
+    // orto con davanti un tassello libero da cui raccoglierla.
+    const o=mappa.oggettoGenerato(x,y);
+    if(generazione.INSELVATICHITE.includes(o)&&mappa.oggettoDi(x,y)===o&&mappa.oggettoDi(x-1,y)===OGGETTO.NESSUNO){trovata={x,y,o};break;}
   }
-  assert.ok(trovata,'spighe vicino alla fattoria');
-  const {x,y}=trovata;
-  assert.equal(mappa.oggettoDi(x,y),OGGETTO.SPIGHE_SELVATICHE);
+  assert.ok(trovata,'una pianta di un orto vicino alla fattoria');
+  const {x,y,o}=trovata;
   tempo.impostaGiorno(6);
   assert.equal(azioni.agisci({...pos(x-1,y),guarda:'destra'},null)?.tipo,'raccolto');
   assert.equal(mappa.oggettoDi(x,y),OGGETTO.NESSUNO);
   const stato=salvataggio.istantanea(eroe,0);assert.ok(salvataggio.applica(stato));
   assert.equal(mappa.oggettoDi(x,y),OGGETTO.NESSUNO);
   tempo.impostaGiorno(9);ricrescita.nuovoGiorno();assert.equal(mappa.oggettoDi(x,y),OGGETTO.NESSUNO,"d'inverno no");
-  tempo.impostaGiorno(13);ricrescita.nuovoGiorno();assert.equal(mappa.oggettoDi(x,y),OGGETTO.SPIGHE_SELVATICHE);
+  tempo.impostaGiorno(13);ricrescita.nuovoGiorno();assert.equal(mappa.oggettoDi(x,y),o);
 });
 
 // M7.18.31 — gli orti abbandonati si trovano.

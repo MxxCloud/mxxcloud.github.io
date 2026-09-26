@@ -12,6 +12,15 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.38 — piante selvatiche solo negli orti
+
+Le piante selvatiche crescono **solo negli orti abbandonati**, compreso quello
+della fattoria. Non ci sono più spighe sulla sterpaglia, lino sulla riva né
+cavolo sulle rocce: i semi si vanno a prendere negli orti. Alberi, sassi,
+cespugli e rovine restano esattamente dove erano. Nelle partite già
+salvate le piante della prateria spariscono, e quelle già raccolte non
+tornano.
+
 ## M7.18.37 — gli orti abbandonati cambiano a ogni partita
 
 Le piante degli orti abbandonati si **estraggono a caso a ogni nuova
@@ -138,6 +147,8 @@ si raccolgono con un colpo come i cespugli:
 | Lino selvatico | sabbia della riva | 1 fibra; 2 semi di lino (estate e autunno 40%, primavera 10%) |
 | Cavolo selvatico | fra le rocce | 2 semi di cavolo (estate 40%, primavera 30%, autunno 20%) |
 | Patata inselvatichita | solo negli orti abbandonati | 1 patata (estate e autunno 60%, primavera 20%) |
+
+(Da M7.18.38 tutte crescono solo negli orti abbandonati, vedi sopra.)
 
 D'inverno i semi non escono mai. Come per i cespugli, quello che una pianta
 dà dipende dalla stagione e dal tassello, non dal caso. Se non dà niente, il
@@ -1994,7 +2005,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.37**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.38**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

@@ -587,7 +587,10 @@ export const RACCOLTA = {
   // per la sete era perso per sempre se non restava una casa da frugare.
   // Come il cespuglio: un colpo, la resa che dipende dalla stagione — i semi
   // quando la pianta ha fiorito, d'inverno niente — e tornano in primavera.
-  // Poco per volta: sono un rimedio da cercare, non un campo gratis.
+  // Poco per volta: sono un rimedio da cercare, non un campo gratis. Da
+  // M7.18.38 crescono solo negli orti abbandonati, dove la resa è garantita
+  // (vedi resaDi in azioni.js): le probabilità qui sotto restano per chi le
+  // trovasse altrove.
   [OGGETTO.SPIGHE_SELVATICHE]: {
     verbo: "Raccogli le spighe",
     colpi: 1,
