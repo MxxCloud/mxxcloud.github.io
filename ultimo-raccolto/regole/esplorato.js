@@ -127,7 +127,62 @@ export function ripristinaOrti(elenco) {
   for (const k of elenco) if (typeof k === "string" && /^-?\d+,-?\d+$/.test(k)) ortiVisti.add(k);
 }
 
+// I segnaposti del giocatore (M7.18.41): un simbolo e un testo breve messi
+// sulla mappa con il mirino — «qui c'è il lino», «qui gli infetti». Stanno
+// qui accanto a quello che hai visto perché sono la stessa cosa detta da te.
+export const TIPI_SEGNO = ["stella", "pericolo", "risorsa", "rifugio"];
+export const SEGNI_MASSIMI = 200;
+export const TESTO_MASSIMO = 16;
+const TESTO_AMMESSO = /^[A-Z0-9 -]*$/;
+const segnaposti = [];
+
+function segnoValido(s) {
+  return s && Number.isInteger(s.tx) && Number.isInteger(s.ty) && TIPI_SEGNO.includes(s.tipo) &&
+    typeof s.testo === "string" && s.testo.length <= TESTO_MASSIMO && TESTO_AMMESSO.test(s.testo);
+}
+
+// Restituisce se l'ha messo: oltre il tetto, o storto, no.
+export function aggiungiSegno(tx, ty, tipo, testo = "") {
+  const segno = { tx: Math.round(tx), ty: Math.round(ty), tipo, testo: String(testo).toUpperCase().trim().slice(0, TESTO_MASSIMO) };
+  if (segnaposti.length >= SEGNI_MASSIMI || !segnoValido(segno)) return false;
+  segnaposti.push(segno);
+  return true;
+}
+
+// Toglie il segno più vicino entro il raggio, in tasselli; restituisce quello
+// tolto, o null.
+export function togliSegnoVicino(tx, ty, raggio) {
+  let migliore = -1;
+  let distanza = raggio;
+  segnaposti.forEach((s, i) => {
+    const d = Math.hypot(s.tx - tx, s.ty - ty);
+    if (d <= distanza) {
+      distanza = d;
+      migliore = i;
+    }
+  });
+  return migliore < 0 ? null : segnaposti.splice(migliore, 1)[0];
+}
+
+export function segni() {
+  return segnaposti.map((s) => ({ ...s }));
+}
+
+export function ripristinaSegni(elenco) {
+  segnaposti.length = 0;
+  if (!Array.isArray(elenco)) return;
+  for (const s of elenco) {
+    if (segnaposti.length >= SEGNI_MASSIMI) break;
+    if (segnoValido(s)) segnaposti.push({ tx: s.tx, ty: s.ty, tipo: s.tipo, testo: s.testo });
+  }
+}
+
+export function segnoValidoPerIlSalvataggio(s) {
+  return !!segnoValido(s);
+}
+
 export function svuota() {
+  segnaposti.length = 0;
   ortiVisti.clear();
   visti.clear();
   ultimoTx = null;

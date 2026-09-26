@@ -12,6 +12,23 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.41 — i tuoi segni sulla mappa
+
+Sulla mappa (TAB) puoi mettere **segni tuoi**, con un simbolo e un nome
+breve, per esempio «LINO» o «INFETTI».
+- Al centro della mappa c'è un **mirino**: sposti la vista con WASD o le
+  frecce e punti il posto.
+- **F** mette un segno sotto il mirino:
+  - si sceglie il simbolo fra stella, pericolo, risorsa e rifugio, con A/D o
+    i tasti 1–4, e si conferma con la barra;
+  - poi si scrive il nome, fino a 16 lettere, cifre o spazi, e si conferma
+    con Invio. Il nome si può anche lasciare vuoto.
+  - Esc annulla.
+- **X** toglie il segno più vicino al mirino.
+- I nomi dei segni si leggono da vicino e a zoom medio, come quelli dei
+  luoghi. La legenda mostra anche i quattro simboli.
+- I segni si salvano con la partita; se ne possono mettere al massimo 200.
+
 ## M7.18.40 — la mappa ricorda le piante degli orti
 
 Quando arrivi a un orto abbandonato (compare il suo nome), la mappa se lo
@@ -2038,7 +2055,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.40**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.41**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

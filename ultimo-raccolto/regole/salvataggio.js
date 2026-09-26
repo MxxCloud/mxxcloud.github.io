@@ -125,6 +125,9 @@ export function istantanea(eroe, casellaScelta) {
     // settori. Un salvataggio che non ce l'ha si riapre senza, e il formato
     // non sale.
     ortiVisti: esplorato.tuttiGliOrti(),
+    // I segnaposti messi sulla mappa (M7.18.41). Come sopra: senza, si
+    // riapre senza segni, e il formato non sale.
+    segnaposti: esplorato.segni(),
   };
 }
 
@@ -316,6 +319,8 @@ export function valido(stato) {
     if (typeof k !== "string" || !/^-?\d+,-?\d+$/.test(k)) return false;
     return k.split(",").every(n => intero(Number(n)));
   }))) return false;
+  if (!presente(stato, "segnaposti", v => Array.isArray(v) && v.length <= esplorato.SEGNI_MASSIMI &&
+    v.every(esplorato.segnoValidoPerIlSalvataggio))) return false;
   if (!presente(stato, "ortiVisti", v => Array.isArray(v) && v.length <= 100000 &&
     v.every(k => typeof k === "string" && /^-?\d+,-?\d+$/.test(k)))) return false;
   return true;
@@ -377,6 +382,7 @@ export function applica(stato) {
   addosso.ripristina(stato.addosso);
   esplorato.ripristina(stato.esplorato);
   esplorato.ripristinaOrti(stato.ortiVisti);
+  esplorato.ripristinaSegni(stato.segnaposti);
 
   return {
     eroe: stato.eroe,

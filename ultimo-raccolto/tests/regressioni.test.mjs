@@ -30,6 +30,7 @@ import * as mappa from '../mondo/mappa.js';
 import * as modifiche from '../mondo/modifiche.js';
 import * as salvataggio from '../regole/salvataggio.js';
 import * as esplorato from '../regole/esplorato.js';
+import * as comandi from '../motore/comandi.js';
 import * as riparo from '../regole/riparo.js';
 import * as freddo from '../regole/freddo.js';
 import * as fiamma from '../regole/fiamma.js';
@@ -4703,4 +4704,42 @@ test("la mappa dice le piante di un orto solo dopo che lo hai visitato, e il sal
   const sorgente=readFileSync(new URL('../interfaccia/mappa.js',import.meta.url),'utf8');
   assert.match(sorgente,/esplorato\.ortoVisto\(rovina\) \? pianteDellOrto\(rovina\)/);
   esplorato.svuota();
+});
+
+// M7.18.41 — i segnaposti del giocatore sulla mappa.
+test("sulla mappa si mettono e si tolgono segni propri, con un simbolo e un testo breve, e il salvataggio li tiene",async()=>{
+  reset();esplorato.svuota();
+  assert.deepEqual(esplorato.TIPI_SEGNO,['stella','pericolo','risorsa','rifugio']);
+  assert.equal(esplorato.aggiungiSegno(10,20,'pericolo','infetti'),true);
+  assert.equal(esplorato.aggiungiSegno(40,20,'risorsa','acqua buona e lino'),true);
+  assert.equal(esplorato.aggiungiSegno(0,0,'drago','x'),false,'tipo ignoto');
+  assert.deepEqual(esplorato.segni(),[{tx:10,ty:20,tipo:'pericolo',testo:'INFETTI'},{tx:40,ty:20,tipo:'risorsa',testo:'ACQUA BUONA E LI'}]);
+  // Si toglie il più vicino al mirino, e solo entro il raggio.
+  assert.equal(esplorato.togliSegnoVicino(25,20,3),null);
+  assert.equal(esplorato.togliSegnoVicino(11,21,3).testo,'INFETTI');
+  assert.equal(esplorato.segni().length,1);
+  // Il salvataggio.
+  const eroe={...pos(0,0),guarda:'giu'};
+  const stato=salvataggio.istantanea(eroe,0);assert.equal(stato.segnaposti.length,1);
+  esplorato.svuota();assert.ok(salvataggio.applica(stato));assert.equal(esplorato.segni()[0].testo,'ACQUA BUONA E LI');
+  const vecchio=structuredClone(stato);delete vecchio.segnaposti;
+  assert.ok(salvataggio.applica(vecchio));assert.deepEqual(esplorato.segni(),[]);
+  for(const storto of [{tx:1,ty:2,tipo:'drago',testo:''},{tx:1.5,ty:2,tipo:'stella',testo:''},{tx:1,ty:2,tipo:'stella',testo:'X'.repeat(17)},{tx:1,ty:2,tipo:'stella',testo:'<b>'}]){
+    assert.equal(salvataggio.valido({...stato,segnaposti:[storto]}),false,JSON.stringify(storto));
+  }
+  // Un tetto, perché un salvataggio non cresca senza fine.
+  esplorato.svuota();
+  for(let i=0;i<esplorato.SEGNI_MASSIMI;i++)assert.equal(esplorato.aggiungiSegno(i,0,'stella',''),true);
+  assert.equal(esplorato.aggiungiSegno(999,0,'stella',''),false);
+  esplorato.svuota();assert.deepEqual(esplorato.segni(),[]);
+  // Lo spazio entra solo nelle scritture che lo chiedono.
+  comandi.iniziaScrittura(16,{spazi:true});comandi.scrivi({key:'a'});comandi.scrivi({key:' '});comandi.scrivi({key:'b'});
+  assert.equal(comandi.testoScritto(),'A B');comandi.fineScrittura();
+  comandi.iniziaScrittura(16);comandi.scrivi({key:'a'});comandi.scrivi({key:' '});comandi.scrivi({key:'b'});
+  assert.equal(comandi.testoScritto(),'AB');comandi.fineScrittura();
+  // La mappa: F mette, X toglie, con il mirino al centro.
+  const sorgente=readFileSync(new URL('../interfaccia/mappa.js',import.meta.url),'utf8');
+  assert.match(sorgente,/comandi\.appenaPremuto\("esporta"\)/);assert.match(sorgente,/comandi\.appenaPremuto\("spegni"\)/);
+  assert.match(sorgente,/mirino\(c, centro\.x, centro\.y, u\)/);assert.match(sorgente,/segnoTuo\(c, segnato\.tipo/);
+  assert.match(sorgente,/F  METTI SEGNO/);
 });
