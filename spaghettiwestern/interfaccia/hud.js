@@ -636,13 +636,14 @@ export function disegnaIniziale(p, { schermata, riga, stagione, versione }) {
 
   // Il nome a grandezza doppia: è l'unica scritta del gioco che non è
   // un'informazione, e deve sembrare un titolo e non un'altra riga.
-  const nome = "ULTIMO RACCOLTO";
+  // Per un pugno di semi (W0.2): il western all'italiana, con un orto.
+  const nome = "PER UN PUGNO DI SEMI";
   p.save();
   p.scale(2, 2);
   testo.disegna(p, nome, Math.round((schermo.LARGHEZZA / 2 - testo.larghezza(nome)) / 2), 22, CHIARO);
   p.restore();
 
-  const domanda = schermata === "titolo" ? "DI GIORNO SI RACCOGLIE, DI NOTTE SERVE LUCE"
+  const domanda = schermata === "titolo" ? "DI GIORNO SI SCAVA, DI NOTTE SI SPARA (NON TU)"
     : schermata === "stagione" ? "NUOVA PARTITA: DA QUALE STAGIONE?"
       : `NUOVA PARTITA, ${stagione.toUpperCase()}: DA QUALE GIORNO?`;
   testo.disegna(p, domanda, centro(domanda), 60, GRIGIO);

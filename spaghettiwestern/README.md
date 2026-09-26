@@ -1,4 +1,6 @@
-# Spaghetti western
+# Per un pugno di semi
+
+*(all'indirizzo `/spaghettiwestern/`)*
 
 Una copia di **Ultimo raccolto**, presa alla versione **M7.18.41** (PR #92), su
 cui provare un cambio radicale di ambientazione: il western all'italiana.
@@ -15,6 +17,28 @@ L'originale resta fermo e giocabile a `/ultimo-raccolto/`; questa vive a
 Come l'originale non ha server né dipendenze: è HTML, CSS e JavaScript serviti
 così come sono. Tutto quello che segue è la storia di Ultimo raccolto fino al
 punto della copia.
+
+## W0.2 — il deserto e il titolo
+
+Il gioco si chiama **Per un pugno di semi**: un western all'italiana con un
+orto. Questa prima fase cambia solo l'aspetto; le regole e la forma del mondo
+sono quelle di prima (stesse colline, laghi e case).
+- **Il deserto di frontiera.** L'erba è secca e gialla, la sterpaglia è
+  salvia grigio-verde, la roccia è la pietra rossa delle mesas, la sabbia è
+  quella calda del deserto, e l'acqua è un rio fangoso. Le stagioni restano:
+  estate secca, autunno ocra, inverno brinato col rio che gela, primavera col
+  deserto in fiore.
+- **Saguari e mesquite** al posto degli alberi: stesso oggetto, si abbattono
+  e danno legna («legna di cactus»). Quale dei due c'è lo decide il posto,
+  quindi resta sempre lo stesso. I saguari non cambiano colore con le
+  stagioni.
+- **Cespugli del deserto**, più bassi e ispidi, con le bacche ancora rosse.
+- **Il cespuglio rotolante**: di giorno, ogni tanto, una palla di sterpi
+  attraversa la scena col vento. È solo decoro: non urta niente e non si
+  raccoglie.
+- **La carta (TAB)** con i colori del deserto.
+- **Il titolo** «PER UN PUGNO DI SEMI», con il sottotitolo «Di giorno si
+  scava, di notte si spara (non tu)», anche nella scheda e nell'app.
 
 ## W0.1 — la copia
 

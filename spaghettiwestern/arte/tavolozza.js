@@ -1,4 +1,8 @@
-// Tavolozza condivisa di Ultimo raccolto.
+// Tavolozza condivisa di Per un pugno di semi (da Ultimo raccolto).
+//
+// Da W0.2 è quella di un deserto di frontiera al confine col Messico: sabbia
+// calda, erba secca, salvia, la pietra rossa delle mesas e un rio fangoso.
+// Le chiavi sono le stesse di prima, quindi ogni disegno si riveste da sé.
 //
 // Ogni colore ha una chiave di un solo carattere perché gli sprite sono scritti
 // come righe di testo (vedi sprite.js): un carattere per pixel tiene una riga di
@@ -14,9 +18,9 @@ export const TAVOLOZZA = {
   ".": null, // trasparente
 
   // Acqua, dalla buca alla riva.
-  "1": "#1d3a4a",
-  "2": "#27556a",
-  "3": "#4a8090",
+  "1": "#1f3c46",
+  "2": "#2a5a66",
+  "3": "#4b8690",
 
   // Ghiaccio distinto dall'acqua profonda anche nella tavolozza invernale.
   //
@@ -35,38 +39,45 @@ export const TAVOLOZZA = {
   C: "#7498ab",
 
   // Sabbia e ghiaia della riva.
-  "4": "#a8905f",
-  "5": "#c9b189",
+  "4": "#b98a52",
+  "5": "#d8b27a",
 
   // Erba viva.
-  "6": "#2f4a26",
-  "7": "#3f5f2d",
-  "8": "#557a38",
+  "6": "#6f6a36",
+  "7": "#8c8443",
+  "8": "#aa9d55",
 
   // Sterpaglia: erba andata a seme, il colore dell'incuria. Sta vicina
   // all'erba di proposito — è lo stesso prato più avanti nell'abbandono, non
   // un altro clima. Tinte più gialle facevano leggere un campo di grano.
-  "9": "#6b6b3a",
-  a: "#83804a",
+  "9": "#6c7157",
+  a: "#8a8f6d",
 
   // Terra battuta e zolle.
-  b: "#5a4430",
-  c: "#75583c",
+  b: "#7a5536",
+  c: "#96693f",
 
   // Roccia, grigio-bruna e non grigio-azzurra: la pietra fredda in una valle
   // calda di fine estate si legge come cemento.
-  d: "#3b3a35",
-  e: "#55534a",
-  f: "#6e6b5f",
+  d: "#5a2e22",
+  e: "#86442f",
+  f: "#a65d3b",
 
   // Legno: tronchi, assi, recinti.
   g: "#3b2a1c",
   h: "#56402a",
 
-  // Chiome degli alberi.
-  i: "#24401f",
-  j: "#355a26",
-  k: "#48742f",
+  // Chiome degli alberi: da Per un pugno di semi (W0.2) il verde-oliva
+  // polveroso del mesquite, l'unico albero che il deserto si concede.
+  i: "#3d4726",
+  j: "#56602f",
+  k: "#717b3b",
+
+  // Il cactus (W0.2): tre verdi freddi e polverosi, fuori dalle vesti delle
+  // stagioni — un saguaro non ingiallisce in autunno e non fiorisce a comando.
+  F: "#2f4b3f",
+  H: "#46694f",
+  I: "#6b8f6a",
 
   // Pelle.
   l: "#a06e4e",
@@ -146,8 +157,8 @@ export const TAVOLOZZA = {
 // sembrerebbe vuoto.
 export const TAVOLOZZA_BAGNATA = {
   ...TAVOLOZZA,
-  b: "#3b2c1e",
-  c: "#4e3a26",
+  b: "#4f3620",
+  c: "#654527",
   g: "#221a11",
 };
 
@@ -170,12 +181,12 @@ export const FOGLIE_ASSETATE = {
 // La terra grassa non ha un colore suo: più scura si confonderebbe proprio
 // con quella bagnata, e lo dice il tasto quando si semina.
 export const TERRA_STANCA = {
-  b: "#66513d",
-  c: "#836a50",
+  b: "#8a6a4c",
+  c: "#a3835f",
 };
 export const TERRA_SFINITA = {
-  b: "#706656",
-  c: "#8c8170",
+  b: "#948672",
+  c: "#ab9d86",
 };
 
 // --- gli infetti ----------------------------------------------------------
@@ -227,14 +238,14 @@ const VESTI = {
   // questo è giusto: in autunno l'erba raggiunge la sterpaglia, non il
   // contrario.
   autunno: {
-    "6": "#4a3b23",
-    "7": "#63502c",
-    "8": "#8a6430",
-    "9": "#7a6f35",
-    a: "#968447",
-    i: "#4a3218",
-    j: "#7a5320",
-    k: "#a8762c",
+    "6": "#7a5a2c",
+    "7": "#946c33",
+    "8": "#b0843f",
+    "9": "#7a6a45",
+    a: "#968456",
+    i: "#5a4a24",
+    j: "#7a6230",
+    k: "#94793a",
   },
 
   // L'inverno non è bianco. Una valle coperta di neve vorrebbe tasselli nuovi
@@ -246,14 +257,14 @@ const VESTI = {
     // era grigio-verde e finiva sulla stessa tinta della roccia: un campo e
     // una pietraia indistinguibili sono peggio di una stagione che non si
     // vede, perché tolgono la lettura del terreno invece di un colore.
-    "6": "#56605c",
-    "7": "#68746e",
-    "8": "#7d8a83",
-    "9": "#6f7466",
-    a: "#888c7c",
-    i: "#2e2a22",
-    j: "#463d2f",
-    k: "#5c5040",
+    "6": "#8a8674",
+    "7": "#a19c88",
+    "8": "#bbb59f",
+    "9": "#8e9180",
+    a: "#a7aa98",
+    i: "#4a4a38",
+    j: "#626246",
+    k: "#7a7a58",
   },
 
   // La primavera è l'unica più viva della base: verdi più freddi e più chiari,
@@ -261,14 +272,14 @@ const VESTI = {
   // verdi leggermente diversi a colpo d'occhio sono la stessa stagione, ed è
   // il motivo per cui la primavera fiorisce (vedi sprite-fiori.js).
   primavera: {
-    "6": "#2b4f28",
-    "7": "#3c6b31",
-    "8": "#56913f",
-    "9": "#6f7c3e",
-    a: "#8a9455",
-    i: "#26471f",
-    j: "#3a6b28",
-    k: "#55913a",
+    "6": "#55702f",
+    "7": "#6c8a38",
+    "8": "#8aa84a",
+    "9": "#6f8458",
+    a: "#8ea070",
+    i: "#3f5a26",
+    j: "#577a30",
+    k: "#74983f",
   },
 };
 
