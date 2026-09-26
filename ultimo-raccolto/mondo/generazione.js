@@ -238,10 +238,17 @@ const COSTRUITO = {
 // L'orto abbandonato (M7.18.30): le piante delle aiuole non sono morte, sono
 // inselvatichite. Da M7.18.32 lo sono tutte e otto, e ogni orto ne ha due
 // varietà, una per fila — le colture di chi se n'è andato: grano, lino,
-// patate e fagioli. Il cavolo selvatico resta fra le rocce. Quali due lo dice
+// patate, fagioli e, da M7.18.33, cavolo. Quali due lo dice
 // l'origine dell'orto, quindi un orto ha sempre le sue, e sapere dov'è
 // "l'orto del lino e dei fagioli" è una cosa che si impara girando.
-const INSELVATICHITE = [OGGETTO.SPIGHE_SELVATICHE, OGGETTO.LINO_SELVATICO, OGGETTO.PATATA_SELVATICA, OGGETTO.FAGIOLI_SELVATICI];
+export const INSELVATICHITE = [OGGETTO.SPIGHE_SELVATICHE, OGGETTO.LINO_SELVATICO, OGGETTO.PATATA_SELVATICA,
+  OGGETTO.FAGIOLI_SELVATICI, OGGETTO.CAVOLO_SELVATICO];
+
+// Questa pianta sta in un orto abbandonato? Serve alla raccolta, che lì non
+// tira a sorte, e al disegno, che d'inverno la mostra secca.
+export function inselvatichitaNellOrto(x, y, oggetto) {
+  return INSELVATICHITE.includes(oggetto) && luogoIn(x, y)?.luogo === "orto";
+}
 
 // Le due varietà di questo orto, sempre diverse fra loro.
 export function varietaDellOrto(r, seme) {

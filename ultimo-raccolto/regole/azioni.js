@@ -513,7 +513,9 @@ function sulTassello(eroe, cosaInMano, indice) {
     // strumento() lo sa, e qui si vede da solo nel numero di colpi che manca.
     const attrezzo = COLPI_DURI.has(b.oggetto) ? strumento(cosaInMano, indice, "raccolta") : cosaInMano;
     const restano = Math.max(1, colpiNecessari(b.oggetto, attrezzo) - gia);
-    return { tipo: "raccogli", verbo: raccolta.verbo, restano, bersaglio: b };
+    // D'inverno la pianta dell'orto è secca, e il tasto lo dice prima.
+    const secca = stagioni.stagioneCorrente() === "inverno" && mappa.inselvatichitaNellOrto(b.tx, b.ty, b.oggetto);
+    return { tipo: "raccogli", verbo: secca ? "Strappa la pianta secca" : raccolta.verbo, restano, bersaglio: b };
   }
   const terreno = mappa.terrenoDi(b.tx, b.ty);
   const acqua = terreno === TERRENO.ACQUA || terreno === TERRENO.ACQUA_BASSA;
@@ -1114,8 +1116,10 @@ function resaDi(raccolta, tx, ty) {
   const ottenuto = [];
   // Negli orti abbandonati le piante inselvatichite danno sempre (M7.18.32):
   // sono state coltivate, e l'orto è il posto dove si va apposta per i semi.
-  // Quelle della prateria restano un terno secondo la stagione.
-  const coltivata = mappa.luogoIn(tx, ty)?.luogo === "orto";
+  // Quelle della prateria restano un terno secondo la stagione. D'inverno però
+  // (M7.18.33) quelle dell'orto sono secche, e danno solo la fibra.
+  const coltivata = mappa.inselvatichitaNellOrto(tx, ty, mappa.oggettoDi(tx, ty));
+  if (coltivata && stagioni.stagioneCorrente() === "inverno") return [{ cosa: "fibra", quante: 1 }];
   raccolta.resa.forEach((voce, i) => {
     if (voce.probabilita !== undefined && !coltivata) {
       const soglia = stagioni.valoreStagionale(voce.probabilita);
