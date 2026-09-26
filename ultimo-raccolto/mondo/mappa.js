@@ -15,7 +15,8 @@ import * as luoghiArte from "../arte/sprite-luoghi.js";
 import * as coseArte from "../arte/sprite-cose.js";
 import * as ortoArte from "../arte/sprite-orto.js";
 import * as transizioniArte from "../arte/sprite-transizioni.js";
-import { TERRENO, OGGETTO, terrenoIn, oggettoIn, preparaRovine, inselvatichitaNellOrto } from "./generazione.js";
+import { TERRENO, OGGETTO, terrenoIn, oggettoIn, preparaRovine, inselvatichitaNellOrto,
+  impostaSorteggioDegliOrti, sorteggioDegliOrti } from "./generazione.js";
 import * as modifiche from "./modifiche.js";
 import { TAVOLOZZA, TAVOLOZZA_BAGNATA, FOGLIE_ASSETATE, TERRA_STANCA, TERRA_SFINITA } from "../arte/tavolozza.js";
 
@@ -420,6 +421,14 @@ function collegaSteccato(tx, ty) {
 export function scordaSettori() {
   settori.clear();
 }
+
+// Le piante degli orti abbandonati di questa partita (M7.18.37, vedi
+// generazione.js). I settori già disegnati hanno addosso quelle di prima.
+export function impostaOrti(n) {
+  impostaSorteggioDegliOrti(n);
+  settori.clear();
+}
+export { sorteggioDegliOrti };
 
 // C'è qualcosa di acceso entro questo raggio di tasselli? Serve al freddo, e
 // serve che sia una domanda sul mondo e non sull'inquadratura: lumiVisibili()

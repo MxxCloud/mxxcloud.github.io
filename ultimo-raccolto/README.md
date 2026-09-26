@@ -12,6 +12,24 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.37 — gli orti abbandonati cambiano a ogni partita
+
+Le piante degli orti abbandonati si **estraggono a caso a ogni nuova
+partita**. La valle resta la stessa (case, luoghi, alberi, gli orti stessi
+nello stesso posto), ma quali due varietà ha ogni orto cambia da una partita
+all'altra: dove trovare il lino o il grano va scoperto ogni volta. Le regole
+restano quelle di prima:
+- due varietà diverse per orto, una per fila, fra grano, lino, patate,
+  fagioli e cavolo;
+- dentro la stessa partita un orto ha sempre le sue due, anche dopo un
+  salvataggio e un caricamento, e anche per un superstite nuovo dopo una
+  morte;
+- **l'orto della fattoria resta sempre fagioli e patate.**
+
+Il numero estratto si salva con la partita. Un salvataggio scritto prima di
+questa versione si riapre con gli orti che aveva. Con `?orti=N`
+nell'indirizzo si fissa il numero e si rifà una partita con gli stessi orti.
+
 ## M7.18.36 — un orto abbandonato vero, sotto la prima casa
 
 L'orto della fattoria adesso è **un orto abbandonato come gli altri**, subito
@@ -1976,7 +1994,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.36**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.37**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

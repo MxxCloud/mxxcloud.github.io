@@ -4587,3 +4587,61 @@ test("la fattoria di partenza ha il suo orto abbandonato sotto la prima casa, co
   tempo.impostaGiorno(13);ricrescita.nuovoGiorno();
   for(const p of [fagiolo,patata,altro])assert.equal(mappa.oggettoDi(p.tx,p.ty),ATTESO[p.c]);
 });
+
+// M7.18.37 — le piante degli orti abbandonati si estraggono a ogni partita.
+test("gli orti abbandonati cambiano piante a ogni partita nuova, l'orto della fattoria no, e il salvataggio se le ricorda",()=>{
+  const ammesse=generazione.INSELVATICHITE;
+  const orti=[];
+  for(let seme=1;seme<=40&&orti.length<12;seme++){
+    generazione.preparaRovine(seme);
+    for(let cy=-3;cy<=3;cy++)for(let cx=-3;cx<=3;cx++){const r=generazione.rovinaNellaCella(cx,cy);if(r?.luogo==='orto')orti.push({r,seme});}
+  }
+  assert.ok(orti.length>=8);
+  const fila=(r,seme,segno)=>{const out=[];for(let y=0;y<r.altezza;y++)for(let x=0;x<r.larghezza;x++)if(r.pianta[y][x]===segno){const tx=r.tx0+x,ty=r.ty0+y;out.push(generazione.oggettoIn(tx,ty,seme,generazione.terrenoIn(tx,ty,seme)));}return out;};
+  let cambiati=0;
+  for(const {r,seme} of orti){
+    generazione.preparaRovine(seme);
+    generazione.impostaSorteggioDegliOrti(0);const prima=generazione.varietaDellOrto(r,seme);
+    const coppie=new Set();
+    for(const n of [1,2,3,0xdeadbeef,123456789,4294967295]){
+      generazione.impostaSorteggioDegliOrti(n);
+      const v=generazione.varietaDellOrto(r,seme);
+      // Sempre due varietà diverse fra le cinque, una per fila, e sempre quelle con lo stesso numero.
+      assert.notEqual(v[0],v[1]);assert.ok(v.every(o=>ammesse.includes(o)));
+      assert.deepEqual(generazione.varietaDellOrto(r,seme),v);
+      assert.deepEqual(fila(r,seme,'s'),[v[0],v[0],v[0],v[0]]);assert.deepEqual(fila(r,seme,'u'),[v[1],v[1],v[1],v[1]]);
+      coppie.add(v.join('-'));
+    }
+    if([...coppie].some(c=>c!==prima.join('-')))cambiati++;
+    assert.ok(coppie.size>=2,'lo stesso orto cambia da una partita all\'altra');
+  }
+  assert.equal(cambiati,orti.length);
+  // Con zero, gli orti di prima: un salvataggio vecchio si riapre com'era.
+  generazione.impostaSorteggioDegliOrti(0);
+  // L'orto della fattoria è sempre fagioli e patate.
+  for(const n of [0,7,0xdeadbeef]){
+    mappa.inizializza('review');mappa.impostaOrti(n);
+    const a=mappa.rovinaNellaCella(0,0).annesso;
+    for(let y=0;y<a.altezza;y++)for(let x=0;x<a.larghezza;x++){
+      const c=a.pianta[y][x];if(c!=='b'&&c!=='q')continue;
+      const tx=a.tx0+x,ty=a.ty0+y;
+      assert.equal(generazione.oggettoIn(tx,ty,mappa.semeCorrente().valore,generazione.terrenoIn(tx,ty,mappa.semeCorrente().valore)),c==='b'?OGGETTO.FAGIOLI_SELVATICI:OGGETTO.PATATA_SELVATICA);
+    }
+  }
+  // Il salvataggio: il numero va e torna; senza il campo si riparte da zero.
+  reset();const eroe={...pos(0,0),guarda:'giu'};
+  mappa.impostaOrti(2024);
+  const stato=salvataggio.istantanea(eroe,0);assert.equal(stato.orti,2024);
+  mappa.impostaOrti(5);assert.ok(salvataggio.applica(stato));assert.equal(mappa.sorteggioDegliOrti(),2024);
+  const vecchio=structuredClone(stato);delete vecchio.orti;
+  assert.ok(salvataggio.applica(vecchio));assert.equal(mappa.sorteggioDegliOrti(),0);
+  assert.equal(salvataggio.valido({...stato,orti:-1}),false);assert.equal(salvataggio.valido({...stato,orti:1.5}),false);
+  // Si estrae alla partita nuova, con crypto, e non per un superstite nuovo.
+  const src=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  const nuova=src.slice(src.indexOf('function avviaNuovaPartita'),src.indexOf('function estraiOrti'));
+  assert.match(nuova,/mappa\.impostaOrti\(/);
+  assert.match(src.slice(src.indexOf('function estraiOrti'),src.indexOf('function estraiOrti')+200),/crypto\.getRandomValues/);
+  const superstite=src.slice(src.indexOf('function nuovoSuperstite'),src.indexOf('function nuovoSuperstite')+3000);
+  assert.doesNotMatch(superstite.slice(0,superstite.indexOf('\n}\n')),/impostaOrti|estraiOrti/);
+  mappa.impostaOrti(0);
+});

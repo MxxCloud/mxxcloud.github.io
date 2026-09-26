@@ -73,7 +73,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.36";
+const VERSIONE = "M7.18.37";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -227,9 +227,21 @@ function provaIlGiorno(giorno) {
 // Una partita nuova, dal giorno scelto. La valle, il superstite e lo zaino
 // sono già quelli di una partita nuova — la pagina si apre così — quindi
 // cominciarla vuol dire soltanto fissare il giorno e togliere il menu.
+//
+// E le piante degli orti abbandonati si estraggono qui (M7.18.37): ogni
+// partita nuova ha i suoi orti, e un superstite nuovo dopo una morte no — è
+// la stessa partita. Con crypto e non con Math.random, che in questo gioco
+// non esiste; "?orti=" nell'indirizzo lo fissa, per rifare una partita uguale.
 function avviaNuovaPartita(giorno) {
+  mappa.impostaOrti(parametri.has("orti") ? Number(parametri.get("orti")) : estraiOrti());
   provaIlGiorno(giorno);
   chiudiLIniziale();
+}
+
+function estraiOrti() {
+  const numero = new Uint32Array(1);
+  globalThis.crypto.getRandomValues(numero);
+  return numero[0];
 }
 
 // --- la morte -------------------------------------------------------------

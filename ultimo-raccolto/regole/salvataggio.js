@@ -80,6 +80,10 @@ export function istantanea(eroe, casellaScelta) {
     // Quando, in tempo vero: serve solo a far scegliere fra due salvataggi.
     quando: Date.now(),
     seme: mappa.semeCorrente().nome,
+    // Le piante degli orti abbandonati di questa partita (M7.18.37). Un
+    // salvataggio che non ce l'ha si riapre con 0, cioè con gli orti che
+    // aveva quando è stato scritto: il formato non sale.
+    orti: mappa.sorteggioDegliOrti(),
     ore: tempo.oraCorrente(),
     giorno: tempo.giornoCorrente(),
     eroe: { px: eroe.px, py: eroe.py, guarda: eroe.guarda },
@@ -299,6 +303,7 @@ export function valido(stato) {
   if (!presente(stato, "polli", polli.statoValido)) return false;
   if (!presente(stato, "addosso", addosso.statoValido)) return false;
   if (!presente(stato, "bagnato", livelloValido)) return false;
+  if (!presente(stato, "orti", n => intero(n) && n >= 0 && n <= 0xffffffff)) return false;
   if (!presente(stato, "salute", livelloValido) || !presente(stato, "infezione", v => typeof v === "boolean")) return false;
   if (!presente(stato, "bisogni", v => oggetto(v) && bisogni.ELENCO.every(k => presente(v, k, livelloValido)))) return false;
   if (!presente(stato, "inventario", v => filaValida(v, inventario.CASELLE))) return false;
@@ -343,6 +348,7 @@ export function applica(stato) {
   try { stato = structuredClone(stato); } catch { return null; }
 
   if (stato.seme !== mappa.semeCorrente().nome) mappa.inizializza(stato.seme);
+  mappa.impostaOrti(stato.orti ?? 0);
 
   modifiche.svuota();
   for (const voce of stato.modifiche ?? []) {
