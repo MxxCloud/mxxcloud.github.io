@@ -12,20 +12,37 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.36 — un orto abbandonato vero, sotto la prima casa
+
+L'orto della fattoria adesso è **un orto abbandonato come gli altri**, subito
+a sud della prima casa: si esce dalla porta sud, si attraversa il campo e ci
+si trova davanti allo spaventapasseri. È uguale agli altri orti per aspetto e
+funzioni:
+- muretti crollati, spaventapasseri rotto, due aiuole da 4 piante e una
+  cassa col bottino degli orti;
+- entrando compare «Orto abbandonato», e sulla mappa (TAB) ha il suo segno
+  verde accanto a quello della fattoria.
+
+Le piante sono sempre **4 fagioli** nella prima fila e **4 patate** nella
+seconda, con le regole degli orti:
+- dalla primavera all'autunno danno sempre;
+- d'inverno sono secche e danno solo fibra;
+- tornano ogni primavera.
+
+Le due file nel campo di M7.18.35 non ci sono più: il campo è tornato terra
+battuta da zappare. La fattoria sta esattamente dove stava in ogni valle, e
+l'orto ci si aggiunge sotto. Il terreno sotto l'orto non si controlla,
+altrimenti in alcune valli la fattoria si sarebbe spostata. In circa una
+valle su otto l'orto arriva quindi fino alla riva, o dentro un po' d'acqua:
+dove ha un segno la terra è battuta, e ci si arriva sempre dal campo.
+
 ## M7.18.35 — l'orto della fattoria
 
-La fattoria da cui si comincia ha adesso anche **il suo orto abbandonato**,
-nel campo davanti alle case. Ha una fila di **4 fagioli** e una di **4
-patate**, sempre quelli: il loro raccolto è anche il seme, quindi è la
-prima cosa che si raccoglie e il primo orto del giocatore nasce da qui. Segue
-le regole degli altri orti abbandonati:
-- dalla primavera all'autunno le piante danno sempre, 2 fagioli o 1 patata;
-- d'inverno sono secche e danno solo fibra;
-- tornano ogni primavera, anche se si è zappata la terra.
-
-La fattoria ha la stessa misura di prima, quindi in ogni valle sta
-esattamente dove stava. Il resto del campo davanti resta terra battuta da
-zappare.
+La fattoria da cui si comincia ha anche **il suo orto abbandonato**, con
+**4 fagioli** e **4 patate**, sempre quelli. Il loro raccolto è anche il
+seme, quindi è la prima cosa che si raccoglie e il primo orto del giocatore
+nasce da qui. (Qui erano due file nel campo davanti alle case; da M7.18.36 è
+un orto abbandonato vero, vedi sopra.)
 
 ## M7.18.34 — gli orti abbandonati tornano comunque
 
@@ -1959,7 +1976,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.35**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.36**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

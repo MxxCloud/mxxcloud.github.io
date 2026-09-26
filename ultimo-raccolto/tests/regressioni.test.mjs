@@ -1,6 +1,6 @@
 import * as riposo from "../regole/riposo.js";
 import { createHash } from 'node:crypto';
-import { LUOGHI } from '../arte/luoghi.js';
+import { LUOGHI, ORTO_DELLA_FATTORIA } from '../arte/luoghi.js';
 import * as spriteLuoghi from '../arte/sprite-luoghi.js';
 import * as rovine from '../mondo/rovine.js';
 import * as ricrescita from '../regole/ricrescita.js';
@@ -4329,12 +4329,14 @@ test("le piante selvatiche nascono solo dove prima non c'era niente, ognuna sul 
   // generazione di M7.18.29: non si è spostato niente. Per il seme 777 è
   // rimisurata a M7.18.31, quando alcuni piccoli luoghi sono diventati orti
   // (vedi DIVENTA_ORTO in rovine.js): con DIVENTA_ORTO a zero torna quella
-  // di M7.18.29, 2028556980 su 7358 oggetti.
-  const impronte=[[12345,1752206296,8823],[777,167087167,7363]];
+  // di M7.18.29, 2028556980 su 7358 oggetti. Tutte e due rimisurate a
+  // M7.18.36 per i muretti e la cassa dell'orto della fattoria: senza l'annesso
+  // tornano 1752206296 su 8823 e 167087167 su 7363.
+  const impronte=[[12345,-1755284879,8831],[777,-187510781,7364]];
   const TERRENI={[OGGETTO.SPIGHE_SELVATICHE]:TERRENO.STERPAGLIA,[OGGETTO.LINO_SELVATICO]:TERRENO.SABBIA,[OGGETTO.CAVOLO_SELVATICO]:TERRENO.ROCCIA};
   for(const [seme,h,n] of impronte){
     const v=valle(seme);assert.equal(v.h,h,'seme '+seme);assert.equal(v.n,n,'seme '+seme);
-    // Fuori dagli orti: quelli abbandonati e, da M7.18.35, quello della fattoria.
+    // Fuori dagli orti: quelli abbandonati e, da M7.18.36, quello della fattoria.
     const fuori=v.piante.filter(p=>!generazione.inselvatichitaNellOrto(p.x,p.y,p.o));
     for(const o of Object.keys(TERRENI).map(Number))assert.ok(fuori.some(p=>p.o===o),'ci sono: '+o);
     for(const p of fuori){
@@ -4534,23 +4536,41 @@ test('in primavera le piante degli orti abbandonati tornano anche sulla terra za
   assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.TERRA_ZAPPATA);
 });
 
-// M7.18.35 — l'orto della fattoria di partenza.
-test("la fattoria di partenza ha il suo orto: quattro fagioli e quattro patate, con le regole degli orti abbandonati",()=>{
-  // La misura non cambia, quindi la fattoria sta dove stava.
-  assert.equal(FATTORIA.length,8);assert.ok(FATTORIA.every(r=>r.length===20));
-  const segni=FATTORIA.join('');
-  assert.equal(segni.split('b').length-1,4);assert.equal(segni.split('q').length-1,4);
-  for(const [seme,x0,y0] of [['valle-1',1,1],['valle-3',27,16],['review',1,9]]){
+// M7.18.36 — l'orto della fattoria di partenza: un orto abbandonato come gli
+// altri, subito a sud della prima casa (in M7.18.35 erano due file nel campo).
+test("la fattoria di partenza ha il suo orto abbandonato sotto la prima casa, come gli altri, sempre fagioli e patate",()=>{
+  // La pianta è quella degli orti, con le due file già decise.
+  const orto=LUOGHI.find(l=>l.id==='orto').pianta;
+  assert.deepEqual(ORTO_DELLA_FATTORIA,orto.map(r=>r.replaceAll('s','b').replaceAll('u','q')));
+  assert.equal(ORTO_DELLA_FATTORIA.join('').split('b').length-1,4);assert.equal(ORTO_DELLA_FATTORIA.join('').split('q').length-1,4);
+  // La fattoria è tornata quella di prima, e sta dove stava.
+  assert.equal(FATTORIA.length,8);assert.ok(FATTORIA.every(r=>r.length===20));assert.ok(!/[bq]/.test(FATTORIA.join('')));
+  for(const [seme,x0,y0] of [['valle-1',1,1],['valle-3',27,16],['review',1,9],['valle-2',1,1],['inverno',30,19]]){
     mappa.inizializza(seme);const r=mappa.rovinaNellaCella(0,0);
     assert.deepEqual([r.tx0,r.ty0],[x0,y0],'fattoria di '+seme);
+    // Subito a sud della prima casa, sotto le due righe di campo.
+    assert.deepEqual([r.annesso.tx0,r.annesso.ty0],[x0,y0+8],'orto di '+seme);
+    assert.equal(r.annesso.luogo,'orto');assert.equal(r.annesso.nome,'Orto abbandonato');
   }
+  // Dalla porta sud della casa si scende sul campo e si arriva allo spaventapasseri.
+  assert.equal(FATTORIA[5].slice(0,8),'####%###');assert.equal(FATTORIA[6][4],'.');assert.equal(FATTORIA[7][4],'.');
+  assert.equal(ORTO_DELLA_FATTORIA[0][4],'p');
   reset();
-  const r=mappa.rovinaNellaCella(0,0);
-  const posti=[];
-  FATTORIA.forEach((riga,y)=>[...riga].forEach((c,x)=>{if(c==='b'||c==='q')posti.push({tx:r.tx0+x,ty:r.ty0+y,c});}));
+  const r=mappa.rovinaNellaCella(0,0),a=r.annesso;
   // Il reset dei collaudi svuota i dintorni della fattoria: qui si torna al mondo.
-  for(const p of posti)mappa.cambiaTassello(p.tx,p.ty,null);
-  for(const p of posti)assert.equal(mappa.oggettoDi(p.tx,p.ty),p.c==='b'?OGGETTO.FAGIOLI_SELVATICI:OGGETTO.PATATA_SELVATICA);
+  const posti=[];
+  ORTO_DELLA_FATTORIA.forEach((riga,y)=>[...riga].forEach((c,x)=>{mappa.cambiaTassello(a.tx0+x,a.ty0+y,null);posti.push({tx:a.tx0+x,ty:a.ty0+y,c});}));
+  const ATTESO={b:OGGETTO.FAGIOLI_SELVATICI,q:OGGETTO.PATATA_SELVATICA,p:OGGETTO.SPAVENTAPASSERI_ROTTO,'%':OGGETTO.MURO_ROTTO,c:OGGETTO.CASSA};
+  for(const p of posti)if(ATTESO[p.c]!==undefined)assert.equal(mappa.oggettoDi(p.tx,p.ty),ATTESO[p.c],p.c+' in '+p.tx+','+p.ty);
+  // È un orto abbandonato per tutti: il nome all'arrivo, la sua cassa, il suo segno sulla mappa.
+  assert.equal(mappa.luogoIn(a.tx0+2,a.ty0+1)?.nome,'Orto abbandonato');
+  assert.equal(mappa.luogoIn(a.tx0+4,a.ty0+a.altezza+2,3)?.nome,'Orto abbandonato');
+  assert.equal(mappa.luogoIn(r.tx0+10,r.ty0+3),null,'la fattoria non è un luogo');
+  const cassa=posti.find(p=>p.c==='c'),pile=contenitori.contenutoDi(cassa.tx,cassa.ty).filter(Boolean);
+  const DELL_ORTO=['semi','semi_cavolo','patata','grano','fibra','zappa'];
+  assert.ok(pile.length>=1&&pile.length<=2);for(const p of pile)assert.ok(DELL_ORTO.includes(p.cosa),p.cosa);
+  assert.match(readFileSync(new URL('../interfaccia/mappa.js',import.meta.url),'utf8'),/\[trovata, trovata\.annesso\]/);
+  // Le regole degli orti abbandonati.
   const fagiolo=posti.find(p=>p.c==='b'),patata=posti.find(p=>p.c==='q');
   const raccogli=(p)=>azioni.agisci({...pos(p.tx-1,p.ty),guarda:'destra'},null)?.tipo;
   // D'estate danno sempre: due fagioli e una patata, cioè i semi del primo orto.
@@ -4565,5 +4585,5 @@ test("la fattoria di partenza ha il suo orto: quattro fagioli e quattro patate, 
   // In primavera tornano, anche sulla terra zappata.
   modifiche.imposta(patata.tx,patata.ty,{oggetto:OGGETTO.TERRA_ZAPPATA,fertilita:0});
   tempo.impostaGiorno(13);ricrescita.nuovoGiorno();
-  for(const p of [fagiolo,patata,altro])assert.equal(mappa.oggettoDi(p.tx,p.ty),p.c==='b'?OGGETTO.FAGIOLI_SELVATICI:OGGETTO.PATATA_SELVATICA);
+  for(const p of [fagiolo,patata,altro])assert.equal(mappa.oggettoDi(p.tx,p.ty),ATTESO[p.c]);
 });

@@ -66,13 +66,10 @@ export const CROLLO = [
 // seminare senza aver prima trovato una zappa — il campo di qualcun altro è
 // ancora un campo.
 //
-// E da M7.18.35 c'è anche il suo orto abbandonato: una fila di fagioli ("b")
-// e una di patate ("q") inselvatichiti, con le regole degli altri orti (vedi
-// generazione.js). È la prima cosa che si raccoglie, e insegna come va: danno
-// sempre dalla primavera all'autunno, d'inverno sono secchi, e tornano.
-// Fagioli e patate perché il loro raccolto è anche il seme: il primo orto
-// del giocatore nasce da qui. Stessa misura di prima, quindi la fattoria sta
-// dove stava in ogni valle.
+// E da M7.18.36 ha il suo orto abbandonato, subito a sud della casa: non sta
+// in questa pianta ma accanto, come annesso (vedi cercaLaFattoria in
+// rovine.js), perché è un orto come gli altri — stessi muretti, stesso
+// spaventapasseri, stessa cassa — e la sua pianta è quella degli orti.
 export const FATTORIA = [
   "###%####            ",
   "#......#.....#######",
@@ -80,8 +77,8 @@ export const FATTORIA = [
   "%......#.....%..c..#",
   "#....c.#.....#.....%",
   "####%###.....##%####",
-  " ..bb.bb........... ",
-  "  .qq.qq..........  ",
+  " .................. ",
+  "  ................  ",
 ];
 
 // Il paese. Sei case attorno a una strada, ed è l'unica pianta in cui una

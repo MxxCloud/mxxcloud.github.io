@@ -42,3 +42,10 @@ export const LUOGHI = [
     " %%...%% ",
   ] },
 ];
+
+// L'orto della fattoria di partenza (M7.18.36): la pianta degli orti, con le
+// due file già decise — "b" fagioli e "q" patate, sempre. È la prima cosa che
+// si raccoglie, e il raccolto di fagioli e patate è anche il loro seme: il
+// primo orto del giocatore nasce da qui.
+const ORTO = LUOGHI.find((l) => l.id === "orto");
+export const ORTO_DELLA_FATTORIA = ORTO.pianta.map((riga) => riga.replaceAll("s", "b").replaceAll("u", "q"));
