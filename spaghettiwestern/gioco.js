@@ -64,6 +64,7 @@ import { nomeDi, CATALOGO } from "./regole/oggetti.js";
 import * as hud from "./interfaccia/hud.js";
 import * as minimappa from "./interfaccia/minimappa.js";
 import * as mappaGrande from "./interfaccia/mappa.js";
+import * as rotolacampo from "./interfaccia/rotolacampo.js";
 import * as tinte from "./interfaccia/tinte.js";
 import * as esplorato from "./regole/esplorato.js";
 
@@ -73,7 +74,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "W0.1";
+const VERSIONE = "W0.2";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1514,6 +1515,8 @@ function aggiorna(passo) {
     udito.avanza(passo, eroe);
 
     scheggie.aggiorna(passo);
+    // Il cespuglio rotolante (W0.2): decoro, di giorno.
+    rotolacampo.aggiorna(passo, { giorno: !tempo.eNotte() });
     // Si tiene aggiornata anche da spenta: scorrerla costa due centesimi di
     // millisecondo, ricostruirla da zero quasi trenta. Meglio pagare sempre
     // il poco che pagare il molto ogni volta che la si riaccende.
@@ -1682,7 +1685,8 @@ function disegna() {
 
   inPiedi.length = 0;
   for (const o of oggetti) inPiedi.push(o);
-  for (const e of [...entita.daDisegnare(), ...fauna.daDisegnare(), ...polli.daDisegnare()]) {
+  const rotolante = rotolacampo.daDisegnare();
+  for (const e of [...entita.daDisegnare(), ...fauna.daDisegnare(), ...polli.daDisegnare(), ...(rotolante ? [rotolante] : [])]) {
     if (schermo.visibile(e.x, e.y, e.sprite.width, e.sprite.height)) inPiedi.push(e);
   }
   // Chi ha i piedi più in basso è più vicino a chi guarda, quindi va disegnato
@@ -2061,6 +2065,7 @@ if (parametri.has("diagnostica")) {
     messaggio: () => (messaggio ? messaggio.testo : null),
     minimappa,
     mappaGrande,
+    rotolacampo,
     esplorato,
     minimappaAccesa: () => minimappaVisibile,
     mappaAperta: () => mappaAperta,

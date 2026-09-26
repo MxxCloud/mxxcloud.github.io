@@ -39,29 +39,31 @@ const BOSCO = 20;
 const MURO = 21;
 
 // I colori della carta: piatti, uno per cosa, scelti perché si distinguano a
-// colpo d'occhio. Non sono quelli del gioco, che sono screziati e vicini fra
-// loro — l'erba e la sterpaglia, da lontano, erano lo stesso verde.
+// colpo d'occhio.
+// Da Per un pugno di semi (W0.2) sono quelli del deserto di frontiera: sabbia,
+// erba secca, salvia, la pietra rossa delle mesas. L'acqua resta blu, perché
+// sulla carta di un deserto è la cosa da trovare.
 const CARTA = {
   [TERRENO.ACQUA]: "#2f5f8c",
   [TERRENO.ACQUA_BASSA]: "#5b95c2",
   [TERRENO.GHIACCIO]: "#cfe2ee",
-  [TERRENO.SABBIA]: "#e3d29c",
-  [TERRENO.ERBA]: "#86b56c",
-  [TERRENO.STERPAGLIA]: "#bfb872",
-  [TERRENO.ROCCIA]: "#9d9a92",
-  [TERRENO.TERRA]: "#b08658",
-  [BOSCO]: "#3f7a3c",
+  [TERRENO.SABBIA]: "#e6c58e",
+  [TERRENO.ERBA]: "#c9b66a",
+  [TERRENO.STERPAGLIA]: "#a3a67e",
+  [TERRENO.ROCCIA]: "#b0613f",
+  [TERRENO.TERRA]: "#a8764a",
+  [BOSCO]: "#5f7a45",
   [MURO]: "#4b3a2b",
 };
-// D'inverno la valle è sotto la neve anche sulla carta.
+// D'inverno il deserto alto si imbianca di brina anche sulla carta.
 const CARTA_INVERNO = {
   ...CARTA,
-  [TERRENO.SABBIA]: "#e7e0cb",
-  [TERRENO.ERBA]: "#d3ddd6",
-  [TERRENO.STERPAGLIA]: "#dcd8c6",
-  [TERRENO.ROCCIA]: "#b7b5b0",
+  [TERRENO.SABBIA]: "#e8dcc4",
+  [TERRENO.ERBA]: "#d6d2c0",
+  [TERRENO.STERPAGLIA]: "#c4c6b4",
+  [TERRENO.ROCCIA]: "#b98a74",
   [TERRENO.TERRA]: "#b9a58c",
-  [BOSCO]: "#6f8f7c",
+  [BOSCO]: "#7f8f78",
 };
 
 const FONDO = "#15171c";

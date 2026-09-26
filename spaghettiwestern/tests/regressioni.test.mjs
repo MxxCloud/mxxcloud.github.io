@@ -4754,3 +4754,53 @@ test("sulla mappa si mettono e si tolgono segni propri, con un simbolo e un test
   assert.match(sorgente,/mirino\(c, centro\.x, centro\.y, u\)/);assert.match(sorgente,/segnoTuo\(c, segnato\.tipo/);
   assert.match(sorgente,/F  METTI SEGNO/);
 });
+
+// --- Per un pugno di semi (W0.2): il deserto e il titolo ---------------------
+
+test("il deserto: il cactus ha i suoi verdi, che le stagioni non toccano",()=>{
+  for(const k of ['F','H','I'])assert.ok(TAVOLOZZA[k],'chiave '+k);
+  for(const stagione of ['estate','autunno','inverno','primavera']){
+    const t=tavolozzaDi(stagione);
+    for(const k of ['F','H','I'])assert.equal(t[k],TAVOLOZZA[k],stagione+' '+k);
+  }
+  // La roccia è quella rossa delle mesas: il rosso vince sul blu.
+  const [r,,b]=[1,3,5].map(i=>parseInt(TAVOLOZZA.e.slice(i,i+2),16));
+  assert.ok(r>b+40,'roccia rossa');
+});
+test("gli alberi del deserto: saguaro o mesquite secondo il posto, sempre lo stesso",async()=>{
+  const arte=await import('../arte/sprite-oggetti.js');
+  const visti=new Set();
+  for(let x=0;x<60;x++)for(let y=0;y<10;y++){
+    const d=mappa.disegnoDellAlbero(x,y);
+    assert.equal(mappa.disegnoDellAlbero(x,y),d);
+    assert.ok(d===arte.SAGUARO||d===arte.MESQUITE);visti.add(d);
+  }
+  assert.equal(visti.size,2,'compaiono tutti e due');
+  for(const righe of [arte.SAGUARO,arte.MESQUITE,arte.CESPUGLIO]){
+    assert.ok(righe.every(r=>r.length===16));
+    for(const c of righe.join(''))assert.ok(c==='.'||Object.hasOwn(TAVOLOZZA,c),c);
+  }
+  // Il saguaro usa i verdi del cactus.
+  assert.ok(/[FHI]/.test(arte.SAGUARO.join('')));
+});
+test("il cespuglio rotolante: di giorno ogni tanto passa, di notte no, e non tocca il mondo",async()=>{
+  const r=await import('../interfaccia/rotolacampo.js');
+  r.inizializza(7);
+  r.aggiorna(200,{giorno:false});assert.equal(r.attiva(),null,'di notte non parte');
+  r.aggiorna(200,{giorno:true});const p=r.attiva();assert.ok(p,'di giorno sì');
+  let passi=0;while(r.attiva()&&passi<3000){r.aggiorna(1/60,{giorno:true});passi++;}
+  assert.equal(r.attiva(),null,'e se ne va');assert.ok(passi>60,'dopo aver attraversato lo schermo');
+  const sorgente=readFileSync(new URL('../interfaccia/rotolacampo.js',import.meta.url),'utf8');
+  const importi=[...sorgente.matchAll(/^import .* from "(.*)";$/gm)].map(m=>m[1]);
+  assert.deepEqual(importi,['../motore/schermo.js','../motore/casuale.js','../arte/sprite.js'],'solo schermo, caso e disegno');
+  assert.doesNotMatch(sorgente.replace(/\/\/.*$/gm,''),/Math\.random/);
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/rotolacampo\.aggiorna\(passo, \{ giorno: !tempo\.eNotte\(\) \}\)/);
+});
+test("il titolo è Per un pugno di semi, nel gioco, nella pagina e nell'app",()=>{
+  const leggi=(f)=>readFileSync(new URL('../'+f,import.meta.url),'utf8');
+  assert.match(leggi('interfaccia/hud.js'),/const nome = "PER UN PUGNO DI SEMI";/);
+  assert.match(leggi('index.html'),/<title>Per un pugno di semi<\/title>/);
+  const manifesto=JSON.parse(leggi('manifest.webmanifest'));
+  assert.equal(manifesto.name,'Per un pugno di semi');assert.equal(manifesto.short_name,'Pugno di semi');
+});

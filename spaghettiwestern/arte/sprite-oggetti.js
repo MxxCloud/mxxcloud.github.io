@@ -7,33 +7,63 @@
 // alto a sinistra: è ciò che fa passare il superstite davanti o dietro
 // all'albero a seconda di dove ha i piedi (vedi l'ordinamento in mappa.js).
 
-// Chioma larga, tronco stretto: la silhouette deve leggersi anche quando metà
-// albero è coperta da un altro albero.
-export const ALBERO = [
-  "......iiii......",
-  "....iijjjjii....",
-  "...ijjjjjjjjji..",
-  "..ijjjkkkjjjjji.",
-  ".ijjjkkkkkjjjji.",
-  ".ijjkkkkkkkjjji.",
-  "ijjjkkkkkkkjjjji",
-  "ijjkkkkkkkkkjjji",
-  "ijjkkkkkkkkkjjji",
-  "ijjjkkkkkkkjjjji",
-  ".ijjjkkkkkjjjji.",
-  ".iijjjkkkjjjjii.",
-  "..iijjjjjjjjii..",
-  "...iiijjjjiii...",
-  ".....iiiiii.....",
-  "......ghhg......",
-  "......ghhg......",
-  "......ghhg......",
-  "......ghhg......",
-  "......ghhg......",
-  ".....gghhgg.....",
-  "....gghhhhgg....",
-  "...ggg....ggg...",
+// Gli alberi del deserto (W0.2). ALBERO resta un oggetto solo, con le sue
+// regole — si abbatte, dà legna, ferma il passo — ma si disegna in due modi:
+// il saguaro, il cactus a candelabro che è il western stesso, e il mesquite,
+// l'alberello storto e spinoso delle pianure di confine. Quale dei due lo
+// decide la posizione (vedi disegnoDellAlbero in mondo/mappa.js), quindi un
+// albero è sempre lo stesso. «Legna di cactus» è un'ironia voluta.
+//
+// Il saguaro ha i suoi verdi (F, H, I) fuori dalle vesti delle stagioni: un
+// cactus non ingiallisce in autunno. Il mesquite usa quelli delle chiome, e
+// cambia colore con l'anno come prima faceva l'albero.
+export const SAGUARO = [
+  "......FHHF......",
+  ".....FHIIHF.....",
+  ".....FHIIHF.....",
+  ".....FHIIHF.....",
+  ".....FHIHHF.....",
+  ".....FHIHHF..FF.",
+  ".FF..FHIHHF.FHHF",
+  "FHHF.FHIHHF.FHIF",
+  "FHIF.FHIHHF.FHIF",
+  "FHIF.FHIHHF.FHIF",
+  "FHIHFFHIHHF.FHIF",
+  "FHIHHHHIHHFFHIHF",
+  ".FHHHHHIHHHHHHF.",
+  "..FFFFHIHHFFFF..",
+  ".....FHIHHF.....",
+  ".....FHIHHF.....",
+  ".....FHIHHF.....",
+  ".....FHIHHF.....",
+  ".....FHIHHF.....",
+  ".....FHIHHF.....",
+  ".....FHHHHF.....",
+  "....44FFFF44....",
+  "...4455555544...",
 ];
+
+export const MESQUITE = [
+  "................",
+  "....iij..jii....",
+  "..iijjjjijjkji..",
+  ".ijjkkjjjjkkjji.",
+  "ijjkkkkjjkkkkjji",
+  "ijkkkkkjkkkkkkji",
+  ".ijjkkjjjjkkjji.",
+  "..iijji..ijjii..",
+  "....iig..gii....",
+  "......gh.g......",
+  ".......hg.......",
+  ".......hg.......",
+  "......ghh.......",
+  "......ghh.......",
+  ".....gghhg......",
+  "....gg..hgg.....",
+];
+
+// Il nome di prima resta, per chi chiede «un albero» senza sapere dove.
+export const ALBERO = MESQUITE;
 
 export const SASSO = [
   "......dddd......",
@@ -228,17 +258,20 @@ export const SPAVENTAPASSERI_ROTTO = [
   ".....dghd.......",
 ];
 
+// Il cespuglio del deserto (W0.2): più basso e più ispido di quello della
+// valle, rami a punta invece di una palla di foglie. Le bacche, dove ci sono,
+// restano rosse: sono ancora uno dei due colori da trovare.
 export const CESPUGLIO = [
   "................",
-  "......jjjj......",
-  "....jjkkkkjj....",
-  "...jkkkkkkkkj...",
-  "..jkkkkkkkkkkj..",
-  ".jkkkkkkkkkkkkj.",
-  ".jkkkkkkkkkkkkj.",
-  "jjkkkkkkkkkkkkjj",
-  "jjkkkkkkkkkkkkjj",
-  ".jjkkkkkkkkkkjj.",
-  "..ijjkkkkkkjji..",
-  "....iijjjjii....",
+  "................",
+  "....j..k..j.....",
+  "..j.jk.j.kj.j...",
+  "...jkjkjkjkj..j.",
+  ".j.kjkkjkkjkjj..",
+  "..jkkjkkkjkkjkj.",
+  ".jjkkkjkjkkkjjj.",
+  "jjkkjkkkkkjkkjjj",
+  ".ijjkkjkkjkkjji.",
+  "..iijjjjjjjjii..",
+  "....iiiiiiii....",
 ];

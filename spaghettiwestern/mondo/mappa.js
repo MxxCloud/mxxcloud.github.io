@@ -45,6 +45,13 @@ const CATALOGO = {
 // Il cespuglio si attraversa: serve a sporcare la vista e a nascondere, non a
 // bloccare. Alberi e sassi fermano, e fermano l'intero tassello — più preciso
 // di così, a sedici pixel, il giocatore lo leggerebbe come un blocco casuale.
+// Quale albero sta su questo tassello: poco meno della metà sono saguari,
+// gli altri mesquite. Un'impronta delle coordinate e non un tiro, così lo
+// stesso albero resta lo stesso a ogni visita e dopo ogni caricamento.
+export function disegnoDellAlbero(tx, ty) {
+  return impronta(tx, ty, 0x5a6a0) < 0.45 ? oggettiArte.SAGUARO : oggettiArte.MESQUITE;
+}
+
 const CATALOGO_OGGETTI = {
   [OGGETTO.CARRO]: { sprite: luoghiArte.CARRO, solido: true },
   [OGGETTO.POZZO]: { sprite: luoghiArte.POZZO, solido: true },
@@ -702,6 +709,8 @@ function cuociSettore(sx, sy) {
           // E da M7.18.26 anche il cancello, che in una fila verticale si
           // gira con lei.
           : ortiSecchi && inselvatichitaNellOrto(tx, ty, oggetto) ? oggettiArte.PIANTA_SECCA
+          // Gli alberi del deserto (W0.2): saguaro o mesquite secondo il posto.
+          : oggetto === OGGETTO.ALBERO ? disegnoDellAlbero(tx, ty)
           : oggetto === OGGETTO.CANCELLO || oggetto === OGGETTO.CANCELLO_APERTO
             ? coseArte.cancelloVerso(oggetto === OGGETTO.CANCELLO_APERTO,
               collegaSteccato(tx, ty - 1), collegaSteccato(tx, ty + 1),
