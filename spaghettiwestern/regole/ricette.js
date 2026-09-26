@@ -141,6 +141,19 @@ export const RICETTE = [
       { cosa: "legna", quante: 2 },
     ],
   },
+  // Il lazo (Per un pugno di semi W0.6): la reata dei vaqueros, cuoio
+  // intrecciato. Due pelli e quattro fili, al banco, ed è del secondo gradino
+  // due volte: la pelle vuole la caccia, il filo l'orto. È giusto che costi
+  // quanto la pelliccia — quello che ti dà è un cavallo.
+  {
+    id: "lazo",
+    banco: true,
+    produce: { cosa: "lazo", quante: 1 },
+    costo: [
+      { cosa: "pelle", quante: 2 },
+      { cosa: "filo", quante: 4 },
+    ],
+  },
   // La lenza è filo: con la fibra dei cespugli si lega una torcia, non si
   // tira fuori un pesce dall'acqua. È il motivo per cui la pesca arriva dopo
   // il primo lino, e non il primo giorno.

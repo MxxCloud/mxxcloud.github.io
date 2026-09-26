@@ -27,6 +27,7 @@ import * as fiamma from "./regole/fiamma.js";
 import * as addosso from "./regole/addosso.js";
 import * as fauna from "./regole/fauna.js";
 import * as polli from "./regole/polli.js";
+import * as cavalli from "./regole/cavalli.js";
 import * as infetti from "./regole/infetti.js";
 import * as riparo from "./regole/riparo.js";
 import * as chiasso from "./regole/chiasso.js";
@@ -56,6 +57,7 @@ import { FIORI } from "./arte/sprite-fiori.js";
 import {
   colpoDi, MORSO, COLPO_A_SEGNO, CADUTO, ZAPPA, SEMINA, ACQUA, SORSO, MANGIA,
   BENDA, POSA, SCELTA, FATTO, NEGATO, PRESO, GELO, MORTE, COPERCHIO, ROTTURA,
+  LAZO, NITRITO,
 } from "./arte/voci.js";
 import * as inventario from "./regole/inventario.js";
 import * as azioni from "./regole/azioni.js";
@@ -74,7 +76,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "W0.5";
+const VERSIONE = "W0.6";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -289,6 +291,8 @@ function muori(causa) {
   mortoDi = causa;
   suono.suona(MORTE);
   corpo = azioni.lasciaIlCadavere(eroe, tempo.giornoCorrente());
+  // Il cavallo su cui eri e quelli alla corda restano lì, liberi (W0.6).
+  cavalli.lasciaAndare(eroe);
   // Niente messaggio di passaggio: ce n'è una schermata intera che lo dice, e
   // un messaggio che svanisce dietro di essa sarebbe rumore.
   messaggio = null;
@@ -391,7 +395,7 @@ const ARRIVO = {
 // chi chiama deve poter dire "l'inverno ha preso l'orto" invece di due
 // messaggi che si coprono a vicenda.
 function vestiLaValle() {
-  const acquaCambiata = acqua.aggiorna([...entita.tutte(), ...fauna.tutte(), ...polli.tutte()]);
+  const acquaCambiata = acqua.aggiorna([...entita.tutte(), ...fauna.tutte(), ...polli.tutte(), ...cavalli.tutte()]);
   if (acquaCambiata.riportati.includes(eroe)) {
     pesca.interrompi();
     annuncia("il disgelo ti riporta a riva", "#8fb8d8");
@@ -1276,6 +1280,34 @@ function leggiComandi(passo) {
     suono.suona(FATTO);
     annuncia(`${esito.fuoco}: ${esito.legna}/${esito.massimo} legna`, "#e0913a");
   }
+  // Il cavallo (W0.6). Il lazo si sente partire e il cavallo nitrire: è la
+  // conferma che vale più della scritta, che dice cosa fare dopo.
+  if (esito.tipo === "lazoPreso") {
+    suono.suona(LAZO);
+    suono.suona(NITRITO);
+    annuncia("preso: è tuo, portalo al recinto", "#9ec97e");
+  }
+  if (esito.tipo === "cavalloLegato") {
+    suono.suona(POSA);
+    annuncia("il cavallo ti segue", "#9ec97e");
+  }
+  if (esito.tipo === "cavalloSlegato") {
+    suono.suona(POSA);
+    annuncia(esito.nelRecinto ? "il cavallo resta nel recinto" : "slegato fuori dal recinto: stanotte è dei banditi",
+      esito.nelRecinto ? "#9ec97e" : "#c9b189");
+  }
+  if (esito.tipo === "aCavallo") {
+    suono.suona(NITRITO, { tono: 1.15, volume: 0.6 });
+    // Si parte girati da dove si guardava, se era di lato: montare non deve
+    // voltare il cavallo.
+    if (eroe.guarda === "sinistra" || eroe.guarda === "destra") eroe.versoInSella = eroe.guarda;
+    annuncia("a cavallo: maiusc per galoppare", "#9ec97e");
+  }
+  if (esito.tipo === "scesoDaCavallo") {
+    suono.suona(POSA);
+    annuncia(esito.nelRecinto ? "il cavallo resta nel recinto" : "sceso: il cavallo resta qui, di notte non lasciarlo fuori",
+      esito.nelRecinto ? "#9ec97e" : "#c9b189");
+  }
   // Guardare è l'unica azione che non cambia niente, e serve a questo: la
   // fiamma è uguale con una legna e con quattro, quindi il conto va chiesto.
   // I polli e il pollaio (M7.18.18).
@@ -1439,8 +1471,12 @@ function aggiorna(passo) {
     // stanno sotto le regole e non devono sapere cos'è un inventario. Lo
     // stesso vale per la forma fisica: quanto si è in forze è una regola.
     eroe.impugnato = CATALOGO[cosaInMano()]?.impugnato ?? null;
-    eroe.fattoreVelocita = bisogni.fattoreVelocita() * meteo.fattoreVelocita(eroe);
-    eroe.puoCorrere = bisogni.puoCorrere();
+    // In sella (W0.6) la fame e la stanchezza sono del cavaliere, non del
+    // cavallo: si va alla velocità del cavallo, col tempo che fa, e il
+    // galoppo non chiede fiato.
+    eroe.aCavallo = cavalli.montato() !== null;
+    eroe.fattoreVelocita = eroe.aCavallo ? meteo.fattoreVelocita(eroe) : bisogni.fattoreVelocita() * meteo.fattoreVelocita(eroe);
+    eroe.puoCorrere = eroe.aCavallo || bisogni.puoCorrere();
     for (const e of entita.tutte()) if (e.tipo === "infetto") e.fattoreMeteo = meteo.fattoreVelocita(e);
     entita.aggiorna(passo);
 
@@ -1494,7 +1530,9 @@ function aggiorna(passo) {
     // mossi; le decisioni degli infetti dopo il chiasso, perché lo ascoltano.
     // Il morso invece si raccoglie dopo che si sono mossi loro: è l'unico
     // momento in cui si sa se il braccio è arrivato.
-    chiasso.avanza(passo, { corre: eroe.correndo, siMuove: eroe.inMovimento });
+    // Il galoppo fa il chiasso di una corsa (W0.6): chi va a cavallo di notte
+    // va veloce, non in silenzio.
+    chiasso.avanza(passo, { corre: eroe.correndo || eroe.galoppa, siMuove: eroe.inMovimento });
     const visto = infetti.decidi(passo, eroe, {
       luceInMano: Boolean(CATALOGO[cosaInMano()]?.luce),
     });
@@ -1506,6 +1544,9 @@ function aggiorna(passo) {
     // chi è finito dentro chi.
     fauna.sgomitano(eroe);
     polli.aggiorna(passo, eroe);
+    const scuderia = cavalli.aggiorna(passo, eroe);
+    cavalli.sgomitano(eroe);
+    if (scuderia.slegati > 0) annuncia("il cavallo si è slegato: è rimasto indietro", "#c9b189");
     const morsi = infetti.raccogliIMorsi(eroe);
     if (morsi.morsi > 0) {
       lampoDanno = DURATA_LAMPO;
@@ -1619,7 +1660,7 @@ function aggiorna(passo) {
     if (messaggio.vita <= 0) messaggio = null;
   }
 
-  const { uovaDeposte, pulciniNati, pulciniCresciuti, polliNelloZaino, polloDomani, polliScappati, pulciniPersi, polliAffamati, polliDiFame, polliDiFreddo,
+  const { cavalliRubati, uovaDeposte, pulciniNati, pulciniCresciuti, polliNelloZaino, polloDomani, polliScappati, pulciniPersi, polliAffamati, polliDiFame, polliDiFreddo,
     cresciute, appassite, seccate, alBuio, alChiuso, assetate, aSeme, mangiate, spentiLegna, spentiPioggia, torceFinite, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
 
   const arrivata = vestiLaValle();
@@ -1630,7 +1671,11 @@ function aggiorna(passo) {
   // dice in una frase sola invece che in due che si coprono.
   // I polli per primi: un animale morto è la notizia più grave del mattino, e
   // ognuna ha il suo rimedio — il pollaio, il mangime, il recinto.
-  if (polliDiFreddo > 0) annuncia(`il freddo si è portato via dei polli: ${polliDiFreddo}`, "#c0705f");
+  // Prima ancora, il cavallo (W0.6): un cavallo rubato è la notizia peggiore
+  // del mattino, e il rimedio è uno solo — il recinto chiuso.
+  if (cavalliRubati > 0) annuncia(cavalliRubati === 1 ? "stanotte i banditi ti hanno rubato il cavallo"
+    : `stanotte i banditi ti hanno rubato ${cavalliRubati} cavalli`, "#c0705f");
+  else if (polliDiFreddo > 0) annuncia(`il freddo si è portato via dei polli: ${polliDiFreddo}`, "#c0705f");
   else if (polliDiFame > 0) annuncia(`dei polli sono morti di fame: ${polliDiFame}`, "#c0705f");
   else if (polliNelloZaino > 0) annuncia("il pollo nello zaino è morto", "#c0705f");
   else if (pulciniPersi > 0) annuncia(pulciniPersi === 1 ? "un pulcino fuori dal recinto non ha passato la notte"
@@ -1745,7 +1790,7 @@ function disegna() {
   inPiedi.length = 0;
   for (const o of oggetti) inPiedi.push(o);
   const rotolante = rotolacampo.daDisegnare();
-  for (const e of [...entita.daDisegnare(), ...fauna.daDisegnare(), ...polli.daDisegnare(), ...(rotolante ? [rotolante] : [])]) {
+  for (const e of [...entita.daDisegnare(), ...fauna.daDisegnare(), ...polli.daDisegnare(), ...cavalli.daDisegnare(), ...(rotolante ? [rotolante] : [])]) {
     if (schermo.visibile(e.x, e.y, e.sprite.width, e.sprite.height)) inPiedi.push(e);
   }
   // Chi ha i piedi più in basso è più vicino a chi guarda, quindi va disegnato
@@ -1765,6 +1810,8 @@ function disegna() {
     p.fillStyle = "#e0913a"; p.fillRect(x-1,y-2,2,3);
     p.fillStyle = "#d9e8e8"; p.fillRect(x-1,y+1,2,1); p.restore();
   }
+
+  disegnaCorde();
 
   // Prima del buio, così di notte anche le scheggie si spengono con tutto il
   // resto invece di brillare sopra l'oscurità come scintille.
@@ -1813,6 +1860,31 @@ function disegnaBuio() {
     lumi.push({ x: v.da.x, y: v.da.y, raggio: 72, intensita: 0.95 * (v.resta / DURATA_VAMPA) });
   }
   oscurita.disegna(schermo.pennello(), tempo.luceAmbiente(), tempo.tintaOscurita(), lumi);
+}
+
+// La corda dei cavalli condotti (W0.6): dalla mano al collo, una riga di
+// pixel pieni del colore del cuoio, come la traccia degli spari. Sotto il
+// buio, perché è una cosa del mondo e di notte si spegne con lui.
+function disegnaCorde() {
+  const corde = cavalli.corde();
+  if (corde.length === 0) return;
+  const p = schermo.pennello();
+  const q = schermo.inquadratura();
+  const x0 = Math.round(eroe.impugnatura.x) - q.sinistra;
+  const y0 = Math.round(eroe.impugnatura.y) - q.sopra;
+  p.fillStyle = "#8a6a45";
+  for (const collo of corde) {
+    const dx = Math.round(collo.x) - q.sinistra - x0;
+    const dy = Math.round(collo.y) - q.sopra - y0;
+    const passi = Math.max(Math.abs(dx), Math.abs(dy), 1);
+    // Un poco lenta: la corda scende di un paio di pixel a metà, come una
+    // corda vera che non è tesa.
+    for (let i = 0; i <= passi; i += 1) {
+      const t = i / passi;
+      const pancia = Math.round(Math.sin(t * Math.PI) * 3);
+      p.fillRect(x0 + Math.round(dx * t), y0 + Math.round(dy * t) + pancia, 1, 1);
+    }
+  }
 }
 
 // La traccia e la vampa degli spari (W0.5), sopra il buio come il lampo:
@@ -1938,7 +2010,7 @@ function disegnaInterfaccia() {
   // Il promemoria dice "C COSTRUIRE", e con la cassa aperta "C" chiude: un
   // cartello che indica la porta sbagliata è peggio di nessun cartello.
   if (!cassaAperta) {
-    hud.disegnaPromemoria(p, barra, cosaInMano(), casellaScelta, smontaggioCorrente);
+    hud.disegnaPromemoria(p, barra, cosaInMano(), casellaScelta, smontaggioCorrente, eroe.aCavallo);
   }
   hud.disegnaMessaggio(p, messaggio);
   if (minimappaVisibile) minimappa.disegna(p);

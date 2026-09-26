@@ -73,6 +73,17 @@ export const CANNA = [
  ".h..B",".h..B",".h..v",".h...",".h...",".g...",
 ];
 
+// Il lazo in mano (W0.6): la spira sopra il pugno, la corda che scende.
+export const LAZO = [
+  ".www.",
+  "w...w",
+  "w...w",
+  ".www.",
+  "..h..",
+  "..h..",
+  "..w..",
+];
+
 // La pistola dei banditi (W0.5). Non è un attrezzo dello zaino — lo straniero
 // non ne ha una, ed è il sottotitolo del gioco — ma si tiene in mano come gli
 // altri, quindi sta qui.

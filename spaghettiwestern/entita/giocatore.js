@@ -6,6 +6,7 @@ import * as mappa from "../mondo/mappa.js";
 import * as urti from "./urti.js";
 import { cuoci, riflesso, telaio } from "../arte/sprite.js";
 import * as arte from "../arte/sprite-personaggi.js";
+import { CAVALIERE, MANO_IN_SELLA } from "../arte/sprite-cavallo.js";
 
 const { TASSELLO } = schermo;
 
@@ -13,6 +14,25 @@ export const TIPO = "giocatore";
 
 const VELOCITA = 52; // pixel al secondo
 const VELOCITA_CORSA = 92;
+
+// A cavallo (Per un pugno di semi W0.6). Il trotto è più della corsa a piedi
+// e non costa fiato; il galoppo quasi il doppio, e nemmeno quello costa fiato
+// allo straniero — lo paga il chiasso (vedi gioco.js). Il galoppo supera di
+// due volte e mezzo chi ti insegue di notte: il cavallo è la prima cosa nel
+// gioco che ti lascia attraversare la valle col buio.
+export const TROTTO = 110;
+export const GALOPPO = 165;
+// Le zampe del cavallo hanno due pose e non quattro, e un passo di cavallo è
+// lungo: un fotogramma ogni dodici pixel, e allo zoccolo il suono (vedi
+// udito.js).
+const PIXEL_PER_FOTOGRAMMA_IN_SELLA = 12;
+
+// Quanto si va, a piedi o in sella, di corsa o no. Una funzione e non due
+// righe dentro aggiorna() perché si possa controllare senza tastiera.
+export function velocitaDi(e, corre) {
+  const base = e.aCavallo ? (corre ? GALOPPO : TROTTO) : (corre ? VELOCITA_CORSA : VELOCITA);
+  return base * (e.fattoreVelocita ?? 1);
+}
 
 // Un fotogramma di camminata ogni tot pixel percorsi, non ogni tot secondi:
 // così l'animazione resta agganciata al passo anche quando si corre, invece di
@@ -96,7 +116,38 @@ export function figureComposte() {
   return composti.size;
 }
 
+// In sella: il cavaliere è un disegno solo (vedi sprite-cavallo.js), che
+// guarda a destra; l'attrezzo in mano si compone sopra come a piedi, alla mano
+// del cavaliere. Una torcia a cavallo si vede e fa luce.
+function figuraInSella(fotogramma, impugnato) {
+  const chiave = `sella|${fotogramma}|${impugnato?.nome ?? ""}`;
+  const gia = composti.get(chiave);
+  if (gia) return gia;
+  const corpo = cuoci(CAVALIERE[fotogramma]);
+  if (!impugnato) {
+    composti.set(chiave, corpo);
+    return corpo;
+  }
+  const attrezzo = cuoci(impugnato.righe);
+  const { canvas, contesto } = telaio(corpo.width, corpo.height);
+  contesto.drawImage(corpo, 0, 0);
+  contesto.drawImage(attrezzo, MANO_IN_SELLA.x - Math.floor(attrezzo.width / 2), MANO_IN_SELLA.y + (impugnato.scartoY ?? 0));
+  composti.set(chiave, canvas);
+  return canvas;
+}
+
 function aggiornaAspetto(e) {
+  if (e.aCavallo) {
+    const immagine = figuraInSella(Math.floor(e.passo) % 2, e.impugnato ?? null);
+    const aSinistra = e.versoInSella === "sinistra";
+    e.sprite = aSinistra ? riflesso(immagine) : immagine;
+    e.x = e.px - e.sprite.width / 2;
+    e.y = e.py - e.sprite.height;
+    e.base = e.py;
+    const manoX = aSinistra ? e.sprite.width - MANO_IN_SELLA.x - 1 : MANO_IN_SELLA.x;
+    e.impugnatura = { x: e.x + manoX, y: e.y + MANO_IN_SELLA.y + 2 };
+    return;
+  }
   const fotogramma = Math.floor(e.passo) % 4;
   const direzione = e.guarda === "su" ? "su" : e.guarda === "giu" ? "giu" : "lato";
   const immagine = figura(direzione, fotogramma, e.impugnato ?? null);
@@ -125,9 +176,12 @@ export function aggiorna(e, passo) {
   // la fame è roba di regole/, e le entità stanno sotto le regole. Chi
   // orchestra riempie questi due campi prima di aggiornare.
   const corre = comandi.attiva("corri") && e.puoCorrere !== false;
-  const velocita = (corre ? VELOCITA_CORSA : VELOCITA) * (e.fattoreVelocita ?? 1);
+  const velocita = velocitaDi(e, corre);
 
-  e.correndo = corre && (x !== 0 || y !== 0);
+  // A cavallo non si corre, si galoppa: "correndo" è la fatica di chi va a
+  // piedi (vedi bisogni.js), "galoppa" è soltanto il chiasso.
+  e.correndo = corre && (x !== 0 || y !== 0) && !e.aCavallo;
+  e.galoppa = corre && (x !== 0 || y !== 0) && Boolean(e.aCavallo);
   e.inMovimento = x !== 0 || y !== 0;
 
   if (x !== 0 || y !== 0) {
@@ -137,9 +191,12 @@ export function aggiorna(e, passo) {
     else if (x > 0) e.guarda = "destra";
     else if (y < 0) e.guarda = "su";
     else e.guarda = "giu";
+    // Un cavallo si disegna solo di profilo: andando su o giù resta girato
+    // dall'ultima parte in cui si andava di lato.
+    if (x !== 0) e.versoInSella = x < 0 ? "sinistra" : "destra";
 
     const percorso = urti.muovi(e, x * velocita * passo, y * velocita * passo);
-    e.passo += percorso / PIXEL_PER_FOTOGRAMMA;
+    e.passo += percorso / (e.aCavallo ? PIXEL_PER_FOTOGRAMMA_IN_SELLA : PIXEL_PER_FOTOGRAMMA);
   } else {
     // Fermi si torna al fotogramma di riposo, non a uno qualsiasi del ciclo.
     e.passo = 0;
@@ -169,6 +226,10 @@ export function crea(px, py) {
     puoCorrere: true,
     correndo: false,
     inMovimento: false,
+    // In sella (W0.6): lo decide chi orchestra, come il resto qui sopra.
+    aCavallo: false,
+    galoppa: false,
+    versoInSella: "destra",
   };
   aggiornaAspetto(e);
   return e;

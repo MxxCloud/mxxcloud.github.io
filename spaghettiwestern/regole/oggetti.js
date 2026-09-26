@@ -45,6 +45,12 @@ export const CATALOGO = {
     nome: "Pelliccia", icona: cacciaArte.PELLICCIA, pila: 1,
     addosso: { gradiniFermi: true, pioggia: 0.55 },
   },
+  // Il lazo (W0.6): cuoio intrecciato, per prendere i cavalli e condurli.
+  // Non si consuma: una corda che regge un cavallo non si sfilaccia a
+  // lanciarla, e contare i lanci vorrebbe dire contare le volte che hai
+  // mancato, che col lazo non succede — si lancia solo con un cavallo a tiro.
+  lazo: { nome: "Lazo", icona: arte.LAZO, pila: 1,
+    impugnato: { nome: "lazo", righe: impugnati.LAZO, scartoY: 3 } },
   canna: { durata: 20, serve: ["pesca"], nome: "Canna da pesca", icona: arte.CANNA, pila: 1,
     impugnato: { nome: "canna", righe: impugnati.CANNA, scartoY: 3 } },
   pesce_crudo: { nome: "Pesce crudo", icona: arte.PESCE_CRUDO, pila: 10,

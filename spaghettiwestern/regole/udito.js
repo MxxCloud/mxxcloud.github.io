@@ -26,7 +26,7 @@ import * as schermo from "../motore/schermo.js";
 import * as suono from "../motore/suono.js";
 import { generatore } from "../motore/casuale.js";
 import * as fauna from "./fauna.js";
-import { PASSO, PASSO_INFETTO, FISCHIO, CREPITIO, VERSO_BESTIA, CANE, SPARO, PALLOTTOLA } from "../arte/voci.js";
+import { PASSO, PASSO_INFETTO, FISCHIO, CREPITIO, VERSO_BESTIA, CANE, SPARO, PALLOTTOLA, ZOCCOLO } from "../arte/voci.js";
 
 // Da quanto lontano si sente camminare qualcuno. Il numero viene dalla
 // geometria degli infetti e non dal gusto: nascono a 260 pixel come minimo,
@@ -197,7 +197,10 @@ export function avanza(passo, eroe) {
   // scarpe. Sono anche l'unica voce che dice al giocatore quello che
   // chiasso.js sta già misurando — che correre chiama più del camminare — e
   // glielo dice con la cadenza invece che con un numero.
-  passi(eroe, PASSO, { volume: eroe.correndo ? 1.6 : 1, tono: 0.95 + caso() * 0.12 });
+  // A cavallo (W0.6) i passi sono zoccoli, con la stessa cadenza: il disegno
+  // del cavallo ha due pose e un passo ogni dodici pixel (vedi giocatore.js),
+  // quindi al galoppo battono più fitti da sé.
+  passi(eroe, eroe.aCavallo ? ZOCCOLO : PASSO, { volume: eroe.correndo || eroe.galoppa ? 1.6 : 1, tono: 0.95 + caso() * 0.12 });
 
   for (const e of entita.tutte()) {
     if (e.tipo !== infetto.TIPO) continue;

@@ -551,8 +551,11 @@ export function disegnaRicette(p, { scelta, alBanco, alFuoco = false }) {
 // versione: chi raccoglieva legna non aveva modo di scoprire che serviva a
 // costruire, perché niente sullo schermo nominava il tasto. Un sistema che
 // non si trova è come se non ci fosse.
-export function disegnaPromemoria(p, barra, cosaInMano, indice, smontaggio = null) {
+export function disegnaPromemoria(p, barra, cosaInMano, indice, smontaggio = null, aCavallo = false) {
   const righe = ["H  COMANDI", "C  COSTRUIRE"];
+  // In sella (W0.6) il Maiusc non corre, galoppa: è la cosa da sapere lassù,
+  // e si dice lassù.
+  if (aCavallo) righe.push("MAIUSC  GALOPPA");
   const attrezzo = inventario.attrezzo(cosaInMano, indice);
   if (attrezzo) {
     const usi = inventario.usiRimasti(attrezzo);
@@ -684,7 +687,7 @@ export function disegnaIniziale(p, { schermata, riga, stagione, versione }) {
 // questa stessa lista, così non possono dire due cose diverse.
 export const COMANDI = [
   ["WASD  FRECCE", "CAMMINARE"],
-  ["MAIUSC", "CORRERE"],
+  ["MAIUSC", "CORRERE, O GALOPPARE A CAVALLO"],
   ["SPAZIO", "USARE CIÒ CHE HAI DAVANTI"],
   ["1-8", "SCEGLIERE DALLO ZAINO"],
   ["C", "COSTRUIRE"],

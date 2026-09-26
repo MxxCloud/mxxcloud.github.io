@@ -11,12 +11,13 @@
 // dimenticato non darebbe errore online, e si scoprirebbe solo la prima volta
 // che qualcuno prova a giocare in treno.
 
-const VERSIONE = "spaghettiwestern-v5";
+const VERSIONE = "spaghettiwestern-v6";
 
 const RISORSE = [
   "./arte/luoghi.js",
   "./arte/sprite-luoghi.js",
   "./",
+  "./arte/sprite-cavallo.js",
   "./arte/sprite-cose.js",
   "./arte/sprite-fauna.js",
   "./regole/fauna.js",
@@ -64,6 +65,7 @@ const RISORSE = [
   "./regole/azioni.js",
   "./regole/bisogni.js",
   "./regole/chiasso.js",
+  "./regole/cavalli.js",
   "./regole/colture.js",
   "./regole/contenitori.js",
   "./regole/decadimento.js",
