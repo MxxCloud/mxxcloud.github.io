@@ -101,7 +101,8 @@ test('le cinque piante sono rettangolari, diverse e lasciano accesso ai punti ut
     for(let y=0;y<h;y++)for(let x=0;x<w;x++){
       // 's' da M7.18.30: le piante inselvatichite dell'orto abbandonato; 'p'
       // da M7.18.31, il suo spaventapasseri rotto.
-      assert.ok(' .cvotgaf%sp'.includes(l.pianta[y][x]));
+      // 'u' da M7.18.32: la seconda fila dell'orto.
+      assert.ok(' .cvotgaf%spu'.includes(l.pianta[y][x]));
       if('cvotgf'.includes(l.pianta[y][x]))assert.ok([[x-1,y],[x+1,y],[x,y-1],[x,y+1]].some(p=>visitati.has(p.join(','))),l.id);
     }
   }
@@ -4336,37 +4337,41 @@ test("le piante selvatiche nascono solo dove prima non c'era niente, ognuna sul 
     for(const o of Object.keys(TERRENI).map(Number))assert.ok(fuori.some(p=>p.o===o),'ci sono: '+o);
     for(const p of fuori){
       assert.notEqual(p.o,OGGETTO.PATATA_SELVATICA,'la patata solo negli orti');
+      assert.notEqual(p.o,OGGETTO.FAGIOLI_SELVATICI,'i fagioli solo negli orti');
       assert.equal(p.t,TERRENI[p.o]);
     }
     // Poche: meno dei cespugli.
     assert.ok(v.piante.length<n/4);
   }
 });
-test('ogni orto abbandonato ha quattro piante inselvatichite di una coltura sola, e gli orti non sono tutti uguali',()=>{
-  const colture=new Set();let orti=0;
-  for(let seme=1;seme<=40&&orti<12;seme++){
+test('ogni orto abbandonato ha otto piante inselvatichite, due varietà una per fila, fra grano, lino, patate e fagioli',()=>{
+  const ammesse=[OGGETTO.SPIGHE_SELVATICHE,OGGETTO.LINO_SELVATICO,OGGETTO.PATATA_SELVATICA,OGGETTO.FAGIOLI_SELVATICI];
+  const coppie=new Set(),viste=new Set();let orti=0;
+  for(let seme=1;seme<=40&&orti<16;seme++){
     generazione.preparaRovine(seme);
     for(let cy=-4;cy<=4;cy++)for(let cx=-4;cx<=4;cx++){
       const r=generazione.rovinaNellaCella(cx,cy);
       if(r?.luogo!=='orto')continue;
       orti++;
-      const qui=[];
+      const file={s:[],u:[]};
       for(let y=0;y<r.altezza;y++)for(let x=0;x<r.larghezza;x++){
-        if(r.pianta[y][x]!=='s')continue;
+        const segno=r.pianta[y][x];
+        assert.notEqual(segno,'a','nessuna pianta morta');
+        if(!file[segno])continue;
         const tx=r.tx0+x,ty=r.ty0+y;
-        qui.push(generazione.oggettoIn(tx,ty,seme,generazione.terrenoIn(tx,ty,seme)));
+        file[segno].push(generazione.oggettoIn(tx,ty,seme,generazione.terrenoIn(tx,ty,seme)));
       }
-      assert.equal(qui.length,4);
-      assert.equal(new Set(qui).size,1,'una coltura per orto');
-      assert.ok(SELVATICHE.includes(qui[0]));
-      // Sempre la stessa, a ogni lettura.
-      const [px,py]=[r.tx0+r.pianta[1].indexOf('s'),r.ty0+1];
-      assert.equal(generazione.oggettoIn(px,py,seme,generazione.terrenoIn(px,py,seme)),qui[0]);
-      colture.add(qui[0]);
+      assert.equal(file.s.length,4);assert.equal(file.u.length,4);
+      assert.equal(new Set(file.s).size,1,'una varietà per fila');assert.equal(new Set(file.u).size,1);
+      assert.notEqual(file.s[0],file.u[0],'due varietà diverse');
+      for(const o of [file.s[0],file.u[0]]){assert.ok(ammesse.includes(o));viste.add(o);}
+      assert.deepEqual(generazione.varietaDellOrto(r,seme),[file.s[0],file.u[0]],'sempre le stesse');
+      coppie.add(file.s[0]+'-'+file.u[0]);
     }
   }
-  assert.ok(orti>=4,'orti trovati: '+orti);
-  assert.ok(colture.size>=3,'colture diverse: '+colture.size);
+  assert.ok(orti>=6,'orti trovati: '+orti);
+  assert.equal(viste.size,4,'tutte e quattro le varietà compaiono');
+  assert.ok(coppie.size>=4,'coppie diverse: '+coppie.size);
 });
 test("le piante selvatiche danno semi d'estate e d'inverno solo la fibra, o niente",()=>{
   const raccogli=(oggetto,giorno)=>{
@@ -4454,4 +4459,27 @@ test('sulla mappa grande l\'orto abbandonato ha un segno suo, verde e più grand
   assert.match(sorgente,/const colore = orto \? ORTO/);
   assert.match(sorgente,/segnale\(x, y, colore, rovina\.luogo && !orto \? 2 : 3\)/);
   assert.match(sorgente,/VERDE ORTI/,'e la legenda lo dice');
+});
+
+// M7.18.32 — negli orti abbandonati le piante danno sempre.
+test("negli orti abbandonati le piante inselvatichite danno sempre, in ogni stagione; nella prateria no",()=>{
+  const r=trovaLuogo('orto');
+  const rese={[OGGETTO.SPIGHE_SELVATICHE]:['grano',2],[OGGETTO.LINO_SELVATICO]:['semi_lino',2],[OGGETTO.PATATA_SELVATICA]:['patata',1],[OGGETTO.FAGIOLI_SELVATICI]:['fagioli',2]};
+  for(const giorno of [1,6,10,14]){
+    for(const segno of ['s','u']){
+      reset();tempo.impostaGiorno(giorno);
+      const p=segnoNelLuogo(r,segno),o=mappa.oggettoDi(p.tx,p.ty);
+      const [cosa,quante]=rese[o];
+      modifiche.imposta(p.tx-1,p.ty,{oggetto:OGGETTO.NESSUNO});
+      assert.equal(azioni.agisci({...pos(p.tx-1,p.ty),guarda:'destra'},null)?.tipo,'raccolto');
+      assert.equal(inventario.quante(cosa),quante,`giorno ${giorno}, ${cosa}`);
+    }
+  }
+  // Fuori dall'orto la stessa pianta d'inverno non dà semi.
+  reset();tempo.impostaGiorno(10);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FAGIOLI_SELVATICI});
+  assert.equal(azioni.agisci(eroe,null)?.tipo,'raccolto');assert.equal(inventario.quante('fagioli'),0);
+  assert.equal(azioni.azionePossibile(eroe,null),null);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FAGIOLI_SELVATICI});
+  assert.equal(azioni.azionePossibile(eroe,null).verbo,'Raccogli i fagioli');
 });

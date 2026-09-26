@@ -167,6 +167,23 @@ export const PATATA_SELVATICA = [
 // cappello, con la testa di paglia caduta di lato e gli stracci sbiaditi. È
 // più alto di un tassello apposta: l'orto è piccolo e basso, e senza qualcosa
 // che sporga sopra l'erba ci si passava accanto senza vederlo. Fa da faro.
+// I fagioli inselvatichiti (M7.18.32): un paletto storto dell'orto di prima,
+// con il fagiolo rampicante che ci si è arrampicato sopra e i baccelli.
+export const FAGIOLI_SELVATICI = [
+  "................",
+  "................",
+  ".......w........",
+  "......yw.y......",
+  ".....yywyy......",
+  "......xwx.y.....",
+  ".....y.wyyy.....",
+  "....yyxw.x......",
+  ".....x.wxy......",
+  "....yy.wyyy.....",
+  ".....xxwxx......",
+  "......xwx.......",
+];
+
 export const SPAVENTAPASSERI_ROTTO = [
   "................",
   "...........55...",

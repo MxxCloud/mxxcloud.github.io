@@ -49,6 +49,7 @@ const RITORNO = {
   [OGGETTO.LINO_SELVATICO]: "primavera",
   [OGGETTO.CAVOLO_SELVATICO]: "primavera",
   [OGGETTO.PATATA_SELVATICA]: "primavera",
+  [OGGETTO.FAGIOLI_SELVATICI]: "primavera",
 };
 
 // Una modifica è "un tassello svuotato e basta" solo se non porta altro.
