@@ -129,6 +129,8 @@ export const OGGETTO = {
   // posto, alto, che si vede da lontano. Non si raccoglie e non spaventa più
   // niente.
   SPAVENTAPASSERI_ROTTO: 42,
+  // I fagioli inselvatichiti (M7.18.32): come la patata, solo negli orti.
+  FAGIOLI_SELVATICI: 43,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati
@@ -233,18 +235,26 @@ const COSTRUITO = {
   p: OGGETTO.SPAVENTAPASSERI_ROTTO,
 };
 
-// L'orto abbandonato (M7.18.30): le piante della prima fila delle aiuole non
-// sono morte, sono inselvatichite, e sono tutte della stessa coltura — quella
-// che ci coltivava chi se n'è andato. Quale lo dice l'origine dell'orto,
-// quindi un orto ha sempre la sua, e sapere dov'è "l'orto del lino" è una
-// cosa che si impara girando.
-const INSELVATICHITE = [OGGETTO.SPIGHE_SELVATICHE, OGGETTO.LINO_SELVATICO, OGGETTO.CAVOLO_SELVATICO, OGGETTO.PATATA_SELVATICA];
+// L'orto abbandonato (M7.18.30): le piante delle aiuole non sono morte, sono
+// inselvatichite. Da M7.18.32 lo sono tutte e otto, e ogni orto ne ha due
+// varietà, una per fila — le colture di chi se n'è andato: grano, lino,
+// patate e fagioli. Il cavolo selvatico resta fra le rocce. Quali due lo dice
+// l'origine dell'orto, quindi un orto ha sempre le sue, e sapere dov'è
+// "l'orto del lino e dei fagioli" è una cosa che si impara girando.
+const INSELVATICHITE = [OGGETTO.SPIGHE_SELVATICHE, OGGETTO.LINO_SELVATICO, OGGETTO.PATATA_SELVATICA, OGGETTO.FAGIOLI_SELVATICI];
 
-function inselvatichitaIn(x, y, seme) {
+// Le due varietà di questo orto, sempre diverse fra loro.
+export function varietaDellOrto(r, seme) {
+  const n = INSELVATICHITE.length;
+  const prima = Math.min(Math.floor(impronta(r.tx0, r.ty0, scarto(seme, 11)) * n), n - 1);
+  const salto = 1 + Math.min(Math.floor(impronta(r.tx0, r.ty0, scarto(seme, 12)) * (n - 1)), n - 2);
+  return [INSELVATICHITE[prima], INSELVATICHITE[(prima + salto) % n]];
+}
+
+function inselvatichitaIn(x, y, seme, fila) {
   const r = luogoIn(x, y);
   if (!r) return OGGETTO.APPASSITA;
-  const quale = Math.floor(impronta(r.tx0, r.ty0, scarto(seme, 11)) * INSELVATICHITE.length);
-  return INSELVATICHITE[Math.min(quale, INSELVATICHITE.length - 1)];
+  return varietaDellOrto(r, seme)[fila];
 }
 
 export function rovinaNellaCella(cx, cy) {
@@ -279,7 +289,8 @@ export function oggettoIn(x, y, seme, terreno) {
   // TERRA, che non produce niente, ma un muro deve poter stare anche dove il
   // rumore avrebbe messo un bosco.
   const segno = rovine.tasselloDi(x, y, adatto);
-  if (segno === "s") return inselvatichitaIn(x, y, seme);
+  if (segno === "s") return inselvatichitaIn(x, y, seme, 0);
+  if (segno === "u") return inselvatichitaIn(x, y, seme, 1);
   if (segno !== null) return COSTRUITO[segno] ?? OGGETTO.NESSUNO;
 
   const sorte = impronta(x, y, scarto(seme, 3));

@@ -628,6 +628,16 @@ export const RACCOLTA = {
       { cosa: "patata", quante: 1, probabilita: { estate: 0.6, autunno: 0.6, inverno: 0, primavera: 0.2 } },
     ],
   },
+  // I fagioli inselvatichiti (M7.18.32): solo negli orti abbandonati.
+  [OGGETTO.FAGIOLI_SELVATICI]: {
+    verbo: "Raccogli i fagioli",
+    colpi: 1,
+    voce: "erba",
+    scheggie: ["y", "w", "x"],
+    resa: [
+      { cosa: "fagioli", quante: 2, probabilita: { estate: 0.6, autunno: 0.5, inverno: 0, primavera: 0.1 } },
+    ],
+  },
   [OGGETTO.TORCIA_PIANTATA]: {
     verbo: "Raccogli",
     colpi: 1,

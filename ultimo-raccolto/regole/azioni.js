@@ -1112,8 +1112,12 @@ function raccoltaIn(oggetto, tx, ty) {
 function resaDi(raccolta, tx, ty) {
   const seme = mappa.semeCorrente().valore;
   const ottenuto = [];
+  // Negli orti abbandonati le piante inselvatichite danno sempre (M7.18.32):
+  // sono state coltivate, e l'orto è il posto dove si va apposta per i semi.
+  // Quelle della prateria restano un terno secondo la stagione.
+  const coltivata = mappa.luogoIn(tx, ty)?.luogo === "orto";
   raccolta.resa.forEach((voce, i) => {
-    if (voce.probabilita !== undefined) {
+    if (voce.probabilita !== undefined && !coltivata) {
       const soglia = stagioni.valoreStagionale(voce.probabilita);
       if (soglia <= 0) return;
       if (impronta(tx + i * 101, ty - i * 57, seme ^ 0x3c6ef372) > soglia) return;
