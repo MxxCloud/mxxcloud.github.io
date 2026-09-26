@@ -1,4 +1,4 @@
-// Il superstite: movimento, urti, animazione.
+// Lo straniero (il superstite di Ultimo raccolto): movimento, urti, animazione.
 
 import * as schermo from "../motore/schermo.js";
 import * as comandi from "../motore/comandi.js";
@@ -26,14 +26,24 @@ const PIXEL_PER_FOTOGRAMMA = 7;
 // identico in tutti e quattro i fotogrammi di una direzione — cambiano solo le
 // gambe — quindi camminando la mano non si muove.
 //
-// "dietro" dice da che parte dell'ordine di disegno va l'oggetto: di spalle
-// una torcia sta dietro al corpo, di fronte e di profilo davanti.
-const MANO = {
+// "dietro" dice da che parte dell'ordine di disegno va l'oggetto. In Ultimo
+// raccolto di spalle una torcia stava dietro al corpo; con il poncho (W0.4)
+// l'oggetto sta davanti in tutte e tre le direzioni, e il campo resta per il
+// giorno in cui una figura più stretta lo vorrà di nuovo.
+//
+// Esportata per il collaudo che conta quanto di ogni attrezzo resta in vista:
+// è così che si è visto che il poncho se li mangiava.
+export const MANO = {
   giu: { x: 11, y: 6, dietro: false },
   // Di spalle l'oggetto va spostato verso il bordo, non messo in mezzo alle
   // scapole: dietro al busto sparirebbe del tutto, e un oggetto che non si
   // vede è come non averlo disegnato.
-  su: { x: 2, y: 6, dietro: true },
+  //
+  // Da Per un pugno di semi W0.4 si disegna anche sopra il corpo e non
+  // dietro: il poncho arriva quasi al bordo dello sprite, e dietro al poncho
+  // la torcia lasciava fuori mezza fiamma e l'ascia niente del tutto.
+  // Sporgendo dal fianco si legge come tenuta di lato, che è quello che è.
+  su: { x: 2, y: 6, dietro: false },
   lato: { x: 3, y: 6, dietro: false },
 };
 

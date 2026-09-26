@@ -18,6 +18,40 @@ Come l'originale non ha server né dipendenze: è HTML, CSS e JavaScript serviti
 così come sono. Tutto quello che segue è la storia di Ultimo raccolto fino al
 punto della copia.
 
+## W0.4 — lo straniero e i banditi
+
+La terza fase del rivestimento tocca le persone. Le regole restano quelle di
+prima: cambia chi si vede e cosa si sente.
+- **Lo straniero.** Il superstite adesso è un forestiero col **cappello a tesa
+  larga** e il **poncho** con la fascia chiara sull'orlo; sotto, i jeans e gli
+  stivali. Ha la barba di qualche giorno e, di profilo, **il sigaro**.
+  Quello che ha in mano si vede in tutte le direzioni, anche di spalle: il
+  poncho è largo, e l'attrezzo adesso sporge dal fianco invece di sparirci
+  dietro.
+- **I banditi.** Quelli che escono col buio non sono più infetti ma
+  **banditi**: stesso cappello e stesso poncho dello straniero, ma **cappello
+  nero** con la fascia di borchie, **spolverino scuro** e il **fazzoletto rosso
+  sulla faccia**. Fanno quello che facevano prima — vagano, ti sentono, ti
+  inseguono, sfondano muri e porte, e se ne vanno all'alba — e si combattono
+  allo stesso modo.
+- **Il fischio.** Un bandito che ti ha visto non ringhia: **fischia** agli
+  altri, un richiamo che sale e arriva dalla parte da cui viene lui.
+- **Le scritte.** «Un bandito ti ha visto» al posto di «qualcosa ti ha visto».
+  Si muore «ucciso da un bandito», e la ferita che si infetta si cura sempre
+  con una benda. Dopo la morte **arriva un altro straniero**.
+- **Il corpo** che resta dove sei caduto è lo straniero steso, col **cappello
+  sulla faccia**.
+- **L'icona** dell'app non è più il falò di Ultimo raccolto: è il cappello,
+  con un germoglio infilato nella fascia.
+- **Corretto:** da W0.3, rinascendo al ranch, il suo nome copriva subito
+  «riprenditi quello che era tuo» — e riprendendo una partita salvata al
+  ranch, «partita ripresa». Adesso il posto in cui ci si risveglia conta come
+  già annunciato; una partita nuova invece si apre ancora col nome del ranch.
+
+Nel codice i banditi si chiamano ancora infetti, come il ranch si chiama
+ancora fattoria: rinominare le regole senza cambiarle sarebbe stato un diff
+enorme che non cambia niente di quello che si gioca.
+
 ## W0.3 — il ranch e la frontiera
 
 - **Case di adobe.** I muri sono di mattoni di fango intonacati, con una

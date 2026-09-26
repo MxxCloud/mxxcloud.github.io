@@ -1,5 +1,10 @@
 // Gli infetti: quanti sono, da dove arrivano, cosa notano, quanto costano.
 //
+// Da Per un pugno di semi W0.4 a schermo sono i banditi, che escono col buio
+// e se ne vanno all'alba (vedi arte/tavolozza.js). Le regole sono quelle di
+// prima: il «morso» è il colpo di un bandito, e l'infezione è la ferita che
+// si infetta — che si cura sempre con una benda.
+//
 // L'entità sa camminare e colpire (vedi entita/infetto.js). Tutto il resto —
 // il buio che li fa uscire, la vista, l'udito, il morso e l'infezione — è
 // regola, e sta qui.
