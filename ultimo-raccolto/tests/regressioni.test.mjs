@@ -4344,10 +4344,10 @@ test("le piante selvatiche nascono solo dove prima non c'era niente, ognuna sul 
     assert.ok(v.piante.length<n/4);
   }
 });
-test('ogni orto abbandonato ha otto piante inselvatichite, due varietà una per fila, fra grano, lino, patate e fagioli',()=>{
-  const ammesse=[OGGETTO.SPIGHE_SELVATICHE,OGGETTO.LINO_SELVATICO,OGGETTO.PATATA_SELVATICA,OGGETTO.FAGIOLI_SELVATICI];
+test('ogni orto abbandonato ha otto piante inselvatichite, due varietà una per fila, fra grano, lino, patate, fagioli e cavolo',()=>{
+  const ammesse=[OGGETTO.SPIGHE_SELVATICHE,OGGETTO.LINO_SELVATICO,OGGETTO.PATATA_SELVATICA,OGGETTO.FAGIOLI_SELVATICI,OGGETTO.CAVOLO_SELVATICO];
   const coppie=new Set(),viste=new Set();let orti=0;
-  for(let seme=1;seme<=40&&orti<16;seme++){
+  for(let seme=1;seme<=60&&orti<30;seme++){
     generazione.preparaRovine(seme);
     for(let cy=-4;cy<=4;cy++)for(let cx=-4;cx<=4;cx++){
       const r=generazione.rovinaNellaCella(cx,cy);
@@ -4370,7 +4370,7 @@ test('ogni orto abbandonato ha otto piante inselvatichite, due varietà una per 
     }
   }
   assert.ok(orti>=6,'orti trovati: '+orti);
-  assert.equal(viste.size,4,'tutte e quattro le varietà compaiono');
+  assert.equal(viste.size,5,'tutte e cinque le varietà compaiono');
   assert.ok(coppie.size>=4,'coppie diverse: '+coppie.size);
 });
 test("le piante selvatiche danno semi d'estate e d'inverno solo la fibra, o niente",()=>{
@@ -4462,24 +4462,44 @@ test('sulla mappa grande l\'orto abbandonato ha un segno suo, verde e più grand
 });
 
 // M7.18.32 — negli orti abbandonati le piante danno sempre.
-test("negli orti abbandonati le piante inselvatichite danno sempre, in ogni stagione; nella prateria no",()=>{
+test("negli orti abbandonati le piante danno sempre dalla primavera all'autunno; d'inverno sono secche e danno solo fibra",()=>{
   const r=trovaLuogo('orto');
-  const rese={[OGGETTO.SPIGHE_SELVATICHE]:['grano',2],[OGGETTO.LINO_SELVATICO]:['semi_lino',2],[OGGETTO.PATATA_SELVATICA]:['patata',1],[OGGETTO.FAGIOLI_SELVATICI]:['fagioli',2]};
-  for(const giorno of [1,6,10,14]){
-    for(const segno of ['s','u']){
-      reset();tempo.impostaGiorno(giorno);
-      const p=segnoNelLuogo(r,segno),o=mappa.oggettoDi(p.tx,p.ty);
-      const [cosa,quante]=rese[o];
-      modifiche.imposta(p.tx-1,p.ty,{oggetto:OGGETTO.NESSUNO});
-      assert.equal(azioni.agisci({...pos(p.tx-1,p.ty),guarda:'destra'},null)?.tipo,'raccolto');
+  const rese={[OGGETTO.SPIGHE_SELVATICHE]:['grano',2],[OGGETTO.LINO_SELVATICO]:['semi_lino',2],[OGGETTO.PATATA_SELVATICA]:['patata',1],
+    [OGGETTO.FAGIOLI_SELVATICI]:['fagioli',2],[OGGETTO.CAVOLO_SELVATICO]:['semi_cavolo',2]};
+  const raccogli=(segno,giorno)=>{
+    reset();tempo.impostaGiorno(giorno);
+    const p=segnoNelLuogo(r,segno),o=mappa.oggettoDi(p.tx,p.ty),e={...pos(p.tx-1,p.ty),guarda:'destra'};
+    modifiche.imposta(p.tx-1,p.ty,{oggetto:OGGETTO.NESSUNO});
+    const verbo=azioni.azionePossibile(e,null).verbo;
+    assert.equal(azioni.agisci(e,null)?.tipo,'raccolto');
+    return {o,verbo};
+  };
+  for(const segno of ['s','u']){
+    for(const giorno of [1,6,14]){
+      const {o}=raccogli(segno,giorno);const [cosa,quante]=rese[o];
       assert.equal(inventario.quante(cosa),quante,`giorno ${giorno}, ${cosa}`);
     }
+    // D'inverno: secca, solo una fibra, e il tasto lo dice.
+    const {o,verbo}=raccogli(segno,10);
+    assert.equal(verbo,'Strappa la pianta secca');
+    assert.equal(inventario.quante('fibra'),1);assert.equal(inventario.quante(rese[o][0]),0);
+    assert.equal(inventario.contenuto().filter(Boolean).length,1);
   }
-  // Fuori dall'orto la stessa pianta d'inverno non dà semi.
+  // Il cavolo, tornato negli orti: d'estate dà sempre i suoi due semi.
+  reset();tempo.impostaGiorno(1);
+  const c=segnoNelLuogo(r,'s');modifiche.imposta(c.tx,c.ty,{oggetto:OGGETTO.CAVOLO_SELVATICO});modifiche.imposta(c.tx-1,c.ty,{oggetto:OGGETTO.NESSUNO});
+  assert.equal(azioni.agisci({...pos(c.tx-1,c.ty),guarda:'destra'},null)?.tipo,'raccolto');assert.equal(inventario.quante('semi_cavolo'),2);
+  // Fuori dall'orto la stessa pianta d'inverno non dà semi, e il verbo è il suo.
   reset();tempo.impostaGiorno(10);
   modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FAGIOLI_SELVATICI});
-  assert.equal(azioni.agisci(eroe,null)?.tipo,'raccolto');assert.equal(inventario.quante('fagioli'),0);
-  assert.equal(azioni.azionePossibile(eroe,null),null);
-  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FAGIOLI_SELVATICI});
   assert.equal(azioni.azionePossibile(eroe,null).verbo,'Raccogli i fagioli');
+  assert.equal(azioni.agisci(eroe,null)?.tipo,'raccolto');assert.equal(inventario.quante('fagioli'),0);
+});
+test("d'inverno le piante degli orti abbandonati si disegnano secche",()=>{
+  assert.equal(arteOggetti.PIANTA_SECCA.length,12);assert.ok(arteOggetti.PIANTA_SECCA.every(r=>r.length===16));
+  const m=readFileSync(new URL('../mondo/mappa.js',import.meta.url),'utf8');
+  assert.match(m,/export function impostaOrtiSecchi/);
+  assert.match(m,/ortiSecchi && inselvatichitaNellOrto\(tx, ty, oggetto\) \? oggettiArte\.PIANTA_SECCA/);
+  const g=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(g,/mappa\.impostaOrtiSecchi\(stagione === "inverno"\)/);
 });

@@ -15,7 +15,7 @@ import * as luoghiArte from "../arte/sprite-luoghi.js";
 import * as coseArte from "../arte/sprite-cose.js";
 import * as ortoArte from "../arte/sprite-orto.js";
 import * as transizioniArte from "../arte/sprite-transizioni.js";
-import { TERRENO, OGGETTO, terrenoIn, oggettoIn, preparaRovine } from "./generazione.js";
+import { TERRENO, OGGETTO, terrenoIn, oggettoIn, preparaRovine, inselvatichitaNellOrto } from "./generazione.js";
 import * as modifiche from "./modifiche.js";
 import { TAVOLOZZA, TAVOLOZZA_BAGNATA, FOGLIE_ASSETATE, TERRA_STANCA, TERRA_SFINITA } from "../arte/tavolozza.js";
 
@@ -228,6 +228,16 @@ export function registraIconeMucchio(icone) {
 // questi, e ogni tanto di non spargere niente.
 let fioritura = null;
 
+// D'inverno le piante degli orti abbandonati sono secche (M7.18.33): lo dice
+// gioco.js al cambio di stagione, come la fioritura, e si ricuociono i settori.
+let ortiSecchi = false;
+export function impostaOrtiSecchi(secchi) {
+  if (secchi === ortiSecchi) return false;
+  ortiSecchi = secchi;
+  settori.clear();
+  return true;
+}
+
 export function impostaFioritura(fiori) {
   const nuova = fiori ?? null;
   if (nuova === fioritura) return false;
@@ -322,7 +332,7 @@ export function inizializza(nome) {
 // La rovina di una cella, per chi disegna la mappa grande. Il mondo la sa già
 // — la maglia è in rovine.js — e passare di qui evita che l'interfaccia debba
 // sapere che esiste un seme.
-export { rovinaNellaCella, laFattoria, luogoIn } from "./generazione.js";
+export { rovinaNellaCella, laFattoria, luogoIn, inselvatichitaNellOrto } from "./generazione.js";
 export { CELLA as CELLA_ROVINE } from "./rovine.js";
 
 export function semeCorrente() {
@@ -682,6 +692,7 @@ function cuociSettore(sx, sy) {
               collegaSteccato(tx + 1, ty), collegaSteccato(tx - 1, ty))
           // E da M7.18.26 anche il cancello, che in una fila verticale si
           // gira con lei.
+          : ortiSecchi && inselvatichitaNellOrto(tx, ty, oggetto) ? oggettiArte.PIANTA_SECCA
           : oggetto === OGGETTO.CANCELLO || oggetto === OGGETTO.CANCELLO_APERTO
             ? coseArte.cancelloVerso(oggetto === OGGETTO.CANCELLO_APERTO,
               collegaSteccato(tx, ty - 1), collegaSteccato(tx, ty + 1),

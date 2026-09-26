@@ -12,6 +12,18 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.33 — gli orti abbandonati seguono le stagioni
+
+- **D'inverno** le piante degli orti abbandonati seccano: si vedono come
+  steli di paglia e, raccolte («Strappa la pianta secca»), danno **solo 1
+  fibra**.
+- **Dalla primavera all'autunno** danno sempre la loro resa piena: grano,
+  semi di lino, patate, fagioli o semi di cavolo.
+- **Il cavolo torna negli orti.** Le varietà sono cinque: grano, lino, patate,
+  fagioli e cavolo. Ogni orto ne ha sempre due, una per fila.
+- Una pianta raccolta, verde o secca, torna il primo giorno di primavera.
+  Quelle della prateria non cambiano.
+
 ## M7.18.32 — orti abbandonati pieni, e generosi
 
 - **Otto piante inselvatichite** in ogni orto abbandonato: tutte e due le file
@@ -21,7 +33,7 @@ sotto quell'indirizzo.
   cavolo selvatico non cresce più negli orti: resta fra le rocce.
 - **I fagioli inselvatichiti** sono una pianta nuova: un paletto storto con
   il rampicante sopra. Crescono solo negli orti.
-- **Negli orti le piante danno sempre**, in ogni stagione, anche d'inverno:
+- **Negli orti le piante danno sempre** (d'inverno, da M7.18.33, sono secche e danno solo fibra):
   2 grano (più una fibra), 2 semi di lino (più una fibra), 1 patata, 2
   fagioli. Sono state coltivate, e l'orto è il posto in cui si va apposta per
   i semi. Le stesse piante nella prateria restano legate alla stagione, come
@@ -1921,7 +1933,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.32**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.33**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

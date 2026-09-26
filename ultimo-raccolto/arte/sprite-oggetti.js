@@ -184,6 +184,23 @@ export const FAGIOLI_SELVATICI = [
   "......xwx.......",
 ];
 
+// La pianta secca dell'orto abbandonato d'inverno (M7.18.33): steli marroni
+// piegati, gli stessi per tutte le colture — sotto il gelo sono paglia.
+export const PIANTA_SECCA = [
+  "................",
+  "................",
+  "................",
+  "......4...4.....",
+  "...4..h..4......",
+  "....h.h.h...4...",
+  ".....hhh...h....",
+  "..4..gh...h.....",
+  "...h.g.h.hg.....",
+  "....hg..hg......",
+  ".....gghg.......",
+  "....ggggg.......",
+];
+
 export const SPAVENTAPASSERI_ROTTO = [
   "................",
   "...........55...",
