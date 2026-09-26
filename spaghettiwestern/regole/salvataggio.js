@@ -26,6 +26,7 @@ import * as modifiche from "../mondo/modifiche.js";
 import * as esplorato from "./esplorato.js";
 import * as fauna from "./fauna.js";
 import * as polli from "./polli.js";
+import * as cavalli from "./cavalli.js";
 import * as addosso from "./addosso.js";
 import * as meteo from "./meteo.js";
 import * as orto from "./orto.js";
@@ -112,6 +113,10 @@ export function istantanea(eroe, casellaScelta) {
     fauna: fauna.istantanea(),
     // I polli, selvatici e allevati: gli allevati sono roba tua quanto l'orto.
     polli: polli.istantanea(),
+    // I cavalli (W0.6), come i polli: roba tua. Anche quello su cui sei
+    // seduto — riprendendo la partita, sei di nuovo in sella. Non alza il
+    // formato: una partita scritta prima non ha il campo e non ha cavalli.
+    cavalli: cavalli.istantanea(),
     addosso: addosso.istantanea(),
     // Copie e non riferimenti: l'array dello zaino continua a vivere e a
     // cambiare mentre il salvataggio aspetta di essere scritto.
@@ -312,6 +317,7 @@ export function valido(stato) {
   if (!presente(stato, "riposo", riposo.statoValido)) return false;
   if (!presente(stato, "fauna", fauna.statoValido)) return false;
   if (!presente(stato, "polli", polli.statoValido)) return false;
+  if (!presente(stato, "cavalli", cavalli.statoValido)) return false;
   if (!presente(stato, "addosso", addosso.statoValido)) return false;
   if (!presente(stato, "bagnato", livelloValido)) return false;
   if (!presente(stato, "orti", n => intero(n) && n >= 0 && n <= 0xffffffff)) return false;
@@ -383,6 +389,7 @@ export function applica(stato) {
   inventario.ripristina(stato.inventario);
   fauna.ripristina(stato.fauna);
   polli.ripristina(stato.polli);
+  cavalli.ripristina(stato.cavalli);
   addosso.ripristina(stato.addosso);
   esplorato.ripristina(stato.esplorato);
   esplorato.ripristinaOrti(stato.ortiVisti);

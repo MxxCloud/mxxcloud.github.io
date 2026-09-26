@@ -376,6 +376,14 @@ export function davanti(eroe,portata,carcassa=false) {
   }
   return trovato;
 }
+// Un animale che lascia la prateria vivo: il cavallo preso al lazo (W0.6,
+// vedi cavalli.js). Da qui in poi non è più fauna, è tuo.
+export function togli(e) {
+  const i=animali.indexOf(e);
+  if(i<0||e.vita<=0) return false;
+  animali.splice(i,1);
+  return true;
+}
 export function colpisci(e,danno) {
   if(!animali.includes(e)||e.vita<=0||!Number.isFinite(danno)||danno<=0) return {caduto:false};
   e.vita=Math.max(0,e.vita-danno);e.sussulto=0.3;

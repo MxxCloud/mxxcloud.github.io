@@ -184,6 +184,44 @@ export const PALLOTTOLA = {
   volume: 0.14,
 };
 
+// --- il cavallo (W0.6) ------------------------------------------------------
+
+// Il lazo che parte: il cappio che gira sopra la testa e poi vola. Rumore che
+// sale, come lo strappo dell'erba e per la stessa ragione — quello che si
+// sente è l'aria tagliata, non una massa che si sposta.
+export const LAZO = {
+  onda: "rumore",
+  attacco: 0.02,
+  coda: 0.3,
+  filtro: { tipo: "passabanda", taglio: 700, a: 2600, risonanza: 1.6 },
+  volume: 0.32,
+};
+
+// Il nitrito del cavallo preso. Un dente di sega che scende tremando dentro un
+// filtro stretto: non è una nota pulita, è fiato che passa da una gola. Si
+// sente una volta sola, quando il cappio si chiude, ed è la conferma che vale
+// più di qualunque scritta.
+export const NITRITO = {
+  onda: "dente",
+  da: 760,
+  a: 380,
+  attacco: 0.03,
+  coda: 0.7,
+  filtro: { tipo: "passabanda", taglio: 1300, a: 700, risonanza: 3 },
+  volume: 0.2,
+};
+
+// Lo zoccolo sul terreno, a cavallo, al posto del passo: più duro, più basso
+// e più forte, perché pesa sei volte tanto. È la stessa cadenza del passo
+// (vedi udito.js), agganciata al disegno delle zampe.
+export const ZOCCOLO = {
+  onda: "rumore",
+  attacco: 0.001,
+  coda: 0.07,
+  filtro: { tipo: "passabanda", taglio: 900, a: 420, risonanza: 2.2 },
+  volume: 0.22,
+};
+
 // --- lo scontro -----------------------------------------------------------
 
 // Il morso. Il lampo rosso di gioco.js aveva bisogno di questo da sempre:

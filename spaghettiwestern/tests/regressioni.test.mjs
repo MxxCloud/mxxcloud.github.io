@@ -12,6 +12,7 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import * as pesca from '../regole/pesca.js';
 import * as polli from '../regole/polli.js';
+import * as cavalli from '../regole/cavalli.js';
 import * as acqua from '../regole/acqua.js';
 import * as urti from '../entita/urti.js';
 import { GHIACCIO } from '../arte/sprite-terreno.js';
@@ -60,6 +61,7 @@ function reset() {
   addosso.reimposta();
   fauna.reimposta();
   polli.reimposta();
+  cavalli.reimposta();
   meteo.reimposta();
   pesca.interrompi(); mappa.impostaGelo(false); orto.impostaBestie(false);
   riparo.reimposta(); tempo.reimposta(); bisogni.reimposta(); salute.reimposta();
@@ -5145,4 +5147,165 @@ test("lo sparo si vede e si sente: la pistola in pugno, la vampa, la traccia, il
   assert.match(gioco,/lumi\.push\(\{ x: v\.da\.x, y: v\.da\.y, raggio: 72/,'la vampa apre il buio');
   for(const scritta of ['ti prendono la mira: scansati','ti hanno sparato','la pallottola è rimasta dentro'])
     assert.ok(gioco.includes(`annuncia("${scritta}"`),scritta);
+});
+
+// --- Per un pugno di semi (W0.6): il cavallo ----------------------------------
+
+// Un cavallo selvatico a dx pixel dall'eroe, sulla stessa riga.
+function cavalloSelvatico(dx,dy=0){
+  const h=fauna.crea('cavallo',eroe.px+dx,eroe.py+dy,4242);
+  fauna.tutte().push(h);return h;
+}
+test("il lazo si fa al banco con due pelli e quattro fili, e il cavallo ha la sella e il cavaliere",async()=>{
+  const lazo=ricette.RICETTE.find(r=>r.id==='lazo');
+  assert.equal(lazo.banco,true);
+  assert.deepEqual(lazo.costo,[{cosa:'pelle',quante:2},{cosa:'filo',quante:4}]);
+  inventario.aggiungi('pelle',2);inventario.aggiungi('filo',4);
+  assert.equal(ricette.fai(lazo,true).fatto,true);assert.equal(inventario.quante('lazo'),1);
+  const voce=CATALOGO.lazo;assert.equal(voce.nome,'Lazo');assert.equal(voce.durata,undefined,'non si consuma');
+  assert.ok(voce.icona.length===12&&voce.icona.every(r=>r.length===12));decodifica(voce.icona);decodifica(voce.impugnato.righe);
+  const arte=await import('../arte/sprite-cavallo.js');
+  for(const f of [...arte.SELLATO,...arte.CAVALIERE])decodifica(f);
+  assert.equal(arte.CAVALIERE[0].length,25);assert.equal(arte.CAVALIERE[0][0].length,32);
+  // Stesso cavallo della prateria, con la sella sopra: un cavallo non cambia taglia quando lo prendi.
+  assert.equal(arte.SELLATO[0].length,arteFauna.ANIMALI.cavallo[0].length);
+  assert.notDeepEqual(arte.SELLATO[0],arteFauna.ANIMALI.cavallo[0]);
+  // In sella c'è lo straniero: cappello e poncho sopra il cavallo, lo stivale sul fianco.
+  const sella=arte.CAVALIERE[0].join('');for(const c of 'MOQn')assert.ok(sella.includes(c),c);
+  assert.ok(arteFauna.ANIMALI.cavallo[0][0].length>arteFauna.ANIMALI.cervo[0][0].length,'più grande delle altre bestie');
+});
+test("col lazo in mano un cavallo selvatico a tiro si prende, e diventa tuo alla corda",()=>{
+  inventario.aggiungi('lazo',1);
+  const h=cavalloSelvatico(60);
+  assert.equal(azioni.azionePossibile(eroe,null,0)?.tipo==='lazo',false,'a mani nude no');
+  const a=azioni.azionePossibile(eroe,'lazo',0);
+  assert.equal(a.tipo,'lazo');assert.equal(a.verbo,'Lancia il lazo');assert.equal(a.impedito,null);
+  // Alle spalle o troppo lontano no.
+  assert.notEqual(azioni.azionePossibile({...eroe,guarda:'sinistra'},'lazo',0)?.tipo,'lazo');
+  h.px=eroe.px+cavalli.GITTATA_LAZO+4;
+  assert.notEqual(azioni.azionePossibile(eroe,'lazo',0)?.tipo,'lazo');
+  h.px=eroe.px+60;
+  // Dietro un muro nemmeno.
+  modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.MURO});
+  assert.notEqual(azioni.azionePossibile(eroe,'lazo',0)?.tipo,'lazo');
+  modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.NESSUNO});
+  const esito=azioni.agisci(eroe,'lazo',0);
+  assert.equal(esito.tipo,'lazoPreso');
+  assert.equal(fauna.tutte().includes(h),false,'non è più della prateria');
+  assert.equal(cavalli.tutte().length,1);assert.equal(cavalli.tutte()[0].stato,'legato');
+  assert.equal(inventario.quante('lazo'),1,'il lazo resta');
+  // Un bandito addosso viene prima.
+  const h2=cavalloSelvatico(40);
+  entita.aggiungi({tipo:'infetto',px:eroe.px+10,py:eroe.py,vita:5});
+  assert.equal(azioni.azionePossibile(eroe,'lazo',0).tipo,'combatti');
+  entita.svuota();
+  assert.equal(azioni.azionePossibile(eroe,'lazo',0).tipo,'lazo');
+  assert.ok(fauna.tutte().includes(h2));
+});
+test("legato ti segue a qualche passo, e se resta troppo indietro la corda si scioglie",()=>{
+  const h=cavalloSelvatico(60);cavalli.prendi(h);
+  const c=cavalli.tutte()[0];c.px=eroe.px+80;c.py=eroe.py;
+  for(let i=0;i<60;i++)cavalli.aggiorna(1/60,eroe);
+  const d=Math.hypot(c.px-eroe.px,c.py-eroe.py);
+  assert.ok(d<=23&&d>=20,`ti viene dietro: ${d.toFixed(1)}`);
+  assert.equal(c.destra,false,'girato verso di te');
+  const lontano={...eroe,px:eroe.px-200};
+  assert.equal(cavalli.aggiorna(1/60,lontano).slegati,1);assert.equal(c.stato,'libero');
+  // Libero, pascola piano e non ti segue.
+  const prima={x:c.px,y:c.py};for(let i=0;i<60;i++)cavalli.aggiorna(1/60,eroe);
+  assert.ok(Math.hypot(c.px-prima.x,c.py-prima.y)<=8.5,'al passo del pascolo');
+});
+test("a mani libere si monta, e a cavallo la barra fa soltanto scendere; col lazo si lega e si slega",()=>{
+  const h=cavalloSelvatico(60);cavalli.prendi(h);
+  const c=cavalli.tutte()[0];c.px=eroe.px+16;c.py=eroe.py;
+  assert.deepEqual([azioni.azionePossibile(eroe,'lazo',0).tipo,azioni.azionePossibile(eroe,'lazo',0).verbo],['slega','Slega il cavallo']);
+  assert.equal(azioni.agisci(eroe,'lazo',0).tipo,'cavalloSlegato');assert.equal(c.stato,'libero');
+  assert.equal(azioni.azionePossibile(eroe,'lazo',0).tipo,'lega');
+  assert.equal(azioni.agisci(eroe,'lazo',0).tipo,'cavalloLegato');assert.equal(c.stato,'legato');
+  const monta=azioni.azionePossibile(eroe,null,0);
+  assert.deepEqual([monta.tipo,monta.verbo],['monta','Monta a cavallo']);
+  assert.equal(azioni.agisci(eroe,null,0).tipo,'aCavallo');
+  assert.equal(cavalli.montato(),c);assert.deepEqual([c.px,c.py],[eroe.px,eroe.py],'il cavallo viene sotto di te');
+  // Lassù niente altro: non si zappa, non si smonta, non si mena.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.PORTA});
+  assert.deepEqual(azioni.azionePossibile(eroe,'ascia',0),{tipo:'scendi',verbo:'Scendi da cavallo'});
+  assert.equal(azioni.smontaggioPossibile(eroe,null),null);
+  const giu=azioni.agisci(eroe,null,0);
+  assert.equal(giu.tipo,'scesoDaCavallo');assert.equal(giu.nelRecinto,false);
+  assert.equal(c.stato,'libero');assert.equal(cavalli.montato(),null);
+  // E il cavallo si scansa da chi è a piedi, invece di restargli sotto.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.NESSUNO});
+  cavalli.sgomitano(eroe);assert.ok(Math.hypot(c.px-eroe.px,c.py-eroe.py)>=13.9,`${c.px-eroe.px},${c.py-eroe.py}`);
+});
+test("a cavallo si va al trotto e al galoppo, e il galoppo non costa fiato ma fa chiasso",async()=>{
+  const giocatore=await import('../entita/giocatore.js');
+  assert.equal(giocatore.velocitaDi({fattoreVelocita:1},false),52);
+  assert.equal(giocatore.velocitaDi({fattoreVelocita:1},true),92);
+  assert.equal(giocatore.velocitaDi({aCavallo:true,fattoreVelocita:1},false),giocatore.TROTTO);
+  assert.equal(giocatore.velocitaDi({aCavallo:true,fattoreVelocita:1},true),giocatore.GALOPPO);
+  assert.ok(giocatore.TROTTO>92,'il trotto supera la corsa');
+  assert.ok(giocatore.GALOPPO>2.5*62,'e il galoppo lascia indietro chi ti insegue');
+  const leggi=(f)=>readFileSync(new URL('../'+f,import.meta.url),'utf8');
+  const g=leggi('entita/giocatore.js');
+  assert.match(g,/e\.correndo = corre && \(x !== 0 \|\| y !== 0\) && !e\.aCavallo;/);
+  assert.match(g,/e\.galoppa = corre && \(x !== 0 \|\| y !== 0\) && Boolean\(e\.aCavallo\);/);
+  const gioco=leggi('gioco.js');
+  assert.match(gioco,/eroe\.aCavallo = cavalli\.montato\(\) !== null;/);
+  assert.match(gioco,/eroe\.fattoreVelocita = eroe\.aCavallo \? meteo\.fattoreVelocita\(eroe\) :/,'la fame è del cavaliere, non del cavallo');
+  assert.match(gioco,/chiasso\.avanza\(passo, \{ corre: eroe\.correndo \|\| eroe\.galoppa,/);
+});
+test("a mezzanotte i banditi rubano il cavallo lasciato fuori, non quello nel recinto chiuso né quello alla corda",()=>{
+  // A ovest della fattoria: a est, col cancello aperto, si finisce nel
+  // recinto dei cavalli del ranch, che è chiuso anche lui.
+  recinto(tx-12,ty);
+  const fuori=cavalloSelvatico(60),dentro=cavalloSelvatico(70),corda=cavalloSelvatico(80);
+  for(const h of [fuori,dentro,corda])cavalli.prendi(h);
+  const [a,b,c]=cavalli.tutte();
+  Object.assign(a,{...pos(tx+4,ty+4)});cavalli.slega(a);
+  Object.assign(b,{...pos(tx-12,ty)});assert.equal(cavalli.slega(b).nelRecinto,true);
+  assert.equal(cavalli.alSicuro(a),false);assert.equal(cavalli.alSicuro(b),true);assert.equal(cavalli.alSicuro(c),true);
+  assert.equal(cavalli.nuovoGiorno().rubati,1);
+  assert.deepEqual(cavalli.tutte(),[b,c]);
+  // Col cancello aperto il recinto non tiene.
+  modifiche.imposta(tx-10,ty,{oggetto:OGGETTO.CANCELLO_APERTO});
+  assert.equal(cavalli.nuovoGiorno().rubati,1);assert.deepEqual(cavalli.tutte(),[c]);
+  // Il conto arriva al mattino con gli altri, attraverso la mezzanotte vera.
+  cavalli.slega(c);Object.assign(c,{...pos(tx+4,ty+4)});
+  tempo.impostaOra(23.9);simulazione.resoconto();simulazione.avanza(20);
+  assert.equal(simulazione.resoconto().cavalliRubati,1);assert.equal(cavalli.tutte().length,0);
+});
+test("il cavallo si salva con la partita, anche quello su cui sei seduto, e morendo resta dove cadi",()=>{
+  const h=cavalloSelvatico(60),h2=cavalloSelvatico(90);cavalli.prendi(h);cavalli.prendi(h2);
+  const [c]=cavalli.tutte();cavalli.monta(c,eroe);
+  const stato=salvataggio.istantanea(eroe,0);
+  assert.ok(salvataggio.valido(stato));
+  assert.deepEqual(stato.cavalli.cavalli.map(k=>k.stato),['montato','legato']);
+  cavalli.reimposta();assert.ok(salvataggio.applica(stato));
+  assert.deepEqual(cavalli.tutte().map(k=>k.stato),['montato','legato']);assert.ok(cavalli.montato());
+  // Un salvataggio di prima non ha cavalli, e va bene lo stesso.
+  const vecchio=structuredClone(stato);delete vecchio.cavalli;
+  assert.ok(salvataggio.valido(vecchio));salvataggio.applica(vecchio);assert.equal(cavalli.tutte().length,0);
+  // Quelli storti no: due in sella, uno stato che non esiste.
+  const due=structuredClone(stato);due.cavalli.cavalli[1].stato='montato';assert.equal(salvataggio.valido(due),false);
+  const strano=structuredClone(stato);strano.cavalli.cavalli[0].stato='volante';assert.equal(salvataggio.valido(strano),false);
+  // Morendo, quello in sella e quello alla corda restano lì, liberi.
+  salvataggio.applica(stato);
+  const caduto={...eroe,px:eroe.px+33};
+  cavalli.lasciaAndare(caduto);
+  assert.deepEqual(cavalli.tutte().map(k=>k.stato),['libero','libero']);
+  assert.equal(cavalli.tutte()[0].px,caduto.px);
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/corpo = azioni\.lasciaIlCadavere\(eroe, tempo\.giornoCorrente\(\)\);\n  \/\/ Il cavallo su cui eri e quelli alla corda restano lì, liberi \(W0\.6\)\.\n  cavalli\.lasciaAndare\(eroe\);/);
+});
+test("in partita il cavallo si muove, si disegna con la corda, si sente e si annuncia",()=>{
+  const leggi=(f)=>readFileSync(new URL('../'+f,import.meta.url),'utf8');
+  const gioco=leggi('gioco.js');
+  assert.match(gioco,/const scuderia = cavalli\.aggiorna\(passo, eroe\);\n    cavalli\.sgomitano\(eroe\);/);
+  assert.match(gioco,/\.\.\.cavalli\.daDisegnare\(\)/);assert.match(gioco,/disegnaCorde\(\);\n\n  \/\/ Prima del buio/);
+  for(const scritta of ['preso: è tuo, portalo al recinto','il cavallo ti segue','a cavallo: maiusc per galoppare','stanotte i banditi ti hanno rubato il cavallo'])
+    assert.ok(gioco.includes(scritta),scritta);
+  assert.match(leggi('regole/udito.js'),/passi\(eroe, eroe\.aCavallo \? ZOCCOLO : PASSO,/);
+  const hud=leggi('interfaccia/hud.js');
+  assert.match(hud,/\["MAIUSC", "CORRERE, O GALOPPARE A CAVALLO"\]/);assert.match(hud,/if \(aCavallo\) righe\.push\("MAIUSC  GALOPPA"\);/);
+  assert.match(leggi('regole/simulazione.js'),/eventi\.cavalliRubati \+= cavalli\.nuovoGiorno\(\)\.rubati;/);
 });

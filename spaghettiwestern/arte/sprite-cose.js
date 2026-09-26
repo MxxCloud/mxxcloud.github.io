@@ -1464,6 +1464,25 @@ export const SEMI_CAVOLO = [
 // pende. Chiaro come il lino e non verde come la fibra, perché nello zaino le
 // due cose stanno una accanto all'altra e devono sembrare due cose: una è
 // sterpo strappato, l'altra è lavoro.
+// Il lazo (W0.6): una corda di cuoio intrecciato avvolta in spire, con il
+// cappio che pende. Il colore è quello della pelle conciata e non della
+// fibra: è fatto di pelle e di filo, e deve sembrare più robusto di un
+// gomitolo.
+export const LAZO = [
+  "............",
+  "...hwwwwh...",
+  "..hwhhhhwh..",
+  ".hwh....hwh.",
+  ".wh......hw.",
+  ".wh......hw.",
+  ".hwh....hwh.",
+  "..hwhhhhwh..",
+  "...hwwwwhw..",
+  "........hw..",
+  ".......hwh..",
+  ".......hh...",
+];
+
 export const FILO = [
   "............",
   "............",

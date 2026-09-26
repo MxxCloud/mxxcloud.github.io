@@ -18,6 +18,42 @@ Come l'originale non ha server né dipendenze: è HTML, CSS e JavaScript serviti
 così come sono. Tutto quello che segue è la storia di Ultimo raccolto fino al
 punto della copia.
 
+## W0.6 — il cavallo
+
+Il recinto del ranch non è più vuoto: **i cavalli si prendono, si conducono e
+si cavalcano**.
+- **Il lazo.** Si fa al banco con **2 pelli e 4 fili di lino**: vuole la
+  caccia e l'orto, come la pelliccia. Non si consuma.
+- **Prenderlo.** Con il lazo in mano, un cavallo selvatico **a cinque tasselli
+  davanti a te** si prende con la barra: «Lancia il lazo». Ti vede da sei
+  tasselli e scappa appena sotto la tua corsa, quindi va rincorso: tre secondi
+  di corsa e sei a tiro. Un bandito addosso viene prima: col bandito a un
+  braccio la barra mena.
+- **Condurlo.** Preso, è tuo e **ti segue legato alla corda**, che si vede
+  dalla tua mano al suo collo. Col lazo in mano, davanti a lui, lo **sleghi**
+  e lo **leghi**. Se resta troppo indietro — un muro in mezzo, un cancello
+  chiuso — la corda si scioglie e lui resta lì.
+- **Cavalcarlo.** A mani libere, davanti al tuo cavallo: «Monta a cavallo».
+  In sella si va **al trotto, più veloce della corsa**, e col **Maiusc al
+  galoppo**, che lascia indietro qualunque bandito; né l'uno né l'altro
+  costano fiato, ma il galoppo fa il chiasso di una corsa. Da lassù la barra
+  fa una cosa sola: **scendere**, e il cavallo resta dove sei sceso. Una
+  torcia in mano si porta anche a cavallo.
+- **Tenerlo.** Un cavallo lasciato **slegato fuori da un recinto chiuso** o da
+  una stanza, a **mezzanotte**, **se lo prendono i banditi**; al mattino lo si
+  legge. Nel recinto col cancello chiuso, in casa, alla corda o in sella è al
+  sicuro. Il recinto dei cavalli del ranch serve a questo.
+- Morendo, il cavallo su cui eri e quelli alla corda restano dove sei caduto,
+  liberi: chi arriva dopo li può riprendere, se arriva prima di mezzanotte.
+- I cavalli si salvano con la partita, anche quello su cui sei seduto.
+- Il cavallo è **più grande** di prima, selvatico compreso: alla misura della
+  fauna uno straniero in sella sembrava in piedi davanti a un pony. Il tuo ha
+  la **sella e la coperta a scacchi**, e si riconosce da quelli della
+  prateria. In sella i passi diventano **zoccoli**; prendendolo, **nitrisce**.
+
+Per ora un cavallo non mangia e non si stanca: la biada, la stalla e la
+stanchezza verranno insieme.
+
 ## W0.5 — di notte si spara
 
 La prima regola western, ed è quella del sottotitolo: **i banditi hanno la

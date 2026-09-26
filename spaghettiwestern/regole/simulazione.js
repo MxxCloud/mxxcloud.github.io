@@ -10,8 +10,9 @@ import * as orto from "./orto.js";
 import * as decadimento from "./decadimento.js";
 import * as ricrescita from "./ricrescita.js";
 import * as polli from "./polli.js";
+import * as cavalli from "./cavalli.js";
 
-const vuoto = () => ({ uovaDeposte: 0, pulciniNati: 0, pulciniCresciuti: [], polliNelloZaino: 0, polloDomani: 0, polliScappati: 0, pulciniPersi: 0, polliAffamati: 0, polliDiFame: 0, polliDiFreddo: 0,
+const vuoto = () => ({ cavalliRubati: 0, uovaDeposte: 0, pulciniNati: 0, pulciniCresciuti: [], polliNelloZaino: 0, polloDomani: 0, polliScappati: 0, pulciniPersi: 0, polliAffamati: 0, polliDiFame: 0, polliDiFreddo: 0,
   cresciute: 0, appassite: 0, seccate: 0, alBuio: 0, alChiuso: 0, assetate: 0, aSeme: 0, mangiate: 0, spentiLegna: 0, spentiPioggia: 0, torceFinite: 0, guaste: 0, inScadenza: 0, tornati: 0, risvegliForzati: 0 });
 let eventi = vuoto();
 
@@ -99,6 +100,8 @@ export function avanza(secondi, { eroe = null, dorme = false, nelLetto = false, 
       // Come le assetate: lo stato di stamattina.
       eventi.polloDomani = pollame.avvisoZaino;
       eventi.polliAffamati = pollame.affamati;
+      // I cavalli lasciati fuori (W0.6): a mezzanotte se li prendono i banditi.
+      eventi.cavalliRubati += cavalli.nuovoGiorno().rubati;
     }
   }
   return trascorsi;

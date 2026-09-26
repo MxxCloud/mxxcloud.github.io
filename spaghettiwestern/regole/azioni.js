@@ -28,6 +28,7 @@ import * as pesca from "./pesca.js";
 import * as riparo from "./riparo.js";
 import * as decadimento from "./decadimento.js";
 import * as polli from "./polli.js";
+import * as cavalli from "./cavalli.js";
 
 const { TASSELLO } = schermo;
 
@@ -220,6 +221,11 @@ export function strumento(cosaInMano, indice, scopo) {
 }
 
 export function azionePossibile(eroe, cosaInMano, indice) {
+  // A cavallo (W0.6) la barra fa una cosa sola, scendere: da lassù non si
+  // zappa, non si raccoglie e non si mena. Sta in cima per la stessa ragione
+  // del bandito addosso qui sotto — è la risposta prima di ogni domanda.
+  if (cavalli.montato()) return { tipo: "scendi", verbo: "Scendi da cavallo" };
+
   // Prima di qualunque cosa, perché nel momento in cui uno ti è addosso non
   // esiste nient'altro da fare. Senza questa riga in cima, trovandosi un
   // infetto sopra un cespuglio la barra strappava il cespuglio — e sarebbe
@@ -229,9 +235,29 @@ export function azionePossibile(eroe, cosaInMano, indice) {
   const animale = fauna.davanti(eroe, portata);
   // Il bersaglio più vicino: un animale non deve coprire un infetto addosso.
   const distanza = e => e ? Math.hypot(e.px-eroe.px,e.py-eroe.py) : Infinity;
+
+  // Il lazo (W0.6), dopo il bandito addosso e prima della bestia a portata di
+  // braccio: con il lazo in mano, un cavallo davanti si prende e non si mena.
+  if (cosaInMano === "lazo" && !(infetto && distanza(infetto) <= distanza(animale))) {
+    const preda = cavalli.selvaticoATiro(eroe);
+    if (preda) return { tipo: "lazo", verbo: "Lancia il lazo", preda, impedito: cavalli.percheNonLazo() };
+  }
+
   const addosso = distanza(infetto) <= distanza(animale) ? infetto : animale;
   if (addosso) {
     return { tipo: "combatti", verbo: addosso.specie ? "Colpisci " + fauna.SPECIE[addosso.specie].nome : "Colpisci", nemico: addosso };
+  }
+
+  // Il tuo cavallo davanti (W0.6): col lazo in mano lo si lega o lo si slega,
+  // con qualunque altra cosa ci si sale sopra.
+  const mio = cavalli.davanti(eroe);
+  if (mio) {
+    if (cosaInMano === "lazo") {
+      return mio.stato === "legato"
+        ? { tipo: "slega", verbo: "Slega il cavallo", cavallo: mio }
+        : { tipo: "lega", verbo: "Lega il cavallo", cavallo: mio };
+    }
+    return { tipo: "monta", verbo: "Monta a cavallo", cavallo: mio };
   }
 
   // Il pollo davanti: con un'arma in mano gli si tira il collo, a mani nude
@@ -717,7 +743,7 @@ function zappabile(terreno) {
 
 function occupato(tx, ty, eroe) {
   // Comprende l'eroe anche nei collaudi senza registro delle entità.
-  return [eroe, ...entita.tutte(), ...fauna.tutte(), ...polli.tutte()].some(e => e &&
+  return [eroe, ...entita.tutte(), ...fauna.tutte(), ...polli.tutte(), ...cavalli.tutte()].some(e => e &&
     e.px + urti.LARGHEZZA / 2 > tx * TASSELLO && e.px - urti.LARGHEZZA / 2 < (tx + 1) * TASSELLO &&
     e.py > ty * TASSELLO && e.py - urti.ALTEZZA < (ty + 1) * TASSELLO);
 }
@@ -935,6 +961,8 @@ function sollevaConLAscia(b, cosaInMano) {
 }
 
 export function smontaggioPossibile(eroe, cosaInMano = null) {
+  // Da cavallo non si smonta niente, come non si zappa (W0.6).
+  if (cavalli.montato()) return null;
   const b = bersaglio(eroe);
   const voce = (sollevaConLAscia(b, cosaInMano) ? PAVIMENTO_SOLLEVATO : null)
     ?? SMONTAGGI[b.oggetto]
@@ -1225,7 +1253,7 @@ export function agisci(eroe, cosaInMano, indice) {
     : esito?.tipo === "combattuto" ? 0.02
     : esito?.tipo === "zappa" || esito?.tipo === "interra" ? 0.02
     : ["colpo", "raccolto"].includes(esito?.tipo) ? (scopo === "raccolta" ? 0.015 : 0.005)
-    : ({ semina: 0.005, innaffia: 0.005, spargi: 0.005, posa: 0.01, cotto: 0.005, riempi: 0.005 }[esito?.tipo] ?? 0);
+    : ({ semina: 0.005, innaffia: 0.005, spargi: 0.005, posa: 0.01, cotto: 0.005, riempi: 0.005, lazoPreso: 0.01 }[esito?.tipo] ?? 0);
   if (costo) bisogni.consuma("stanchezza", costo);
   if (esito && attrezzo && (["combattuto", "colpo", "raccolto", "zappa", "interra"].includes(esito.tipo) || esito.lavorato)) {
     const avviso = inventario.usura(attrezzo);
@@ -1238,6 +1266,12 @@ function esegui(eroe, cosaInMano, indice, azione) {
   if (pesca.stato()) { pesca.interrompi(); return { tipo: "pescaInterrotta" }; }
   if (!azione || azione.impedito) return null;
   if (azione.tipo === "pesca") return pesca.inizia(eroe, azione.bersaglio.tx, azione.bersaglio.ty, indice);
+
+  if (azione.tipo === "scendi") return cavalli.scendi(eroe);
+  if (azione.tipo === "lazo") return cavalli.prendi(azione.preda);
+  if (azione.tipo === "lega") return cavalli.lega(azione.cavallo);
+  if (azione.tipo === "slega") return cavalli.slega(azione.cavallo);
+  if (azione.tipo === "monta") return cavalli.monta(azione.cavallo, eroe);
 
   if (azione.tipo === "macella" || azione.tipo === "spoglia") return fauna.macella(azione.carcassa);
   if (azione.tipo === "prendiPollo") return polli.prendi(azione.pollo);
