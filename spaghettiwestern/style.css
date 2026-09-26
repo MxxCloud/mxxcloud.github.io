@@ -1,0 +1,101 @@
+/* ==========================================================================
+   Ultimo raccolto — impaginazione
+   La pagina non è un'interfaccia: è una cornice attorno a un rettangolo di
+   384x216 pixel. Tutto qui dentro serve a non disturbarlo.
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  --fondo: #0d0f12;
+  --testo: #c9cdd4;
+  --testo-tenue: #7c848f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--testo);
+  font: 14px/1.5 ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, monospace;
+  /* Le frecce e la barra spaziatrice sono comandi di gioco: se la pagina
+     scorresse, ogni passo verso il basso muoverebbe anche la finestra. */
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+#scena {
+  position: relative;
+  height: 100%;
+  display: grid;
+  place-content: center;
+}
+
+#quadro {
+  display: block;
+  /* Il canvas ha sempre 384x216 pixel veri; la larghezza in CSS la decide
+     schermo.js con un fattore intero. Questa riga è ciò che impedisce al
+     browser di sfumare l'ingrandimento e di trasformare la pixel art in
+     acquerello. */
+  image-rendering: pixelated;
+  background: #000;
+  /* Caso degenere: finestra più piccola della risoluzione interna. Meglio
+     rimpicciolire che tagliare via metà dell'inquadratura. */
+  max-width: 100vw;
+  max-height: 100vh;
+  /* Toccare lo schermo non deve selezionare né far comparire la lente. */
+  touch-action: none;
+  user-select: none;
+}
+
+/* ==========================================================================
+   Sovrapposizioni
+   ========================================================================== */
+
+/* La diagnostica sta nel DOM e non sul canvas: disegnare testo leggibile a
+   questa risoluzione richiederebbe un font di sprite, che è lavoro da fare per
+   l'interfaccia vera, non per qualche numero di servizio. */
+#diagnostica {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  background: rgb(13 15 18 / 0.78);
+  border: 1px solid #262b32;
+  border-radius: 4px;
+  color: var(--testo-tenue);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre;
+  pointer-events: none;
+}
+
+/* La mappa grande (M7.18.39): un canvas suo sopra il gioco, della stessa
+   misura sullo schermo ma con i pixel veri, perché una carta si deve leggere
+   e la pixel art ingrandita non si leggeva. La misura la decide mappa.js. */
+#carta {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+#carta[hidden] {
+  display: none;
+}
+
+#diagnostica[hidden] {
+  display: none;
+}

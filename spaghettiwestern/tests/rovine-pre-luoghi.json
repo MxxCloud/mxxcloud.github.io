@@ -1,0 +1,284 @@
+[
+  {
+    "seme": "review",
+    "cx": 1,
+    "cy": -3,
+    "hash": "c923a59d0d51c5ec4246f3bae920405e95aa2f2b85a8a1172f0062cee4c7319f"
+  },
+  {
+    "seme": "review",
+    "cx": 2,
+    "cy": -3,
+    "hash": "bf4c80385b96a081463d4e7927cfeb9a28054cd308ff996d9c52e2fb1939c9c9"
+  },
+  {
+    "seme": "review",
+    "cx": 0,
+    "cy": -2,
+    "hash": "5e934663aa343dc3665624bc23707713f4a66fcfa3dcdb190f8f1ec1907272c4"
+  },
+  {
+    "seme": "review",
+    "cx": -3,
+    "cy": -1,
+    "hash": "4c74d345076866ef878149004870f058498b6dc72a6243e496cb5ca8ca63fdf0"
+  },
+  {
+    "seme": "review",
+    "cx": -2,
+    "cy": -1,
+    "hash": "c99f381252c75cc802ce48f6f986b225c7e44f0f6461dadc94367a66566387bf"
+  },
+  {
+    "seme": "review",
+    "cx": -1,
+    "cy": -1,
+    "hash": "60ac29e42380ba440c321b155cba2604f38d4828c5bdd5983db43649543cb646"
+  },
+  {
+    "seme": "review",
+    "cx": 2,
+    "cy": -1,
+    "hash": "60e474e6779b0d8ca050a6de2f2254f35a64ef05882f8f98a6942305aa182a3d"
+  },
+  {
+    "seme": "review",
+    "cx": 0,
+    "cy": 0,
+    "hash": "cebcca807b348b612131bc0519cc36dc743f1e4c4414e2074644c8cca75ebac1"
+  },
+  {
+    "seme": "review",
+    "cx": 1,
+    "cy": 0,
+    "hash": "a06d7af577e4a76d03d1c731b0a30744ae8817c7e8530711334fdd3726f9dec6"
+  },
+  {
+    "seme": "review",
+    "cx": 1,
+    "cy": 1,
+    "hash": "c054ac13f7a0a252ab0b6530bc77057b9ab62f723ff2a7102847d60b76216dca"
+  },
+  {
+    "seme": "review",
+    "cx": 3,
+    "cy": 1,
+    "hash": "c23838cd7d6216b56651c0b82721cc251b24d90b2fa8d59a8cca2f6488231d68"
+  },
+  {
+    "seme": "review",
+    "cx": 2,
+    "cy": 2,
+    "hash": "9bceae08231ace1bca375cba0e48321e5fad78eb53c3da095b0dd442697d9e5f"
+  },
+  {
+    "seme": "review",
+    "cx": 3,
+    "cy": 2,
+    "hash": "cc19843a43af0646eac40b126d7daa39e5e4195c58c662b0cf81adecb68510a1"
+  },
+  {
+    "seme": "review",
+    "cx": -3,
+    "cy": 3,
+    "hash": "ea2ae1642c53d67d136a8affcd939ab91fe4ebe6d30cca2597a6cb64edc8693d"
+  },
+  {
+    "seme": "review",
+    "cx": 1,
+    "cy": 3,
+    "hash": "eadb5ac6428590d8b3321c68f417f24db98eafbba76b5971d5d2bec6bc3d4084"
+  },
+  {
+    "seme": "review",
+    "cx": 2,
+    "cy": 3,
+    "hash": "4b06ebd1ee69fde975fc3dae98c9be6920ded23d749b368449d4658e07b3d570"
+  },
+  {
+    "seme": "inverno",
+    "cx": -2,
+    "cy": -2,
+    "hash": "dc3f20d0e145c2d473da858fe97761993f9892ddcfcc2420161f24abb4b9e872"
+  },
+  {
+    "seme": "inverno",
+    "cx": -1,
+    "cy": 0,
+    "hash": "b444221d6f8fd11f35fe211efcb8606bb02e42ff7f1ae17e16db16bfc0f75553"
+  },
+  {
+    "seme": "inverno",
+    "cx": 0,
+    "cy": 0,
+    "hash": "5b044b54c65810b542017b570b8e5593a978276d8313eb44a16634aa664667cb"
+  },
+  {
+    "seme": "inverno",
+    "cx": -2,
+    "cy": 1,
+    "hash": "fdb08723467dff30da4bc4acff00fd8de23f524cc4df9d56c8f5a09af08f1585"
+  },
+  {
+    "seme": "inverno",
+    "cx": -1,
+    "cy": 2,
+    "hash": "f1c9a99e2a4142c5db04671c416a6495e787bd1f554722539e851ad16077725e"
+  },
+  {
+    "seme": "inverno",
+    "cx": 2,
+    "cy": 2,
+    "hash": "171ef6cf088815112fd33c4a040efe9b70f7f278d2aa833a171982fd0df1dede"
+  },
+  {
+    "seme": "inverno",
+    "cx": -2,
+    "cy": 3,
+    "hash": "7b4c2feffb430dbbd6dcb28a24a413a4c3f070b403954df6b48dafeca52b6439"
+  },
+  {
+    "seme": "valle",
+    "cx": -2,
+    "cy": -2,
+    "hash": "80a2f620ab855a4a3e9533ea3db18660a23b785f91a67e0eb021568bc9fef2a5"
+  },
+  {
+    "seme": "valle",
+    "cx": -1,
+    "cy": -1,
+    "hash": "ff74284ac868ff7c47d1a869aa9ed8c817a71ecea33d2d54ea42d070e0dc0992"
+  },
+  {
+    "seme": "valle",
+    "cx": 2,
+    "cy": -1,
+    "hash": "7d5b6a0c808684b07aafd8fc792824625bbf8243a3b3bdfce8edf4e39df0a8b8"
+  },
+  {
+    "seme": "valle",
+    "cx": 3,
+    "cy": -1,
+    "hash": "f9703436c5c90f55096f00cbfeba17a3d00b5be7f783ba1f41a317aca13baca0"
+  },
+  {
+    "seme": "valle",
+    "cx": -3,
+    "cy": 0,
+    "hash": "94738214ba00deba30e1024905c814fe1dac4bf11ad02fdfd5eda6cf0a7aaad0"
+  },
+  {
+    "seme": "valle",
+    "cx": -1,
+    "cy": 0,
+    "hash": "34c6d65eef61993b8f400503131f2d52d99d230371e3c4fd1098237670540998"
+  },
+  {
+    "seme": "valle",
+    "cx": 0,
+    "cy": 0,
+    "hash": "bc74c49311eb28a654796c96c11536a16600970ec0e7fe73cc581e7d0e758b3d"
+  },
+  {
+    "seme": "valle",
+    "cx": -3,
+    "cy": 1,
+    "hash": "4e218934aedb8f01c88231bebb9a24539e53f613836ae1fbb6a82020818f2146"
+  },
+  {
+    "seme": "valle",
+    "cx": 1,
+    "cy": 1,
+    "hash": "97b963e63f1b06ecb486510622111c6a31dc1cb183680d766686ba26d3cf4687"
+  },
+  {
+    "seme": "valle",
+    "cx": 2,
+    "cy": 2,
+    "hash": "111389d1b5c5e8d84ba93ef59d5189822a1618d15cc4514e5d57d9f05d55fce1"
+  },
+  {
+    "seme": "valle",
+    "cx": 1,
+    "cy": 3,
+    "hash": "f22443167eb21056465e4b3cb2db82235191ebfa98939b68f3c84de994712355"
+  },
+  {
+    "seme": "raccolto",
+    "cx": -3,
+    "cy": -3,
+    "hash": "a03679222639d13bf7af775e6f9d3ed2bf44d90f2550fb9d2f45a276da9760af"
+  },
+  {
+    "seme": "raccolto",
+    "cx": -2,
+    "cy": -3,
+    "hash": "48d4b9d164157abcb2dc8ed975031ec06e574c22252cbeb5280c5ec30f3e4610"
+  },
+  {
+    "seme": "raccolto",
+    "cx": 2,
+    "cy": -3,
+    "hash": "0a9707be573a6e654dc21ed505698758a0d61cc6f83a430677cf89e352e11591"
+  },
+  {
+    "seme": "raccolto",
+    "cx": -2,
+    "cy": -2,
+    "hash": "5224bcfc1dee32532b24173f5dcd1f62ebd524ea8b4ab40d9b631412fbc5ed00"
+  },
+  {
+    "seme": "raccolto",
+    "cx": 1,
+    "cy": -2,
+    "hash": "d040b25ecc25c191ee4898e968b079cf44132dc32bdac6b00def676dc17d76ca"
+  },
+  {
+    "seme": "raccolto",
+    "cx": 0,
+    "cy": -1,
+    "hash": "47be0dcdaf8fb05f9fd92ced8bdc40fb585c0f02ad039a25112379ac21634c8d"
+  },
+  {
+    "seme": "raccolto",
+    "cx": -2,
+    "cy": 0,
+    "hash": "898bb8ef672e890bb31243ec1bddf49fd20c1b6388bf4058caa2dbb4db07ed5e"
+  },
+  {
+    "seme": "raccolto",
+    "cx": -1,
+    "cy": 0,
+    "hash": "8a52f984667075869f00cbe526ff789aad54d115cba4c522521319e9329e0d9c"
+  },
+  {
+    "seme": "raccolto",
+    "cx": 0,
+    "cy": 0,
+    "hash": "fdfcf90cc6722887fdbb927ba788f87b263775a621d5f791bd4f1a10698e6403"
+  },
+  {
+    "seme": "raccolto",
+    "cx": -3,
+    "cy": 1,
+    "hash": "c347b5344966662175add2f8bc07c8179fff707a4310408e4c753b0cf2e4ce73"
+  },
+  {
+    "seme": "raccolto",
+    "cx": 2,
+    "cy": 1,
+    "hash": "a81454debbc95bd1d76bfd6199e01b1cb88c98028a1a6f8848d5aa7f92f5a1b7"
+  },
+  {
+    "seme": "raccolto",
+    "cx": 0,
+    "cy": 2,
+    "hash": "10b9bdc48597adaff8f50e0116dd17d2aff0053aab88e6bb9009276c81028ebd"
+  },
+  {
+    "seme": "raccolto",
+    "cx": 1,
+    "cy": 2,
+    "hash": "1ae40cbbba7558871a4f3c411a43f94c43e4e1c00968bc1170c0d5f4a7a85c92"
+  }
+]

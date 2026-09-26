@@ -1,0 +1,105 @@
+// Un'unica cronologia per fotogrammi, sonno e assenze. Le soglie dei bisogni
+// e la mezzanotte sono confini: il passato non usa le condizioni del futuro.
+import * as riposo from "./riposo.js";
+import * as meteo from "./meteo.js";
+import * as addosso from "./addosso.js";
+import * as tempo from "./tempo.js";
+import * as bisogni from "./bisogni.js";
+import * as salute from "./salute.js";
+import * as orto from "./orto.js";
+import * as decadimento from "./decadimento.js";
+import * as ricrescita from "./ricrescita.js";
+import * as polli from "./polli.js";
+
+const vuoto = () => ({ uovaDeposte: 0, pulciniNati: 0, pulciniCresciuti: [], polliNelloZaino: 0, polloDomani: 0, polliScappati: 0, pulciniPersi: 0, polliAffamati: 0, polliDiFame: 0, polliDiFreddo: 0,
+  cresciute: 0, appassite: 0, seccate: 0, alBuio: 0, alChiuso: 0, assetate: 0, aSeme: 0, mangiate: 0, spentiLegna: 0, spentiPioggia: 0, torceFinite: 0, guaste: 0, inScadenza: 0, tornati: 0, risvegliForzati: 0 });
+let eventi = vuoto();
+
+export function resoconto() {
+  const risultato = eventi;
+  eventi = vuoto();
+  return risultato;
+}
+
+// "nelLetto" dice che si dorme in un letto e non su un giaciglio: vale solo
+// finché si dorme, e cambia la salute (vedi salute.js), non il riposo.
+export function avanza(secondi, { eroe = null, dorme = false, nelLetto = false, corre = false, siMuove = false, alFreddo = () => false } = {}) {
+  if (!Number.isFinite(secondi) || secondi <= 0) return 0;
+  let trascorsi = 0;
+  while (secondi > 1e-10 && !salute.eMorto()) {
+    eventi.spentiPioggia += meteo.aggiornaMondo().spenti;
+    const esaurito = bisogni.livello("stanchezza") === 0;
+    const dormendo = dorme || riposo.secondiDiSonno() > 0;
+    const confineRiposo = riposo.confine(esaurito, dorme);
+    const opzioni = { dorme: dormendo, corre, siMuove };
+    const giorno = tempo.giornoCorrente();
+    const mezzanotte = (24 - tempo.oraCorrente()) * tempo.SECONDI_PER_GIORNO / 24;
+    // Un secondo al massimo per valutare gelo e luci anche nelle assenze.
+    const passo = Math.min(secondi, 1, confineRiposo, Math.max(1e-9, mezzanotte), bisogni.secondiAlVuoto(opzioni), meteo.secondiAlCambio(eroe));
+    // Una pelliccia zuppa non scalda, ed è la regola che tiene insieme le due
+    // scale: l'unico modo di rimetterla in funzione è asciugarsi, cioè un
+    // fuoco. È il costo ricorrente della pelliccia, pagato in legna e visibile
+    // nella barra del bagnato invece che in un contatore invisibile.
+    //
+    // Sta qui e non in addosso.js perché è una frase sul freddo, non sulla
+    // pelliccia — e perché meteo deve poter chiedere ad addosso per la
+    // pioggia: metterla là creerebbe un ciclo fra i due.
+    const protetto = Boolean(addosso.dati()?.gradiniFermi) && !meteo.zuppo();
+    // Il richiamo restituisce che freddo è, non se fa freddo: "gelo",
+    // "bagnato" o niente (vedi freddo.js). Boolean() regge anche un richiamo
+    // vecchio che rispondeva sì o no, e in quel caso mite resta falso — cioè
+    // la regola severa, che è la risposta giusta quando non si sa.
+    const che = alFreddo();
+    salute.avanza(passo, {
+      vuoti: bisogni.vuoti().filter(v => !dormendo || v !== "stanchezza"),
+      alFreddo: Boolean(che),
+      protetto,
+      mite: che === "bagnato",
+      nelLetto: dorme && nelLetto,
+    });
+    if (dormendo) bisogni.passanoSecondi(passo);
+    else bisogni.avanza(passo, { corre, siMuove });
+    if (riposo.avanza(passo, { esaurito, dorme, vivo: !salute.eMorto() })) {
+      bisogni.ristora("stanchezza", 0.25);
+      eventi.risvegliForzati++;
+    }
+    meteo.avanza(passo, eroe);
+    tempo.avanza(passo);
+    trascorsi += passo;
+    secondi -= passo;
+    if (tempo.giornoCorrente() !== giorno) {
+      const orti = orto.nuovoGiorno();
+      const lasciato = decadimento.nuovoGiorno();
+      eventi.cresciute += orti.cresciute;
+      eventi.appassite += orti.appassite;
+      eventi.seccate += orti.seccate;
+      eventi.aSeme += orti.aSeme;
+      eventi.mangiate += orti.mangiate;
+      eventi.alBuio += orti.alBuio;
+      // Come le assetate: è lo stato di stamattina, non una somma.
+      eventi.alChiuso = orti.alChiuso;
+      // Come "in scadenza": è lo stato di stamattina, non una somma. Dopo
+      // due notti d'assenza le assetate di ieri sono le seccate di oggi, e
+      // contarle due volte direbbe un orto più grande di quello che c'è.
+      eventi.assetate = orti.assetate;
+      eventi.spentiLegna += lasciato.fuochi;
+      eventi.torceFinite += lasciato.torce;
+      eventi.guaste += lasciato.guaste;
+      eventi.inScadenza = lasciato.inScadenza;
+      eventi.tornati += ricrescita.nuovoGiorno();
+      const pollame = polli.nuovoGiorno();
+      eventi.polliNelloZaino += pollame.mortiNelloZaino;
+      eventi.polliScappati += pollame.scappati;
+      eventi.pulciniPersi += pollame.pulciniPersi;
+      eventi.polliDiFame += pollame.mortiDiFame;
+      eventi.polliDiFreddo += pollame.mortiDiFreddo;
+      eventi.uovaDeposte += pollame.uova;
+      eventi.pulciniNati += pollame.nati;
+      eventi.pulciniCresciuti.push(...pollame.cresciuti);
+      // Come le assetate: lo stato di stamattina.
+      eventi.polloDomani = pollame.avvisoZaino;
+      eventi.polliAffamati = pollame.affamati;
+    }
+  }
+  return trascorsi;
+}
