@@ -143,6 +143,47 @@ export const FISCHIO = {
   volume: 0.15,
 };
 
+// --- la pistola (W0.5) ----------------------------------------------------
+
+// Il cane che scatta: un bandito ti ha preso la mira. È l'avviso che conta di
+// più in tutta la notte, perché fra questo e lo sparo c'è meno di un secondo
+// e l'unica cosa da fare è muoversi. Corto e secco, alto: un clic metallico
+// è rumore filtrato in cima, non una nota, e deve bucare tutto il resto senza
+// essere forte.
+export const CANE = {
+  onda: "rumore",
+  attacco: 0.001,
+  coda: 0.045,
+  filtro: { tipo: "passaalto", taglio: 3600, risonanza: 4 },
+  volume: 0.4,
+};
+
+// Lo sparo. La voce più forte del gioco, più del morso che lo era, e la sola
+// che si sente da così lontano (vedi udito.js): uno schiocco che parte aperto e si chiude
+// in fretta, e poi una coda lunga che è la valle che lo rimanda indietro.
+export const SPARO = {
+  onda: "rumore",
+  attacco: 0.001,
+  coda: 0.75,
+  filtro: { tipo: "passabasso", taglio: 5200, a: 140, risonanza: 1.1 },
+  volume: 0.9,
+};
+
+// La pallottola che ti passa accanto: il fischio che scende, quello di tutti
+// i western. Una sinusoide e non rumore, per la ragione del fischio dei
+// banditi: una cosa intonata in mezzo al rumore della notte si sente senza
+// doverla alzare. Suona solo per quelle che ti sfiorano — è il suono di
+// averla scampata.
+export const PALLOTTOLA = {
+  onda: "sinusoide",
+  da: 2700,
+  a: 750,
+  attacco: 0.01,
+  coda: 0.36,
+  filtro: { tipo: "passabanda", taglio: 1700, risonanza: 0.6 },
+  volume: 0.14,
+};
+
 // --- lo scontro -----------------------------------------------------------
 
 // Il morso. Il lampo rosso di gioco.js aveva bisogno di questo da sempre:

@@ -21,7 +21,7 @@ import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
 import { OGGETTO } from "../mondo/generazione.js";
 import * as schermo from "../motore/schermo.js";
-import { vistaLibera, fattoreSuono } from "../mondo/ostacoli.js";
+import { vistaLibera, fattoreSuono, chiude } from "../mondo/ostacoli.js";
 import * as entita from "../entita/entita.js";
 import * as infetto from "../entita/infetto.js";
 import * as urti from "../entita/urti.js";
@@ -258,6 +258,118 @@ export function raccogliIMorsi(eroe) {
   return { morsi, infettato };
 }
 
+// --- la pistola (W0.5) -----------------------------------------------------
+
+// Quanto toglie una pallottola: poco meno di due colpi di calcio. Cinque
+// pallottole uccidono, e per prenderne cinque bisogna essere rimasti fermi
+// allo scoperto cinque volte, con il cane che scatta ogni volta prima.
+// Ventuno centesimi e non venti: cinque volte venti, coi decimali di un
+// computer, lascia un filo di salute, e «cinque uccidono» sarebbe falso.
+const SPARO = 0.21;
+
+// Metà delle volte resta dentro. Più del braccio (un terzo): una pallottola
+// è una ferita più sporca di un colpo di calcio, ed è giusto che il ritorno a
+// casa per la benda arrivi più spesso da qui.
+const RISCHIO_INFEZIONE_SPARO = 0.5;
+
+// A che distanza dalla traiettoria si viene presi. Poco più di metà del
+// riquadro d'urto: chi si è spostato di lato di un passo è fuori, chi è
+// rimasto è dentro. Camminando si fanno tredici pixel nel tratto in cui la
+// canna non segue più, correndo ventisette.
+//
+// Dalla traiettoria e non dal punto mirato, e la differenza si vede: chi
+// scappa dritto lontano da chi spara ha la pallottola che gli arriva dietro
+// lungo la stessa linea, e contarla mancata voleva dire una traccia che
+// attraversa lo straniero senza fargli niente. Scansarsi è di lato.
+const RAGGIO_COLPITO = 7;
+
+// Quanto vola una pallottola che non prende niente, contata dal bandito: la
+// gittata e poi ancora un po', perché chi manca non manca di un palmo.
+const VOLO = 190;
+
+// Sotto questa distanza una pallottola mancata si sente passare.
+const SFIORA = 26;
+
+// Il volo di una pallottola sul terreno, dai piedi di chi spara verso il punto
+// mirato e oltre, fino al primo muro o porta chiusa (gli stessi che fermano la
+// vista, vedi mondo/ostacoli.js). Si cammina a due pixel per volta: un muro è
+// largo sedici, e a questo passo non ce n'è uno che si salti.
+function volo(da, verso) {
+  const dx = verso.x - da.x;
+  const dy = verso.y - da.y;
+  const lunghezza = Math.hypot(dx, dy) || 1;
+  const ux = dx / lunghezza;
+  const uy = dy / lunghezza;
+  const { TASSELLO } = schermo;
+  for (let t = 2; t <= VOLO; t += 2) {
+    const x = da.x + ux * t;
+    const y = da.y + uy * t;
+    const tx = Math.floor(x / TASSELLO);
+    const ty = Math.floor(y / TASSELLO);
+    if (chiude(tx, ty)) return { x, y, muro: { tx, ty, scheggie: SFONDABILI[mappa.oggettoDi(tx, ty)]?.scheggie ?? ["J", "K", "L"] } };
+  }
+  return { x: da.x + ux * VOLO, y: da.y + uy * VOLO, muro: null };
+}
+
+// Quanto passa vicino al punto p il tratto da a a b.
+function distanzaDalTratto(p, a, b) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const quadro = dx * dx + dy * dy;
+  const t = quadro === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / quadro));
+  return Math.hypot(p.x - (a.x + dx * t), p.y - (a.y + dy * t));
+}
+
+// Da chiamare dopo entita.aggiorna(), insieme ai morsi: i colpi partiti
+// diventano ferite o polvere. Restituisce ogni colpo con quello che serve a
+// farlo vedere e sentire — da dove parte e dove finisce, disegnati all'altezza
+// della canna; se ha preso qualcuno, se ha preso un muro, se ti è passato
+// accanto — e se una pallottola è rimasta dentro.
+export function raccogliGliSpari(eroe) {
+  const spari = [];
+  let infettato = false;
+  for (const e of entita.tutte()) {
+    if (e.tipo !== infetto.TIPO || !e.sparo) continue;
+    const { da, piedi, a } = e.sparo;
+    // Il volo si fa sul terreno, dai piedi ai piedi, come la vista; la canna
+    // sta più in alto di questo scarto, ed è lì che si disegna.
+    const alto = piedi.y - da.y;
+    const traiettoria = volo(piedi, a);
+    const colpito = Boolean(eroe) && !salute.eMorto()
+      && distanzaDalTratto({ x: eroe.px, y: eroe.py }, piedi, traiettoria) <= RAGGIO_COLPITO
+      // La vista vuole px e py, come le entità: il punto dei piedi si
+      // traduce qui, altrimenti ogni colpo risultava dietro un muro.
+      && vistaLibera({ px: piedi.x, py: piedi.y }, eroe);
+    const fine = colpito ? { x: eroe.px, y: eroe.py } : traiettoria;
+    if (colpito) {
+      salute.ferita(SPARO, "spari");
+      if (!salute.eInfetto() && caso() < RISCHIO_INFEZIONE_SPARO) {
+        salute.infettati();
+        infettato = true;
+      }
+    }
+    spari.push({
+      da: { ...da },
+      a: { x: fine.x, y: fine.y - alto },
+      suolo: { x: fine.x, y: fine.y },
+      piedi: { ...piedi },
+      colpito,
+      muro: colpito ? null : traiettoria.muro,
+      sfiorato: !colpito && Boolean(eroe) && distanzaDalTratto({ x: eroe.px, y: eroe.py }, piedi, fine) <= SFIORA,
+    });
+  }
+  return { spari, infettato };
+}
+
+// Quanti ti stanno prendendo la mira adesso. Serve all'avviso, che si dà una
+// volta per raffica e non per bandito: quando si passa da nessuno a qualcuno.
+// Il cane che scatta invece è di ognuno, e lo fa suonare udito.js.
+export function mirano() {
+  let n = 0;
+  for (const e of entita.tutte()) if (e.tipo === infetto.TIPO && e.mira) n += 1;
+  return n;
+}
+
 // --- quello che sfondano ---------------------------------------------------
 
 // Quanti colpi regge quello che hai messo in mezzo, e cosa ne resta.
@@ -280,7 +392,9 @@ export function raccogliIMorsi(eroe) {
 // rompono, ed è giusto così — costano tre volte tanto, e chi ha fatto quel
 // conto sa già quello che sta facendo.
 const SFONDABILI = {
-  [OGGETTO.MURO]: { colpi: 8, diventa: OGGETTO.MURO_ROTTO, scheggie: ["e", "f", "d"] },
+  // Le schegge del muro sono d'adobe da W0.5: i muri lo sono da W0.3, e
+  // sfondati spargevano ancora la pietra rossa delle mesas.
+  [OGGETTO.MURO]: { colpi: 8, diventa: OGGETTO.MURO_ROTTO, scheggie: ["J", "K", "L"] },
   [OGGETTO.PORTA]: { colpi: 5, diventa: OGGETTO.NESSUNO, scheggie: ["w", "h", "g"] },
   // Lo steccato e il cancello chiuso: legno leggero, tre colpi. Senza, un
   // recinto sarebbe un rifugio gratis contro la notte — fermerebbe chi ti

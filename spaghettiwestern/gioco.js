@@ -74,7 +74,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "W0.4";
+const VERSIONE = "W0.5";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -175,6 +175,17 @@ let gelando = null;
 // perché è puro racconto: la ferita l'ha già applicata chi mordeva.
 let lampoDanno = 0;
 const DURATA_LAMPO = 0.45;
+
+// Gli spari (W0.5): la vampa alla bocca della canna e la traccia del colpo.
+// Durano un soffio, come nel mondo, e come il lampo stanno qui perché sono
+// racconto: il colpo l'hanno già deciso le regole. La vampa apre il buio per
+// un istante attorno a chi ha sparato — di notte è l'unico modo di vederlo.
+const DURATA_VAMPA = 0.12;
+const DURATA_TRACCIA = 0.07;
+const vampe = [];
+// Quanti banditi ti stavano prendendo la mira al fotogramma prima: l'avviso
+// si dà quando si passa da nessuno a qualcuno, una volta per raffica.
+let miravano = 0;
 
 const lumi = [];
 
@@ -339,6 +350,8 @@ function nuovoSuperstite() {
   cassaScelta = 0;
   colpito = null;
   lumi.length = 0;
+  vampe.length = 0;
+  miravano = 0;
   minimappa.dimentica();
   minimappa.aggiorna(eroe);
 
@@ -628,6 +641,8 @@ function riprendi(ripreso) {
   albaScritta = tempo.oraCorrente() >= tempo.ALBA_PIENA ? ripreso.giorno : ripreso.giorno - 1;
   colpito = null;
   lumi.length = 0;
+  vampe.length = 0;
+  miravano = 0;
 
   // La valle si rimette la stagione giusta senza annunciare un arrivo: non è
   // arrivato niente, si è ripreso da lì.
@@ -1513,9 +1528,32 @@ function aggiorna(passo) {
       if (colpo.ceduto) annuncia("hanno sfondato", "#c0705f");
     }
 
+    // Gli spari (W0.5), dopo i morsi e per la stessa ragione: si sono già
+    // mossi tutti, e chi aveva il dito sul grilletto ha sparato adesso. Dove
+    // finisce la pallottola si vede: sangue su di te, schegge sul muro,
+    // polvere per terra.
+    const colpi = infetti.raccogliGliSpari(eroe);
+    for (const s of colpi.spari) {
+      vampe.push({ ...s, resta: DURATA_VAMPA });
+      if (s.colpito) {
+        lampoDanno = DURATA_LAMPO;
+        scheggie.sparge(s.a.x, s.a.y, 6, ["A"], 0.6);
+      } else if (s.muro) {
+        scheggie.sparge(s.a.x, s.a.y, 8, s.muro.scheggie, 0.7);
+      } else {
+        scheggie.sparge(s.suolo.x, s.suolo.y, 5, ["5", "4", "c"], 0.45);
+      }
+    }
+    udito.spari(eroe, colpi.spari);
+    const mirano = infetti.mirano();
+
     if (morsi.infettato) annuncia("la ferita è sporca", "#9d7fb0");
+    else if (colpi.infettato) annuncia("la pallottola è rimasta dentro", "#9d7fb0");
+    else if (colpi.spari.some((s) => s.colpito)) annuncia("ti hanno sparato", "#c0705f");
+    else if (mirano > 0 && miravano === 0 && morsi.morsi === 0) annuncia("ti prendono la mira: scansati", "#c0705f");
     // Da W0.4 chi ti vede è un bandito, cioè qualcuno e non qualcosa.
     else if (visto.appenaVisto && morsi.morsi === 0) annuncia("un bandito ti ha visto", "#c0705f");
+    miravano = mirano;
 
     // L'udito dopo che tutti si sono mossi, perché quello che si sente dipende
     // da dove sono adesso. È l'altra metà di chiasso.js — quello misura quanto
@@ -1556,6 +1594,10 @@ function aggiorna(passo) {
       if (colpito.resta <= 0) colpito = null;
     }
     if (lampoDanno > 0) lampoDanno -= passo;
+    for (let i = vampe.length - 1; i >= 0; i -= 1) {
+      vampe[i].resta -= passo;
+      if (vampe[i].resta <= 0) vampe.splice(i, 1);
+    }
   }
 
   // Un controllo solo, e fuori dal giro del mondo. La salute può arrivare a
@@ -1729,6 +1771,7 @@ function disegna() {
   scheggie.disegna();
   atmosfera.disegna(schermo.pennello(), meteo.evento(), tempo.giornoCorrente()*tempo.SECONDI_PER_GIORNO + tempo.oraCorrente()/24*tempo.SECONDI_PER_GIORNO, riparo.stanza());
   disegnaBuio();
+  disegnaSpari();
   // Dopo il buio e prima dell'interfaccia: il lampo è una cosa che succede
   // nel mondo, non un cartello sul vetro, quindi la notte non lo spegne ma i
   // pannelli gli stanno sopra.
@@ -1765,7 +1808,47 @@ function disegnaBuio() {
   if (luceInMano) {
     lumi.push({ x: eroe.impugnatura.x, y: eroe.impugnatura.y, ...luceInMano });
   }
+  // La vampa di uno sparo apre il buio attorno alla canna, e si spegne con lei.
+  for (const v of vampe) {
+    lumi.push({ x: v.da.x, y: v.da.y, raggio: 72, intensita: 0.95 * (v.resta / DURATA_VAMPA) });
+  }
   oscurita.disegna(schermo.pennello(), tempo.luceAmbiente(), tempo.tintaOscurita(), lumi);
+}
+
+// La traccia e la vampa degli spari (W0.5), sopra il buio come il lampo:
+// sono fuoco, e la notte non li spegne. La traccia è una riga di pixel pieni
+// e non una linea del canvas, che verrebbe sfumata ai bordi come niente altro
+// in questo gioco.
+function disegnaSpari() {
+  if (vampe.length === 0) return;
+  const p = schermo.pennello();
+  const q = schermo.inquadratura();
+  p.save();
+  for (const v of vampe) {
+    const eta = DURATA_VAMPA - v.resta;
+    const x0 = Math.round(v.da.x) - q.sinistra;
+    const y0 = Math.round(v.da.y) - q.sopra;
+    if (eta < DURATA_TRACCIA) {
+      const dx = Math.round(v.a.x) - q.sinistra - x0;
+      const dy = Math.round(v.a.y) - q.sopra - y0;
+      const passi = Math.max(Math.abs(dx), Math.abs(dy), 1);
+      p.globalAlpha = 1 - (eta / DURATA_TRACCIA) * 0.6;
+      p.fillStyle = "#f2d06b";
+      for (let i = 2; i <= passi; i += 1) {
+        p.fillRect(x0 + Math.round((dx * i) / passi), y0 + Math.round((dy * i) / passi), 1, 1);
+      }
+    }
+    // La vampa: un cuore chiaro e quattro lingue di fuoco.
+    p.globalAlpha = v.resta / DURATA_VAMPA;
+    p.fillStyle = "#f2d06b";
+    p.fillRect(x0 - 1, y0 - 1, 3, 3);
+    p.fillStyle = "#e0913a";
+    p.fillRect(x0 - 2, y0, 1, 1);
+    p.fillRect(x0 + 2, y0, 1, 1);
+    p.fillRect(x0, y0 - 2, 1, 1);
+    p.fillRect(x0, y0 + 2, 1, 1);
+  }
+  p.restore();
 }
 
 // Quello che il pannello delle partite deve sapere per disegnarsi. Sta in una
@@ -1904,7 +1987,7 @@ function aggiornaDiagnostica() {
     `terreno  ${NOMI_TERRENO[mappa.terrenoDi(tx, ty)]}`,
     `bisogni  ${bisogni.ELENCO.map((n) => n[0] + " " + bisogni.livello(n).toFixed(2)).join("  ")}  velocità ${bisogni.fattoreVelocita().toFixed(2)}`,
     `salute   ${salute.livelloCorrente().toFixed(3)}  freddo ${gelando ?? "no"}  ${salute.eInfetto() ? "infetto" : "sano"}  ${mortoDi ? `morto ${mortoDi}` : "vivo"}`,
-    `infetti  ${infetti.quanti()}  inseguono ${infetti.inseguono()}  chiasso ${chiasso.quanto()} (${Math.round(chiasso.raggio())}px)`,
+    `infetti  ${infetti.quanti()}  inseguono ${infetti.inseguono()}  mirano ${infetti.mirano()}  chiasso ${chiasso.quanto()} (${Math.round(chiasso.raggio())}px)`,
     `ora      ${tempo.orologio()}  giorno ${tempo.giornoCorrente()}  luce ${tempo.luceAmbiente().toFixed(2)}`,
     `settori  ${mappa.settoriInMemoria()}  in piedi ${inPiedi.length}  lumi ${lumi.length}`,
     `scheggie ${scheggie.vive()}  figure ${giocatore.figureComposte()}`,
