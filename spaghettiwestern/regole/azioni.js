@@ -288,11 +288,13 @@ function sulTassello(eroe, cosaInMano, indice) {
   // Lo stato del gelo si chiede a mappa e non alle stagioni: il pozzo deve
   // ghiacciare nello stesso istante degli stagni, e due calendari che
   // rispondono alla stessa domanda prima o poi si contraddicono.
-  if (b.oggetto === OGGETTO.POZZO) {
-    const gelato = mappa.gelato() ? "il pozzo è gelato" : null;
+  // La cisterna di Cattle Corner (W0.3) è un pozzo con le gambe.
+  if (b.oggetto === OGGETTO.POZZO || b.oggetto === OGGETTO.CISTERNA) {
+    const cisterna = b.oggetto === OGGETTO.CISTERNA;
+    const gelato = mappa.gelato() ? (cisterna ? "la cisterna è gelata" : "il pozzo è gelato") : null;
     if (cosaInMano === "secchio") return { tipo: "riempi", verbo: "Attingi acqua", bersaglio: b, impedito: gelato };
     if (daRiempire(cosaInMano, indice)) return { tipo: "riempi", verbo: "Attingi acqua", annaffiatoio: true, bersaglio: b, impedito: gelato };
-    return { tipo: "bevi", verbo: "Bevi dal pozzo", bersaglio: b,
+    return { tipo: "bevi", verbo: cisterna ? "Bevi dalla cisterna" : "Bevi dal pozzo", bersaglio: b,
       impedito: gelato ?? (bisogni.livello("sete") >= 1 ? "non hai sete" : null) };
   }
 

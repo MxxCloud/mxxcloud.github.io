@@ -55,6 +55,11 @@ export function disegnoDellAlbero(tx, ty) {
 const CATALOGO_OGGETTI = {
   [OGGETTO.CARRO]: { sprite: luoghiArte.CARRO, solido: true },
   [OGGETTO.POZZO]: { sprite: luoghiArte.POZZO, solido: true },
+  // La frontiera (W0.3).
+  [OGGETTO.CROCE]: { sprite: luoghiArte.CROCE, solido: false },
+  [OGGETTO.CISTERNA]: { sprite: luoghiArte.CISTERNA, solido: true },
+  [OGGETTO.BINARI]: { sprite: luoghiArte.BINARI, solido: false, suolo: true },
+  [OGGETTO.SETACCIO]: { sprite: luoghiArte.SETACCIO, solido: false },
   [OGGETTO.TRONCO]: { sprite: luoghiArte.TRONCO, solido: true },
   [OGGETTO.ALBERO]: { sprite: oggettiArte.ALBERO, solido: true },
   [OGGETTO.SASSO]: { sprite: oggettiArte.SASSO, solido: true },
@@ -340,7 +345,7 @@ export function inizializza(nome) {
 // La rovina di una cella, per chi disegna la mappa grande. Il mondo la sa già
 // — la maglia è in rovine.js — e passare di qui evita che l'interfaccia debba
 // sapere che esiste un seme.
-export { rovinaNellaCella, laFattoria, luogoIn, inselvatichitaNellOrto } from "./generazione.js";
+export { rovinaNellaCella, laFattoria, luogoIn, postoIn, inselvatichitaNellOrto } from "./generazione.js";
 export { CELLA as CELLA_ROVINE } from "./rovine.js";
 
 export function semeCorrente() {

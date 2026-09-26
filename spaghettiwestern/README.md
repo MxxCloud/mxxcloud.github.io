@@ -18,6 +18,31 @@ Come l'originale non ha server né dipendenze: è HTML, CSS e JavaScript serviti
 così come sono. Tutto quello che segue è la storia di Ultimo raccolto fino al
 punto della copia.
 
+## W0.3 — il ranch e la frontiera
+
+- **Case di adobe.** I muri sono di mattoni di fango intonacati, con una
+  trave in cima; anche quelli che costruisci tu.
+- **Ogni posto ha un nome**, annunciato quando ci arrivi: «Casa di adobe»,
+  «Fienile», «Adobe crollata», «Ranch abbandonato». La **cittadina di
+  frontiera** dice anche il nome di ogni edificio in cui entri: Saloon,
+  Emporio, Ufficio dello sceriffo, Banca, Chiesa della missione e «Il
+  becchino», che cita il fabbricante di bare di «Per un pugno di dollari».
+- **Il ranch** ha, oltre all'orto, il **recinto dei cavalli**: uno steccato
+  con il cancello, subito a sud della stalla. Per ora è vuoto: i cavalli
+  arriveranno con le regole western.
+- **I luoghi** cambiano nome e aspetto: la **diligenza rovesciata** (rossa,
+  con le ruote gialle in aria), il **pozzo nel deserto**, l'**accampamento
+  bruciato**, il **campo dei cercatori d'oro** (con il setaccio) e gli **orti
+  dei coloni**, con le regole degli orti di prima.
+- **Due luoghi nuovi**, citazioni di Leone:
+  - il **cimitero di Sad Hill** (da «Il buono, il brutto, il cattivo»): un
+    cerchio di croci attorno a una tomba senza nome, con una cassa. Niente oro
+    dei confederati: quello se l'è preso qualcun altro.
+  - la **stazione di Cattle Corner** (da «C'era una volta il West»): i binari,
+    la pensilina e la **cisterna**, da cui si beve e si attinge come dal pozzo
+    (e che d'inverno gela).
+- Sulla carta il ranch si chiama «RANCH» e gli orti «ORTO DEI COLONI».
+
 ## W0.2 — il deserto e il titolo
 
 Il gioco si chiama **Per un pugno di semi**: un western all'italiana con un

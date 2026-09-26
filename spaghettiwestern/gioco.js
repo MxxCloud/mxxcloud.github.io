@@ -74,7 +74,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "W0.2";
+const VERSIONE = "W0.3";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1527,9 +1527,11 @@ function aggiorna(passo) {
     // rumore — così premere TAB non calcola niente.
     const scoperti = esplorato.segna(eroe);
     if (scoperti.length > 0) mappaGrande.aggiungi(scoperti);
-    const luogo = mappa.luogoIn(Math.floor(eroe.px / TASSELLO), Math.floor(eroe.py / TASSELLO), 3);
-    const chiaveLuogo = luogo ? `${luogo.tx0},${luogo.ty0}` : null;
-    if (chiaveLuogo && chiaveLuogo !== luogoAttuale) annuncia(luogo.nome, "#c9b189");
+    // Il nome del posto (W0.3): l'edificio, il luogo, la casa.
+    const posto = mappa.postoIn(Math.floor(eroe.px / TASSELLO), Math.floor(eroe.py / TASSELLO), 3);
+    const luogo = posto?.luogo ?? null;
+    const chiaveLuogo = posto?.chiave ?? null;
+    if (chiaveLuogo && chiaveLuogo !== luogoAttuale) annuncia(posto.nome, "#c9b189");
     // Un orto a cui si arriva finisce sulla mappa con le sue piante (M7.18.40).
     if (luogo?.luogo === "orto") esplorato.segnaOrto(luogo);
     luogoAttuale = chiaveLuogo;

@@ -131,6 +131,13 @@ export const OGGETTO = {
   SPAVENTAPASSERI_ROTTO: 42,
   // I fagioli inselvatichiti (M7.18.32): come la patata, solo negli orti.
   FAGIOLI_SELVATICI: 43,
+  // La frontiera (W0.3): le croci di Sad Hill e il setaccio dei cercatori
+  // d'oro non fermano il passo; la cisterna di Cattle Corner sì, ed è un
+  // pozzo; i binari sono terra, si dipingono col terreno.
+  CROCE: 44,
+  CISTERNA: 45,
+  BINARI: 46,
+  SETACCIO: 47,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati
@@ -233,6 +240,14 @@ const COSTRUITO = {
   g: OGGETTO.GIACIGLIO,
   a: OGGETTO.APPASSITA,
   p: OGGETTO.SPAVENTAPASSERI_ROTTO,
+  // Il recinto dei cavalli del ranch (W0.3).
+  k: OGGETTO.STECCATO,
+  n: OGGETTO.CANCELLO,
+  // I luoghi della frontiera (W0.3).
+  x: OGGETTO.CROCE,
+  w: OGGETTO.CISTERNA,
+  "=": OGGETTO.BINARI,
+  z: OGGETTO.SETACCIO,
   // L'orto della fattoria di partenza (M7.18.36): sempre fagioli e patate.
   b: OGGETTO.FAGIOLI_SELVATICI,
   q: OGGETTO.PATATA_SELVATICA,
@@ -295,8 +310,31 @@ export function rovinaNellaCella(cx, cy) {
 // fattoria come annesso: si guarda lì quando la rovina della cella non lo è.
 export function luogoIn(tx, ty, margine = 0) {
   const r = rovinaNellaCella(Math.floor(tx / rovine.CELLA), Math.floor(ty / rovine.CELLA));
-  return [r, r?.annesso].find((l) => l?.luogo && tx >= l.tx0-margine && ty >= l.ty0-margine &&
+  return [r, ...(r?.annessi ?? [])].find((l) => l?.luogo && tx >= l.tx0-margine && ty >= l.ty0-margine &&
     tx < l.tx0+l.larghezza+margine && ty < l.ty0+l.altezza+margine) ?? null;
+}
+
+// Il nome del posto in cui sei (W0.3), il più preciso che c'è: l'edificio
+// della cittadina se ci sei dentro, poi il luogo (con il margine
+// dell'annuncio), poi l'annesso del ranch, poi la casa. Restituisce una
+// chiave, che dice quando si è cambiato posto, e il nome. luogoIn resta
+// com'è: le case non sono luoghi, e il loro bottino e i polli non cambiano.
+export function postoIn(tx, ty, margine = 0) {
+  const r = rovinaNellaCella(Math.floor(tx / rovine.CELLA), Math.floor(ty / rovine.CELLA));
+  if (!r) return null;
+  const dentro = (x0, y0, w, h, m) => tx >= x0 - m && ty >= y0 - m && tx < x0 + w + m && ty < y0 + h + m;
+  for (const e of r.edifici ?? []) {
+    if (dentro(r.tx0 + e.x, r.ty0 + e.y, e.larghezza, e.altezza, 0)) {
+      return { chiave: `${r.tx0},${r.ty0}:${e.x},${e.y}`, nome: e.nome };
+    }
+  }
+  const luogo = luogoIn(tx, ty, margine);
+  if (luogo) return { chiave: `${luogo.tx0},${luogo.ty0}`, nome: luogo.nome, luogo };
+  for (const a of r.annessi ?? []) {
+    if (!a.luogo && a.nome && dentro(a.tx0, a.ty0, a.larghezza, a.altezza, 0)) return { chiave: `${a.tx0},${a.ty0}`, nome: a.nome };
+  }
+  if (r.nome && dentro(r.tx0, r.ty0, r.larghezza, r.altezza, margine)) return { chiave: `${r.tx0},${r.ty0}`, nome: r.nome };
+  return null;
 }
 
 // Dove comincia la partita: la fattoria, non l'origine delle coordinate.
