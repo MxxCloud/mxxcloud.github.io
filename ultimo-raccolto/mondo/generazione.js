@@ -335,22 +335,18 @@ export function oggettoIn(x, y, seme, terreno) {
     return OGGETTO.NESSUNO;
   }
 
-  // Le piante selvatiche (M7.18.30) stanno in fette della sorte che fino a
-  // M7.18.29 non davano niente: alberi, sassi e cespugli restano dov'erano, e
-  // cambiano solo tasselli vuoti.
+  // Le piante selvatiche crescono soltanto negli orti abbandonati (M7.18.38).
+  // Da M7.18.30 c'erano anche spighe sulla sterpaglia, cavolo sulle rocce e
+  // lino sulla riva: tolte, perché i semi si vanno a prendere negli orti, e
+  // una prateria che li regala toglieva il motivo di cercarli.
   if (terreno === TERRENO.STERPAGLIA) {
     if (sorte < 0.05) return OGGETTO.CESPUGLIO;
-    if (sorte < 0.07) return OGGETTO.SPIGHE_SELVATICHE;
     if (sorte > 0.993) return OGGETTO.SASSO;
     return OGGETTO.NESSUNO;
   }
 
   if (terreno === TERRENO.ROCCIA && sorte < 0.08) return OGGETTO.SASSO;
-  // Il cavolo selvatico cresce davvero sulle rocce: è una pianta di scogliera.
-  if (terreno === TERRENO.ROCCIA && sorte < 0.1) return OGGETTO.CAVOLO_SELVATICO;
   if (terreno === TERRENO.SABBIA && sorte > 0.99) return OGGETTO.SASSO;
-  // E il lino sulla riva, vicino all'acqua.
-  if (terreno === TERRENO.SABBIA && sorte < 0.05) return OGGETTO.LINO_SELVATICO;
 
   return OGGETTO.NESSUNO;
 }
