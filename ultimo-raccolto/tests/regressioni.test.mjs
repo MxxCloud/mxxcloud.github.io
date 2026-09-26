@@ -4455,11 +4455,14 @@ test("ogni orto abbandonato ha il suo spaventapasseri rotto: alto, non ferma e n
   assert.equal(azioni.smontaggioPossibile({...pos(p.tx-1,p.ty),guarda:'destra'}),null);
 });
 test('sulla mappa grande l\'orto abbandonato ha un segno suo, verde e più grande',()=>{
+  // Da M7.18.39 la carta è vettoriale: il segno dell'orto è un cerchio verde
+  // con una foglia, il più grande dei luoghi, e la legenda lo nomina.
   const sorgente=readFileSync(new URL('../interfaccia/mappa.js',import.meta.url),'utf8');
-  assert.match(sorgente,/const ORTO = "#9ec97e";/);
-  assert.match(sorgente,/const colore = orto \? ORTO/);
-  assert.match(sorgente,/segnale\(x, y, colore, rovina\.luogo && !orto \? 2 : 3\)/);
-  assert.match(sorgente,/VERDE ORTI/,'e la legenda lo dice');
+  assert.match(sorgente,/const ORTO = "#8fd16a";/);
+  assert.match(sorgente,/rovina\.luogo === "orto" \? "orto"/);
+  assert.match(sorgente,/cerchio\(c, x, y, 2\.6 \* u, ORTO\)/);
+  assert.match(sorgente,/cerchio\(c, x, y, 2 \* u, POZZO\)/,'più grande del pozzo');
+  assert.match(sorgente,/\["orto", "ORTO ABBANDONATO"\]/,'e la legenda lo dice');
 });
 
 // M7.18.32 — negli orti abbandonati le piante danno sempre.
@@ -4641,4 +4644,30 @@ test("gli orti abbandonati cambiano piante a ogni partita nuova, l'orto della fa
   const superstite=src.slice(src.indexOf('function nuovoSuperstite'),src.indexOf('function nuovoSuperstite')+3000);
   assert.doesNotMatch(superstite.slice(0,superstite.indexOf('\n}\n')),/impostaOrti|estraiOrti/);
   mappa.impostaOrti(0);
+});
+
+// M7.18.39 — la mappa grande è una carta: nitida, a misura fissa, navigabile.
+test("la mappa grande ha una misura fissa, si apre su di te e si naviga con WASD, le frecce e Q/E",async()=>{
+  const carta=await import('../interfaccia/mappa.js');
+  // Tre livelli di zoom contati in tasselli, non in pixel né nell'esplorato:
+  // la carta non cambia proporzioni esplorando.
+  assert.deepEqual(carta.LIVELLI,[96,192,384]);
+  carta.apri({px:(40+0.5)*16,py:(-7+0.75)*16,guarda:'giu'});
+  const st=carta.stato();
+  assert.equal(st.x,40.5);assert.equal(st.y,-6.25);assert.equal(st.tasselli,192);
+  const sorgente=readFileSync(new URL('../interfaccia/mappa.js',import.meta.url),'utf8');
+  assert.doesNotMatch(sorgente,/function ridimensiona|RESPIRO/,'niente più atlante che si allarga');
+  // Disegnata su un canvas suo alla risoluzione vera dello schermo, a
+  // contorni e non a quadretti.
+  assert.match(sorgente,/devicePixelRatio/);assert.match(sorgente,/const PEZZI = \[/);
+  assert.match(sorgente,/new Path2D\(t\.tutto\.join\(""\)\)/);
+  const comandiSrc=readFileSync(new URL('../motore/comandi.js',import.meta.url),'utf8');
+  assert.match(comandiSrc,/KeyQ: "allontana"/);assert.match(comandiSrc,/Equal: "avvicina"/);
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/if \(mappaAperta\) mappaGrande\.apri\(eroe\);/);
+  assert.match(gioco,/mappaGrande\.naviga\(passo, eroe\);/);
+  assert.match(gioco,/mappaGrande\.nascondi\(\);/);
+  assert.match(gioco,/if \(!haDormito\) leggiComandi\(passo\);/);
+  const css=readFileSync(new URL('../style.css',import.meta.url),'utf8');
+  assert.match(css,/#carta\[hidden\]/);
 });

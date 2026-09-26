@@ -8,7 +8,7 @@
 export const AZIONI = [
   "su", "giu", "sinistra", "destra", "usa", "corri", "ricette", "minimappa",
   "consuma", "getta", "partita", "esporta", "importa", "spegni", "mappa",
-  "suono", "indietro", "aiuto",
+  "suono", "indietro", "aiuto", "allontana", "avvicina",
 ];
 
 // Otto caselle, otto tasti: la selezione con la rotellina o con Q/E costringe
@@ -51,6 +51,10 @@ const MAPPA = {
   // "H" come help: la lista dei comandi, da M7.18.24. Era sparita con la
   // schermata iniziale, che aveva preso il posto di quella che li elencava.
   KeyH: "aiuto",
+  // Lo zoom della mappa grande (M7.18.39): Q allontana ed E, che fuori dalla
+  // mappa è "consuma", avvicina. Anche - e + per chi li cerca lì.
+  KeyQ: "allontana", Minus: "allontana", NumpadSubtract: "allontana",
+  Equal: "avvicina", NumpadAdd: "avvicina",
 };
 
 for (let i = 1; i <= CASELLE; i += 1) MAPPA[`Digit${i}`] = `casella${i}`;

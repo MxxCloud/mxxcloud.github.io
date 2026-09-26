@@ -6,254 +6,242 @@
 // tutto il resto. Cresce esplorando, e questo è metà del suo scopo: rende
 // l'andare a vedere una cosa che lascia un segno.
 //
-// IL COSTO DECIDE LA STRUTTURA, come per la minimappa. Calcolare il terreno di
-// una schermata intera di mappa vuol dire decine di migliaia di valutazioni di
-// rumore, cioè quasi mezzo secondo: impensabile alla pressione di un tasto.
-// Quindi non si calcola niente quando si apre. Ogni settore viene disegnato
-// una volta sola nell'atlante, nel momento in cui lo si scopre — sedici
-// valutazioni, un'inezia dentro il fotogramma in cui si entra in un settore
-// nuovo — e aprire la mappa è una drawImage.
+// Da M7.18.39 è una carta e non un ingrandimento di pixel. Prima stava nei
+// 384x216 del gioco, un pixel ogni quattro tasselli con i colori del terreno
+// vero, e si allargava con l'esplorato cambiando proporzioni ogni volta: una
+// macchia che si leggeva male e che non restava mai uguale. Adesso:
+//   - si disegna su un canvas suo, sopra quello del gioco, alla risoluzione
+//     vera dello schermo, con i colori piatti di una carta e i segni vettoriali
+//     con il loro nome;
+//   - un tassello è un punto della carta, e i boschi e i muri delle case si
+//     vedono;
+//   - la scala è fissa (tre livelli di zoom, Q ed E), e ci si sposta con WASD
+//     o le frecce; si apre centrata su di te, e la barra ti ritrova.
 //
-// L'atlante tiene gli identificatori del terreno e non i colori. È la stessa
-// scelta della minimappa e paga per la stessa ragione: al cambio di stagione
-// si ridipingono dei pixel invece di ricalcolare del rumore.
+// IL COSTO DECIDE LA STRUTTURA, come per la minimappa. Ogni settore si
+// calcola una volta sola, nel momento in cui lo si scopre — duecentocinquanta-
+// sei tasselli, un quarto di millisecondo misurato — e resta in memoria come
+// un'immagine di 16x16 punti. Aprire la mappa non calcola niente: incolla le
+// immagini dei settori che stanno in vista.
 
 import * as schermo from "../motore/schermo.js";
+import * as comandi from "../motore/comandi.js";
 import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
 import * as esplorato from "../regole/esplorato.js";
 import { OGGETTO, TERRENO } from "../mondo/generazione.js";
-import * as tinte from "./tinte.js";
-import * as testo from "../arte/testo.js";
-import { telaio } from "../arte/sprite.js";
 
 const { SETTORE } = mappa;
 
-// Quanti pixel d'atlante per settore. Quattro: un pixel ogni quattro
-// tasselli. Più fitto e una partita lunga darebbe un atlante da ingrandire
-// mai e da rimpicciolire sempre; più rado e un lago di otto tasselli
-// diventerebbe un pixel solo.
-const PIXEL_PER_SETTORE = 4;
-const TASSELLI_PER_PIXEL = SETTORE / PIXEL_PER_SETTORE;
+// Due classi che il terreno non conosce: sulla carta il bosco non è erba e un
+// muro non è pavimento. Stanno dopo gli identificatori del terreno.
+const BOSCO = 20;
+const MURO = 21;
 
-// Margini della finestra a schermo. In basso resta più spazio perché lì ci va
-// la riga dei tasti.
-const MARGINE = 14;
-const PIEDE = 12;
-
-const FONDO = "rgb(8 9 12 / 0.92)";
-const BORDO = "#3a3f48";
-const CHIARO = "#e4e2d6";
-const GRIGIO = "#8e8a7e";
-const EROE = "#ffffff";
-
-// Gli stessi colori della minimappa per le stesse cose: chi ha imparato che
-// il puntino caldo è un falò non deve reimpararlo qui.
-const SEGNAPOSTI = {
-  [OGGETTO.FALO_ACCESO]: "#f2d06b",
-  [OGGETTO.FOCOLARE_ACCESO]: "#f2d06b",
-  [OGGETTO.FOCOLARE_SPENTO]: "#55534a",
-  [OGGETTO.ESSICCATOIO]: "#56402a",
-  [OGGETTO.ESSICCATOIO_CARICO]: "#a33b2a",
-  [OGGETTO.ESSICCATOIO_PRONTO]: "#5a4430",
-  [OGGETTO.TORCIA_PIANTATA]: "#e0913a",
-  [OGGETTO.FALO_SPENTO]: "#7b756a",
-  // Il cadavere sulla minimappa non c'è, e qui sì: la minimappa dice dove sei,
-  // questa dice dove devi andare. Recuperare il proprio corpo è un viaggio, e
-  // un viaggio vuole una destinazione segnata.
-  [OGGETTO.CADAVERE]: "#c0705f",
-  // La cassa e il giaciglio, per la stessa ragione e con più diritto di tutti
-  // gli altri. Si segnava il falò SPENTO e non il proprio ripostiglio: una
-  // svista di quando le casse sono arrivate. Questa mappa dice dove devi
-  // andare, e dove sta la tua roba è la destinazione per eccellenza — insieme
-  // al posto in cui puoi dormire, che d'inverno vuol dire saltare il gelo.
-  [OGGETTO.CASSA]: "#c9b189",
-  [OGGETTO.GIACIGLIO]: "#8fa8d8",
-  [OGGETTO.LETTO]: "#8fa8d8",
+// I colori della carta: piatti, uno per cosa, scelti perché si distinguano a
+// colpo d'occhio. Non sono quelli del gioco, che sono screziati e vicini fra
+// loro — l'erba e la sterpaglia, da lontano, erano lo stesso verde.
+const CARTA = {
+  [TERRENO.ACQUA]: "#2f5f8c",
+  [TERRENO.ACQUA_BASSA]: "#5b95c2",
+  [TERRENO.GHIACCIO]: "#cfe2ee",
+  [TERRENO.SABBIA]: "#e3d29c",
+  [TERRENO.ERBA]: "#86b56c",
+  [TERRENO.STERPAGLIA]: "#bfb872",
+  [TERRENO.ROCCIA]: "#9d9a92",
+  [TERRENO.TERRA]: "#b08658",
+  [BOSCO]: "#3f7a3c",
+  [MURO]: "#4b3a2b",
+};
+// D'inverno la valle è sotto la neve anche sulla carta.
+const CARTA_INVERNO = {
+  ...CARTA,
+  [TERRENO.SABBIA]: "#e7e0cb",
+  [TERRENO.ERBA]: "#d3ddd6",
+  [TERRENO.STERPAGLIA]: "#dcd8c6",
+  [TERRENO.ROCCIA]: "#b7b5b0",
+  [TERRENO.TERRA]: "#b9a58c",
+  [BOSCO]: "#6f8f7c",
 };
 
-// Le rovine hanno un segnaposto loro, e ci sono arrivate per prova.
-//
-// L'idea era che non servisse: il pavimento di una rovina è TERRENO.TERRA, che
-// ha una tinta sua, quindi una casa si disegna da sé. Sulla minimappa è vero e
-// si vede benissimo — un rettangolo scuro in mezzo al verde. Su questa no:
-// qui un settore sta in pochi pixel, una casa di otto tasselli ne occupa tre,
-// e tre pixel di terra battuta in mezzo alla sterpaglia sono tre pixel di
-// sterpaglia. Fotografato prima di accorgersene.
-//
-// È anche l'unico segnaposto che non indica roba tua, ed è il motivo per cui
-// questa mappa comincia a servire a qualcosa: fin qui segnava solo i posti in
-// cui eri già stato con le tue mani.
-const ROVINA = "#b9a48a";
-const ORTO = "#9ec97e";
+const FONDO = "#15171c";
+const CHIARO = "#ece8dc";
+const GRIGIO = "#a09b8e";
+const CONTORNO = "#15171c";
 
-// --- l'atlante ------------------------------------------------------------
+// Quanti tasselli stanno nella larghezza della carta, per livello di zoom. Si
+// conta in tasselli e non in pixel perché la carta abbia la stessa misura su
+// ogni schermo: la finestra più grande la disegna più nitida, non più larga.
+export const LIVELLI = [96, 192, 384];
+const LIVELLO_INIZIALE = 1;
+// Quanta carta si attraversa in un secondo tenendo premuto: metà della
+// larghezza, e con Maiuscolo due volte e mezza tanto.
+const VELOCITA = 0.5;
+const CORSA = 2.5;
 
-// Cresce a scatti invece che a ogni settore nuovo: allargare vuol dire
-// ricopiare l'immagine intera, e farlo per un pixel alla volta sarebbe una
-// ricopiatura a ogni passo.
-const RESPIRO = 8;
+// I segni delle cose tue, come sulla minimappa: chi ha imparato che il giallo
+// è un fuoco non deve reimpararlo qui.
+const SEGNAPOSTI = {
+  [OGGETTO.FALO_ACCESO]: "fuoco",
+  [OGGETTO.FOCOLARE_ACCESO]: "fuoco",
+  [OGGETTO.TORCIA_PIANTATA]: "fuoco",
+  // Il cadavere: recuperare il proprio corpo è un viaggio, e un viaggio vuole
+  // una destinazione segnata.
+  [OGGETTO.CADAVERE]: "corpo",
+  // La cassa e il letto: dove sta la tua roba e dove puoi dormire.
+  [OGGETTO.CASSA]: "cassa",
+  [OGGETTO.GIACIGLIO]: "letto",
+  [OGGETTO.LETTO]: "letto",
+};
 
-let tela = null;
-let pennello = null;
-let terreni = null; // Int8Array, un valore per pixel d'atlante
-let sxMin = 0;
-let syMin = 0;
-let larghezzaSettori = 0;
-let altezzaSettori = 0;
+// Le rovine e i luoghi hanno ognuno un segno suo. L'orto abbandonato è il più
+// grande e il più acceso (da M7.18.31): è l'unico luogo a cui si torna ogni
+// anno, per i semi.
+const ORTO = "#8fd16a";
+const POZZO = "#7fb6e0";
+const LUOGO = "#d9a45f";
+const ROVINA = "#c9b49a";
+const FATTORIA = "#9db8ec";
+
+// --- l'atlante dei settori ------------------------------------------------
+
+// Un'immagine di 16x16 per settore visto, con accanto le classi da cui è
+// fatta: al cambio di stagione si ridipingono i punti, senza ricalcolare il
+// rumore.
+const settori = new Map();
+let inverno = false;
 let ridipinture = 0;
+let versione = 0;
 
-function indice(px, py) {
-  return py * (larghezzaSettori * PIXEL_PER_SETTORE) + px;
+function rgb(esadecimale) {
+  const n = Number.parseInt(esadecimale.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
-// Rifà l'atlante da zero sulle dimensioni chieste, portandosi dietro quello
-// che c'era. Capita al primo settore e poi solo quando si esce dai bordi.
-function ridimensiona(nuovoSxMin, nuovoSyMin, nuoveLarghezza, nuovaAltezza) {
-  const vecchiTerreni = terreni;
-  const vecchiaLarghezza = larghezzaSettori;
-  const vecchioSxMin = sxMin;
-  const vecchioSyMin = syMin;
-  const vecchiaAltezza = altezzaSettori;
-
-  sxMin = nuovoSxMin;
-  syMin = nuovoSyMin;
-  larghezzaSettori = nuoveLarghezza;
-  altezzaSettori = nuovaAltezza;
-
-  const larghezzaPixel = larghezzaSettori * PIXEL_PER_SETTORE;
-  const altezzaPixel = altezzaSettori * PIXEL_PER_SETTORE;
-  terreni = new Int8Array(larghezzaPixel * altezzaPixel).fill(-1);
-
-  const fatto = telaio(larghezzaPixel, altezzaPixel);
-  tela = fatto.canvas;
-  pennello = fatto.contesto;
-
-  if (!vecchiTerreni) return;
-  // I valori vecchi si ricopiano invece di essere ricalcolati: sono già la
-  // risposta giusta, e ricalcolarli sarebbe l'unica cosa cara qui dentro.
-  for (let py = 0; py < vecchiaAltezza * PIXEL_PER_SETTORE; py += 1) {
-    for (let px = 0; px < vecchiaLarghezza * PIXEL_PER_SETTORE; px += 1) {
-      const valore = vecchiTerreni[py * (vecchiaLarghezza * PIXEL_PER_SETTORE) + px];
-      if (valore < 0) continue;
-      const nx = px + (vecchioSxMin - sxMin) * PIXEL_PER_SETTORE;
-      const ny = py + (vecchioSyMin - syMin) * PIXEL_PER_SETTORE;
-      terreni[indice(nx, ny)] = valore;
-    }
+function dipingi(voce) {
+  const tavola = inverno ? CARTA_INVERNO : CARTA;
+  const immagine = voce.pennello.createImageData(SETTORE, SETTORE);
+  for (let i = 0; i < voce.classi.length; i += 1) {
+    const [r, v, b] = rgb(tavola[voce.classi[i]] ?? tavola[TERRENO.ERBA]);
+    immagine.data[i * 4] = r;
+    immagine.data[i * 4 + 1] = v;
+    immagine.data[i * 4 + 2] = b;
+    immagine.data[i * 4 + 3] = 255;
   }
-  ridipingi();
+  voce.pennello.putImageData(immagine, 0, 0);
 }
 
-function faiStare(sx, sy) {
-  if (!terreni) {
-    ridimensiona(sx - RESPIRO, sy - RESPIRO, RESPIRO * 2 + 1, RESPIRO * 2 + 1);
-    return;
-  }
-  if (sx >= sxMin && sy >= syMin && sx < sxMin + larghezzaSettori && sy < syMin + altezzaSettori) {
-    return;
-  }
-  const nuovoSxMin = Math.min(sxMin, sx - RESPIRO);
-  const nuovoSyMin = Math.min(syMin, sy - RESPIRO);
-  const nuovoSxMax = Math.max(sxMin + larghezzaSettori - 1, sx + RESPIRO);
-  const nuovoSyMax = Math.max(syMin + altezzaSettori - 1, sy + RESPIRO);
-  ridimensiona(nuovoSxMin, nuovoSyMin, nuovoSxMax - nuovoSxMin + 1, nuovoSyMax - nuovoSyMin + 1);
-}
+// Il mondo com'era generato, non com'è adesso: un albero abbattuto resta
+// bosco sulla carta. È la regola di una carta vera, che dice com'era il posto
+// quando qualcuno l'ha disegnata.
+//
+// Il bosco è una macchia e non un albero: un tassello è bosco se attorno, lui
+// compreso, ci sono almeno tre alberi. Segnati uno per uno, gli alberi radi
+// facevano un reticolo di righine che si leggeva come un disturbo.
+const BOSCO_MINIMO = 3;
 
-// Sedici valutazioni di rumore, prese al centro di ogni gruppo di quattro
-// tasselli per quattro: il centro e non l'angolo, perché un angolo cade sul
-// confine fra due terreni e sceglie sempre lo stesso dei due.
 function disegnaSettore(sx, sy) {
-  faiStare(sx, sy);
-  const px0 = (sx - sxMin) * PIXEL_PER_SETTORE;
-  const py0 = (sy - syMin) * PIXEL_PER_SETTORE;
-
-  for (let y = 0; y < PIXEL_PER_SETTORE; y += 1) {
-    for (let x = 0; x < PIXEL_PER_SETTORE; x += 1) {
-      const tx = sx * SETTORE + x * TASSELLI_PER_PIXEL + (TASSELLI_PER_PIXEL >> 1);
-      const ty = sy * SETTORE + y * TASSELLI_PER_PIXEL + (TASSELLI_PER_PIXEL >> 1);
-      const terreno = mappa.terrenoDi(tx, ty);
-      terreni[indice(px0 + x, py0 + y)] = terreno;
-      const [r, v, b] = tinte.coloreDi(terreno);
-      pennello.fillStyle = `rgb(${r} ${v} ${b})`;
-      pennello.fillRect(px0 + x, py0 + y, 1, 1);
+  const chiave = `${sx},${sy}`;
+  let voce = settori.get(chiave);
+  if (!voce) {
+    const tela = document.createElement("canvas");
+    tela.width = SETTORE;
+    tela.height = SETTORE;
+    voce = { tela, pennello: tela.getContext("2d"), classi: new Int8Array(SETTORE * SETTORE) };
+    settori.set(chiave, voce);
+  }
+  // Gli alberi con un tassello di bordo, per contare i vicini anche sul
+  // confine del settore.
+  const B = SETTORE + 2;
+  const alberi = new Uint8Array(B * B);
+  const oggetti = new Int16Array(B * B);
+  for (let y = 0; y < B; y += 1) {
+    for (let x = 0; x < B; x += 1) {
+      const o = mappa.oggettoGenerato(sx * SETTORE + x - 1, sy * SETTORE + y - 1);
+      oggetti[y * B + x] = o;
+      alberi[y * B + x] = o === OGGETTO.ALBERO ? 1 : 0;
     }
+  }
+  for (let y = 0; y < SETTORE; y += 1) {
+    for (let x = 0; x < SETTORE; x += 1) {
+      const o = oggetti[(y + 1) * B + x + 1];
+      let classe;
+      if (o === OGGETTO.MURO || o === OGGETTO.MURO_ROTTO) classe = MURO;
+      else {
+        let vicini = 0;
+        for (let dy = 0; dy < 3; dy += 1) for (let dx = 0; dx < 3; dx += 1) vicini += alberi[(y + dy) * B + x + dx];
+        classe = vicini >= BOSCO_MINIMO ? BOSCO : mappa.terrenoDi(sx * SETTORE + x, sy * SETTORE + y);
+      }
+      voce.classi[y * SETTORE + x] = classe;
+    }
+  }
+  gela(voce.classi);
+  dipingi(voce);
+  versione += 1;
+}
+
+// Il bassofondo gela d'inverno, sulla carta come nel mondo.
+function gela(classi) {
+  for (let i = 0; i < classi.length; i++) {
+    if (inverno && classi[i] === TERRENO.ACQUA_BASSA) classi[i] = TERRENO.GHIACCIO;
+    else if (!inverno && classi[i] === TERRENO.GHIACCIO) classi[i] = TERRENO.ACQUA_BASSA;
   }
 }
 
-// Dall'elenco degli identificatori ai pixel. Non tocca il rumore: serve al
-// cambio di stagione, dove quello che cambia è il colore e non il terreno.
-function ridipingi() {
-  if (!terreni) return;
-  const larghezzaPixel = larghezzaSettori * PIXEL_PER_SETTORE;
-  for (let i = 0; i < terreni.length; i += 1) {
-    const terreno = terreni[i];
-    if (terreno < 0) continue;
-    const [r, v, b] = tinte.coloreDi(terreno);
-    pennello.fillStyle = `rgb(${r} ${v} ${b})`;
-    pennello.fillRect(i % larghezzaPixel, Math.floor(i / larghezzaPixel), 1, 1);
+// Al cambio di stagione: il bassofondo gela o si scioglie, e la neve copre
+// l'erba. Si ridipinge tutto, senza toccare il rumore.
+export function ridipingiSeServe(gelo) {
+  if (typeof gelo === "boolean") inverno = gelo;
+  for (const voce of settori.values()) {
+    gela(voce.classi);
+    dipingi(voce);
   }
+  versione += 1;
   ridipinture += 1;
 }
 
-export function ridipingiSeServe(gelo) {
-  if (terreni && typeof gelo === "boolean") {
-    for (let i = 0; i < terreni.length; i++) {
-      if (gelo && terreni[i] === TERRENO.ACQUA_BASSA) terreni[i] = TERRENO.GHIACCIO;
-      else if (!gelo && terreni[i] === TERRENO.GHIACCIO) terreni[i] = TERRENO.ACQUA_BASSA;
-    }
-  }
-  ridipingi();
-}
-
-// I settori appena scoperti, come coppie sx,sy di seguito. È la strada
-// normale: si dipinge quello che è comparso e nient'altro, quindi il costo non
-// dipende da quanto si è già esplorato.
+// I settori appena scoperti, come coppie sx,sy di seguito.
 export function aggiungi(nuovi) {
   for (let i = 0; i < nuovi.length; i += 2) disegnaSettore(nuovi[i], nuovi[i + 1]);
 }
 
-// Ridisegna tutto quello che risulta esplorato. Serve solo al caricamento di
-// una partita, dove l'atlante non esiste ancora e i settori arrivano tutti
-// insieme da un file.
+// Tutto quello che risulta esplorato e non è ancora sulla carta. Serve al
+// caricamento di una partita, dove i settori arrivano tutti insieme da un file.
 export function aggiorna() {
   esplorato.perOgnuno((sx, sy) => {
-    if (!terreni) {
-      disegnaSettore(sx, sy);
-      return;
-    }
-    const px = (sx - sxMin) * PIXEL_PER_SETTORE;
-    const py = (sy - syMin) * PIXEL_PER_SETTORE;
-    const dentro =
-      sx >= sxMin && sy >= syMin && sx < sxMin + larghezzaSettori && sy < syMin + altezzaSettori;
-    if (dentro && terreni[indice(px, py)] >= 0) return;
-    disegnaSettore(sx, sy);
+    if (!settori.has(`${sx},${sy}`)) disegnaSettore(sx, sy);
   });
 }
 
-// Il mondo sotto è cambiato: un caricamento, un seme diverso. L'atlante di
-// prima descrive un'altra valle.
+// Il mondo sotto è cambiato: un caricamento, un seme diverso.
 export function dimentica() {
-  tela = null;
-  pennello = null;
-  terreni = null;
-  larghezzaSettori = 0;
-  altezzaSettori = 0;
+  settori.clear();
+  versione += 1;
 }
 
 export function ridipinte() {
   return ridipinture;
 }
 
-// --- il disegno a schermo -------------------------------------------------
+// --- dove si guarda -------------------------------------------------------
 
-// Quanto della mappa si è davvero scoperto, in pixel d'atlante. Serve a
-// incorniciare quello che c'è invece dell'atlante intero, che ha attorno il
-// respiro lasciato per crescere.
-function riquadroScoperto() {
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
+// Il centro della carta in tasselli, e il livello di zoom. Fra un'apertura e
+// l'altra resta solo lo zoom: la carta si riapre sempre su di te.
+const vista = { x: 0, y: 0, livello: LIVELLO_INIZIALE };
+
+export function apri(eroe) {
+  vista.x = eroe.px / schermo.TASSELLO;
+  vista.y = eroe.py / schermo.TASSELLO;
+}
+
+export function stato() {
+  return { x: vista.x, y: vista.y, livello: vista.livello, tasselli: LIVELLI[vista.livello] };
+}
+
+// Il riquadro dell'esplorato, in tasselli: la carta non va oltre quello che
+// hai visto, così non ci si perde nel buio.
+function confini() {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   esplorato.perOgnuno((sx, sy) => {
     if (sx < minX) minX = sx;
     if (sy < minY) minY = sy;
@@ -261,77 +249,317 @@ function riquadroScoperto() {
     if (sy > maxY) maxY = sy;
   });
   if (minX === Infinity) return null;
-  return {
-    px: (minX - sxMin) * PIXEL_PER_SETTORE,
-    py: (minY - syMin) * PIXEL_PER_SETTORE,
-    larghezza: (maxX - minX + 1) * PIXEL_PER_SETTORE,
-    altezza: (maxY - minY + 1) * PIXEL_PER_SETTORE,
-  };
+  return { x0: minX * SETTORE, y0: minY * SETTORE, x1: (maxX + 1) * SETTORE, y1: (maxY + 1) * SETTORE };
 }
 
+// I tasti della carta, a ogni passo mentre è aperta. WASD e le frecce
+// spostano, Maiuscolo corre, Q ed E cambiano lo zoom, la barra torna su di te.
+export function naviga(passo, eroe) {
+  if (comandi.appenaPremuto("allontana")) vista.livello = Math.min(LIVELLI.length - 1, vista.livello + 1);
+  if (comandi.appenaPremuto("avvicina") || comandi.appenaPremuto("consuma")) {
+    vista.livello = Math.max(0, vista.livello - 1);
+  }
+  if (comandi.appenaPremuto("usa") && eroe) apri(eroe);
+  const { x, y } = comandi.direzione();
+  const larghezza = LIVELLI[vista.livello];
+  const veloce = comandi.attiva("corri") ? CORSA : 1;
+  vista.x += x * larghezza * VELOCITA * veloce * passo;
+  vista.y += y * larghezza * VELOCITA * veloce * passo;
+}
+
+// --- il canvas della carta ------------------------------------------------
+
+// Un canvas suo, sopra quello del gioco e della stessa misura sullo schermo,
+// ma con i pixel veri dello schermo: il gioco resta pixel art, la carta no.
+let carta = null;
+
+function preparaCarta() {
+  if (carta) return carta;
+  carta = document.createElement("canvas");
+  carta.id = "carta";
+  carta.setAttribute("aria-label", "La mappa di quello che hai visto");
+  const scena = document.getElementById("scena") ?? document.body;
+  scena.insertBefore(carta, document.getElementById("diagnostica"));
+  return carta;
+}
+
+// Chiusa la mappa, la carta sparisce. Si chiama a ogni fotogramma in cui la
+// mappa non c'è, ed è un confronto e basta.
+export function nascondi() {
+  if (carta && !carta.hidden) carta.hidden = true;
+}
+
+// --- i contorni -----------------------------------------------------------
+
+// Il terreno si disegna a contorni e non a quadretti. Per ogni gruppo di
+// quattro tasselli vicini si guarda quali sono di una certa classe e si
+// riempie il pezzo di quadrato che le spetta, tagliando gli angoli a metà
+// strada (i "marching squares"): i confini diventano linee con gli angoli
+// smussati, e un albero da solo diventa un puntino invece di un quadretto.
+//
+// I vertici del quadrato: 0 alto sinistra, 1 alto destra, 2 basso destra,
+// 3 basso sinistra; poi i punti a metà dei lati: 4 sopra, 5 destra, 6 sotto,
+// 7 sinistra. Il numero del caso somma 8, 4, 2, 1 per i vertici dentro.
+const PUNTI = [[0, 0], [1, 0], [1, 1], [0, 1], [0.5, 0], [1, 0.5], [0.5, 1], [0, 0.5]];
+const PEZZI = [
+  null, [7, 6, 3], [6, 5, 2], [7, 5, 2, 3], [4, 1, 5], [4, 1, 5, 6, 3, 7], [4, 1, 2, 6], [4, 1, 2, 3, 7],
+  [0, 4, 7], [0, 4, 6, 3], [0, 4, 5, 2, 6, 7], [0, 4, 5, 2, 3], [0, 1, 5, 7], [0, 1, 5, 6, 3], [0, 1, 2, 6, 7], [0, 1, 2, 3],
+];
+
+// L'ordine in cui si stendono i colori: prima quello che sta sotto.
+const STRATI = [TERRENO.STERPAGLIA, TERRENO.ROCCIA, TERRENO.SABBIA, TERRENO.ACQUA_BASSA, TERRENO.GHIACCIO,
+  TERRENO.ACQUA, TERRENO.TERRA, BOSCO, MURO];
+
+// La carta già disegnata, più grande della vista: spostandosi di poco si
+// ritaglia da qui, e si ridisegna solo quando la vista ne esce o quando
+// l'atlante cambia versione — un settore nuovo, una stagione nuova.
+let cache = null;
+
+function classeIn(tx, ty) {
+  const sx = Math.floor(tx / SETTORE);
+  const sy = Math.floor(ty / SETTORE);
+  const voce = settori.get(`${sx},${sy}`);
+  if (!voce) return -1;
+  return voce.classi[(ty - sy * SETTORE) * SETTORE + (tx - sx * SETTORE)];
+}
+
+function costruisci(tx0, ty0, colonne, righe, perTassello, dpr) {
+  // Le classi della regione, con un tassello in più attorno.
+  const L = colonne + 2;
+  const griglia = new Int8Array(L * (righe + 2));
+  for (let y = 0; y < righe + 2; y += 1) {
+    for (let x = 0; x < L; x += 1) griglia[y * L + x] = classeIn(tx0 - 1 + x, ty0 - 1 + y);
+  }
+  // Per ogni classe due tracciati: tutto quello che va riempito, e i soli
+  // pezzi di bordo, che si ripassano. I quadrati pieni si uniscono in
+  // strisce per riga: sono quasi tutta la carta. E i tracciati si scrivono
+  // come testo, nella lingua dei tracciati SVG, e diventano un Path2D alla
+  // fine in una volta sola: chiamare moveTo e lineTo per decine di migliaia
+  // di pezzi costava due secondi, misurati, al primo disegno.
+  const tracciati = new Map();
+  const tracciato = (k) => {
+    let t = tracciati.get(k);
+    if (!t) tracciati.set(k, (t = { tutto: [], bordi: [] }));
+    return t;
+  };
+  const lato = perTassello * dpr;
+  const n = (v) => Math.round(v * 10) / 10;
+  // Il centro del tassello (x, y) della griglia sta, in pixel della cache,
+  // a (x - 0.5) * lato: la griglia comincia un tassello prima della regione.
+  const pezzo = (t, caso, x, y) => {
+    const indici = PEZZI[caso];
+    const bx = (x - 0.5) * lato;
+    const by = (y - 0.5) * lato;
+    let d = "M" + n(bx + PUNTI[indici[0]][0] * lato) + " " + n(by + PUNTI[indici[0]][1] * lato);
+    for (let i = 1; i < indici.length; i += 1) d += "L" + n(bx + PUNTI[indici[i]][0] * lato) + " " + n(by + PUNTI[indici[i]][1] * lato);
+    d += "Z";
+    t.tutto.push(d);
+    t.bordi.push(d);
+  };
+  const striscia = (k, x0, x1, y) => {
+    const sx = n((x0 - 0.5) * lato);
+    const sy = n((y - 0.5) * lato);
+    const ex = n((x1 - 0.5) * lato);
+    const ey = n((y + 0.5) * lato);
+    tracciato(k).tutto.push(`M${sx} ${sy}H${ex}V${ey}H${sx}Z`);
+  };
+  for (let y = 0; y < righe + 1; y += 1) {
+    // Le strisce aperte: quella del visto e quella della classe.
+    let vistoDa = -1;
+    let classe = -2;
+    let classeDa = -1;
+    const chiudiClasse = (x) => {
+      if (classeDa >= 0) striscia(classe, classeDa, x, y);
+      classeDa = -1;
+      classe = -2;
+    };
+    for (let x = 0; x < colonne + 1; x += 1) {
+      const a = griglia[y * L + x];
+      const b = griglia[y * L + x + 1];
+      const c = griglia[(y + 1) * L + x + 1];
+      const d = griglia[(y + 1) * L + x];
+      // Il visto: sotto a tutto, con il colore dell'erba.
+      const visto = (a >= 0 ? 8 : 0) | (b >= 0 ? 4 : 0) | (c >= 0 ? 2 : 0) | (d >= 0 ? 1 : 0);
+      if (visto === 15) {
+        if (vistoDa < 0) vistoDa = x;
+      } else {
+        if (vistoDa >= 0) striscia("visto", vistoDa, x, y);
+        vistoDa = -1;
+        if (visto) pezzo(tracciato("visto"), visto, x, y);
+      }
+      if (a === b && b === c && c === d && a >= 0 && a !== TERRENO.ERBA) {
+        if (classe !== a) {
+          chiudiClasse(x);
+          classe = a;
+          classeDa = x;
+        }
+        continue;
+      }
+      chiudiClasse(x);
+      if (a === b && b === c && c === d) continue;
+      for (const k of new Set([a, b, c, d])) {
+        if (k < 0 || k === TERRENO.ERBA) continue;
+        const caso = (a === k ? 8 : 0) | (b === k ? 4 : 0) | (c === k ? 2 : 0) | (d === k ? 1 : 0);
+        pezzo(tracciato(k), caso, x, y);
+      }
+    }
+    if (vistoDa >= 0) striscia("visto", vistoDa, colonne + 1, y);
+    chiudiClasse(colonne + 1);
+  }
+  const tela = document.createElement("canvas");
+  tela.width = Math.ceil(colonne * lato);
+  tela.height = Math.ceil(righe * lato);
+  const c = tela.getContext("2d");
+  const tavola = inverno ? CARTA_INVERNO : CARTA;
+  // Riempito e ripassato di un pixel dello stesso colore: fra due colori
+  // vicini la sfumatura del bordo lascerebbe un filo del colore di sotto.
+  const stendi = (t, colore) => {
+    c.fillStyle = colore;
+    c.strokeStyle = colore;
+    c.lineWidth = Math.max(1, dpr * 0.8);
+    c.fill(new Path2D(t.tutto.join("")));
+    if (t.bordi.length) c.stroke(new Path2D(t.bordi.join("")));
+  };
+  if (tracciati.has("visto")) stendi(tracciati.get("visto"), tavola[TERRENO.ERBA]);
+  for (const k of STRATI) if (tracciati.has(k)) stendi(tracciati.get(k), tavola[k]);
+  return { tela, tx0, ty0, colonne, righe, perTassello, dpr, versione };
+}
+
+// --- il disegno -----------------------------------------------------------
+
+// Il gioco sotto si limita a scurirsi; tutto il resto è sulla carta.
 export function disegna(p, eroe) {
   p.fillStyle = FONDO;
   p.fillRect(0, 0, schermo.LARGHEZZA, schermo.ALTEZZA);
+  if (typeof document === "undefined") return;
 
-  const utileL = schermo.LARGHEZZA - MARGINE * 2;
-  const utileA = schermo.ALTEZZA - MARGINE * 2 - PIEDE;
+  const tela = preparaCarta();
+  const riquadro = document.getElementById("quadro").getBoundingClientRect();
+  const W = Math.round(riquadro.width);
+  const H = Math.round(riquadro.height);
+  const dpr = globalThis.devicePixelRatio || 1;
+  if (tela.width !== Math.round(W * dpr) || tela.height !== Math.round(H * dpr)) {
+    tela.width = Math.round(W * dpr);
+    tela.height = Math.round(H * dpr);
+  }
+  tela.style.width = `${W}px`;
+  tela.style.height = `${H}px`;
+  tela.hidden = false;
 
-  const scoperto = tela && riquadroScoperto();
-  if (!scoperto) {
-    const vuoto = "NON HAI ANCORA VISTO NIENTE";
-    testo.disegna(p, vuoto, Math.round((schermo.LARGHEZZA - testo.larghezza(vuoto)) / 2), 100, GRIGIO);
+  const c = tela.getContext("2d");
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // L'unità: un pixel del gioco sullo schermo. Tutte le misure della carta
+  // sono in questa unità, così la carta ha le stesse proporzioni ovunque.
+  const u = W / schermo.LARGHEZZA;
+  c.fillStyle = FONDO;
+  c.fillRect(0, 0, W, H);
+
+  const area = { x: 6 * u, y: 16 * u, w: W - 12 * u, h: H - 46 * u };
+  titolo(c, u, W);
+
+  if (esplorato.quanti() === 0) {
+    scrivi(c, "NON HAI ANCORA VISTO NIENTE", W / 2, area.y + area.h / 2, 5 * u, GRIGIO, "center");
+    legenda(c, u, W, H);
     return;
   }
 
-  // Si ingrandisce a numeri interi finché ci sta, perché a numeri interi la
-  // pixel art resta pixel art. Quando l'esplorato è più grande dello schermo
-  // non c'è scelta e si rimpicciolisce con un fattore qualunque: qui è un
-  // diagramma e non il mondo, e perdere una riga di pixel su una macchia di
-  // bosco non si vede.
-  const grezza = Math.min(utileL / scoperto.larghezza, utileA / scoperto.altezza);
-  const scala = grezza >= 1 ? Math.floor(grezza) : grezza;
+  // Quanti pixel dello schermo per tassello, e il tassello in alto a sinistra.
+  const perTassello = area.w / LIVELLI[vista.livello];
+  tienDentro(area, perTassello);
+  const sinistra = vista.x - area.w / 2 / perTassello;
+  const sopra = vista.y - area.h / 2 / perTassello;
+  const colonne = Math.ceil(area.w / perTassello) + 1;
+  const righe = Math.ceil(area.h / perTassello) + 1;
 
-  const larghezzaVista = scoperto.larghezza * scala;
-  const altezzaVista = scoperto.altezza * scala;
-  const x0 = Math.round((schermo.LARGHEZZA - larghezzaVista) / 2);
-  const y0 = Math.round((schermo.ALTEZZA - PIEDE - altezzaVista) / 2);
+  // La cache copre la vista con mezza vista di margine per lato.
+  const fuori = !cache || cache.perTassello !== perTassello || cache.dpr !== dpr || cache.versione !== versione ||
+    sinistra < cache.tx0 || sopra < cache.ty0 ||
+    sinistra + colonne > cache.tx0 + cache.colonne || sopra + righe > cache.ty0 + cache.righe;
+  if (fuori) {
+    cache = costruisci(Math.floor(sinistra - colonne / 2), Math.floor(sopra - righe / 2), colonne * 2, righe * 2, perTassello, dpr);
+  }
 
-  p.imageSmoothingEnabled = false;
-  p.drawImage(
-    tela,
-    scoperto.px, scoperto.py, scoperto.larghezza, scoperto.altezza,
-    x0, y0, larghezzaVista, altezzaVista
-  );
+  c.save();
+  c.beginPath();
+  c.rect(area.x, area.y, area.w, area.h);
+  c.clip();
+  // Si ricopia a pixel interi dello schermo, così la carta resta nitida.
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.imageSmoothingEnabled = false;
+  c.drawImage(cache.tela,
+    Math.round((area.x + (cache.tx0 - sinistra) * perTassello) * dpr),
+    Math.round((area.y + (cache.ty0 - sopra) * perTassello) * dpr));
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  // Dall'atlante allo schermo. Tutto quello che va sopra la mappa passa di
-  // qui, così i segnaposti e il superstite non possono finire fuori posto
-  // rispetto al terreno.
-  const suSchermo = (tx, ty) => ({
-    x: x0 + ((tx / TASSELLI_PER_PIXEL) - sxMin * PIXEL_PER_SETTORE - scoperto.px) * scala,
-    y: y0 + ((ty / TASSELLI_PER_PIXEL) - syMin * PIXEL_PER_SETTORE - scoperto.py) * scala,
+  const suCarta = (tx, ty) => ({
+    x: area.x + (tx - sinistra) * perTassello,
+    y: area.y + (ty - sopra) * perTassello,
+  });
+  const inVista = ({ x, y }) =>
+    x > area.x - 40 * u && y > area.y - 20 * u && x < area.x + area.w + 40 * u && y < area.y + area.h + 20 * u;
+
+  const nomi = [];
+  luoghi(c, u, suCarta, inVista, nomi);
+
+  modifiche.perOgnuno((tx, ty, cambio) => {
+    const tipo = SEGNAPOSTI[cambio.oggetto];
+    if (!tipo) return;
+    if (!esplorato.eVisto(Math.floor(tx / SETTORE), Math.floor(ty / SETTORE))) return;
+    const punto = suCarta(tx + 0.5, ty + 0.5);
+    if (inVista(punto)) segno(c, tipo, punto.x, punto.y, u);
   });
 
-  // I segnaposti hanno una misura fissa e non seguono la scala della mappa.
-  // È il contrario di quello che si farebbe d'istinto, e viene da una prova
-  // guardata: legati alla scala diventavano un pixel su una mappa da
-  // trecentottanta settori, cioè sparivano proprio quando la mappa comincia a
-  // servire. Un falò non è grande quanto quattro tasselli, è un posto — e un
-  // posto o si vede o non c'è.
-  const segnale = (x, y, colore, lato) => {
-    const rx = Math.round(x) - (lato >> 1);
-    const ry = Math.round(y) - (lato >> 1);
-    // Il contorno scuro sotto: su un prato chiaro un puntino giallo si perde,
-    // e con il bordo si stacca da qualunque terreno.
-    p.fillStyle = "#11131a";
-    p.fillRect(rx - 1, ry - 1, lato + 2, lato + 2);
-    p.fillStyle = colore;
-    p.fillRect(rx, ry, lato, lato);
-  };
+  // La fattoria: dove comincia la partita e dove ricomincia un superstite.
+  const fattoria = mappa.laFattoria();
+  if (fattoria) {
+    const punto = suCarta(fattoria.tx, fattoria.ty);
+    if (inVista(punto)) {
+      segno(c, "fattoria", punto.x, punto.y, u);
+      nomi.push({ testo: "FATTORIA", x: punto.x, y: punto.y + 4.5 * u, colore: FATTORIA });
+    }
+  }
 
-  // Le rovine dei settori visti. Si passa per le celle e non per i tasselli:
-  // una cella è quattro settori per lato, quindi le celle da guardare sono un
-  // sedicesimo dei settori esplorati — poche decine anche in una partita
-  // lunga, e solo mentre la mappa è aperta.
+  // I nomi dopo i segni, così nessun segno copre una scritta; e solo da
+  // vicino e a media distanza, perché da lontano si pesterebbero.
+  if (vista.livello < 2) {
+    for (const n of nomi) scrivi(c, n.testo, n.x, n.y, 3.3 * u, n.colore, "center", true);
+  }
+
+  // Tu per ultimo, e più grande di tutto: è l'unica cosa che si cerca sempre.
+  const io = suCarta(eroe.px / schermo.TASSELLO, eroe.py / schermo.TASSELLO);
+  freccia(c, io.x, io.y, eroe.guarda, u);
+  c.restore();
+
+  c.strokeStyle = "#3a3f48";
+  c.lineWidth = Math.max(1, u / 2);
+  c.strokeRect(area.x, area.y, area.w, area.h);
+
+  // Se la carta si è spostata lontano da te, una freccia sul bordo dice da
+  // che parte sei.
+  if (io.x < area.x || io.y < area.y || io.x > area.x + area.w || io.y > area.y + area.h) {
+    versoDiTe(c, io, area, u);
+  }
+
+  legenda(c, u, W, H);
+}
+
+// La vista non esce da quello che hai visto: se l'esplorato è più largo della
+// carta ci si ferma al suo bordo, se è più stretto resta al centro.
+function tienDentro(area, perTassello) {
+  const c = confini();
+  if (!c) return;
+  const mezzaL = area.w / 2 / perTassello;
+  const mezzaA = area.h / 2 / perTassello;
+  const margine = SETTORE;
+  const limita = (v, a, b, mezza) =>
+    b - a + margine * 2 <= mezza * 2 ? (a + b) / 2 : Math.min(Math.max(v, a - margine + mezza), b + margine - mezza);
+  vista.x = limita(vista.x, c.x0, c.x1, mezzaL);
+  vista.y = limita(vista.y, c.y0, c.y1, mezzaA);
+}
+
+// Le rovine delle celle viste. Si passa per le celle e non per i tasselli: una
+// cella è quattro settori per lato, quindi sono poche decine.
+function luoghi(c, u, suCarta, inVista, nomi) {
   const celleViste = new Set();
   esplorato.perOgnuno((sx, sy) => {
     celleViste.add(`${Math.floor(sx * SETTORE / mappa.CELLA_ROVINE)},${Math.floor(sy * SETTORE / mappa.CELLA_ROVINE)}`);
@@ -340,63 +568,200 @@ export function disegna(p, eroe) {
     const [cx, cy] = chiave.split(",").map(Number);
     const trovata = mappa.rovinaNellaCella(cx, cy);
     if (!trovata) continue;
-    // La fattoria porta con sé il suo orto (M7.18.36), che ha il segno suo.
+    // La fattoria porta con sé il suo orto (M7.18.36), che ha il segno suo;
+    // lei ha il suo, disegnato a parte.
     for (const rovina of [trovata, trovata.annesso].filter(Boolean)) {
-      const tx = rovina.tx0 + (rovina.larghezza >> 1);
-      const ty = rovina.ty0 + (rovina.altezza >> 1);
-      // Una cella è più grande di un settore: si può aver visto la cella senza
-      // essere mai passati dove sta la casa, e segnare una cosa che non si è
-      // vista è il contrario di quello che questa mappa fa.
+      if (rovina === trovata && trovata.annesso) continue;
+      const tx = rovina.tx0 + rovina.larghezza / 2;
+      const ty = rovina.ty0 + rovina.altezza / 2;
+      // Una cella è più grande di un settore: si segna solo quello che si è
+      // visto davvero.
       if (!esplorato.eVisto(Math.floor(tx / SETTORE), Math.floor(ty / SETTORE))) continue;
-      const { x, y } = suSchermo(tx, ty);
-      // L'orto abbandonato ha un segno suo, verde e più grande (M7.18.31): è
-      // l'unico luogo a cui si torna ogni anno, per i semi, e un puntino
-      // uguale a quello di un carro si perdeva.
-      const orto = rovina.luogo === "orto";
-      const colore = orto ? ORTO : rovina.luogo === "pozzo" ? "#8fb8d8" : rovina.luogo ? "#c79a62" : ROVINA;
-      segnale(x, y, colore, rovina.luogo && !orto ? 2 : 3);
+      const punto = suCarta(tx, ty);
+      if (!inVista(punto)) continue;
+      const tipo = rovina.luogo === "orto" ? "orto" : rovina.luogo === "pozzo" ? "pozzo" : rovina.luogo ? "luogo" : "rovina";
+      segno(c, tipo, punto.x, punto.y, u);
+      if (rovina.nome) {
+        const colore = tipo === "orto" ? ORTO : tipo === "pozzo" ? POZZO : LUOGO;
+        nomi.push({ testo: rovina.nome.toUpperCase(), x: punto.x, y: punto.y + 3.6 * u, colore });
+      }
     }
   }
-
-  modifiche.perOgnuno((tx, ty, cambio) => {
-    const colore = SEGNAPOSTI[cambio.oggetto];
-    if (!colore) return;
-    if (!esplorato.eVisto(Math.floor(tx / SETTORE), Math.floor(ty / SETTORE))) return;
-    const { x, y } = suSchermo(tx, ty);
-    segnale(x, y, colore, 2);
-  });
-
-  // La fattoria: dove comincia la partita e dove ricomincia un superstite
-  // nuovo. Vuoto invece che pieno, perché non è una cosa che hai posato — è
-  // il posto da cui si riparte, e adesso è un posto per davvero. Fin qui
-  // questo segno stava fisso su (0,0), che era la cosa più simile a casa che
-  // il gioco avesse.
-  const fattoria = mappa.laFattoria();
-  const casa = suSchermo(fattoria?.tx ?? 0, fattoria?.ty ?? 0);
-  const cx = Math.round(casa.x) - 2;
-  const cy = Math.round(casa.y) - 2;
-  p.fillStyle = "#11131a";
-  p.fillRect(cx - 1, cy - 1, 7, 7);
-  p.fillStyle = "#8fa8d8";
-  p.fillRect(cx, cy, 5, 1);
-  p.fillRect(cx, cy + 4, 5, 1);
-  p.fillRect(cx, cy, 1, 5);
-  p.fillRect(cx + 4, cy, 1, 5);
-
-  // Il superstite per ultimo, perché nessun segnaposto deve poterlo coprire,
-  // e più grande di tutti perché è l'unica cosa che si cerca sempre.
-  const io = suSchermo(eroe.px / schermo.TASSELLO, eroe.py / schermo.TASSELLO);
-  segnale(io.x, io.y, EROE, 3);
-
-  p.strokeStyle = BORDO;
-  p.lineWidth = 1;
-  p.strokeRect(x0 - 0.5, y0 - 0.5, larghezzaVista + 1, altezzaVista + 1);
-
-  const titolo = "QUELLO CHE HAI VISTO";
-  testo.disegna(p, titolo, MARGINE, 5, CHIARO);
-  const quanti = `${esplorato.quanti()} SETTORI`;
-  testo.disegna(p, quanti, schermo.LARGHEZZA - MARGINE - testo.larghezza(quanti), 5, GRIGIO);
-  const piede = "TAB CHIUDI   BLU POZZI   VERDE ORTI   OCRA LUOGHI";
-  testo.disegna(p, piede, Math.round((schermo.LARGHEZZA - testo.larghezza(piede)) / 2), schermo.ALTEZZA - 9, GRIGIO);
 }
 
+// --- i segni --------------------------------------------------------------
+
+function segno(c, tipo, x, y, u) {
+  c.lineWidth = 0.8 * u;
+  c.strokeStyle = CONTORNO;
+  c.lineJoin = "round";
+  if (tipo === "orto") {
+    cerchio(c, x, y, 2.6 * u, ORTO);
+    // Una foglia dentro: l'orto si riconosce anche senza i colori.
+    c.fillStyle = "#2f6a1f";
+    c.beginPath();
+    c.moveTo(x - 1.3 * u, y + 1.3 * u);
+    c.quadraticCurveTo(x - 1.3 * u, y - 1.3 * u, x + 1.3 * u, y - 1.3 * u);
+    c.quadraticCurveTo(x + 1.3 * u, y + 1.3 * u, x - 1.3 * u, y + 1.3 * u);
+    c.fill();
+    return;
+  }
+  if (tipo === "pozzo") return cerchio(c, x, y, 2 * u, POZZO);
+  if (tipo === "luogo") {
+    c.beginPath();
+    c.moveTo(x, y - 2.3 * u);
+    c.lineTo(x + 2.3 * u, y);
+    c.lineTo(x, y + 2.3 * u);
+    c.lineTo(x - 2.3 * u, y);
+    c.closePath();
+    c.fillStyle = LUOGO;
+    c.fill();
+    c.stroke();
+    return;
+  }
+  if (tipo === "rovina") return casetta(c, x, y, 1.8 * u, ROVINA);
+  if (tipo === "fattoria") return casetta(c, x, y, 2.8 * u, FATTORIA);
+  if (tipo === "fuoco") return cerchio(c, x, y, 1.5 * u, "#f2c14e");
+  if (tipo === "cassa") return quadrato(c, x, y, 1.4 * u, "#d8bf8f");
+  if (tipo === "letto") return quadrato(c, x, y, 1.4 * u, FATTORIA);
+  if (tipo === "corpo") {
+    c.lineWidth = 1.6 * u;
+    croce(c, x, y, 1.8 * u);
+    c.lineWidth = 0.8 * u;
+    c.strokeStyle = "#e0705a";
+    croce(c, x, y, 1.8 * u);
+  }
+}
+
+function cerchio(c, x, y, r, colore) {
+  c.beginPath();
+  c.arc(x, y, r, 0, Math.PI * 2);
+  c.fillStyle = colore;
+  c.fill();
+  c.stroke();
+}
+
+function quadrato(c, x, y, r, colore) {
+  c.fillStyle = colore;
+  c.fillRect(x - r, y - r, r * 2, r * 2);
+  c.strokeRect(x - r, y - r, r * 2, r * 2);
+}
+
+function casetta(c, x, y, r, colore) {
+  c.beginPath();
+  c.moveTo(x - r, y + r);
+  c.lineTo(x - r, y - r * 0.2);
+  c.lineTo(x, y - r * 1.1);
+  c.lineTo(x + r, y - r * 0.2);
+  c.lineTo(x + r, y + r);
+  c.closePath();
+  c.fillStyle = colore;
+  c.fill();
+  c.stroke();
+}
+
+function croce(c, x, y, r) {
+  c.beginPath();
+  c.moveTo(x - r, y - r);
+  c.lineTo(x + r, y + r);
+  c.moveTo(x + r, y - r);
+  c.lineTo(x - r, y + r);
+  c.stroke();
+}
+
+// Tu: una freccia bianca che punta dove guardi.
+const ANGOLI = { destra: 0, giu: Math.PI / 2, sinistra: Math.PI, su: -Math.PI / 2 };
+
+function freccia(c, x, y, guarda, u) {
+  const r = 3.2 * u;
+  c.save();
+  c.translate(x, y);
+  c.rotate(ANGOLI[guarda] ?? -Math.PI / 2);
+  c.beginPath();
+  c.moveTo(r, 0);
+  c.lineTo(-r * 0.7, r * 0.75);
+  c.lineTo(-r * 0.35, 0);
+  c.lineTo(-r * 0.7, -r * 0.75);
+  c.closePath();
+  c.fillStyle = "#ffffff";
+  c.strokeStyle = CONTORNO;
+  c.lineWidth = u;
+  c.lineJoin = "round";
+  c.stroke();
+  c.fill();
+  c.restore();
+}
+
+function versoDiTe(c, io, area, u) {
+  const cx = area.x + area.w / 2;
+  const cy = area.y + area.h / 2;
+  const a = Math.atan2(io.y - cy, io.x - cx);
+  // Il punto del bordo in quella direzione, un po' dentro.
+  const m = 5 * u;
+  const k = Math.min(
+    (area.w / 2 - m) / Math.max(Math.abs(Math.cos(a)), 1e-6),
+    (area.h / 2 - m) / Math.max(Math.abs(Math.sin(a)), 1e-6),
+  );
+  c.save();
+  c.translate(cx + Math.cos(a) * k, cy + Math.sin(a) * k);
+  c.rotate(a);
+  c.beginPath();
+  c.moveTo(3 * u, 0);
+  c.lineTo(-2 * u, 2.2 * u);
+  c.lineTo(-2 * u, -2.2 * u);
+  c.closePath();
+  c.fillStyle = "#ffffff";
+  c.strokeStyle = CONTORNO;
+  c.lineWidth = u;
+  c.stroke();
+  c.fill();
+  c.restore();
+}
+
+// --- le scritte -----------------------------------------------------------
+
+const CARATTERE = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+
+function scrivi(c, testo, x, y, misura, colore, allineamento = "left", ombra = false) {
+  c.font = `600 ${misura}px ${CARATTERE}`;
+  c.textAlign = allineamento;
+  c.textBaseline = "top";
+  if (ombra) {
+    c.lineWidth = misura * 0.3;
+    c.strokeStyle = "rgb(12 13 16 / 0.85)";
+    c.lineJoin = "round";
+    c.strokeText(testo, x, y);
+  }
+  c.fillStyle = colore;
+  c.fillText(testo, x, y);
+}
+
+function titolo(c, u, W) {
+  scrivi(c, "QUELLO CHE HAI VISTO", 6 * u, 5 * u, 5 * u, CHIARO);
+  const zoom = ["VICINO", "MEDIO", "LONTANO"][vista.livello];
+  scrivi(c, `${esplorato.quanti()} SETTORI · ZOOM ${zoom}`, W - 6 * u, 5.8 * u, 3.6 * u, GRIGIO, "right");
+}
+
+// La legenda: VERDE ORTI, come diceva la riga dei tasti di prima, adesso con
+// il segno accanto a ogni nome.
+const VOCI_LEGENDA = [
+  ["tu", "TU"], ["fattoria", "FATTORIA"], ["orto", "ORTO ABBANDONATO"], ["pozzo", "POZZO"],
+  ["luogo", "ALTRI LUOGHI"], ["rovina", "CASA"], ["cassa", "CASSA"], ["letto", "LETTO"],
+  ["fuoco", "FUOCO"], ["corpo", "IL TUO CORPO"],
+];
+
+function legenda(c, u, W, H) {
+  const y = H - 25 * u;
+  const misura = 3.2 * u;
+  c.font = `600 ${misura}px ${CARATTERE}`;
+  const passi = VOCI_LEGENDA.map(([, nome]) => 7 * u + c.measureText(nome).width + 5 * u);
+  let x = (W - passi.reduce((a, b) => a + b, 0)) / 2;
+  VOCI_LEGENDA.forEach(([tipo, nome], i) => {
+    if (tipo === "tu") freccia(c, x + 3 * u, y + misura / 2, "destra", u * 0.8);
+    else segno(c, tipo, x + 3 * u, y + misura / 2, u);
+    scrivi(c, nome, x + 7 * u, y, misura, GRIGIO);
+    x += passi[i];
+  });
+  const tasti = "WASD / FRECCE  SPOSTA      MAIUSC  PIÙ VELOCE      Q / E  ZOOM      SPAZIO  TORNA A TE      TAB  CHIUDI";
+  scrivi(c, tasti, W / 2, H - 13 * u, 3.2 * u, CHIARO, "center");
+}
