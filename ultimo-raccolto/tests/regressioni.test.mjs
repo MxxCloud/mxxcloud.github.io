@@ -29,6 +29,7 @@ import * as ricette from '../regole/ricette.js';
 import * as mappa from '../mondo/mappa.js';
 import * as modifiche from '../mondo/modifiche.js';
 import * as salvataggio from '../regole/salvataggio.js';
+import * as esplorato from '../regole/esplorato.js';
 import * as riparo from '../regole/riparo.js';
 import * as freddo from '../regole/freddo.js';
 import * as fiamma from '../regole/fiamma.js';
@@ -4670,4 +4671,36 @@ test("la mappa grande ha una misura fissa, si apre su di te e si naviga con WASD
   assert.match(gioco,/if \(!haDormito\) leggiComandi\(passo\);/);
   const css=readFileSync(new URL('../style.css',import.meta.url),'utf8');
   assert.match(css,/#carta\[hidden\]/);
+});
+
+// M7.18.40 — sulla mappa, le piante degli orti già visitati.
+test("la mappa dice le piante di un orto solo dopo che lo hai visitato, e il salvataggio se lo ricorda",async()=>{
+  const carta=await import('../interfaccia/mappa.js');
+  reset();
+  // Le piante lette per la carta sono quelle del mondo, anche col sorteggio.
+  const r=trovaLuogo('orto');
+  for(const n of [0,7,0xdeadbeef]){
+    mappa.impostaOrti(n);
+    assert.deepEqual(carta.pianteDellOrto(r),generazione.varietaDellOrto(r,mappa.semeCorrente().valore),'sorteggio '+n);
+  }
+  mappa.impostaOrti(0);
+  const a=mappa.rovinaNellaCella(0,0).annesso;
+  assert.deepEqual(carta.pianteDellOrto(a),[OGGETTO.FAGIOLI_SELVATICI,OGGETTO.PATATA_SELVATICA]);
+  // Visitato o no.
+  esplorato.svuota();
+  assert.equal(esplorato.ortoVisto(r),false);
+  esplorato.segnaOrto(r);assert.equal(esplorato.ortoVisto(r),true);assert.equal(esplorato.ortoVisto(a),false);
+  // Il salvataggio.
+  const eroe={...pos(0,0),guarda:'giu'};
+  const stato=salvataggio.istantanea(eroe,0);assert.deepEqual(stato.ortiVisti,[`${r.tx0},${r.ty0}`]);
+  esplorato.svuota();assert.ok(salvataggio.applica(stato));assert.equal(esplorato.ortoVisto(r),true);
+  const vecchio=structuredClone(stato);delete vecchio.ortiVisti;
+  assert.ok(salvataggio.applica(vecchio));assert.equal(esplorato.ortoVisto(r),false);
+  assert.equal(salvataggio.valido({...stato,ortiVisti:['x']}),false);assert.equal(salvataggio.valido({...stato,ortiVisti:'1,2'}),false);
+  // La visita la segna l'annuncio del nome dell'orto.
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/if \(luogo\?\.luogo === "orto"\) esplorato\.segnaOrto\(luogo\);/);
+  const sorgente=readFileSync(new URL('../interfaccia/mappa.js',import.meta.url),'utf8');
+  assert.match(sorgente,/esplorato\.ortoVisto\(rovina\) \? pianteDellOrto\(rovina\)/);
+  esplorato.svuota();
 });

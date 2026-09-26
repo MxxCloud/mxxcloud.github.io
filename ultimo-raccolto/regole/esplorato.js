@@ -103,7 +103,32 @@ export function ripristina(elenco) {
   }
 }
 
+// Gli orti abbandonati visitati (M7.18.40): la mappa scrive quali piante ha
+// un orto solo dopo che ci sei passato. Da M7.18.37 cambiano a ogni partita,
+// quindi saperlo è una cosa che si impara, non che si legge. Conta come visita
+// l'annuncio del nome, a tre tasselli: da lì le piante si vedono.
+const ortiVisti = new Set();
+
+export function segnaOrto(luogo) {
+  ortiVisti.add(chiave(luogo.tx0, luogo.ty0));
+}
+
+export function ortoVisto(luogo) {
+  return ortiVisti.has(chiave(luogo.tx0, luogo.ty0));
+}
+
+export function tuttiGliOrti() {
+  return [...ortiVisti];
+}
+
+export function ripristinaOrti(elenco) {
+  ortiVisti.clear();
+  if (!Array.isArray(elenco)) return;
+  for (const k of elenco) if (typeof k === "string" && /^-?\d+,-?\d+$/.test(k)) ortiVisti.add(k);
+}
+
 export function svuota() {
+  ortiVisti.clear();
   visti.clear();
   ultimoTx = null;
   ultimoTy = null;

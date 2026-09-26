@@ -12,6 +12,22 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.40 — la mappa ricorda le piante degli orti
+
+Quando arrivi a un orto abbandonato (compare il suo nome), la mappa se lo
+ricorda. Da quel momento, accanto al suo segno ci sono **due pallini colorati
+con le sue piante**. Da vicino e a zoom medio, sotto il segno c'è anche il
+loro nome, per esempio «FAGIOLI · PATATE». Gli orti mai visitati restano
+anonimi: le piante cambiano a ogni partita, e per saperle bisogna andarci una
+volta. La legenda spiega i colori:
+- grano oro;
+- lino azzurro;
+- cavolo verde acqua;
+- patate marrone;
+- fagioli rosso.
+
+Gli orti visitati si salvano con la partita.
+
 ## M7.18.39 — la mappa (TAB) è una carta
 
 La mappa che si apre con TAB è rifatta per essere leggibile.
@@ -2022,7 +2038,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.39**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.40**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
