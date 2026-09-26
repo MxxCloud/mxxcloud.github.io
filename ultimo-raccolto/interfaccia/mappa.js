@@ -232,6 +232,74 @@ const vista = { x: 0, y: 0, livello: LIVELLO_INIZIALE };
 export function apri(eroe) {
   vista.x = eroe.px / schermo.TASSELLO;
   vista.y = eroe.py / schermo.TASSELLO;
+  lasciaIlSegno();
+}
+
+// --- i segnaposti ---------------------------------------------------------
+
+// Un mirino al centro della carta: F mette un segno lì sotto, X toglie quello
+// più vicino (M7.18.41). Mettere un segno sono due passi — il simbolo, poi il
+// testo — e mentre li fai la carta sta ferma.
+const SEGNI_TUOI = {
+  stella: { colore: "#f2d24a", nome: "STELLA" },
+  pericolo: { colore: "#e0584a", nome: "PERICOLO" },
+  risorsa: { colore: "#7fd16a", nome: "RISORSA" },
+  rifugio: { colore: "#8fc4f0", nome: "RIFUGIO" },
+};
+let modo = "sfoglia";
+let scelto = 0;
+// La scrittura è una sola per tutto il gioco: la chiude solo chi l'ha aperta,
+// altrimenti chiudendo la mappa si butterebbe il codice che si sta scrivendo
+// nel pannello delle partite.
+let miaScrittura = false;
+// Quanto vicino al mirino, in tasselli, sta un segno da togliere: sei unità
+// della carta, quindi dipende dallo zoom. Lo aggiorna il disegno.
+let raggioDelMirino = 3;
+
+function lasciaIlSegno() {
+  if (miaScrittura && comandi.stoScrivendo()) comandi.fineScrittura();
+  miaScrittura = false;
+  modo = "sfoglia";
+}
+
+export function modalita() {
+  return { modo, scelto: esplorato.TIPI_SEGNO[scelto], testo: modo === "scrivi" ? comandi.testoScritto() : "" };
+}
+
+// Restituisce true se i tasti di questo passo sono andati ai segni.
+function segnaposti() {
+  if (modo === "scrivi") {
+    const finita = comandi.fineScritturaSeFinita();
+    if (finita) {
+      if (finita.confermato) {
+        esplorato.aggiungiSegno(Math.floor(vista.x), Math.floor(vista.y), esplorato.TIPI_SEGNO[scelto], finita.testo);
+      }
+      miaScrittura = false;
+      modo = "sfoglia";
+    }
+    return true;
+  }
+  if (modo === "simbolo") {
+    const quanti = esplorato.TIPI_SEGNO.length;
+    if (comandi.appenaPremuto("indietro")) modo = "sfoglia";
+    if (comandi.appenaPremuto("sinistra")) scelto = (scelto + quanti - 1) % quanti;
+    if (comandi.appenaPremuto("destra")) scelto = (scelto + 1) % quanti;
+    for (let i = 0; i < quanti; i += 1) if (comandi.appenaPremuto(`casella${i + 1}`)) scelto = i;
+    if (modo === "simbolo" && comandi.appenaPremuto("usa")) {
+      comandi.iniziaScrittura(esplorato.TESTO_MASSIMO, { spazi: true });
+      miaScrittura = true;
+      modo = "scrivi";
+    }
+    return true;
+  }
+  if (comandi.appenaPremuto("esporta")) {
+    modo = "simbolo";
+    return true;
+  }
+  if (comandi.appenaPremuto("spegni")) {
+    esplorato.togliSegnoVicino(vista.x - 0.5, vista.y - 0.5, raggioDelMirino);
+  }
+  return false;
 }
 
 export function stato() {
@@ -255,6 +323,7 @@ function confini() {
 // I tasti della carta, a ogni passo mentre è aperta. WASD e le frecce
 // spostano, Maiuscolo corre, Q ed E cambiano lo zoom, la barra torna su di te.
 export function naviga(passo, eroe) {
+  if (segnaposti()) return;
   if (comandi.appenaPremuto("allontana")) vista.livello = Math.min(LIVELLI.length - 1, vista.livello + 1);
   if (comandi.appenaPremuto("avvicina") || comandi.appenaPremuto("consuma")) {
     vista.livello = Math.max(0, vista.livello - 1);
@@ -286,6 +355,7 @@ function preparaCarta() {
 // Chiusa la mappa, la carta sparisce. Si chiama a ogni fotogramma in cui la
 // mappa non c'è, ed è un confronto e basta.
 export function nascondi() {
+  if (modo !== "sfoglia") lasciaIlSegno();
   if (carta && !carta.hidden) carta.hidden = true;
 }
 
@@ -519,6 +589,16 @@ export function disegna(p, eroe) {
     }
   }
 
+  // I tuoi segni, sopra i luoghi (M7.18.41).
+  for (const segnato of esplorato.segni()) {
+    const punto = suCarta(segnato.tx + 0.5, segnato.ty + 0.5);
+    if (!inVista(punto)) continue;
+    segnoTuo(c, segnato.tipo, punto.x, punto.y, u);
+    if (segnato.testo) {
+      nomi.push({ testo: segnato.testo, x: punto.x, y: punto.y + 3.8 * u, colore: SEGNI_TUOI[segnato.tipo].colore });
+    }
+  }
+
   // I nomi dopo i segni, così nessun segno copre una scritta; e solo da
   // vicino e a media distanza, perché da lontano si pesterebbero.
   if (vista.livello < 2) {
@@ -528,6 +608,13 @@ export function disegna(p, eroe) {
   // Tu per ultimo, e più grande di tutto: è l'unica cosa che si cerca sempre.
   const io = suCarta(eroe.px / schermo.TASSELLO, eroe.py / schermo.TASSELLO);
   freccia(c, io.x, io.y, eroe.guarda, u);
+
+  // Il mirino al centro, e sopra tutto quello che serve a mettere un segno.
+  raggioDelMirino = (6 * u) / perTassello;
+  const centro = { x: area.x + area.w / 2, y: area.y + area.h / 2 };
+  mirino(c, centro.x, centro.y, u);
+  if (modo === "simbolo") sceltaDelSimbolo(c, centro, u);
+  if (modo === "scrivi") casellaDelTesto(c, centro, u);
   c.restore();
 
   c.strokeStyle = "#3a3f48";
@@ -748,6 +835,134 @@ function versoDiTe(c, io, area, u) {
   c.restore();
 }
 
+// I simboli dei tuoi segni. Nessuno somiglia ai segni della valle: sono
+// cose tue, e devono staccarsi da quelle che la carta sa da sola.
+function segnoTuo(c, tipo, x, y, u) {
+  const { colore } = SEGNI_TUOI[tipo] ?? SEGNI_TUOI.stella;
+  c.fillStyle = colore;
+  c.strokeStyle = CONTORNO;
+  c.lineWidth = 0.8 * u;
+  c.lineJoin = "round";
+  c.beginPath();
+  if (tipo === "stella") {
+    for (let i = 0; i < 10; i += 1) {
+      const r = (i % 2 === 0 ? 3 : 1.35) * u;
+      const a = -Math.PI / 2 + (i * Math.PI) / 5;
+      if (i === 0) c.moveTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+      else c.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+    }
+    c.closePath();
+    c.fill();
+    c.stroke();
+    return;
+  }
+  if (tipo === "pericolo") {
+    c.moveTo(x, y - 3 * u);
+    c.lineTo(x + 3 * u, y + 2.2 * u);
+    c.lineTo(x - 3 * u, y + 2.2 * u);
+    c.closePath();
+    c.fill();
+    c.stroke();
+    c.fillStyle = CONTORNO;
+    c.fillRect(x - 0.35 * u, y - 1.2 * u, 0.7 * u, 1.9 * u);
+    c.fillRect(x - 0.35 * u, y + 1.1 * u, 0.7 * u, 0.6 * u);
+    return;
+  }
+  if (tipo === "risorsa") {
+    // Una goccia: l'acqua, il lino, i semi — quello che si viene a prendere.
+    c.moveTo(x, y - 3 * u);
+    c.bezierCurveTo(x + 2.8 * u, y, x + 2.4 * u, y + 2.6 * u, x, y + 2.6 * u);
+    c.bezierCurveTo(x - 2.4 * u, y + 2.6 * u, x - 2.8 * u, y, x, y - 3 * u);
+    c.closePath();
+    c.fill();
+    c.stroke();
+    return;
+  }
+  // Il rifugio: una bandierina, dove si può tornare.
+  c.moveTo(x - 1.8 * u, y - 3.2 * u);
+  c.lineTo(x + 3.2 * u, y - 1.4 * u);
+  c.lineTo(x - 1.8 * u, y + 0.4 * u);
+  c.closePath();
+  c.fill();
+  c.stroke();
+  c.lineCap = "round";
+  c.lineWidth = 1.8 * u;
+  c.beginPath();
+  c.moveTo(x - 1.8 * u, y - 3.2 * u);
+  c.lineTo(x - 1.8 * u, y + 3 * u);
+  c.stroke();
+  c.lineWidth = 0.8 * u;
+  c.strokeStyle = colore;
+  c.stroke();
+  c.lineCap = "butt";
+}
+
+function mirino(c, x, y, u) {
+  const tratto = (lw, colore) => {
+    c.lineWidth = lw;
+    c.strokeStyle = colore;
+    c.beginPath();
+    c.moveTo(x - 5 * u, y);
+    c.lineTo(x - 1.5 * u, y);
+    c.moveTo(x + 1.5 * u, y);
+    c.lineTo(x + 5 * u, y);
+    c.moveTo(x, y - 5 * u);
+    c.lineTo(x, y - 1.5 * u);
+    c.moveTo(x, y + 1.5 * u);
+    c.lineTo(x, y + 5 * u);
+    c.stroke();
+  };
+  tratto(1.4 * u, "rgb(12 13 16 / 0.7)");
+  tratto(0.5 * u, "#ffffff");
+}
+
+function pannello(c, x, y, w, h, u) {
+  c.fillStyle = "rgb(18 20 25 / 0.94)";
+  c.strokeStyle = "#5a606b";
+  c.lineWidth = 0.5 * u;
+  c.beginPath();
+  c.roundRect(x, y, w, h, 1.5 * u);
+  c.fill();
+  c.stroke();
+}
+
+function sceltaDelSimbolo(c, centro, u) {
+  const tipi = esplorato.TIPI_SEGNO;
+  const cella = 19 * u;
+  const w = cella * tipi.length + 4 * u;
+  const h = 24 * u;
+  const x = centro.x + 8 * u;
+  const y = centro.y - h / 2;
+  pannello(c, x, y, w, h, u);
+  scrivi(c, "SCEGLI IL SEGNO", x + w / 2, y + 2 * u, 3 * u, GRIGIO, "center");
+  tipi.forEach((tipo, i) => {
+    const cx = x + 2 * u + cella * i + cella / 2;
+    if (i === scelto) {
+      c.fillStyle = "rgb(255 255 255 / 0.12)";
+      c.strokeStyle = CHIARO;
+      c.lineWidth = 0.5 * u;
+      c.beginPath();
+      c.roundRect(cx - cella / 2 + u, y + 6.5 * u, cella - 2 * u, 15.5 * u, u);
+      c.fill();
+      c.stroke();
+    }
+    segnoTuo(c, tipo, cx, y + 11.5 * u, u);
+    scrivi(c, `${i + 1}  ${SEGNI_TUOI[tipo].nome}`, cx, y + 16.5 * u, 2.5 * u, i === scelto ? CHIARO : GRIGIO, "center");
+  });
+}
+
+function casellaDelTesto(c, centro, u) {
+  const w = 62 * u;
+  const h = 15 * u;
+  const x = centro.x + 8 * u;
+  const y = centro.y - h / 2;
+  pannello(c, x, y, w, h, u);
+  segnoTuo(c, esplorato.TIPI_SEGNO[scelto], x + 5 * u, y + h / 2, u);
+  scrivi(c, "IL NOME DEL SEGNO", x + 10 * u, y + 2 * u, 2.8 * u, GRIGIO);
+  const acceso = Math.floor(performance.now() / 500) % 2 === 0;
+  scrivi(c, comandi.testoScritto() + (acceso ? "|" : ""), x + 10 * u, y + 6.5 * u, 4.2 * u, CHIARO);
+}
+
 // --- le scritte -----------------------------------------------------------
 
 const CARATTERE = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
@@ -794,9 +1009,15 @@ function legenda(c, u, W, H) {
   });
   // Sotto, i colori delle piante degli orti visitati.
   const yPiante = H - 19.5 * u;
+  // E accanto i tuoi segni (M7.18.41).
   const vociPiante = Object.values(PIANTE);
+  const vociSegni = Object.entries(SEGNI_TUOI);
+  const separa = 8 * u;
+  c.font = `600 ${misura}px ${CARATTERE}`;
   const passiPiante = vociPiante.map(({ nome }) => 5 * u + c.measureText(nome).width + 5 * u);
-  let xp = (W - passiPiante.reduce((a, b) => a + b, 0)) / 2;
+  const passiSegni = vociSegni.map(([, { nome }]) => 6 * u + c.measureText(nome).width + 5 * u);
+  const totale = [...passiPiante, ...passiSegni].reduce((a, b) => a + b, 0) + separa;
+  let xp = (W - totale) / 2;
   c.lineWidth = 0.8 * u;
   c.strokeStyle = CONTORNO;
   vociPiante.forEach(({ colore, nome }, i) => {
@@ -804,6 +1025,21 @@ function legenda(c, u, W, H) {
     scrivi(c, nome, xp + 5 * u, yPiante, misura, GRIGIO);
     xp += passiPiante[i];
   });
-  const tasti = "WASD / FRECCE  SPOSTA      MAIUSC  PIÙ VELOCE      Q / E  ZOOM      SPAZIO  TORNA A TE      TAB  CHIUDI";
-  scrivi(c, tasti, W / 2, H - 12 * u, 3.2 * u, CHIARO, "center");
+  xp += separa;
+  vociSegni.forEach(([tipo, { nome }], i) => {
+    const k = 0.62;
+    c.save();
+    c.translate(xp + 2.5 * u, yPiante + misura / 2);
+    c.scale(k, k);
+    segnoTuo(c, tipo, 0, 0, u);
+    c.restore();
+    scrivi(c, nome, xp + 6 * u, yPiante, misura, GRIGIO);
+    xp += passiSegni[i];
+  });
+  const TASTI = {
+    sfoglia: "WASD / FRECCE  SPOSTA     MAIUSC  VELOCE     Q / E  ZOOM     SPAZIO  TORNA A TE     F  METTI SEGNO     X  TOGLI SEGNO     TAB  CHIUDI",
+    simbolo: "A / D  SCEGLI     1-4  SIMBOLO     SPAZIO  CONFERMA     ESC  ANNULLA",
+    scrivi: "SCRIVI IL NOME (FINO A 16 LETTERE)     INVIO  CONFERMA     ESC  ANNULLA",
+  };
+  scrivi(c, TASTI[modo], W / 2, H - 12 * u, 3.2 * u, CHIARO, "center");
 }

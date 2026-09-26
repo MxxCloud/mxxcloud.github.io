@@ -120,8 +120,11 @@ export function stoScrivendo() {
   return scrittura !== null;
 }
 
-export function iniziaScrittura(lunghezzaMassima = 40) {
-  scrittura = { testo: "", massimo: lunghezzaMassima, confermato: false, annullato: false };
+// Con { spazi: true } la scrittura accetta anche lo spazio: serve ai
+// segnaposti della mappa (M7.18.41), dove «ACQUA BUONA» è un testo giusto.
+// Il codice di una partita resta senza, per la ragione detta sotto.
+export function iniziaScrittura(lunghezzaMassima = 40, { spazi = false } = {}) {
+  scrittura = { testo: "", massimo: lunghezzaMassima, confermato: false, annullato: false, spazi };
 }
 
 export function fineScrittura() {
@@ -148,7 +151,9 @@ export function testoScritto() {
 // è un codice sbagliato che sembra giusto.
 const AMMESSI = /^[A-Za-z0-9-]$/;
 
-function scrivi(evento) {
+// Esportata per i collaudi: è la sola strada per provare cosa entra in una
+// scrittura senza una tastiera vera.
+export function scrivi(evento) {
   if (evento.key === "Enter") {
     scrittura.confermato = true;
     return;
@@ -161,7 +166,8 @@ function scrivi(evento) {
     scrittura.testo = scrittura.testo.slice(0, -1);
     return;
   }
-  if (evento.key.length !== 1 || !AMMESSI.test(evento.key)) return;
+  const spazio = evento.key === " " && scrittura.spazi;
+  if (evento.key.length !== 1 || (!AMMESSI.test(evento.key) && !spazio)) return;
   if (scrittura.testo.length >= scrittura.massimo) return;
   scrittura.testo += evento.key.toUpperCase();
 }
