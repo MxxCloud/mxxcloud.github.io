@@ -46,6 +46,7 @@ import * as arteCose from '../arte/sprite-cose.js';
 import { OGGETTO, TERRENO } from '../mondo/generazione.js';
 import * as generazione from '../mondo/generazione.js';
 import * as arteOggetti from '../arte/sprite-oggetti.js';
+import { FATTORIA } from '../arte/piante.js';
 import { CATALOGO, RACCOLTA } from '../regole/oggetti.js';
 import { vistaLibera, fattoreSuono } from '../mondo/ostacoli.js';
 import * as sprite from '../arte/sprite-cose.js';
@@ -4333,7 +4334,8 @@ test("le piante selvatiche nascono solo dove prima non c'era niente, ognuna sul 
   const TERRENI={[OGGETTO.SPIGHE_SELVATICHE]:TERRENO.STERPAGLIA,[OGGETTO.LINO_SELVATICO]:TERRENO.SABBIA,[OGGETTO.CAVOLO_SELVATICO]:TERRENO.ROCCIA};
   for(const [seme,h,n] of impronte){
     const v=valle(seme);assert.equal(v.h,h,'seme '+seme);assert.equal(v.n,n,'seme '+seme);
-    const fuori=v.piante.filter(p=>generazione.luogoIn(p.x,p.y)===null);
+    // Fuori dagli orti: quelli abbandonati e, da M7.18.35, quello della fattoria.
+    const fuori=v.piante.filter(p=>!generazione.inselvatichitaNellOrto(p.x,p.y,p.o));
     for(const o of Object.keys(TERRENI).map(Number))assert.ok(fuori.some(p=>p.o===o),'ci sono: '+o);
     for(const p of fuori){
       assert.notEqual(p.o,OGGETTO.PATATA_SELVATICA,'la patata solo negli orti');
@@ -4530,4 +4532,38 @@ test('in primavera le piante degli orti abbandonati tornano anche sulla terra za
   modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.TERRA_ZAPPATA});
   tempo.impostaGiorno(45);ricrescita.nuovoGiorno();
   assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.TERRA_ZAPPATA);
+});
+
+// M7.18.35 — l'orto della fattoria di partenza.
+test("la fattoria di partenza ha il suo orto: quattro fagioli e quattro patate, con le regole degli orti abbandonati",()=>{
+  // La misura non cambia, quindi la fattoria sta dove stava.
+  assert.equal(FATTORIA.length,8);assert.ok(FATTORIA.every(r=>r.length===20));
+  const segni=FATTORIA.join('');
+  assert.equal(segni.split('b').length-1,4);assert.equal(segni.split('q').length-1,4);
+  for(const [seme,x0,y0] of [['valle-1',1,1],['valle-3',27,16],['review',1,9]]){
+    mappa.inizializza(seme);const r=mappa.rovinaNellaCella(0,0);
+    assert.deepEqual([r.tx0,r.ty0],[x0,y0],'fattoria di '+seme);
+  }
+  reset();
+  const r=mappa.rovinaNellaCella(0,0);
+  const posti=[];
+  FATTORIA.forEach((riga,y)=>[...riga].forEach((c,x)=>{if(c==='b'||c==='q')posti.push({tx:r.tx0+x,ty:r.ty0+y,c});}));
+  // Il reset dei collaudi svuota i dintorni della fattoria: qui si torna al mondo.
+  for(const p of posti)mappa.cambiaTassello(p.tx,p.ty,null);
+  for(const p of posti)assert.equal(mappa.oggettoDi(p.tx,p.ty),p.c==='b'?OGGETTO.FAGIOLI_SELVATICI:OGGETTO.PATATA_SELVATICA);
+  const fagiolo=posti.find(p=>p.c==='b'),patata=posti.find(p=>p.c==='q');
+  const raccogli=(p)=>azioni.agisci({...pos(p.tx-1,p.ty),guarda:'destra'},null)?.tipo;
+  // D'estate danno sempre: due fagioli e una patata, cioè i semi del primo orto.
+  tempo.impostaGiorno(1);
+  assert.equal(raccogli(fagiolo),'raccolto');assert.equal(raccogli(patata),'raccolto');
+  assert.equal(inventario.quante('fagioli'),2);assert.equal(inventario.quante('patata'),1);
+  // D'inverno sono secche: solo fibra.
+  inventario.svuota();tempo.impostaGiorno(10);
+  const altro=posti.filter(p=>p.c==='b')[2];
+  assert.equal(azioni.azionePossibile({...pos(altro.tx-1,altro.ty),guarda:'destra'},null).verbo,'Strappa la pianta secca');
+  assert.equal(raccogli(altro),'raccolto');assert.equal(inventario.quante('fibra'),1);assert.equal(inventario.quante('fagioli'),0);
+  // In primavera tornano, anche sulla terra zappata.
+  modifiche.imposta(patata.tx,patata.ty,{oggetto:OGGETTO.TERRA_ZAPPATA,fertilita:0});
+  tempo.impostaGiorno(13);ricrescita.nuovoGiorno();
+  for(const p of [fagiolo,patata,altro])assert.equal(mappa.oggettoDi(p.tx,p.ty),p.c==='b'?OGGETTO.FAGIOLI_SELVATICI:OGGETTO.PATATA_SELVATICA);
 });

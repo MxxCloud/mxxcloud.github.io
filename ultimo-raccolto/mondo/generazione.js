@@ -233,6 +233,9 @@ const COSTRUITO = {
   g: OGGETTO.GIACIGLIO,
   a: OGGETTO.APPASSITA,
   p: OGGETTO.SPAVENTAPASSERI_ROTTO,
+  // L'orto della fattoria di partenza (M7.18.35): sempre fagioli e patate.
+  b: OGGETTO.FAGIOLI_SELVATICI,
+  q: OGGETTO.PATATA_SELVATICA,
 };
 
 // L'orto abbandonato (M7.18.30): le piante delle aiuole non sono morte, sono
@@ -245,9 +248,12 @@ export const INSELVATICHITE = [OGGETTO.SPIGHE_SELVATICHE, OGGETTO.LINO_SELVATICO
   OGGETTO.FAGIOLI_SELVATICI, OGGETTO.CAVOLO_SELVATICO];
 
 // Questa pianta sta in un orto abbandonato? Serve alla raccolta, che lì non
-// tira a sorte, e al disegno, che d'inverno la mostra secca.
+// tira a sorte, al disegno, che d'inverno la mostra secca, e alla ricrescita.
+// Lo dice il segno della pianta sotto il tassello: le due file degli orti
+// abbandonati e quelle dell'orto della fattoria (M7.18.35).
+const SEGNI_DELL_ORTO = new Set(["s", "u", "b", "q"]);
 export function inselvatichitaNellOrto(x, y, oggetto) {
-  return INSELVATICHITE.includes(oggetto) && luogoIn(x, y)?.luogo === "orto";
+  return INSELVATICHITE.includes(oggetto) && SEGNI_DELL_ORTO.has(rovine.tasselloDi(x, y, adatto));
 }
 
 // Le due varietà di questo orto, sempre diverse fra loro.
