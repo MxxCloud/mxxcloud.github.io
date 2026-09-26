@@ -75,6 +75,10 @@ export const CAUSE = {
   // Da Per un pugno di semi W0.4 chi colpisce di notte è un bandito, e non
   // sbrana: la chiave resta "infetti" come nel resto del codice.
   infetti: "ucciso da un bandito",
+  // La pistola (W0.5) ha una causa sua, e non per pignoleria: chi muore così
+  // è rimasto fermo allo scoperto, e il rimedio è diverso da quello di chi si
+  // è fatto raggiungere.
+  spari: "ucciso da una pallottola",
   animali: "ucciso da un animale",
   infezione: "d'infezione",
 };
@@ -90,7 +94,7 @@ let esposizioneFreddo = 0;
 // da dieci secondi è morto di fame, anche se l'ultimo colpo l'ha dato la
 // sete. Nominare l'ultima causa sarebbe più facile da scrivere e più facile
 // da sbagliare.
-const danni = { fame: 0, sete: 0, stanchezza: 0, freddo: 0, infetti: 0, animali: 0, infezione: 0 };
+const danni = { fame: 0, sete: 0, stanchezza: 0, freddo: 0, infetti: 0, spari: 0, animali: 0, infezione: 0 };
 
 export function livelloCorrente() {
   return livello;

@@ -72,3 +72,26 @@ export const CANNA = [
  "...hB","..h.B",".h..B",".h..B",".h..B",".h..B",
  ".h..B",".h..B",".h..v",".h...",".h...",".g...",
 ];
+
+// La pistola dei banditi (W0.5). Non è un attrezzo dello zaino — lo straniero
+// non ne ha una, ed è il sottotitolo del gioco — ma si tiene in mano come gli
+// altri, quindi sta qui.
+//
+// Di profilo punta verso sinistra, come la figura che la tiene: canna in alto
+// e calcio che scende all'indietro. È quello che rende la mira leggibile a
+// colpo d'occhio: quando la canna sporge dalla sagoma, qualcuno ti sta
+// puntando. Il metallo è la tinta chiara della tavolozza, e sullo spolverino
+// scuro del bandito è la cosa che si vede per prima.
+export const PISTOLA = [
+  "ssss.",
+  "..shh",
+  "...hg",
+];
+
+// Di fronte e di spalle la canna è di scorcio: un anello di metallo con il
+// buco in mezzo, che è quello che vede chi si trova dall'altra parte.
+export const PISTOLA_DI_FRONTE = [
+  ".s.",
+  "srs",
+  ".h.",
+];

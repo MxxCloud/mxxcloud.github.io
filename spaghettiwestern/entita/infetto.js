@@ -18,8 +18,9 @@
 // costa.
 
 import * as urti from "./urti.js";
-import { cuoci, riflesso } from "../arte/sprite.js";
+import { cuoci, riflesso, telaio } from "../arte/sprite.js";
 import * as arte from "../arte/sprite-personaggi.js";
+import { PISTOLA, PISTOLA_DI_FRONTE } from "../arte/sprite-impugnati.js";
 import { TAVOLOZZA_INFETTO } from "../arte/tavolozza.js";
 import { generatore } from "../motore/casuale.js";
 
@@ -50,6 +51,42 @@ export const VITA = 5;
 // direzione ogni mezzo secondo sembra una mosca, non una persona rotta.
 const DURATA_GIRO = [1.8, 4.5];
 
+// La pistola (Per un pugno di semi W0.5): di notte si spara, e non sei tu.
+//
+// Un bandito che ti vede, e che ti ha abbastanza lontano da non doverti
+// venire addosso, si ferma e ti prende la mira. La mira è una cosa che si
+// vede e si sente — la pistola esce dalla sagoma e il cane scatta — e dura
+// abbastanza da poterci fare qualcosa: MIRA secondi in tutto. Per quasi tutto
+// quel tempo la canna ti segue; nell'ultimo tratto, col dito sul grilletto,
+// non più, e il colpo parte verso il punto in cui eri. Chi è rimasto lì lo
+// prende, chi si è scansato di lato di un passo no.
+//
+// È tutta la regola, ed è voluta così: di notte stare fermi allo scoperto è
+// quello che costa, e il rimedio è quello che il gioco chiede già — muoversi,
+// o mettersi dietro un muro, che la vista e le pallottole non passano.
+//
+// Qui dentro non si sa cosa sia il danno: l'entità alza una bandierina con
+// da dove parte il colpo e verso dove va, e chi la raccoglie decide se ha
+// preso qualcuno (vedi raccogliGliSpari in regole/infetti.js).
+//
+// Fra trenta pixel e la gittata. Più vicino di così non si mira: si mena,
+// come prima. Più lontano non si mira nemmeno, e comunque senza una luce
+// in mano un bandito ti vede a meno di sessanta.
+export const GITTATA = 120;
+const TROPPO_VICINO = 30;
+const MIRA = 0.9;
+const DITO_SUL_GRILLETTO = 0.3;
+// Fra un colpo e l'altro: armare, ricaricare, riprendere fiato. Un intervallo
+// e non un numero, perché cinque banditi che sparano insieme a tempo sono un
+// plotone, non una banda.
+const RICARICA_SPARO = [3.5, 6];
+// Da quando ti vede a quando comincia a mirare: anche la prima volta c'è un
+// momento, e senza, cinque che ti scoprono insieme sparerebbero insieme.
+const PRIMA_MIRA = [0.4, 1.6];
+// Quanto resta la pistola in pugno dopo lo sparo: abbastanza da vedere chi è
+// stato.
+const IN_PUGNO_DOPO = 0.35;
+
 // Il proprio generatore, seminato. Gli infetti non fanno parte del mondo
 // riproducibile — non stanno nelle modifiche e non si salvano — ma in questo
 // gioco Math.random non esiste, e tenere una sorgente sola evita che un
@@ -58,21 +95,47 @@ const caso = generatore(0x9a1f00d);
 
 // --- aspetto --------------------------------------------------------------
 
-// Tre direzioni per quattro fotogrammi: dodici immagini in tutto, cotte la
-// prima volta che servono e poi tenute. Niente oggetto in pugno, quindi
-// niente composizione — un infetto non impugna niente, ed è anche il motivo
-// per cui si distingue da lontano da un altro superstite.
+// Tre direzioni per quattro fotogrammi, e da W0.5 due volte: a mani vuote e
+// con la pistola. Ventiquattro immagini al massimo, cotte la prima volta che
+// servono e poi tenute. In Ultimo raccolto un infetto non impugnava niente,
+// ed era il motivo per cui si distingueva da lontano da un altro superstite;
+// adesso la pistola in pugno si vede solo quando mira, ed è l'avviso.
 const cotti = new Map();
 
-function figura(direzione, fotogramma) {
-  const chiave = `${direzione}|${fotogramma}`;
+// Dove sta la pistola, in coordinate dello sprite 16x24: l'angolo in alto a
+// sinistra del disegno e la bocca della canna. Non è la mano degli attrezzi
+// dello straniero (vedi MANO in giocatore.js): quella è un braccio lungo il
+// fianco, questa è un braccio teso all'altezza del petto. Di profilo la
+// canna parte dalla colonna zero, e così sporge di due pixel oltre il
+// poncho: è quello che si deve vedere.
+export const PUGNO = {
+  giu: { x: 10, y: 11, bocca: { x: 11, y: 12 } },
+  su: { x: 1, y: 11, bocca: { x: 2, y: 12 } },
+  lato: { x: 0, y: 11, bocca: { x: 0, y: 11 } },
+};
+
+function figura(direzione, fotogramma, armato) {
+  const chiave = `${direzione}|${fotogramma}|${armato ? "pistola" : ""}`;
   const gia = cotti.get(chiave);
   if (gia) return gia;
 
   const fotogrammi = direzione === "su" ? arte.SU : direzione === "giu" ? arte.GIU : arte.LATO;
-  const immagine = cuoci(fotogrammi[fotogramma], TAVOLOZZA_INFETTO);
-  cotti.set(chiave, immagine);
-  return immagine;
+  const corpo = cuoci(fotogrammi[fotogramma], TAVOLOZZA_INFETTO);
+  if (!armato) {
+    cotti.set(chiave, corpo);
+    return corpo;
+  }
+
+  // Composta una volta sola, come lo straniero con l'ascia: la pistola sta
+  // sempre davanti al corpo, anche di spalle, per la stessa ragione del
+  // poncho (vedi giocatore.js).
+  const pistola = cuoci(direzione === "lato" ? PISTOLA : PISTOLA_DI_FRONTE);
+  const pugno = PUGNO[direzione];
+  const { canvas, contesto } = telaio(corpo.width, corpo.height);
+  contesto.drawImage(corpo, 0, 0);
+  contesto.drawImage(pistola, pugno.x, pugno.y);
+  cotti.set(chiave, canvas);
+  return canvas;
 }
 
 export function figureCotte() {
@@ -82,12 +145,19 @@ export function figureCotte() {
 function aggiornaAspetto(e) {
   const fotogramma = Math.floor(e.passo) % 4;
   const direzione = e.guarda === "su" ? "su" : e.guarda === "giu" ? "giu" : "lato";
-  const immagine = figura(direzione, fotogramma);
+  const armato = Boolean(e.mira) || e.inPugno > 0;
+  const immagine = figura(direzione, fotogramma, armato);
 
   e.sprite = e.guarda === "destra" ? riflesso(immagine) : immagine;
   e.x = e.px - e.sprite.width / 2;
   e.y = e.py - e.sprite.height;
   e.base = e.py;
+
+  // La bocca della canna nel mondo, riflessa a destra come la figura. Serve
+  // a far partire la vampa e la traccia del colpo da dove si vede la pistola.
+  const bocca = PUGNO[direzione].bocca;
+  const boccaX = e.guarda === "destra" ? e.sprite.width - bocca.x - 1 : bocca.x;
+  e.bocca = { x: e.x + boccaX, y: e.y + bocca.y };
 }
 
 // --- comportamento --------------------------------------------------------
@@ -159,14 +229,69 @@ function insegue(e, passo, bx, by, fermatiA = 0) {
   return distanza;
 }
 
+function fra(intervallo) {
+  return intervallo[0] + caso() * (intervallo[1] - intervallo[0]);
+}
+
+// Il giro della mira: fermo, girato verso di te, la canna che ti segue finché
+// il dito non è sul grilletto. Restituisce vero finché sta mirando, cioè
+// finché questo giro non deve fare altro.
+function prendeLaMira(e, passo) {
+  const dx = e.preda.px - e.px;
+  const dy = e.preda.py - e.py;
+  const distanza = Math.hypot(dx, dy);
+
+  if (!e.mira) {
+    if (e.ricaricaSparo > 0 || distanza < TROPPO_VICINO || distanza > GITTATA) return false;
+    e.mira = { resta: MIRA, bersaglio: { x: e.preda.px, y: e.preda.py } };
+    e.miraAppena = true;
+  } else if (distanza < TROPPO_VICINO) {
+    // Gli sei arrivato addosso: la pistola torna giù e si mena, come prima.
+    e.mira = null;
+    return false;
+  }
+
+  e.passo = 0;
+  e.mira.resta -= passo;
+  if (e.mira.resta > DITO_SUL_GRILLETTO) e.mira.bersaglio = { x: e.preda.px, y: e.preda.py };
+  guardaVerso(e, e.mira.bersaglio.x - e.px, e.mira.bersaglio.y - e.py);
+
+  if (e.mira.resta <= 0) {
+    // La bocca è quella dell'ultimo aspetto, che è fermo e girato da questa
+    // parte da tutto il tempo della mira: è esattamente dove si vede.
+    e.sparo = { da: { ...e.bocca }, piedi: { x: e.px, y: e.py }, a: { ...e.mira.bersaglio } };
+    e.mira = null;
+    e.ricaricaSparo = fra(RICARICA_SPARO);
+    e.inPugno = IN_PUGNO_DOPO;
+  }
+  return true;
+}
+
 export function aggiorna(e, passo) {
   e.ricarica -= passo;
+  e.ricaricaSparo -= passo;
+  if (e.inPugno > 0) e.inPugno -= passo;
   // La bandierina vale un passo solo: chi la raccoglie gira una volta per
   // fotogramma, e lasciarla alzata vorrebbe dire un morso che conta due volte.
+  // Vale anche per lo sparo e per il primo istante della mira, che è quando
+  // il cane scatta.
   e.colpo = false;
   e.sfonda = false;
   e.bloccato = false;
+  e.sparo = null;
+  e.miraAppena = false;
   if (e.sussulto > 0) e.sussulto -= passo;
+
+  // Ti ha appena visto: prima di mirare passa un momento.
+  if (e.preda && !e.avevaPreda) e.ricaricaSparo = Math.max(e.ricaricaSparo, fra(PRIMA_MIRA));
+  e.avevaPreda = Boolean(e.preda);
+  // Chi ti perde di vista abbassa la pistola: non si spara a un muro.
+  if (!e.preda) e.mira = null;
+
+  if (e.preda && prendeLaMira(e, passo)) {
+    aggiornaAspetto(e);
+    return;
+  }
 
   if (e.preda) {
     const distanza = insegue(e, passo, e.preda.px, e.preda.py, PORTATA - 2);
@@ -220,6 +345,17 @@ export function crea(px, py) {
     sfonda: false,
     bloccato: false,
     ricarica: 0,
+    // La pistola (W0.5). "mira" è il colpo che sta preparando, con quanto
+    // gli manca e il punto verso cui punta; "sparo" la bandierina del colpo
+    // partito, come "colpo" per il braccio. "miraAppena" dice il primo
+    // istante della mira, che è quando si sente il cane.
+    mira: null,
+    sparo: null,
+    miraAppena: false,
+    ricaricaSparo: 0,
+    inPugno: 0,
+    avevaPreda: false,
+    bocca: { x: px, y: py },
     // Quanto gli resta da tremare dopo averle prese. Serve al disegno, che è
     // l'unico modo che ha il giocatore di sapere di averlo colpito davvero.
     sussulto: 0,

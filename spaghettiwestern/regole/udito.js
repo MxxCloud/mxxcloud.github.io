@@ -26,7 +26,7 @@ import * as schermo from "../motore/schermo.js";
 import * as suono from "../motore/suono.js";
 import { generatore } from "../motore/casuale.js";
 import * as fauna from "./fauna.js";
-import { PASSO, PASSO_INFETTO, FISCHIO, CREPITIO, VERSO_BESTIA } from "../arte/voci.js";
+import { PASSO, PASSO_INFETTO, FISCHIO, CREPITIO, VERSO_BESTIA, CANE, SPARO, PALLOTTOLA } from "../arte/voci.js";
 
 // Da quanto lontano si sente camminare qualcuno. Il numero viene dalla
 // geometria degli infetti e non dal gusto: nascono a 260 pixel come minimo,
@@ -41,6 +41,13 @@ const PORTATA_PASSI = 300;
 // vale la pena che arrivi da oltre lo schermo. Da W0.4 è un fischio (vedi
 // arte/voci.js), e un fischio porta ancora meglio di un ringhio.
 const PORTATA_FISCHIO = 380;
+
+// La pistola (W0.5). Il cane si sente poco più in là di dove un bandito può
+// mirare, ed è voluto: chi mira da fuori dallo schermo lo senti prima di
+// vederlo, e da quella parte. Lo sparo invece si sente da mezza valle — è
+// l'unico suono della notte che arriva a chi è al sicuro dentro casa.
+const PORTATA_CANE = 200;
+const PORTATA_SPARO = 700;
 
 // Le bestie. Fino a qui la valle aveva i passi degli infetti, il loro respiro
 // a trecentottanta pixel e il crepitio del fuoco — e un bufalo da mezza
@@ -205,6 +212,12 @@ export function avanza(passo, eroe) {
       ricordoDi(e).fotogramma = Math.floor(Math.max(0, e.passo)) % 4;
     }
 
+    // Il cane scatta nel primo istante della mira, uno per bandito.
+    if (e.miraAppena) {
+      const scatto = dove(eroe, e.px, e.py, PORTATA_CANE);
+      if (scatto) suono.suona(CANE, { ...scatto, tono: 0.95 + caso() * 0.12 });
+    }
+
     const r = ricordoDi(e);
     if (!e.preda) {
       // Chi non ti sta inseguendo non fischia, e il conto riparte: così il
@@ -221,6 +234,24 @@ export function avanza(passo, eroe) {
 
   bestie(passo, eroe);
   fuochi(passo, eroe);
+}
+
+// --- gli spari --------------------------------------------------------------
+
+// Quelli che regole/infetti.js ha appena raccolto. Lo sparo viene da chi ha
+// sparato, attenuato e spostato come ogni altra cosa; il fischio della
+// pallottola invece viene dalla parte da cui ti è passata, ed è sempre
+// vicino — per definizione.
+export function spari(eroe, elenco) {
+  if (suono.muto()) return;
+  for (const s of elenco) {
+    const sentito = dove(eroe, s.piedi.x, s.piedi.y, PORTATA_SPARO);
+    if (sentito) suono.suona(SPARO, { ...sentito, tono: 0.9 + caso() * 0.2 });
+    if (s.sfiorato) {
+      const accanto = dove(eroe, (s.piedi.x + s.suolo.x) / 2, (s.piedi.y + s.suolo.y) / 2, Infinity);
+      suono.suona(PALLOTTOLA, { panoramica: accanto?.panoramica ?? 0, tono: 0.9 + caso() * 0.25 });
+    }
+  }
 }
 
 // --- le bestie -------------------------------------------------------------

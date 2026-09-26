@@ -18,6 +18,40 @@ Come l'originale non ha server né dipendenze: è HTML, CSS e JavaScript serviti
 così come sono. Tutto quello che segue è la storia di Ultimo raccolto fino al
 punto della copia.
 
+## W0.5 — di notte si spara
+
+La prima regola western, ed è quella del sottotitolo: **i banditi hanno la
+pistola**. Tu no.
+- **La mira.** Un bandito che ti vede, e che ti ha fra trenta pixel e la
+  gittata (centoventi, cioè poco più di mezzo schermo in altezza), si ferma e
+  ti prende la mira: **la pistola esce dalla sagoma** e si sente **il cane che
+  scatta**. «Ti prendono la mira: scansati».
+- **Lo sparo.** Poco meno di un secondo dopo spara. Per quasi tutto quel tempo
+  la canna ti segue; nell'ultimo tratto, col dito sul grilletto, non più, e il
+  colpo parte verso il punto in cui eri. **Chi è rimasto fermo è preso, chi
+  si è scansato di lato di un passo no** — e se ti passa vicino, **la senti
+  fischiare**. Scappare dritto lontano da lui non basta: la pallottola va
+  dritta anche lei, e ti arriva dietro.
+- **I muri fermano le pallottole**, come fermano la vista: dietro un muro o una
+  porta chiusa non ti mira nessuno.
+- **Quanto costa.** Una pallottola toglie poco meno di due colpi di calcio;
+  **cinque uccidono**. Una volta su due **resta dentro** e la ferita si
+  infetta: si cura con una benda, come sempre. Chi muore così è «ucciso da una
+  pallottola».
+- **Si vede e si sente.** La **vampa** apre il buio per un istante attorno a
+  chi ha sparato, la **traccia** del colpo attraversa la scena, e dove la
+  pallottola finisce si alza la polvere, o schizzano le schegge del muro.
+  Lo sparo si sente da mezza valle, anche dentro casa.
+- Poi si ricarica, da tre secondi e mezzo a sei, e nel frattempo ti viene
+  addosso. Più vicino di trenta pixel non mira: mena, come prima.
+
+La torcia adesso ha un prezzo in più: con una fiamma in mano ti vedono da
+centocinquanta pixel, cioè da abbastanza lontano da prenderti la mira. Al
+buio ti vedono a meno di sessanta, e di solito arrivano prima di sparare.
+
+Anche le schegge di un muro sfondato sono d'adobe: da W0.3 i muri lo sono, e
+sfondati spargevano ancora la pietra rossa delle mesas.
+
 ## W0.4 — lo straniero e i banditi
 
 La terza fase del rivestimento tocca le persone. Le regole restano quelle di

@@ -4999,3 +4999,150 @@ test("rinascendo o riprendendo una partita al ranch, il suo nome non copre il me
   // Una partita nuova invece lo annuncia ancora: lì è il titolo d'apertura.
   assert.doesNotMatch(corpo('avviaNuovaPartita'),/luogoAttuale/);
 });
+
+// --- Per un pugno di semi (W0.5): di notte si spara ---------------------------
+
+// Il bandito vero cuoce la sua figura, e per cuocere serve un canvas: qui ne
+// basta uno finto, come per la minimappa.
+async function conCanvasFinto(prova){
+  const prima={document:globalThis.document,ImageData:globalThis.ImageData};
+  const contesto={imageSmoothingEnabled:false,putImageData(){},drawImage(){},translate(){},scale(){},rotate(){}};
+  globalThis.document={createElement:()=>({width:0,height:0,getContext:()=>contesto})};
+  globalThis.ImageData=class{constructor(data,width,height){Object.assign(this,{data,width,height});}};
+  try { return await prova(); } finally { globalThis.document=prima.document;globalThis.ImageData=prima.ImageData; }
+}
+// Un bandito che ti ha già visto da un po' e ha la pistola carica: la mira
+// comincia al primo giro.
+function banditoPronto(bandito,dx,bersaglio=eroe){
+  const b=bandito.crea(bersaglio.px+dx,bersaglio.py);
+  b.preda=bersaglio;b.avevaPreda=true;b.ricaricaSparo=0;
+  return b;
+}
+test("un bandito che ti vede fra trenta pixel e la gittata si ferma, ti prende la mira e spara dove sei",async()=>{
+  const bandito=await import('../entita/infetto.js');
+  await conCanvasFinto(()=>{
+    const passo=1/60,b=banditoPronto(bandito,80);
+    bandito.aggiorna(b,passo);
+    assert.ok(b.mira,'mira subito');assert.equal(b.miraAppena,true,'e il cane scatta');
+    assert.equal(b.guarda,'sinistra');
+    const fermo={px:b.px,py:b.py};let fotogrammi=1;
+    while(!b.sparo&&fotogrammi<120){bandito.aggiorna(b,passo);fotogrammi++;if(!b.sparo)assert.equal(b.miraAppena,false);}
+    assert.ok(b.sparo,'ha sparato');
+    assert.ok(Math.abs(fotogrammi*passo-0.9)<0.05,`dopo ${fotogrammi} fotogrammi`);
+    assert.deepEqual({px:b.px,py:b.py},fermo,'mirando non si muove');
+    assert.deepEqual(b.sparo.a,{x:eroe.px,y:eroe.py},'verso chi è rimasto fermo');
+    assert.deepEqual(b.sparo.piedi,{x:b.px,y:b.py});
+    assert.ok(b.sparo.da.x<b.px&&b.sparo.da.y<b.py-8,'dalla canna: davanti e all\'altezza del petto');
+    assert.equal(b.mira,null);assert.ok(b.ricaricaSparo>=3.5&&b.ricaricaSparo<=6,'poi ricarica');
+    bandito.aggiorna(b,passo);assert.equal(b.sparo,null,'la bandierina vale un fotogramma');
+  });
+});
+test("chi si sposta quando il dito è sul grilletto non è più dove punta la canna, e la sente passare",async()=>{
+  const bandito=await import('../entita/infetto.js');
+  await conCanvasFinto(()=>{
+    const passo=1/60,bersaglio={...eroe},b=banditoPronto(bandito,80,bersaglio);
+    entita.aggiungi(b);
+    bandito.aggiorna(b,passo);assert.ok(b.mira);
+    let seguito=false;
+    while(!b.sparo){
+      bersaglio.py+=52*passo;  // camminando verso sud
+      bandito.aggiorna(b,passo);
+      if(b.mira&&b.mira.resta>0.35)seguito=b.mira.bersaglio.y===bersaglio.py;
+    }
+    assert.ok(seguito,'finché non è sul grilletto, la canna ti segue');
+    const scarto=Math.hypot(bersaglio.px-b.sparo.a.x,bersaglio.py-b.sparo.a.y);
+    assert.ok(scarto>12&&scarto<17,`un passo e mezzo: ${scarto.toFixed(1)} pixel`);
+    const r=infetti.raccogliGliSpari(bersaglio);
+    assert.equal(r.spari[0].colpito,false);assert.equal(r.spari[0].sfiorato,true);
+    assert.equal(salute.livelloCorrente(),1);
+  });
+});
+test("troppo vicino o troppo lontano non si mira, e chi ti perde di vista abbassa la pistola",async()=>{
+  const bandito=await import('../entita/infetto.js');
+  await conCanvasFinto(()=>{
+    const passo=1/60;
+    // A venti pixel si mena, come sempre.
+    const vicino=banditoPronto(bandito,20);let colpo=false;
+    for(let i=0;i<120;i++){bandito.aggiorna(vicino,passo);assert.equal(vicino.mira,null);assert.equal(vicino.sparo,null);colpo||=vicino.colpo;}
+    assert.ok(colpo,'e il braccio arriva');
+    // Oltre la gittata no: si avvicina.
+    const lontano=banditoPronto(bandito,bandito.GITTATA+10);
+    bandito.aggiorna(lontano,passo);assert.equal(lontano.mira,null);
+    assert.ok(lontano.px<eroe.px+bandito.GITTATA+10,'viene avanti');
+    // Perso di vista a metà della mira: niente sparo.
+    const perso=banditoPronto(bandito,80);
+    bandito.aggiorna(perso,passo);assert.ok(perso.mira);
+    perso.preda=null;
+    for(let i=0;i<90;i++){bandito.aggiorna(perso,passo);assert.equal(perso.sparo,null);}
+    assert.equal(perso.mira,null);
+    // E la prima volta che ti vede c'è un momento prima della mira.
+    const nuovo=bandito.crea(eroe.px+80,eroe.py);nuovo.preda=eroe;
+    bandito.aggiorna(nuovo,passo);
+    assert.equal(nuovo.mira,null);assert.ok(nuovo.ricaricaSparo>=0.35&&nuovo.ricaricaSparo<=1.6,`${nuovo.ricaricaSparo}`);
+  });
+});
+test("la pallottola prende chi è dove punta, si ferma sui muri e ha una morte sua",()=>{
+  const sparo=(a)=>({tipo:'infetto',px:eroe.px+80,py:eroe.py,
+    sparo:{da:{x:eroe.px+72,y:eroe.py-13},piedi:{x:eroe.px+80,y:eroe.py},a}});
+  entita.aggiungi(sparo({x:eroe.px,y:eroe.py}));
+  let r=infetti.raccogliGliSpari(eroe);
+  assert.equal(r.spari.length,1);assert.equal(r.spari[0].colpito,true);
+  assert.ok(Math.abs(salute.livelloCorrente()-0.79)<1e-9,`${salute.livelloCorrente()}`);
+  assert.deepEqual(r.spari[0].a,{x:eroe.px,y:eroe.py-13},'la traccia finisce su di te, all\'altezza della canna');
+  // Mancato di un passo: si sente passare, e non toglie niente.
+  entita.svuota();salute.reimposta();
+  entita.aggiungi(sparo({x:eroe.px,y:eroe.py-14}));
+  r=infetti.raccogliGliSpari(eroe);
+  assert.equal(r.spari[0].colpito,false);assert.equal(r.spari[0].sfiorato,true);
+  assert.equal(salute.livelloCorrente(),1);assert.equal(r.infettato,false);
+  // Scappato dritto lungo la linea di tiro: la pallottola ti arriva dietro.
+  entita.svuota();salute.reimposta();
+  entita.aggiungi(sparo({x:eroe.px+14,y:eroe.py}));
+  r=infetti.raccogliGliSpari(eroe);
+  assert.equal(r.spari[0].colpito,true,'scansarsi è di lato');salute.reimposta();
+  // Mancato di molto: niente fischio.
+  entita.svuota();entita.aggiungi(sparo({x:eroe.px,y:eroe.py-60}));
+  assert.equal(infetti.raccogliGliSpari(eroe).spari[0].sfiorato,false);
+  // Un muro in mezzo: niente ferita, e la pallottola si ferma lì, in schegge d'adobe.
+  entita.svuota();modifiche.imposta(tx+3,ty,{oggetto:OGGETTO.MURO});
+  entita.aggiungi(sparo({x:eroe.px,y:eroe.py}));
+  r=infetti.raccogliGliSpari(eroe);
+  assert.equal(r.spari[0].colpito,false);
+  assert.deepEqual([r.spari[0].muro.tx,r.spari[0].muro.ty],[tx+3,ty]);
+  assert.deepEqual(r.spari[0].muro.scheggie,['J','K','L']);
+  assert.ok(r.spari[0].suolo.x>=(tx+3)*16&&r.spari[0].suolo.x<=(tx+4)*16,'finisce nel muro');
+  assert.equal(salute.livelloCorrente(),1);
+  // Cinque pallottole uccidono, e la morte dice cos'è stato.
+  modifiche.imposta(tx+3,ty,{oggetto:OGGETTO.NESSUNO});
+  for(let i=0;i<5;i++){entita.svuota();entita.aggiungi(sparo({x:eroe.px,y:eroe.py}));infetti.raccogliGliSpari(eroe);}
+  assert.equal(salute.eMorto(),true);assert.equal(salute.causaDellaMorte(),'spari');
+  assert.equal(salute.CAUSE.spari,'ucciso da una pallottola');
+  // Da morti non si viene più colpiti.
+  entita.svuota();entita.aggiungi(sparo({x:eroe.px,y:eroe.py}));
+  assert.equal(infetti.raccogliGliSpari(eroe).spari[0].colpito,false);
+});
+test("lo sparo si vede e si sente: la pistola in pugno, la vampa, la traccia, il cane, lo sparo e la pallottola",async()=>{
+  const impugnati=await import('../arte/sprite-impugnati.js');
+  for(const righe of [impugnati.PISTOLA,impugnati.PISTOLA_DI_FRONTE]){decodifica(righe);assert.match(righe.join(''),/s/,'metallo');}
+  const {PUGNO}=await import('../entita/infetto.js');
+  const arte=await import('../arte/sprite-personaggi.js');
+  // Di profilo la canna parte fuori dalla sagoma: è quello che si vede.
+  const bordo=arte.LATO[0][PUGNO.lato.y].indexOf('r');
+  assert.ok(PUGNO.lato.x<bordo,`la canna dalla colonna ${PUGNO.lato.x}, il poncho dalla ${bordo}`);
+  assert.equal(impugnati.PISTOLA[0].slice(0,3),'sss','e la canna è davanti');
+  const voci=await import('../arte/voci.js');
+  assert.equal(voci.CANE.onda,'rumore');assert.ok(voci.CANE.coda<0.1,'il cane è un clic');
+  assert.ok(voci.SPARO.volume>voci.MORSO.volume,'lo sparo è la voce più forte');
+  assert.equal(voci.PALLOTTOLA.onda,'sinusoide');assert.ok(voci.PALLOTTOLA.da>voci.PALLOTTOLA.a,'la pallottola fischia scendendo');
+  const leggi=(f)=>readFileSync(new URL('../'+f,import.meta.url),'utf8');
+  const udito=leggi('regole/udito.js');
+  assert.match(udito,/if \(e\.miraAppena\) \{/);assert.match(udito,/suono\.suona\(CANE, /);
+  assert.match(udito,/suono\.suona\(SPARO, /);assert.match(udito,/if \(s\.sfiorato\) \{/);
+  const gioco=leggi('gioco.js');
+  assert.match(gioco,/const colpi = infetti\.raccogliGliSpari\(eroe\);/);
+  assert.match(gioco,/udito\.spari\(eroe, colpi\.spari\);/);
+  assert.match(gioco,/disegnaBuio\(\);\n  disegnaSpari\(\);/,'la traccia sopra il buio');
+  assert.match(gioco,/lumi\.push\(\{ x: v\.da\.x, y: v\.da\.y, raggio: 72/,'la vampa apre il buio');
+  for(const scritta of ['ti prendono la mira: scansati','ti hanno sparato','la pallottola è rimasta dentro'])
+    assert.ok(gioco.includes(`annuncia("${scritta}"`),scritta);
+});
