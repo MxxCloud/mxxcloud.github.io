@@ -503,7 +503,7 @@ export function nomeDi(cosa) {
 // e più avanti, quando ci sarà qualcosa che ti sente, anche un rischio.
 export const RACCOLTA = {
   [OGGETTO.CARRO]: {
-    verbo: "Smantella carro", colpi: 4, voce: "legno", scheggie: ["w", "h", "c"],
+    verbo: "Smantella la diligenza", colpi: 4, voce: "legno", scheggie: ["w", "h", "c"],
     resa: [{ cosa: "legna", quante: 3 }, { cosa: "fibra", quante: 2 }],
   },
   [OGGETTO.TRONCO]: {

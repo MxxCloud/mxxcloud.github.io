@@ -5,14 +5,14 @@
 // varietà per orto, vedi generazione.js),
 // p spaventapasseri rotto (M7.18.31: il segno che si vede da lontano).
 export const LUOGHI = [
-  { id: "carro", nome: "Carro rovesciato", pianta: [
+  { id: "carro", nome: "Diligenza rovesciata", pianta: [
     "  .....  ",
     "...v.... ",
     " ..c.....",
     "  .......",
     "    ...  ",
   ] },
-  { id: "pozzo", nome: "Pozzo dei viandanti", pianta: [
+  { id: "pozzo", nome: "Pozzo nel deserto", pianta: [
     " ..... ",
     "...%...",
     "..o....",
@@ -26,20 +26,42 @@ export const LUOGHI = [
     "....c...",
     " .t.... ",
   ] },
-  { id: "boscaioli", nome: "Sosta dei boscaioli", pianta: [
+  { id: "boscaioli", nome: "Campo dei cercatori d'oro", pianta: [
     "  ...... ",
     "..t..t.. ",
     "....c....",
-    "..g...f..",
+    "..g..zf..",
     " ....... ",
     "   ...   ",
   ] },
-  { id: "orto", nome: "Orto abbandonato", pianta: [
+  { id: "orto", nome: "Orto dei coloni", pianta: [
     " %%.p.%% ",
     "..ss.ss..",
     "..uu.uu..",
     ".......c.",
     " %%...%% ",
+  ] },
+  // La frontiera (W0.3). Sad Hill, dal «Buono, il brutto, il cattivo»: un
+  // cerchio di croci attorno a una tomba senza nome, e sotto la cassa.
+  { id: "sadhill", nome: "Cimitero di Sad Hill", pianta: [
+    "   x x x   ",
+    " x       x ",
+    "x    .    x",
+    "    ...    ",
+    "x  ..c..  x",
+    "    ...    ",
+    "x    .    x",
+    " x       x ",
+    "   x x x   ",
+  ] },
+  // Cattle Corner, da «C'era una volta il West»: la stazione in mezzo al
+  // niente, i binari, la pensilina e la cisterna che gocciola mentre si
+  // aspetta un treno che porta guai.
+  { id: "stazione", nome: "Stazione di Cattle Corner", pianta: [
+    "=============",
+    "  .........  ",
+    "  ....w..c.  ",
+    "  .........  ",
   ] },
 ];
 

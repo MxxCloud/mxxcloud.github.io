@@ -124,3 +124,26 @@ export const PIANTE = [
 export function misuraDi(pianta) {
   return { larghezza: pianta[0].length, altezza: pianta.length };
 }
+
+// I nomi delle case sulla frontiera (W0.3), annunciati entrando come quelli
+// dei luoghi. Stanno qui accanto alle piante perché un nome è della pianta:
+// ogni casolare è una casa di adobe, ogni paese è una cittadina.
+export const NOMI_DELLE_PIANTE = new Map([
+  [CASOLARE, "Casa di adobe"],
+  [STALLA, "Fienile"],
+  [CROLLO, "Adobe crollata"],
+  [PAESE, "Cittadina di frontiera"],
+  [FATTORIA, "Ranch abbandonato"],
+]);
+
+// Gli edifici della cittadina, rettangoli della pianta PAESE con il loro
+// nome. «Il becchino» è per Piripero, il fabbricante di bare di «Per un pugno
+// di dollari», l'unico in paese a cui gli affari vanno bene.
+export const EDIFICI_DEL_PAESE = [
+  { x: 0, y: 0, larghezza: 8, altezza: 6, nome: "Saloon" },
+  { x: 10, y: 1, larghezza: 6, altezza: 5, nome: "Ufficio dello sceriffo" },
+  { x: 18, y: 0, larghezza: 8, altezza: 6, nome: "Emporio" },
+  { x: 2, y: 10, larghezza: 6, altezza: 5, nome: "Il becchino" },
+  { x: 11, y: 10, larghezza: 8, altezza: 6, nome: "Chiesa della missione" },
+  { x: 19, y: 10, larghezza: 6, altezza: 5, nome: "Banca" },
+];

@@ -101,6 +101,21 @@ const BOTTINO_FATTORIA = [
 // Scorte piccole e legate al posto, non altre casse ricche come quelle delle
 // case. Nessuna carne fresca dimenticata da anni, attrezzi sempre già usati.
 const BOTTINO_LUOGHI = {
+  // La tomba senza nome di Sad Hill (W0.3): niente oro dei confederati, quello
+  // se l'è preso qualcun altro. Resta quello che serve a chi scava.
+  sadhill: [
+    { cosa: "fagioli", da: 2, a: 4, peso: 3 },
+    { cosa: "benda", da: 1, a: 2, peso: 2 },
+    { cosa: "conserva", da: 1, a: 1, peso: 2 },
+    { cosa: "zappa", da: 1, a: 1, peso: 1 },
+  ],
+  // La stazione: quello che resta di chi aspettava il treno.
+  stazione: [
+    { cosa: "secchio", da: 1, a: 1, peso: 2 },
+    { cosa: "fibra", da: 2, a: 3, peso: 3 },
+    { cosa: "legna", da: 1, a: 3, peso: 3 },
+    { cosa: "conserva", da: 1, a: 1, peso: 1 },
+  ],
   // I fagioli sono il cibo di chi viaggia — secchi, leggeri, durano — e si
   // trovano dove viaggiava qualcuno: nel carro e nell'accampamento.
   carro: [

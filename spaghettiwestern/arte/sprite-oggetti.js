@@ -88,27 +88,29 @@ export const SASSO = [
 // l'intonaco caduto, e sono l'unica cosa che distingue un muro in rovina da
 // un muro. Un muro pulito in una valle dopo il collasso è un muro che qualcuno
 // sta ancora tenendo su.
+// Da W0.3 è adobe: intonaco chiaro di fango, i mattoni scuri dove è caduto,
+// una trave in cima. Vale anche per i muri che costruisci tu.
 export const MURO = [
-  "ffffffffffffffff",
-  "ffffffffffffffff",
-  "eeeeeeeeeeeeeeee",
-  "dddddddddddddddd",
-  "eeeddeeeeeddeeee",
-  "eeeddeecceeddeee",
-  "eeeeeeecceeeeeee",
-  "dddddddddddddddd",
-  "eddeeeeeddeeeeee",
-  "eddeeeeeddeeeeee",
-  "eeeeeeeeeeeeeeee",
-  "dddddddddddddddd",
-  "eeeddeeeeeddeeee",
-  "cceddeeeeeddeeee",
-  "cceeeeeeeeeeeeee",
-  "dddddddddddddddd",
-  "eddeeeeeddeeeeee",
-  "eddeeeeeddeeeeee",
-  "eeeeeeeeeeeeeeee",
-  "dddddddddddddddd",
+  "hhhhhhhhhhhhhhhh",
+  "gghgghgghgghgghg",
+  "JJJJJJJJJJJJJJJJ",
+  "JJJJJJJJJJJJKJJJ",
+  "JJJKJJJJJJJJJJJJ",
+  "JJJJJJJJJJKKJJJJ",
+  "JJJJJJJJJJJJJJJJ",
+  "JJKLLKJJJJJJJJJJ",
+  "JKLLLLKJJJJJKJJJ",
+  "JJKLLKJJJJJJJJJJ",
+  "JJJJJJJJJJJJJJJJ",
+  "JJJJJJJKJJJJJJJJ",
+  "JJJJJJJJJJJKLLKJ",
+  "KJJJJJJJJJKLLLLK",
+  "JJJJJJJJJJJKLLKJ",
+  "JJJKJJJJJJJJJJJJ",
+  "KKJJJJJJJJJJJJKK",
+  "KKKKKKKKKKKKKKKK",
+  "LLKKLLKKKLLKKLLK",
+  "LLLLLLLLLLLLLLLL",
 ];
 
 // Quello che resta dove il muro è venuto giù. Basso e non solido: ci si passa
@@ -119,14 +121,14 @@ export const MURO = [
 // "qui c'era un muro e adesso c'è un varco". È la differenza fra un sasso e
 // una porta.
 export const MURO_ROTTO = [
-  "....dd....dd....",
-  "...deed..deed...",
-  "..deeeed.deeed..",
-  ".deeccdeedeeeed.",
-  "deeeeeedeeeeeeed",
-  "deecceeeeeeeeeed",
-  "ddeeeeeeeeeeeedd",
-  ".dddddddddddddd.",
+  "....LK....KL....",
+  "...KJJK..KJJK...",
+  "..KJJJJK.KJJJK..",
+  ".KJJLLKJJKJJJJK.",
+  "KJJJJJJKJJJJJJJK",
+  "KJJLLJJJJJJKJJJK",
+  "LLKKKKKKKKKKKKLL",
+  ".LLLLLLLLLLLLLL.",
 ];
 
 // Le piante selvatiche (M7.18.30). Più basse e più rade del cespuglio, con i

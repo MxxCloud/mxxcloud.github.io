@@ -79,6 +79,13 @@ export const TAVOLOZZA = {
   H: "#46694f",
   I: "#6b8f6a",
 
+  // L'adobe (W0.3): mattoni di fango e paglia intonacati, come tutte le case
+  // della frontiera. Chiavi sue e non quelle della roccia, che restano il rosso
+  // delle mesas: un muro che si confonde con una rupe non è più un muro.
+  J: "#dcbf8e",
+  K: "#bb9463",
+  L: "#8a5e3a",
+
   // Pelle.
   l: "#a06e4e",
   m: "#c98f68",

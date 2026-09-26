@@ -587,7 +587,7 @@ export function disegna(p, eroe) {
     const punto = suCarta(fattoria.tx, fattoria.ty);
     if (inVista(punto)) {
       segno(c, "fattoria", punto.x, punto.y, u);
-      nomi.push({ testo: "FATTORIA", x: punto.x, y: punto.y + 4.5 * u, colore: FATTORIA });
+      nomi.push({ testo: "RANCH", x: punto.x, y: punto.y + 4.5 * u, colore: FATTORIA });
     }
   }
 
@@ -659,8 +659,11 @@ function luoghi(c, u, suCarta, inVista, nomi) {
     if (!trovata) continue;
     // La fattoria porta con sé il suo orto (M7.18.36), che ha il segno suo;
     // lei ha il suo, disegnato a parte.
-    for (const rovina of [trovata, trovata.annesso].filter(Boolean)) {
-      if (rovina === trovata && trovata.annesso) continue;
+    // Da W0.3 gli annessi sono due, l'orto e il recinto: il recinto non è un
+    // luogo e resta senza segno.
+    for (const rovina of [trovata, ...(trovata.annessi ?? [])].filter(Boolean)) {
+      if (rovina === trovata && trovata.annessi) continue;
+      if (rovina !== trovata && !rovina.luogo) continue;
       const tx = rovina.tx0 + rovina.larghezza / 2;
       const ty = rovina.ty0 + rovina.altezza / 2;
       // Una cella è più grande di un settore: si segna solo quello che si è
@@ -992,7 +995,7 @@ function titolo(c, u, W) {
 // La legenda: VERDE ORTI, come diceva la riga dei tasti di prima, adesso con
 // il segno accanto a ogni nome.
 const VOCI_LEGENDA = [
-  ["tu", "TU"], ["fattoria", "FATTORIA"], ["orto", "ORTO ABBANDONATO"], ["pozzo", "POZZO"],
+  ["tu", "TU"], ["fattoria", "RANCH"], ["orto", "ORTO DEI COLONI"], ["pozzo", "POZZO"],
   ["luogo", "ALTRI LUOGHI"], ["rovina", "CASA"], ["cassa", "CASSA"], ["letto", "LETTO"],
   ["fuoco", "FUOCO"], ["corpo", "IL TUO CORPO"],
 ];

@@ -90,23 +90,25 @@ test('47 rovine e fattorie di quattro semi conservano esattamente pianta e posiz
     assert.equal(createHash('sha256').update(JSON.stringify([r.tx0,r.ty0,r.pianta])).digest('hex'),f.hash);
   }
 });
-test('le cinque piante sono rettangolari, diverse e lasciano accesso ai punti utili',()=>{
-  assert.equal(new Set(LUOGHI.map(l=>l.id)).size,5);
+test('le sette piante sono rettangolari, diverse e lasciano accesso ai punti utili',()=>{
+  // Da W0.3 sono sette: Sad Hill e la stazione di Cattle Corner.
+  assert.equal(new Set(LUOGHI.map(l=>l.id)).size,7);
   for(const l of LUOGHI) {
     const w=l.pianta[0].length,h=l.pianta.length;
     assert.ok(l.pianta.every(r=>r.length===w));assert.equal(l.pianta.join('').split('c').length-1,1);
     const visitati=new Set(),coda=[[-1,-1]];
     for(let i=0;i<coda.length;i++){
       const [x,y]=coda[i],k=`${x},${y}`;
-      if(x<-1||y<-1||x>w||y>h||visitati.has(k)||'cvot'.includes(l.pianta[y]?.[x]??' '))continue;
+      if(x<-1||y<-1||x>w||y>h||visitati.has(k)||'cvotw'.includes(l.pianta[y]?.[x]??' '))continue;
       visitati.add(k);coda.push([x-1,y],[x+1,y],[x,y-1],[x,y+1]);
     }
     for(let y=0;y<h;y++)for(let x=0;x<w;x++){
       // 's' da M7.18.30: le piante inselvatichite dell'orto abbandonato; 'p'
       // da M7.18.31, il suo spaventapasseri rotto.
       // 'u' da M7.18.32: la seconda fila dell'orto.
-      assert.ok(' .cvotgaf%spu'.includes(l.pianta[y][x]));
-      if('cvotgf'.includes(l.pianta[y][x]))assert.ok([[x-1,y],[x+1,y],[x,y-1],[x,y+1]].some(p=>visitati.has(p.join(','))),l.id);
+      // 'x' croce, 'w' cisterna, '=' binari, 'z' setaccio: la frontiera (W0.3).
+      assert.ok(' .cvotgaf%spuxw=z'.includes(l.pianta[y][x]));
+      if('cvotgfw'.includes(l.pianta[y][x]))assert.ok([[x-1,y],[x+1,y],[x,y-1],[x,y+1]].some(p=>visitati.has(p.join(','))),l.id);
     }
   }
 });
@@ -161,7 +163,8 @@ test('carro e tronchi richiedono lavoro, consumano ascia e stamina e non ricresc
 test('bottino dei piccoli luoghi tematico, modesto e stabile alla riapertura',()=>{
   // Da M7.17 i luoghi di chi viaggiava hanno i fagioli, e l'orto i semi
   // della rapa e del cavolo e qualche patata.
-  const ammessi={carro:['fibra','legna','fagioli','benda'],pozzo:['secchio','fibra','pietra'],bruciato:['fibra','benda','fagioli','conserva'],boscaioli:['legna','ramo','ascia'],orto:['semi','semi_cavolo','patata','grano','fibra','zappa']};
+  const ammessi={carro:['fibra','legna','fagioli','benda'],pozzo:['secchio','fibra','pietra'],bruciato:['fibra','benda','fagioli','conserva'],boscaioli:['legna','ramo','ascia'],orto:['semi','semi_cavolo','patata','grano','fibra','zappa'],
+    sadhill:['fagioli','benda','conserva','zappa'],stazione:['secchio','fibra','legna','conserva']};
   for(const l of LUOGHI) {
     const r=trovaLuogo(l.id),p=segnoNelLuogo(r,'c');
     const prima=contenitori.contenutoDi(p.tx,p.ty),pile=prima.filter(Boolean);
@@ -4345,7 +4348,9 @@ test("le piante selvatiche nascono solo negli orti abbandonati, e alberi, sassi 
   // di M7.18.29, 2028556980 su 7358 oggetti. Tutte e due rimisurate a
   // M7.18.36 per i muretti e la cassa dell'orto della fattoria: senza l'annesso
   // tornano 1752206296 su 8823 e 167087167 su 7363.
-  const impronte=[[12345,-1755284879,8831],[777,-187510781,7364]];
+  // Per un pugno di semi W0.3: rimisurate per i due luoghi nuovi (Sad Hill e
+  // Cattle Corner), la quota degli orti a 0,21 e il recinto del ranch.
+  const impronte=[[12345,221490975,8843],[777,-1006691244,7356]];
   for(const [seme,h,n] of impronte){
     const v=valle(seme);assert.equal(v.h,h,'seme '+seme);assert.equal(v.n,n,'seme '+seme);
     // Da M7.18.38 fuori dagli orti (quelli abbandonati e quello della
@@ -4475,7 +4480,7 @@ test('sulla mappa grande l\'orto abbandonato ha un segno suo, verde e più grand
   assert.match(sorgente,/rovina\.luogo === "orto" \? "orto"/);
   assert.match(sorgente,/cerchio\(c, x, y, 2\.6 \* u, ORTO\)/);
   assert.match(sorgente,/cerchio\(c, x, y, 2 \* u, POZZO\)/,'più grande del pozzo');
-  assert.match(sorgente,/\["orto", "ORTO ABBANDONATO"\]/,'e la legenda lo dice');
+  assert.match(sorgente,/\["orto", "ORTO DEI COLONI"\]/,'e la legenda lo dice');
 });
 
 // M7.18.32 — negli orti abbandonati le piante danno sempre.
@@ -4563,7 +4568,7 @@ test("la fattoria di partenza ha il suo orto abbandonato sotto la prima casa, co
     assert.deepEqual([r.tx0,r.ty0],[x0,y0],'fattoria di '+seme);
     // Subito a sud della prima casa, sotto le due righe di campo.
     assert.deepEqual([r.annesso.tx0,r.annesso.ty0],[x0,y0+8],'orto di '+seme);
-    assert.equal(r.annesso.luogo,'orto');assert.equal(r.annesso.nome,'Orto abbandonato');
+    assert.equal(r.annesso.luogo,'orto');assert.equal(r.annesso.nome,'Orto dei coloni');
   }
   // Dalla porta sud della casa si scende sul campo e si arriva allo spaventapasseri.
   assert.equal(FATTORIA[5].slice(0,8),'####%###');assert.equal(FATTORIA[6][4],'.');assert.equal(FATTORIA[7][4],'.');
@@ -4576,13 +4581,13 @@ test("la fattoria di partenza ha il suo orto abbandonato sotto la prima casa, co
   const ATTESO={b:OGGETTO.FAGIOLI_SELVATICI,q:OGGETTO.PATATA_SELVATICA,p:OGGETTO.SPAVENTAPASSERI_ROTTO,'%':OGGETTO.MURO_ROTTO,c:OGGETTO.CASSA};
   for(const p of posti)if(ATTESO[p.c]!==undefined)assert.equal(mappa.oggettoDi(p.tx,p.ty),ATTESO[p.c],p.c+' in '+p.tx+','+p.ty);
   // È un orto abbandonato per tutti: il nome all'arrivo, la sua cassa, il suo segno sulla mappa.
-  assert.equal(mappa.luogoIn(a.tx0+2,a.ty0+1)?.nome,'Orto abbandonato');
-  assert.equal(mappa.luogoIn(a.tx0+4,a.ty0+a.altezza+2,3)?.nome,'Orto abbandonato');
+  assert.equal(mappa.luogoIn(a.tx0+2,a.ty0+1)?.nome,'Orto dei coloni');
+  assert.equal(mappa.luogoIn(a.tx0+4,a.ty0+a.altezza+2,3)?.nome,'Orto dei coloni');
   assert.equal(mappa.luogoIn(r.tx0+10,r.ty0+3),null,'la fattoria non è un luogo');
   const cassa=posti.find(p=>p.c==='c'),pile=contenitori.contenutoDi(cassa.tx,cassa.ty).filter(Boolean);
   const DELL_ORTO=['semi','semi_cavolo','patata','grano','fibra','zappa'];
   assert.ok(pile.length>=1&&pile.length<=2);for(const p of pile)assert.ok(DELL_ORTO.includes(p.cosa),p.cosa);
-  assert.match(readFileSync(new URL('../interfaccia/mappa.js',import.meta.url),'utf8'),/\[trovata, trovata\.annesso\]/);
+  assert.match(readFileSync(new URL('../interfaccia/mappa.js',import.meta.url),'utf8'),/\[trovata, \.\.\.\(trovata\.annessi \?\? \[\]\)\]/);
   // Le regole degli orti abbandonati.
   const fagiolo=posti.find(p=>p.c==='b'),patata=posti.find(p=>p.c==='q');
   const raccogli=(p)=>azioni.agisci({...pos(p.tx-1,p.ty),guarda:'destra'},null)?.tipo;
@@ -4803,4 +4808,75 @@ test("il titolo è Per un pugno di semi, nel gioco, nella pagina e nell'app",()=
   assert.match(leggi('index.html'),/<title>Per un pugno di semi<\/title>/);
   const manifesto=JSON.parse(leggi('manifest.webmanifest'));
   assert.equal(manifesto.name,'Per un pugno di semi');assert.equal(manifesto.short_name,'Pugno di semi');
+});
+
+// --- Per un pugno di semi (W0.3): il ranch e la frontiera --------------------
+
+test("i posti della frontiera hanno un nome: le case, gli edifici della cittadina, il ranch e i luoghi",async()=>{
+  const piante=await import('../arte/piante.js');
+  reset();
+  const cerca=(pianta)=>{for(let cy=-10;cy<=10;cy++)for(let cx=-10;cx<=10;cx++){const r=mappa.rovinaNellaCella(cx,cy);if(r?.pianta===pianta)return r;}return null;};
+  const casa=cerca(piante.CASOLARE);assert.ok(casa);
+  assert.equal(mappa.postoIn(casa.tx0+1,casa.ty0+1,3)?.nome,'Casa di adobe');
+  assert.equal(mappa.postoIn(casa.tx0-2,casa.ty0,3)?.nome,'Casa di adobe','annunciata avvicinandosi');
+  let paese=null;
+  for(const seme of ['valle-1','valle-2','valle-3','prova',12345,777]){mappa.inizializza(seme);paese=cerca(piante.PAESE);if(paese)break;}
+  assert.ok(paese,'una cittadina da qualche parte');
+  for(const e of piante.EDIFICI_DEL_PAESE){
+    assert.equal(mappa.postoIn(paese.tx0+e.x+1,paese.ty0+e.y+1,3)?.nome,e.nome);
+  }
+  assert.equal(mappa.postoIn(paese.tx0+12,paese.ty0+7,3)?.nome,'Cittadina di frontiera','in strada');
+  assert.deepEqual(new Set(piante.EDIFICI_DEL_PAESE.map(e=>e.nome)),new Set(['Saloon','Ufficio dello sceriffo','Emporio','Il becchino','Chiesa della missione','Banca']));
+  reset();
+  const ranch=mappa.rovinaNellaCella(0,0);
+  assert.equal(ranch.nome,'Ranch abbandonato');
+  assert.equal(mappa.postoIn(ranch.tx0+10,ranch.ty0+3,3)?.nome,'Ranch abbandonato');
+  // Il luogo vince sulla casa, e dice che è un luogo.
+  const orto=trovaLuogo('orto');const p=mappa.postoIn(orto.tx0+1,orto.ty0+1,3);
+  assert.equal(p.nome,'Orto dei coloni');assert.equal(p.luogo,orto);
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/const posto = mappa\.postoIn\(/);assert.match(gioco,/annuncia\(posto\.nome/);
+});
+test("il ranch ha il recinto dei cavalli a sud della stalla: uno steccato chiuso con un cancello",()=>{
+  for(const [seme,x0,y0] of [['valle-1',1,1],['valle-3',27,16],['review',1,9]]){
+    mappa.inizializza(seme);const r=mappa.rovinaNellaCella(0,0);
+    assert.deepEqual([r.tx0,r.ty0],[x0,y0],'il ranch sta dove stava: '+seme);
+    const recinto=r.annessi.find(a=>a.nome==='Recinto dei cavalli');
+    assert.deepEqual([recinto.tx0,recinto.ty0],[x0+11,y0+8]);
+  }
+  mappa.inizializza('review');
+  const r=mappa.rovinaNellaCella(0,0),recinto=r.annessi[1];
+  let steccati=0,cancelli=0;
+  for(let y=0;y<recinto.altezza;y++)for(let x=0;x<recinto.larghezza;x++){
+    const o=mappa.oggettoGenerato(recinto.tx0+x,recinto.ty0+y);
+    const bordo=x===0||y===0||x===recinto.larghezza-1||y===recinto.altezza-1;
+    if(bordo)assert.ok(o===OGGETTO.STECCATO||o===OGGETTO.CANCELLO,`bordo ${x},${y}`);
+    else assert.equal(o,OGGETTO.NESSUNO);
+    if(o===OGGETTO.STECCATO)steccati++;if(o===OGGETTO.CANCELLO)cancelli++;
+  }
+  assert.equal(cancelli,1);assert.equal(steccati,2*(recinto.larghezza+recinto.altezza)-4-1);
+  assert.equal(mappa.luogoIn(recinto.tx0+2,recinto.ty0+2),null,'non è un luogo: niente bottino né segno');
+});
+test("Sad Hill e Cattle Corner: croci e binari si attraversano, la cisterna disseta e gela come un pozzo",()=>{
+  reset();
+  const sad=trovaLuogo('sadhill');assert.equal(sad.nome,'Cimitero di Sad Hill');
+  const croce=segnoNelLuogo(sad,'x');
+  assert.equal(mappa.oggettoDi(croce.tx,croce.ty),OGGETTO.CROCE);assert.equal(mappa.solidoIn(croce.tx,croce.ty),false);
+  const st=trovaLuogo('stazione');assert.equal(st.nome,'Stazione di Cattle Corner');
+  const binario=segnoNelLuogo(st,'=');
+  assert.equal(mappa.oggettoDi(binario.tx,binario.ty),OGGETTO.BINARI);assert.equal(mappa.solidoIn(binario.tx,binario.ty),false);
+  const c=segnoNelLuogo(st,'w');
+  assert.equal(mappa.oggettoDi(c.tx,c.ty),OGGETTO.CISTERNA);assert.equal(mappa.solidoIn(c.tx,c.ty),true);
+  modifiche.imposta(c.tx-1,c.ty,{oggetto:OGGETTO.NESSUNO});
+  const accanto={...pos(c.tx-1,c.ty),guarda:'destra'};
+  tempo.impostaGiorno(1);mappa.impostaGelo(false);
+  bisogni.consuma('sete',0.5);
+  let a=azioni.azionePossibile(accanto,null);
+  assert.equal(a.tipo,'bevi');assert.equal(a.verbo,'Bevi dalla cisterna');assert.equal(a.impedito,null);
+  const prima=bisogni.livello('sete');azioni.agisci(accanto,null);assert.ok(bisogni.livello('sete')>prima,'e si beve davvero');
+  inventario.aggiungi('secchio',1);
+  assert.equal(azioni.azionePossibile(accanto,'secchio').verbo,'Attingi acqua');
+  mappa.impostaGelo(true);
+  assert.equal(azioni.azionePossibile(accanto,null).impedito,'la cisterna è gelata');
+  mappa.impostaGelo(false);
 });

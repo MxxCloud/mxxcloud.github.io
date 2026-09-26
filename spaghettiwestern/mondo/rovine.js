@@ -25,7 +25,7 @@
 // c'è un ciclo fra i due file.
 
 import { impronta } from "../motore/casuale.js";
-import { PIANTE, FATTORIA, misuraDi } from "../arte/piante.js";
+import { PIANTE, FATTORIA, PAESE, NOMI_DELLE_PIANTE, EDIFICI_DEL_PAESE, misuraDi } from "../arte/piante.js";
 import { LUOGHI, ORTO_DELLA_FATTORIA } from "../arte/luoghi.js";
 
 export const CELLA = 64;
@@ -119,6 +119,21 @@ const TENTATIVI_FATTORIA = 2500;
 // è lo stesso: ty0 al più 43, e l'orto finisce a 56, dentro la cella.
 const ANNESSO = { dx: 0, dy: FATTORIA.length, ...misuraDi(ORTO_DELLA_FATTORIA) };
 
+// Il recinto dei cavalli del ranch (W0.3): uno steccato con il cancello verso
+// il campo, subito a sud della stalla. Steccato e cancello sono quelli che il
+// giocatore sa già costruire, generati qui con i segni "k" e "n" (vedi
+// COSTRUITO in generazione.js). Come l'orto, sta accanto alla pianta e non
+// dentro: la fattoria resta della sua misura e nel suo posto.
+export const RECINTO = [
+  "kkkknkkkk",
+  "k.......k",
+  "k.......k",
+  "k.......k",
+  "k.......k",
+  "kkkkkkkkk",
+];
+const ANNESSO_RECINTO = { dx: 11, dy: FATTORIA.length, ...misuraDi(RECINTO) };
+
 function cercaLaFattoria(adatto) {
   const { larghezza, altezza } = misuraDi(FATTORIA);
   const limite = CELLA - Math.max(larghezza, altezza) - 1;
@@ -135,7 +150,11 @@ function cercaLaFattoria(adatto) {
             tx0: tx0 + ANNESSO.dx, ty0: ty0 + ANNESSO.dy, pianta: ORTO_DELLA_FATTORIA,
             larghezza: ANNESSO.larghezza, altezza: ANNESSO.altezza, luogo: ORTO.id, nome: ORTO.nome,
           };
-          return { tx0, ty0, pianta: FATTORIA, larghezza, altezza, annesso };
+          const recinto = {
+            tx0: tx0 + ANNESSO_RECINTO.dx, ty0: ty0 + ANNESSO_RECINTO.dy, pianta: RECINTO,
+            larghezza: ANNESSO_RECINTO.larghezza, altezza: ANNESSO_RECINTO.altezza, nome: "Recinto dei cavalli",
+          };
+          return { tx0, ty0, pianta: FATTORIA, larghezza, altezza, nome: "Ranch abbandonato", annesso, annessi: [annesso, recinto] };
         }
       }
     }
@@ -178,7 +197,10 @@ function risolvi(cx, cy, adatto) {
 
   if (!reggeIlTerreno(tx0, ty0, larghezza, altezza, adatto)) return null;
 
-  return { tx0, ty0, pianta, larghezza, altezza };
+  // Il nome della casa e, per la cittadina, quelli dei suoi edifici (W0.3).
+  const nome = NOMI_DELLE_PIANTE.get(pianta);
+  return pianta === PAESE ? { tx0, ty0, pianta, larghezza, altezza, nome, edifici: EDIFICI_DEL_PAESE }
+    : { tx0, ty0, pianta, larghezza, altezza, nome };
 }
 
 // Un piccolo luogo in alcune delle celle rimaste vuote, mai al posto di una
@@ -213,7 +235,10 @@ export const QUOTA_LUOGHI = 0.43;
 // sotto il 42 per cento (vedi il collaudo "la valle resta più natura").
 // Misurati su 441 celle per quattro semi: dal 5,4 al 9,3 per cento delle
 // celle, e l'orto più vicino alla fattoria sta fra i 24 e i 97 tasselli.
-export const DIVENTA_ORTO = 0.15;
+// Da W0.3 i luoghi sono sette e non cinque, quindi la quota sale a 0,21:
+// così un luogo su tre resta un orto, come prima (0,15 + 0,85/5 = 0,32;
+// 0,21 + 0,79/7 = 0,32).
+export const DIVENTA_ORTO = 0.21;
 const ORTO = LUOGHI.find((l) => l.id === "orto");
 
 function piccoloLuogo(cx, cy, adatto) {
@@ -271,7 +296,13 @@ export function tasselloDi(tx, ty, adatto) {
   // dell'origine, e il mondo è infinito in tutte e quattro le direzioni.
   const rovina = nellaCella(Math.floor(tx / CELLA), Math.floor(ty / CELLA), adatto);
   if (!rovina) return null;
-  return segnoIn(rovina, tx, ty) ?? (rovina.annesso ? segnoIn(rovina.annesso, tx, ty) : null);
+  const segno = segnoIn(rovina, tx, ty);
+  if (segno !== null || !rovina.annessi) return segno;
+  for (const annesso of rovina.annessi) {
+    const suo = segnoIn(annesso, tx, ty);
+    if (suo !== null) return suo;
+  }
+  return null;
 }
 
 function segnoIn(rovina, tx, ty) {
