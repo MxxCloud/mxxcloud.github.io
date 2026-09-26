@@ -256,11 +256,26 @@ export function inselvatichitaNellOrto(x, y, oggetto) {
   return INSELVATICHITE.includes(oggetto) && SEGNI_DELL_ORTO.has(rovine.tasselloDi(x, y, adatto));
 }
 
+// Il sorteggio degli orti (M7.18.37): un numero estratto a ogni partita
+// nuova e salvato con lei. La valle resta quella del seme — le case, i luoghi,
+// gli alberi — ma quali piante ha ogni orto abbandonato cambia da una partita
+// all'altra, così dove trovare il lino va scoperto ogni volta. Zero dà gli
+// orti di prima, ed è quello che ritrova un salvataggio scritto prima.
+// L'orto della fattoria non passa di qui: i suoi segni sono fissi.
+let sorteggio = 0;
+export function impostaSorteggioDegliOrti(n) {
+  sorteggio = (Number(n) >>> 0) || 0;
+}
+export function sorteggioDegliOrti() {
+  return sorteggio;
+}
+
 // Le due varietà di questo orto, sempre diverse fra loro.
 export function varietaDellOrto(r, seme) {
   const n = INSELVATICHITE.length;
-  const prima = Math.min(Math.floor(impronta(r.tx0, r.ty0, scarto(seme, 11)) * n), n - 1);
-  const salto = 1 + Math.min(Math.floor(impronta(r.tx0, r.ty0, scarto(seme, 12)) * (n - 1)), n - 2);
+  const base = (seme ^ sorteggio) >>> 0;
+  const prima = Math.min(Math.floor(impronta(r.tx0, r.ty0, scarto(base, 11)) * n), n - 1);
+  const salto = 1 + Math.min(Math.floor(impronta(r.tx0, r.ty0, scarto(base, 12)) * (n - 1)), n - 2);
   return [INSELVATICHITE[prima], INSELVATICHITE[(prima + salto) % n]];
 }
 
