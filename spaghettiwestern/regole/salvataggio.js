@@ -253,6 +253,8 @@ function modificaValida(v) {
   if (!presente(v, "uova", n => intero(n) && n >= 1 && n <= polli.UOVA_MASSIME && v.oggetto === OGGETTO.POLLAIO)) return false;
   if (!presente(v, "cova", n => intero(n) && n >= 1 && n < polli.NOTTI_DI_COVA && v.oggetto === OGGETTO.POLLAIO)) return false;
   if (!presente(v, "pollina", n => intero(n) && n >= 1 && n <= polli.POLLINA_MASSIMA && v.oggetto === OGGETTO.POLLAIO)) return false;
+  // Le razioni della mangiatoia (W0.7): solo in una mangiatoia, e dentro il tetto.
+  if (!presente(v, "razioni", n => intero(n) && n >= 1 && n <= cavalli.RAZIONI_MASSIME && v.oggetto === OGGETTO.MANGIATOIA)) return false;
   // La cenere sul fondo di un fuoco, da una a dieci, e solo in un fuoco.
   if (!presente(v, "cenere", n => intero(n) && n >= 1 && n <= decadimento.CENERE_MASSIMA && decadimento.siCarica(v.oggetto))) return false;
   // Il pavimento: di legno, e con l'oggetto scritto accanto — senza, sul

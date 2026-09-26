@@ -154,6 +154,19 @@ export const RICETTE = [
       { cosa: "filo", quante: 4 },
     ],
   },
+  // La mangiatoia (W0.7): cinque legne e due rami, al banco. Del primo
+  // gradino, al contrario del lazo: è una cassetta di assi, e quello che ci
+  // si mette dentro — fieno, cioè fibra, o grano — è la parte che costa, un
+  // giorno alla volta.
+  {
+    id: "mangiatoia",
+    banco: true,
+    produce: { cosa: "mangiatoia", quante: 1 },
+    costo: [
+      { cosa: "legna", quante: 5 },
+      { cosa: "ramo", quante: 2 },
+    ],
+  },
   // La lenza è filo: con la fibra dei cespugli si lega una torcia, non si
   // tira fuori un pesce dall'acqua. È il motivo per cui la pesca arriva dopo
   // il primo lino, e non il primo giorno.

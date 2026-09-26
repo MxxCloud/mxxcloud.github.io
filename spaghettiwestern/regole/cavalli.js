@@ -17,8 +17,15 @@
 //   a mezzanotte, se lo prendono i banditi. È la regola dei polli detta col
 //   western, e il recinto del ranch esiste per questo.
 //
-// Per ora un cavallo non mangia e non si stanca: la biada e la stanchezza
-// verranno, e verranno insieme alla stalla.
+// E da W0.7 mangia e si stanca:
+// - ogni mezzanotte vuole un pasto. Lo trova da sé nella mangiatoia del suo
+//   recinto, o nel prato del recinto in primavera e d'estate, e al pascolo
+//   anche alla corda o in sella, sempre in primavera e d'estate. Altrimenti
+//   lo si imbocca: fieno (fibra) o biada (grano), uno al giorno, a mano;
+// - un giorno senza e non galoppa; due di fila, rompe la corda e torna alla
+//   prateria. Non muore, come il pollo: se ne va;
+// - il galoppo gli toglie il fiato, e sfiancato va soltanto al trotto finché
+//   non l'ha ripreso.
 
 import * as mappa from "../mondo/mappa.js";
 import { vistaLibera } from "../mondo/ostacoli.js";
@@ -27,6 +34,9 @@ import { impronta } from "../motore/casuale.js";
 import * as schermo from "../motore/schermo.js";
 import * as riparo from "./riparo.js";
 import * as fauna from "./fauna.js";
+import * as stagioni from "./stagioni.js";
+import * as modifiche from "../mondo/modifiche.js";
+import { OGGETTO, TERRENO } from "../mondo/generazione.js";
 import { cuoci, riflesso } from "../arte/sprite.js";
 import { SELLATO, COLLO } from "../arte/sprite-cavallo.js";
 
@@ -54,6 +64,31 @@ const VELOCITA_PASCOLO = 8;
 const ADDOSSO = 14;
 const FRA_LORO = 20;
 
+// --- il fieno e il fiato (W0.7) ----------------------------------------------
+
+// Cosa mangia: il fieno, che è la fibra dei cespugli e della sterpaglia, e la
+// biada, che è il grano dell'orto. Una razione al giorno per cavallo, l'una
+// o l'altra: il grano non vale di più, costa di più — è la scelta di chi ha
+// un campo e non ha voglia di strappare cespugli.
+export const FORAGGI = new Set(["fibra", "grano"]);
+export const nomeDelForaggio = (cosa) => (cosa === "grano" ? "la biada" : "il fieno");
+// Quante razioni tiene una mangiatoia: dodici giorni per un cavallo, sei per
+// due. Come il mangime del pollaio.
+export const RAZIONI_MASSIME = 12;
+// Due giorni senza mangiare e se ne va; uno, e non galoppa.
+export const GIORNI_DI_FAME = 2;
+// Quanti tasselli di prato del recinto sfamano un cavallo in primavera e
+// d'estate: il doppio di un pollo, e un cavallo mangia più di quattro polli
+// — ma un pollo gratta la terra, e un cavallo bruca l'erba alta.
+export const PRATO_PER_CAVALLO = 8;
+// Il fiato: quindici secondi di galoppo lo finiscono, venticinque di trotto o
+// di riposo lo ridanno. Sfiancato torna a galoppare quando ne ha di nuovo un
+// terzo: senza quel margine, a fiato zero il galoppo si accenderebbe e
+// spegnerebbe a ogni fotogramma.
+const GALOPPO_PIENO = 15;
+const RIPRESA = 25;
+const FIATO_PER_RIPARTIRE = 0.3;
+
 const cavalli = [];
 
 export const tutte = () => cavalli;
@@ -63,7 +98,8 @@ export function reimposta() {
 }
 
 function crea(px, py, stato, seme, destra = true) {
-  return { px, py, stato, destra, passo: 0, seme: seme >>> 0, giro: 0, dx: 0, dy: 0 };
+  return { px, py, stato, destra, passo: 0, seme: seme >>> 0, giro: 0, dx: 0, dy: 0,
+    fame: 0, fiato: 1, pasto: false, sfiancato: false };
 }
 
 // Un generatore per cavallo, conservato nel salvataggio, come per la fauna.
@@ -74,6 +110,14 @@ function caso(c) {
 
 export function montato() {
   return cavalli.find((c) => c.stato === "montato") ?? null;
+}
+
+export const affamato = (c) => c.fame > 0;
+
+// Si galoppa se il cavallo sotto di te ha mangiato ieri e ha fiato.
+export function puoGaloppare() {
+  const c = montato();
+  return Boolean(c) && !affamato(c) && !c.sfiancato;
 }
 
 // --- dove si guarda ---------------------------------------------------------
@@ -190,6 +234,79 @@ export function lasciaAndare(eroe) {
   }
 }
 
+// Imboccarlo: una razione di fieno o di biada vale il pasto di oggi, e ne
+// basta una. Chi lo chiama ha già tolto la razione dallo zaino.
+export function nutri(c) {
+  if (!cavalli.includes(c) || c.pasto) return null;
+  c.pasto = true;
+  return { tipo: "cavalloNutrito", affamato: affamato(c) };
+}
+
+// --- la mangiatoia -------------------------------------------------------------
+
+export function razioniNella(tx, ty) {
+  return modifiche.di(tx, ty)?.razioni ?? 0;
+}
+
+// Una razione per volta, come la legna nel focolare.
+export function riempi(tx, ty) {
+  if (mappa.oggettoDi(tx, ty) !== OGGETTO.MANGIATOIA) return false;
+  const razioni = razioniNella(tx, ty);
+  if (razioni >= RAZIONI_MASSIME) return false;
+  modifiche.imposta(tx, ty, { ...(modifiche.di(tx, ty) ?? {}), oggetto: OGGETTO.MANGIATOIA, razioni: razioni + 1 });
+  return true;
+}
+
+function togliRazione(tx, ty) {
+  const { razioni, ...resto } = modifiche.di(tx, ty) ?? { oggetto: OGGETTO.MANGIATOIA };
+  const restano = (razioni ?? 0) - 1;
+  modifiche.imposta(tx, ty, restano > 0 ? { ...resto, razioni: restano } : resto);
+}
+
+const tassello = (c) => ({ tx: Math.floor(c.px / schermo.TASSELLO), ty: Math.floor(c.py / schermo.TASSELLO) });
+
+// Il recinto di questa mangiatoia: quello di uno dei quattro tasselli accanto.
+function recintoAccantoA(tx, ty) {
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const recinto = riparo.recintoDi(tx + dx, ty + dy);
+    if (recinto) return recinto;
+  }
+  return null;
+}
+
+// Il prato di un recinto: i tasselli liberi d'erba o di sterpaglia, come per
+// i polli (vedi polli.js).
+function pratoDi(recinto) {
+  return recinto.tasselli.filter(({ tx, ty }) => {
+    if (mappa.oggettoDi(tx, ty) !== OGGETTO.NESSUNO || mappa.pavimentoIn(tx, ty)) return false;
+    const t = mappa.terrenoNaturaleDi(tx, ty);
+    return t === TERRENO.ERBA || t === TERRENO.STERPAGLIA;
+  }).length;
+}
+
+const siPascola = (stagione) => stagione === "primavera" || stagione === "estate";
+
+function sfamaIlPrato(recinto, stagione) {
+  return siPascola(stagione) ? Math.floor(pratoDi(recinto) / PRATO_PER_CAVALLO) : 0;
+}
+
+function dentroIl(recinto) {
+  const dentro = new Set(recinto.tasselli.map((t) => `${t.tx},${t.ty}`));
+  return (c) => { const t = tassello(c); return dentro.has(`${t.tx},${t.ty}`); };
+}
+
+// Quello che serve a chi guarda la mangiatoia: quanti cavalli liberi stanno
+// nel suo recinto, e quanti ne sfama il prato oggi.
+export function recintoDellaMangiatoia(tx, ty, stagione = stagioni.stagioneCorrente()) {
+  const recinto = recintoAccantoA(tx, ty);
+  if (!recinto) return { cavalli: 0, prato: 0 };
+  const dentro = dentroIl(recinto);
+  return {
+    cavalli: cavalli.filter((c) => c.stato === "libero" && dentro(c)).length,
+    prato: sfamaIlPrato(recinto, stagione),
+  };
+}
+
 // --- il passo ---------------------------------------------------------------
 
 function muovi(c, dx, dy, distanza) {
@@ -202,9 +319,20 @@ function muovi(c, dx, dy, distanza) {
 
 // Restituisce quanti cavalli si sono slegati in questo giro, per dirlo.
 export function aggiorna(passo, eroe) {
-  const eventi = { slegati: 0 };
+  const eventi = { slegati: 0, sfiancato: false };
   if (!Number.isFinite(passo) || passo <= 0 || !eroe) return eventi;
   for (const c of cavalli) {
+    // Il fiato: cala solo al galoppo, e torna in ogni altro momento.
+    if (c.stato === "montato" && eroe.galoppa) {
+      c.fiato = Math.max(0, c.fiato - passo / GALOPPO_PIENO);
+      if (c.fiato === 0 && !c.sfiancato) {
+        c.sfiancato = true;
+        eventi.sfiancato = true;
+      }
+    } else {
+      c.fiato = Math.min(1, c.fiato + passo / RIPRESA);
+      if (c.sfiancato && c.fiato >= FIATO_PER_RIPARTIRE) c.sfiancato = false;
+    }
     if (c.stato === "montato") {
       // Sotto di te: la tua posizione, il tuo verso e il tuo passo, che è
       // quello che muove le zampe del disegno.
@@ -281,20 +409,67 @@ export function alSicuro(c) {
   return riparo.recintato(tx, ty) || riparo.murato(tx, ty);
 }
 
-// Restituisce quanti ne hanno rubati stanotte.
-export function nuovoGiorno() {
-  let rubati = 0;
+// Prima i banditi, poi la cena. Restituisce quanti ne hanno rubati, quanti
+// hanno fame stamattina e quanti se ne sono andati per la fame.
+export function nuovoGiorno(stagione = stagioni.stagioneCorrente()) {
+  const esito = { rubati: 0, affamati: 0, scappati: 0 };
   for (let i = cavalli.length - 1; i >= 0; i -= 1) {
     if (alSicuro(cavalli[i])) continue;
     cavalli.splice(i, 1);
-    rubati += 1;
+    esito.rubati += 1;
   }
-  return { rubati };
+
+  // Chi ha mangiato: imboccato oggi; alla corda o in sella, al pascolo lungo
+  // la strada se è la stagione; libero in un recinto, dal prato e poi dalla
+  // mangiatoia — un recinto per volta, perché è lì che si divide il cibo.
+  const sfamati = new Set(cavalli.filter((c) => c.pasto));
+  if (siPascola(stagione)) {
+    for (const c of cavalli) if (c.stato !== "libero") sfamati.add(c);
+  }
+  const visti = new Set();
+  for (const c of cavalli) {
+    if (c.stato !== "libero" || visti.has(c)) continue;
+    const { tx, ty } = tassello(c);
+    const recinto = riparo.recintoDi(tx, ty);
+    if (!recinto) { visti.add(c); continue; }
+    const dentro = dentroIl(recinto);
+    const qui = cavalli.filter((k) => k.stato === "libero" && dentro(k));
+    for (const k of qui) visti.add(k);
+    const mangiatoie = recinto.pareti.filter((t) => mappa.oggettoDi(t.tx, t.ty) === OGGETTO.MANGIATOIA);
+    let prato = sfamaIlPrato(recinto, stagione);
+    for (const k of qui) {
+      if (sfamati.has(k)) continue;
+      if (prato > 0) {
+        prato -= 1;
+        sfamati.add(k);
+        continue;
+      }
+      // Dalla mangiatoia più piena: con due mangiatoie si vuotano insieme.
+      const piena = mangiatoie.filter((t) => razioniNella(t.tx, t.ty) > 0)
+        .sort((a, b) => razioniNella(b.tx, b.ty) - razioniNella(a.tx, a.ty))[0];
+      if (!piena) continue;
+      togliRazione(piena.tx, piena.ty);
+      sfamati.add(k);
+    }
+  }
+
+  for (let i = cavalli.length - 1; i >= 0; i -= 1) {
+    const c = cavalli[i];
+    c.pasto = false;
+    if (sfamati.has(c)) { c.fame = 0; continue; }
+    c.fame += 1;
+    if (c.fame < GIORNI_DI_FAME) { esito.affamati += 1; continue; }
+    // Se ne va, anche da sotto di te: rompe la corda o ti disarciona. Chi
+    // orchestra deve accorgersene, perché la figura in sella sparisce.
+    cavalli.splice(i, 1);
+    esito.scappati += 1;
+  }
+  return esito;
 }
 
 // --- salvataggio ------------------------------------------------------------
 
-const CAMPI = ["px", "py", "stato", "destra", "passo", "seme", "giro", "dx", "dy"];
+const CAMPI = ["px", "py", "stato", "destra", "passo", "seme", "giro", "dx", "dy", "fame", "fiato", "pasto", "sfiancato"];
 const STATI = ["libero", "legato", "montato"];
 
 export function istantanea() {
@@ -304,7 +479,8 @@ export function istantanea() {
 export function ripristina(dati) {
   reimposta();
   if (!dati) return;
-  for (const c of dati.cavalli) cavalli.push({ ...c });
+  // I cavalli salvati in W0.6 non sanno cos'è la fame: sazi e freschi.
+  for (const c of dati.cavalli) cavalli.push({ fame: 0, fiato: 1, pasto: false, sfiancato: false, ...c });
 }
 
 export function statoValido(dati) {
@@ -315,7 +491,11 @@ export function statoValido(dati) {
     && numero(c.px, -1e9, 1e9) && numero(c.py, -1e9, 1e9)
     && typeof c.destra === "boolean" && numero(c.passo, 0, 1e12)
     && Number.isSafeInteger(c.seme) && c.seme >= 0 && c.seme <= 4294967295
-    && numero(c.giro, -1, 6) && numero(c.dx, -1, 1) && numero(c.dy, -1, 1));
+    && numero(c.giro, -1, 6) && numero(c.dx, -1, 1) && numero(c.dy, -1, 1)
+    && (c.fame === undefined || (Number.isSafeInteger(c.fame) && c.fame >= 0 && c.fame < GIORNI_DI_FAME))
+    && (c.fiato === undefined || numero(c.fiato, 0, 1))
+    && (c.pasto === undefined || typeof c.pasto === "boolean")
+    && (c.sfiancato === undefined || typeof c.sfiancato === "boolean"));
 }
 
 // --- disegno ------------------------------------------------------------------

@@ -372,6 +372,8 @@ export const CATALOGO = {
   // recinto diventa tuo (vedi polli.js). Nello zaino regge una notte sola.
   pollo: { nome: "Pollo vivo", icona: arte.POLLO_ICONA, pila: 1, datato: true },
   pollaio: { nome: "Pollaio", icona: arte.POLLAIO_ICONA, pila: 1, posa: OGGETTO.POLLAIO },
+  // La mangiatoia dei cavalli (W0.7), come il pollaio: dentro un recinto.
+  mangiatoia: { nome: "Mangiatoia", icona: arte.MANGIATOIA_ICONA, pila: 1, posa: OGGETTO.MANGIATOIA },
   // Il gallo vivo (M7.18.19): un oggetto a parte dalla gallina, così nello
   // zaino e nel salvataggio resta quello che era. Senza gallo non si cova.
   gallo: { nome: "Gallo vivo", icona: arte.GALLO_ICONA, pila: 1, datato: true },

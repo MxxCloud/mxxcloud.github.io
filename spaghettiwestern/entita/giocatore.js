@@ -197,6 +197,9 @@ export function aggiorna(e, passo) {
 
     const percorso = urti.muovi(e, x * velocita * passo, y * velocita * passo);
     e.passo += percorso / (e.aCavallo ? PIXEL_PER_FOTOGRAMMA_IN_SELLA : PIXEL_PER_FOTOGRAMMA);
+    // Contro un muro non si galoppa (W0.7): il fiato del cavallo cala per la
+    // strada fatta, non per il tasto tenuto premuto.
+    if (percorso < 0.01) e.galoppa = false;
   } else {
     // Fermi si torna al fotogramma di riposo, non a uno qualsiasi del ciclo.
     e.passo = 0;

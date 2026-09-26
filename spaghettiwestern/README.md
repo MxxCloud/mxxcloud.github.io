@@ -18,6 +18,36 @@ Come l'originale non ha server né dipendenze: è HTML, CSS e JavaScript serviti
 così come sono. Tutto quello che segue è la storia di Ultimo raccolto fino al
 punto della copia.
 
+## W0.7 — la biada e il fiato
+
+Il cavallo adesso **mangia** e **si stanca**.
+- **Un pasto al giorno.** A mezzanotte ogni cavallo vuole aver mangiato. Lo
+  trova da sé:
+  - nella **mangiatoia** del suo recinto, una razione a testa;
+  - nel **prato** del recinto, in primavera e d'estate: otto tasselli d'erba o
+    di sterpaglia sfamano un cavallo;
+  - **al pascolo** lungo la strada, se è alla corda o in sella, sempre in
+    primavera e d'estate.
+
+  Oppure glielo dai tu: con **fieno** (la fibra) o **biada** (il grano) in
+  mano, davanti a lui, «Dai il fieno». Uno al giorno basta.
+- **La fame.** Un giorno senza mangiare e **non galoppa**: lo dice il mattino,
+  lo dice il tasto («Monta a cavallo (ha fame)») e lo dice il ferro rosso in
+  sella. Due giorni di fila e **rompe la corda e torna nella prateria**, anche
+  da sotto di te.
+- **La mangiatoia.** Si fa al banco con **5 legne e 2 rami** e si posa dentro
+  un recinto, come il pollaio. Tiene **12 razioni**, di fieno o di biada, e si
+  riempie una alla volta. Guardandola dice quante razioni restano, quanti
+  cavalli ci mangiano e quanti ne sfama il prato. Con dentro del fieno non si
+  smonta.
+- **Il fiato.** Il galoppo lo consuma: **quindici secondi** e il cavallo è
+  **sfiancato**, e va al trotto finché non ne ha ripreso un terzo. Torna in
+  **venticinque secondi** di trotto o di riposo. In sella c'è una **barra col
+  ferro di cavallo** sotto le tre dello straniero; arancione finché è
+  sfiancato, col ferro rosso quando ha fame. Contro un muro non si galoppa, e
+  il fiato non cala.
+- I cavalli salvati in W0.6 si riaprono sazi e freschi.
+
 ## W0.6 — il cavallo
 
 Il recinto del ranch non è più vuoto: **i cavalli si prendono, si conducono e
