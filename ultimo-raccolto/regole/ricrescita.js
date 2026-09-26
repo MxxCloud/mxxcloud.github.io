@@ -52,6 +52,10 @@ const RITORNO = {
   [OGGETTO.FAGIOLI_SELVATICI]: "primavera",
 };
 
+// La terra del campo senza niente di vivo sopra: quello che la pianta di un
+// orto abbandonato si riprende in primavera.
+const TERRA_NUDA = new Set([OGGETTO.NESSUNO, OGGETTO.TERRA_ZAPPATA, OGGETTO.APPASSITA]);
+
 // Una modifica è "un tassello svuotato e basta" solo se non porta altro.
 // Chi ha innaffiato, colpito a metà o posato qualcosa ha scritto altri campi,
 // e quella non è terra libera: è roba sua. "svuotata" è la data del raccolto
@@ -88,6 +92,17 @@ export function nuovoGiorno() {
   const daDimenticare = [];
 
   modifiche.perOgnuno((tx, ty, cambio) => {
+    // Gli orti abbandonati tornano comunque (M7.18.34): sono la base da cui si
+    // comincia a coltivare, e un tassello zappato, stanco o con una pianta
+    // morta sopra non deve toglierne una per sempre. In primavera la pianta
+    // dell'orto si riprende la terra nuda del campo; non quello che ci hai
+    // costruito sopra, né una tua coltura che sta ancora crescendo.
+    if (comincia === "primavera" && TERRA_NUDA.has(cambio.oggetto)
+        && mappa.inselvatichitaNellOrto(tx, ty, mappa.oggettoGenerato(tx, ty))) {
+      daDimenticare.push({ tx, ty });
+      return;
+    }
+
     if (!soloSvuotato(cambio)) return;
 
     const generato = mappa.oggettoGenerato(tx, ty);

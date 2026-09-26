@@ -4503,3 +4503,31 @@ test("d'inverno le piante degli orti abbandonati si disegnano secche",()=>{
   const g=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
   assert.match(g,/mappa\.impostaOrtiSecchi\(stagione === "inverno"\)/);
 });
+
+// M7.18.34 — le piante degli orti abbandonati tornano comunque.
+test('in primavera le piante degli orti abbandonati tornano anche sulla terra zappata, stanca o morta, ma non sopra la tua roba',()=>{
+  const r=trovaLuogo('orto');
+  const posti=['s','u'].map(g=>segnoNelLuogo(r,g));
+  const [a,b]=posti;
+  const piantaA=mappa.oggettoGenerato(a.tx,a.ty),piantaB=mappa.oggettoGenerato(b.tx,b.ty);
+  // Terra zappata e stanca in un tassello, una cassa nell'altro.
+  modifiche.imposta(a.tx,a.ty,{oggetto:OGGETTO.TERRA_ZAPPATA,fertilita:0});
+  modifiche.imposta(b.tx,b.ty,{oggetto:OGGETTO.CASSA});
+  tempo.impostaGiorno(9);ricrescita.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(a.tx,a.ty),OGGETTO.TERRA_ZAPPATA,"d'inverno no");
+  tempo.impostaGiorno(13);ricrescita.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(a.tx,a.ty),piantaA,'la pianta si riprende la terra');
+  assert.equal(modifiche.di(a.tx,a.ty),undefined);
+  assert.equal(mappa.oggettoDi(b.tx,b.ty),OGGETTO.CASSA,'la cassa resta');
+  // Una pianta morta e una tua coltura che cresce.
+  modifiche.imposta(a.tx,a.ty,{oggetto:OGGETTO.APPASSITA});
+  modifiche.imposta(b.tx,b.ty,{oggetto:OGGETTO.GERMOGLIO,coltura:'grano',passo:1});
+  tempo.impostaGiorno(29);ricrescita.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(a.tx,a.ty),piantaA);
+  assert.equal(mappa.oggettoDi(b.tx,b.ty),OGGETTO.GERMOGLIO,'la tua coltura resta');
+  assert.notEqual(piantaB,undefined);
+  // Fuori dagli orti la terra zappata resta tua anche in primavera.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.TERRA_ZAPPATA});
+  tempo.impostaGiorno(45);ricrescita.nuovoGiorno();
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.TERRA_ZAPPATA);
+});
