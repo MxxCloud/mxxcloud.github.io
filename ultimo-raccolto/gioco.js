@@ -73,7 +73,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.38";
+const VERSIONE = "M7.18.39";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1001,7 +1001,7 @@ function leggiLIniziale() {
 
 // --- comandi --------------------------------------------------------------
 
-function leggiComandi() {
+function leggiComandi(passo) {
   // La morte viene prima di tutto il resto, apertura compresa: è l'unica
   // schermata che non si toglie con un tasto qualsiasi. Si legge cos'è
   // successo, e poi si decide di continuare.
@@ -1101,11 +1101,17 @@ function leggiComandi() {
   if (comandi.appenaPremuto("mappa")) {
     mappaAperta = !mappaAperta;
     ricetteAperte = false;
+    // Si apre sempre su di te (M7.18.39).
+    if (mappaAperta) mappaGrande.apri(eroe);
     return;
   }
   // Aperta, si prende tutti i tasti: non c'è niente da fare guardando una
   // mappa, e lasciar passare la barra vorrebbe dire dare una zappata al buio.
-  if (mappaAperta) return;
+  // I tasti servono a lei: WASD e le frecce la spostano, Q ed E lo zoom.
+  if (mappaAperta) {
+    mappaGrande.naviga(passo, eroe);
+    return;
+  }
 
   if (comandi.appenaPremuto("consuma")) {
     // A mani vuote "E" spoglia. È il solo significato che quel tasto non
@@ -1537,7 +1543,7 @@ function aggiorna(passo) {
   // Il terzo, il sonno, era già sfuggito una volta scrivendolo.
   if (salute.eMorto() && mortoDi === null) muori(salute.causaDellaMorte());
 
-  if (!haDormito) leggiComandi();
+  if (!haDormito) leggiComandi(passo);
   azioneCorrente = mondoFermo() ? null : azioni.azionePossibile(eroe, cosaInMano(), casellaScelta);
   // Quello che farebbe la X, chiesto dove si chiede quello che farebbe la
   // barra: sono due tasti che guardano lo stesso tassello, e tenerli in due
@@ -1771,6 +1777,8 @@ function disegnaInterfaccia() {
     mappaGrande.disegna(p, eroe);
     return;
   }
+  // La carta sta su un canvas suo (M7.18.39): chiusa la mappa, sparisce.
+  mappaGrande.nascondi();
 
   // Lo stesso vale per la schermata iniziale: le barre piene e lo zaino vuoto
   // di una partita che non è cominciata non dicono niente. Sopra ci stanno

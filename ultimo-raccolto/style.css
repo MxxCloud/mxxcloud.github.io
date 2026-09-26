@@ -80,6 +80,22 @@ body {
   pointer-events: none;
 }
 
+/* La mappa grande (M7.18.39): un canvas suo sopra il gioco, della stessa
+   misura sullo schermo ma con i pixel veri, perché una carta si deve leggere
+   e la pixel art ingrandita non si leggeva. La misura la decide mappa.js. */
+#carta {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+#carta[hidden] {
+  display: none;
+}
+
 #diagnostica[hidden] {
   display: none;
 }

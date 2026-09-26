@@ -12,6 +12,23 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.39 — la mappa (TAB) è una carta
+
+La mappa che si apre con TAB è rifatta per essere leggibile.
+- **Una carta, non pixel ingranditi.** Si disegna alla risoluzione vera dello
+  schermo, sopra il gioco. Il terreno ha colori piatti e ben distinti (acqua
+  profonda e bassa, sabbia, erba, sterpaglia, roccia, boschi, muri e
+  pavimenti delle case), con contorni lisci. I luoghi hanno segni vettoriali
+  con il loro nome, e c'è una legenda. D'inverno la carta è innevata e il
+  bassofondo è ghiacciato.
+- **Una misura fissa.** La carta non si allarga più con l'esplorato: ha tre
+  livelli di zoom (vicino, medio, lontano) e resta uguale su ogni schermo.
+- **Si naviga con la tastiera.** WASD o le frecce spostano la vista, con
+  Maiuscolo più veloce; Q ed E (o - e +) cambiano lo zoom; la barra
+  spaziatrice torna su di te. Si apre sempre centrata su di te. Se ti perdi
+  di vista, una freccia sul bordo dice da che parte sei. La vista non va
+  oltre quello che hai già esplorato.
+
 ## M7.18.38 — piante selvatiche solo negli orti
 
 Le piante selvatiche crescono **solo negli orti abbandonati**, compreso quello
@@ -2005,7 +2022,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.38**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.39**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
