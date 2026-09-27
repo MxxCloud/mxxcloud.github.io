@@ -61,7 +61,7 @@ function reset() {
   fauna.reimposta();
   polli.reimposta();
   meteo.reimposta();
-  pesca.interrompi(); mappa.impostaGelo(false); orto.impostaBestie(false);
+  pesca.interrompi(); mappa.impostaGelo(false); orto.impostaBestie(false); orto.impostaParassiti(false);
   riparo.reimposta(); tempo.reimposta(); bisogni.reimposta(); salute.reimposta();
   inventario.svuota(); modifiche.svuota(); entita.svuota(); simulazione.resoconto();
   mappa.inizializza('review');
@@ -800,7 +800,11 @@ test('un evento per stagione e anno; mai pioggia estiva; previsioni stabili per 
     mappa.inizializza(seme);
     for(let anno=0;anno<8;anno++)for(let stagione=0;stagione<4;stagione++) {
       const giorni=Array.from({length:4},(_,i)=>meteo.evento(anno*16+stagione*4+i+1));
-      if(stagione===0)assert.deepEqual(giorni,['arido','arido','arido','arido']);
+      // Da M7.18.42 un giorno d'estate, dal secondo al quarto, è la canicola.
+      if(stagione===0){
+        assert.equal(giorni[0],'arido');assert.equal(giorni.filter(e=>e==='canicola').length,1);
+        assert.ok(giorni.every(e=>e==='arido'||e==='canicola'));
+      }
       else assert.equal(giorni.filter(e=>e===(stagione===2?'neve':'pioggia')).length,1);
     }
     const prima=Array.from({length:32},(_,i)=>meteo.evento(i+1));
@@ -2831,10 +2835,12 @@ test('tre giorni asciutti di fila seccano, e il secondo lo dice',()=>{
   assert.equal(notte(16).seccate,1);assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.APPASSITA);
 });
 test('d’estate un giorno senz’acqua conta due',()=>{
-  assert.equal(meteo.evento(2),'arido');assert.equal(meteo.evento(3),'arido');
-  tempo.impostaGiorno(2);modifiche.imposta(tx,ty,{oggetto:OGGETTO.CRESCIUTA});
-  assert.equal(notte(3).seccate,0);assert.equal(modifiche.di(tx,ty).secco,2);
-  assert.equal(notte(4).seccate,1);assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.APPASSITA);
+  // Un'estate in cui il secondo e il terzo giorno sono aridi e non canicola.
+  let base=1;while(!(meteo.evento(base+1)==='arido'&&meteo.evento(base+2)==='arido'))base+=16;
+  assert.ok(base<16*20);
+  tempo.impostaGiorno(base+1);modifiche.imposta(tx,ty,{oggetto:OGGETTO.CRESCIUTA});
+  assert.equal(notte(base+2).seccate,0);assert.equal(modifiche.di(tx,ty).secco,2);
+  assert.equal(notte(base+3).seccate,1);assert.equal(mappa.oggettoDi(tx,ty),OGGETTO.APPASSITA);
 });
 test('il seme nella terra asciutta aspetta, anche d’estate',()=>{
   tempo.impostaGiorno(1);modifiche.imposta(tx,ty,{oggetto:OGGETTO.SEMINATO});
@@ -4742,4 +4748,253 @@ test("sulla mappa si mettono e si tolgono segni propri, con un simbolo e un test
   assert.match(sorgente,/comandi\.appenaPremuto\("esporta"\)/);assert.match(sorgente,/comandi\.appenaPremuto\("spegni"\)/);
   assert.match(sorgente,/mirino\(c, centro\.x, centro\.y, u\)/);assert.match(sorgente,/segnoTuo\(c, segnato\.tipo/);
   assert.match(sorgente,/F  METTI SEGNO/);
+});
+
+// --- M7.18.42: imprevisti del raccolto — canicola e parassiti ----------------
+
+// Il primo giorno di canicola dell'anno, per il seme dei collaudi.
+function primaCanicola() {
+  let c=1;while(c<=16&&meteo.evento(c)!=='canicola')c++;
+  assert.ok(c<=4,'la prima estate ha la sua canicola');
+  return c;
+}
+
+test('ogni estate ha un giorno di canicola, fra il secondo e il quarto, e vale arido',()=>{
+  const cadute=new Set();
+  for(const seme of ['review','canicola','altro seme']) {
+    mappa.inizializza(seme);
+    for(let anno=0;anno<12;anno++) {
+      const base=anno*16;
+      const estate=[1,2,3,4].map(g=>meteo.evento(base+g));
+      assert.equal(estate[0],'arido','il primo giorno d’estate non è mai canicola');
+      assert.equal(estate.filter(e=>e==='canicola').length,1,`${seme}, anno ${anno}`);
+      cadute.add(estate.indexOf('canicola')+1);
+      for(let g=1;g<=4;g++)assert.ok(meteo.arido(base+g),'canicola o arido, d’estate si ha sete doppia');
+      for(let g=5;g<=16;g++)assert.equal(meteo.arido(base+g),false);
+    }
+    // Stabile: la stessa valle ha le stesse canicole.
+    const prima=[...Array(48)].map((_,i)=>meteo.evento(i+1));
+    mappa.inizializza(seme);
+    assert.deepEqual([...Array(48)].map((_,i)=>meteo.evento(i+1)),prima);
+  }
+  assert.deepEqual([...cadute].sort(),[2,3,4],'cade su tutti e tre i giorni possibili');
+});
+
+test('la notte di canicola secca subito chi non ha bevuto, e risparmia chi sì',()=>{
+  const c=primaCanicola();tempo.impostaGiorno(c);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CRESCIUTA});
+  modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.GERMOGLIO,bagnato:true});
+  modifiche.imposta(tx+3,ty,{oggetto:OGGETTO.SEMINATO});
+  // Il tasto lo dice anche alla pianta che stamattina non aveva sete.
+  assert.equal(orto.seccaStanotte(modifiche.di(tx+1,ty)),true);
+  assert.equal(orto.seccaStanotte(modifiche.di(tx+2,ty)),false,'innaffiata');
+  assert.equal(orto.seccaStanotte(modifiche.di(tx+3,ty)),false,'il seme aspetta');
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,"canicola: senz'acqua stanotte secca");
+  // E il giorno prima no: un giorno arido lascia la grazia di sempre.
+  assert.equal(orto.seccaStanotte(modifiche.di(tx+1,ty),c-1),false);
+  const esito=notte(c+1);
+  assert.equal(esito.seccate,1);assert.equal(esito.assetate,0);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.APPASSITA);
+  assert.equal(mappa.oggettoDi(tx+2,ty),OGGETTO.CRESCIUTA,'chi ha bevuto cresce');
+  assert.equal(mappa.oggettoDi(tx+3,ty),OGGETTO.SEMINATO);
+  // Col secchio in mano il tasto innaffia, come sempre.
+  tempo.impostaGiorno(c);modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CRESCIUTA});
+  for(const x of [tx+2,tx+3])modifiche.imposta(x,ty,{oggetto:OGGETTO.NESSUNO});
+  inventario.aggiungi('secchio_pieno',1);
+  assert.equal(azioni.azionePossibile(eroe,'secchio_pieno',0).verbo,'Innaffia');
+  azioni.agisci(eroe,'secchio_pieno',0);
+  assert.equal(notte(c+1).seccate,0);assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.MATURA);
+});
+
+test('la canicola si annuncia il giorno prima, il giorno stesso e all’alba',()=>{
+  const hud=readFileSync(new URL('../interfaccia/hud.js',import.meta.url),'utf8');
+  assert.match(hud,/canicola: "CANICOLA: INNAFFIA TUTTO"/);
+  assert.match(hud,/domani === "canicola" \? "#e0704a"/,'la previsione in rosso caldo');
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  // Una volta al giorno e a schermo libero: la canicola è uno stato, e detta
+  // a ogni fotogramma copriva per tutto il giorno ogni altra notizia.
+  assert.match(gioco,/meteo\.evento\(\) === "canicola" && canicolaDetta !== tempo\.giornoCorrente\(\) && !messaggio && orto\.quante\(\) > 0\) \{\s*annuncia\("oggi canicola: chi non beve, secca", "#e0704a"\);\s*canicolaDetta = tempo\.giornoCorrente\(\);/);
+  // La previsione del giorno prima dice proprio canicola.
+  const c=primaCanicola();
+  assert.equal(meteo.evento(c),'canicola');assert.notEqual(meteo.evento(c-1),'canicola');
+});
+
+// Una patata matura non ha sete e non va a seme: sta ferma e lascia vedere
+// solo i parassiti.
+function patata(x,y,giorno,extra={}) {
+  modifiche.imposta(x,y,{oggetto:OGGETTO.MATURA,coltura:'patata',passo:5,maturata:giorno,...extra});
+}
+// Il primo giorno d'estate, d'autunno o di primavera dopo cui due notti di
+// fila non scoppia niente: lì si guarda il contagio da solo.
+function dueNottiTranquille() {
+  for(let g=1;g<48;g++) {
+    if(stagioni.stagioneDi(g)==='inverno'||stagioni.stagioneDi(g+1)==='inverno')continue;
+    reset();orto.impostaParassiti(true);tempo.impostaGiorno(g);
+    patata(tx-4,ty-4,g);
+    const a=notte(g+1).parassitiNuovi,b=notte(g+2).parassitiNuovi;
+    if(a===0&&b===0){reset();orto.impostaParassiti(true);tempo.impostaGiorno(g);return g;}
+  }
+  assert.fail('nessuna coppia di notti tranquille');
+}
+
+test('i parassiti passano alle quattro vicine, e la pianta infestata da una notte muore',()=>{
+  const g=dueNottiTranquille();
+  patata(tx+1,ty,g,{parassiti:1});     // A
+  patata(tx+2,ty,g);                   // B, vicina
+  patata(tx+1,ty+1,g,{sana:true});     // C, vicina ma protetta dalla cenere
+  patata(tx+4,ty+3,g);                 // D, lontana
+  patata(tx+3,ty,g);                   // F, vicina di B: stanotte no, B non contagia ancora
+  modifiche.imposta(tx+1,ty-1,{oggetto:OGGETTO.SEMINATO}); // E, non ancora spuntata
+  const prima=notte(g+1);
+  assert.equal(prima.parassitiContagiate,1);assert.equal(prima.parassitiUccise,0);assert.equal(prima.parassitiNuovi,0);
+  assert.equal(modifiche.di(tx+1,ty).parassiti,2);
+  assert.equal(modifiche.di(tx+2,ty).parassiti,1);
+  assert.equal(modifiche.di(tx+1,ty+1).parassiti,undefined);assert.equal(modifiche.di(tx+1,ty+1).sana,true);
+  assert.equal(modifiche.di(tx+4,ty+3).parassiti,undefined);
+  assert.equal(modifiche.di(tx+3,ty).parassiti,undefined,'un passo solo per notte');
+  assert.deepEqual(modifiche.di(tx+1,ty-1),{oggetto:OGGETTO.SEMINATO});
+  const seconda=notte(g+2);
+  assert.equal(seconda.parassitiUccise,1);assert.equal(seconda.parassitiContagiate,1,'la F, dalla B');
+  assert.equal(modifiche.di(tx+3,ty).parassiti,1);
+  assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.APPASSITA},'morta, e la terra non si porta dietro i parassiti');
+  assert.equal(modifiche.di(tx+2,ty).parassiti,2);
+  assert.equal(modifiche.di(tx+1,ty+1).parassiti,undefined);
+});
+
+test('la pianta infestata lo dice al tasto, e quando muore',()=>{
+  tempo.impostaGiorno(14);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CRESCIUTA,parassiti:1,secco:1});
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,'parassiti: estirpa o spargi cenere','prima della sete');
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CRESCIUTA,parassiti:2});
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,'parassiti: stanotte muore, estirpa o spargi cenere');
+  // D'inverno il gelo li ferma, e il tasto non promette una morte che non viene.
+  tempo.impostaGiorno(10);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CRESCIUTA,coltura:'cavolo',passo:3,parassiti:2});
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,'parassiti: estirpa o spargi cenere');
+  // La matura infestata si raccoglie: è il rimedio più semplice.
+  tempo.impostaGiorno(14);patata(tx+1,ty,14,{parassiti:2});
+  assert.equal(azioni.azionePossibile(eroe,null).tipo,'raccogli');
+});
+
+test('d’inverno i parassiti non scoppiano e non uccidono',()=>{
+  orto.impostaParassiti(true);
+  for(let anno=0;anno<4;anno++) for(const g of [10,11,12,13].map(g=>g+anno*16)) {
+    tempo.impostaGiorno(g-1);
+    for(let i=0;i<5;i++)modifiche.imposta(tx-2+i,ty+2,{oggetto:OGGETTO.MATURA,coltura:'cavolo',passo:4,maturata:g-1});
+    modifiche.imposta(tx,ty+4,{oggetto:OGGETTO.MATURA,coltura:'cavolo',passo:4,maturata:g-1,parassiti:2});
+    const esito=notte(g);
+    assert.equal(esito.parassitiNuovi+esito.parassitiContagiate+esito.parassitiUccise,0,`notte ${g}`);
+    assert.equal(modifiche.di(tx,ty+4).parassiti,2);
+  }
+});
+
+test('lo scoppio: una notte su cinque, una pianta sola, sempre la stessa',()=>{
+  orto.impostaParassiti(true);
+  const campo=[];for(let y=0;y<3;y++)for(let x=0;x<3;x++)campo.push([tx-1+x,ty+2+y]);
+  const semina=g=>{for(const [x,y] of campo)patata(x,y,g-1);};
+  const infestate=()=>campo.filter(([x,y])=>modifiche.di(x,y).parassiti===1).map(p=>p.join(','));
+  let notti=0,scoppi=[];
+  for(let g=2;g<=16*10;g++) {
+    if(stagioni.stagioneDi(g-1)==='inverno')continue;
+    tempo.impostaGiorno(g-1);semina(g);notti++;
+    const esito=notte(g);
+    assert.ok(esito.parassitiNuovi<=1);
+    assert.equal(infestate().length,esito.parassitiNuovi,'una pianta sola, per quante ce ne siano');
+    if(esito.parassitiNuovi===1)scoppi.push({g,dove:infestate()[0]});
+  }
+  const frequenza=scoppi.length/notti;
+  assert.ok(frequenza>0.1&&frequenza<0.3,`scoppi in ${scoppi.length} notti su ${notti}`);
+  // La stessa notte nello stesso orto va sempre allo stesso modo.
+  const {g,dove}=scoppi[0];
+  tempo.impostaGiorno(g-1);semina(g);notte(g);
+  assert.deepEqual(infestate(),[dove]);
+  // E la cenere protegge: un orto tutto sano non si infesta.
+  tempo.impostaGiorno(g-1);for(const [x,y] of campo)patata(x,y,g-1,{sana:true});
+  assert.equal(notte(g).parassitiNuovi,0);
+});
+
+test('la cenere cura la pianta infestata e la protegge, anche sulla terra grassa; la pollina no',()=>{
+  tempo.impostaGiorno(14);inventario.aggiungi('cenere',3);inventario.aggiungi('pollina',2);
+  const cenere=casellaDi('cenere'),pollina=casellaDi('pollina');
+  // Terra grassa: senza parassiti la cenere non servirebbe, con i parassiti sì.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CRESCIUTA,fertilita:3,bagnato:true,parassiti:1});
+  const gesto=azioni.azionePossibile(eroe,'cenere',cenere);
+  assert.equal(gesto.verbo,'Spargi la cenere sui parassiti');assert.equal(gesto.impedito,null);
+  // La pollina concima e basta: sulla terra grassa non si sparge.
+  assert.equal(azioni.azionePossibile(eroe,'pollina',pollina).impedito,'la terra è già grassa');
+  const esito=azioni.agisci(eroe,'cenere',cenere);
+  assert.equal(esito.tipo,'spargi');assert.equal(esito.cura,true);
+  assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.CRESCIUTA,fertilita:3,bagnato:true,sana:true});
+  assert.equal(inventario.quante('cenere'),2);
+  // Sana resta sana: la vicina infestata non la contagia.
+  modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.GERMOGLIO,bagnato:true,parassiti:1});
+  orto.impostaParassiti(true);notte(15);orto.impostaParassiti(false);
+  assert.equal(modifiche.di(tx+1,ty).parassiti,undefined);assert.equal(modifiche.di(tx+1,ty).sana,true);
+  // Sulla terra non grassa la cenere cura e concima insieme.
+  tempo.impostaGiorno(14);modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GERMOGLIO,fertilita:1,parassiti:2});
+  azioni.agisci(eroe,'cenere',casellaDi('cenere'));
+  assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.GERMOGLIO,fertilita:2,sana:true});
+  // La pollina sulla terra magra concima, ma i parassiti restano.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GERMOGLIO,fertilita:1,parassiti:1});
+  assert.equal(azioni.azionePossibile(eroe,'pollina',casellaDi('pollina')).verbo,'Spargi la pollina');
+  const sparsa=azioni.agisci(eroe,'pollina',casellaDi('pollina'));
+  assert.equal(sparsa.cura,false);
+  assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.GERMOGLIO,fertilita:2,parassiti:1});
+  // E all'alba del raccolto la protezione se ne va con la pianta.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.MATURA,maturata:14,sana:true,fertilita:2});
+  azioni.agisci(eroe,null);
+  assert.equal(modifiche.di(tx+1,ty).sana,undefined);
+});
+
+test('estirpare la pianta infestata ferma il contagio',()=>{
+  const g=dueNottiTranquille();
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.GERMOGLIO,bagnato:true,parassiti:1});
+  patata(tx+2,ty,g);
+  const x=azioni.smontaggioPossibile(eroe);
+  assert.equal(x.verbo,'Estirpa la pianta');assert.equal(x.impedito,null);
+  assert.equal(azioni.smontaDavanti(eroe).tipo,'smontato');
+  assert.deepEqual(modifiche.di(tx+1,ty),{oggetto:OGGETTO.NESSUNO});
+  assert.equal(notte(g+1).parassitiContagiate,0);
+  assert.equal(modifiche.di(tx+2,ty).parassiti,undefined);
+});
+
+test('i parassiti e la cenere si salvano solo su una pianta, e solo com’erano',()=>{
+  const stato=salvataggio.istantanea(eroe,0);
+  stato.modifiche=[
+    {tx:tx+1,ty,oggetto:OGGETTO.CRESCIUTA,parassiti:1},
+    {tx:tx+2,ty,oggetto:OGGETTO.A_SEME,maturata:3,parassiti:2},
+    {tx:tx+3,ty,oggetto:OGGETTO.GERMOGLIO,sana:true},
+  ];
+  assert.ok(salvataggio.valido(stato));
+  for(const storto of [0,3,-1,1.5,'1',true]) {
+    stato.modifiche=[{tx:tx+1,ty,oggetto:OGGETTO.CRESCIUTA,parassiti:storto}];
+    assert.equal(salvataggio.valido(stato),false,String(storto));
+  }
+  for(const storto of [false,1,'sì']) {
+    stato.modifiche=[{tx:tx+1,ty,oggetto:OGGETTO.CRESCIUTA,sana:storto}];
+    assert.equal(salvataggio.valido(stato),false,String(storto));
+  }
+  stato.modifiche=[{tx:tx+1,ty,oggetto:OGGETTO.TERRA_ZAPPATA,parassiti:1}];
+  assert.equal(salvataggio.valido(stato),false,'parassiti sulla terra nuda');
+  stato.modifiche=[{tx:tx+1,ty,oggetto:OGGETTO.CESPUGLIO,sana:true}];
+  assert.equal(salvataggio.valido(stato),false,'cenere su un cespuglio');
+});
+
+test('i parassiti si vedono sulla pianta, e l’alba li racconta',()=>{
+  const d=decodifica(ortoArte.PARASSITI,tavolozzaDi('estate'));
+  assert.equal(d.larghezza,16);assert.equal(ortoArte.PARASSITI.length,16);
+  assert.ok(d.pixel.some(v=>v>0));
+  const mappaSorgente=readFileSync(new URL('../mondo/mappa.js',import.meta.url),'utf8');
+  assert.match(mappaSorgente,/if \(voce\.stadio && \(modifiche\.di\(tx, ty\)\?\.parassiti \?\? 0\) > 0\) \{\s*const puntini = cuoci\(ortoArte\.PARASSITI/);
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  for(const frase of ['i parassiti hanno ucciso delle piante: ${parassitiUccise}','i parassiti si allargano: ${parassitiContagiate}',
+    "i parassiti sono nell'orto: estirpa o spargi cenere",'cenere sparsa: via i parassiti'])
+    assert.ok(gioco.includes(frase),frase);
+  // Il resoconto della notte li porta fino all'alba.
+  const g=dueNottiTranquille();
+  patata(tx+1,ty,g,{parassiti:2});patata(tx+1,ty+1,g,{parassiti:1});patata(tx+2,ty+1,g);
+  tempo.impostaOra(23);simulazione.resoconto();simulazione.avanza(26);
+  assert.equal(tempo.giornoCorrente(),g+1);
+  const alba=simulazione.resoconto();
+  assert.equal(alba.parassitiUccise,1);assert.equal(alba.parassitiContagiate,1);assert.equal(alba.parassitiNuovi,0);
 });

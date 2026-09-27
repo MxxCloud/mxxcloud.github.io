@@ -73,7 +73,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.41";
+const VERSIONE = "M7.18.42";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -117,6 +117,10 @@ let alFuoco = false;
 let azioneCorrente = null;
 let smontaggioCorrente = null;
 let messaggio = null;
+// Il giorno di canicola già annunciato (M7.18.42). La canicola è uno stato e
+// non un fatto della notte: senza segnarla si riannuncerebbe a ogni
+// fotogramma, coprendo per tutto il giorno ogni altro messaggio.
+let canicolaDetta = null;
 let avvisoRisveglio = null;
 let luogoAttuale = null;
 // La schermata iniziale, o null quando si gioca. Sono tre passi di uno stesso
@@ -1228,7 +1232,10 @@ function leggiComandi(passo) {
       : esito.vuoto ? "innaffiato: annaffiatoio vuoto" : "innaffiato", "#8fb8d8");
   }
   if (esito.tipo === "interra") { suono.suona(ZAPPA); annuncia("interrata: la terra è più grassa", "#9ec97e"); }
-  if (esito.tipo === "spargi") { suono.suona(SEMINA); annuncia(`${esito.cosa ?? "cenere"} sparsa: la terra è più grassa`, "#9ec97e"); }
+  if (esito.tipo === "spargi") {
+    suono.suona(SEMINA);
+    annuncia(esito.cura ? "cenere sparsa: via i parassiti" : `${esito.cosa ?? "cenere"} sparsa: la terra è più grassa`, "#9ec97e");
+  }
   if (esito.tipo === "cenere") { suono.suona(PRESO); annuncia(`+${esito.quante} cenere`, "#c9b189"); }
   // Dormire non ha voce, ed è l'unico gesto che non ne ha: fra il tasto e il
   // risveglio passano ore di gioco, e un suono attaccato a quel momento
@@ -1558,7 +1565,7 @@ function aggiorna(passo) {
   }
 
   const { uovaDeposte, pulciniNati, pulciniCresciuti, polliNelloZaino, polloDomani, polliScappati, pulciniPersi, polliAffamati, polliDiFame, polliDiFreddo,
-    cresciute, appassite, seccate, alBuio, alChiuso, assetate, aSeme, mangiate, spentiLegna, spentiPioggia, torceFinite, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
+    cresciute, appassite, seccate, alBuio, alChiuso, assetate, aSeme, mangiate, parassitiNuovi, parassitiContagiate, parassitiUccise, spentiLegna, spentiPioggia, torceFinite, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
 
   const arrivata = vestiLaValle();
 
@@ -1587,6 +1594,11 @@ function aggiorna(passo) {
   // Le bestie dopo la sete e prima del marcire, per la stessa ragione: si
   // poteva evitare, e sapere come — uno spaventapasseri — è la notizia.
   else if (mangiate > 0) annuncia(`le bestie hanno mangiato l'orto: ${mangiate}`, "#c0705f");
+  // I parassiti (M7.18.42): prima i morti, poi il contagio, poi lo scoppio —
+  // tutte e tre notizie su cui si può ancora fare qualcosa oggi.
+  else if (parassitiUccise > 0) annuncia(`i parassiti hanno ucciso delle piante: ${parassitiUccise}`, "#c0705f");
+  else if (parassitiContagiate > 0) annuncia(`i parassiti si allargano: ${parassitiContagiate}`, "#c0705f");
+  else if (parassitiNuovi > 0) annuncia("i parassiti sono nell'orto: estirpa o spargi cenere", "#c0705f");
   else if (appassite > 0) annuncia(`l'orto è marcito: ${appassite}`, "#c0705f");
   else if (arrivata) annuncia(ARRIVO[arrivata], "#c9b189");
   // Il cibo guasto viene prima del fuoco spento, e non è un ordine a caso: un
@@ -1614,6 +1626,14 @@ function aggiorna(passo) {
   // Gli avvisi dei polli: parlano di stanotte, come la sete.
   else if (polliAffamati > 0) annuncia(`i polli hanno fame: ${polliAffamati}`, "#c9b189");
   else if (polloDomani > 0) annuncia("il pollo nello zaino non passa un'altra notte", "#c9b189");
+  // La canicola (M7.18.42) prima della sete: dice la stessa cosa più forte, e
+  // vale anche per le piante che stamattina non hanno ancora sete. Una volta
+  // al giorno, e solo a schermo libero: se all'alba c'era una notizia più
+  // grave, la canicola aspetta che sia letta invece di cancellarla.
+  else if (meteo.evento() === "canicola" && canicolaDetta !== tempo.giornoCorrente() && !messaggio && orto.quante() > 0) {
+    annuncia("oggi canicola: chi non beve, secca", "#e0704a");
+    canicolaDetta = tempo.giornoCorrente();
+  }
   else if (assetate > 0) annuncia(`l'orto ha sete: ${assetate}`, "#c9b189");
   else if (inScadenza > 0) annuncia("del cibo sta per guastarsi", "#c9b189");
   else if (aSeme > 0) annuncia(`l'orto è andato a seme: ${aSeme}`, "#c9b189");

@@ -235,6 +235,10 @@ function modificaValida(v) {
   if (!presente(v, "fertilita", n => intero(n) && n >= 0 && n <= orto.FERTILITA_MASSIMA
     && (orto.eDelCampo(v.oggetto) || orto.pratoStanco(v)))) return false;
   if (!presente(v, "patito", b => b === true && orto.eColtura(v.oggetto))) return false;
+  // I parassiti (M7.18.42): una o due notti, e la cenere che protegge; solo
+  // su una pianta.
+  if (!presente(v, "parassiti", n => (n === 1 || n === 2) && orto.eColtura(v.oggetto))) return false;
+  if (!presente(v, "sana", b => b === true && orto.eColtura(v.oggetto))) return false;
   // Una notte al chiuso: vale uno e basta — alla seconda la pianta non c'è
   // più — e solo su una pianta.
   if (!presente(v, "buio", n => n === 1 && orto.eColtura(v.oggetto))) return false;

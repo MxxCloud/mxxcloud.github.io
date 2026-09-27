@@ -726,6 +726,14 @@ function cuociSettore(sx, sy) {
           const disegno = coseArte.essiccatoioSteso(dati?.quante ?? 0, dati?.cosa, voce.steso === "secco");
           fotogrammi[0] = cuoci(disegno, tavolozza);
         }
+        // I parassiti (M7.18.42) si vedono: puntini scuri sulla pianta,
+        // allineati ai piedi del disegno qualunque sia la sua altezza. Su
+        // ogni stadio, anche quella andata a seme: non beve più, ma contagia
+        // ancora.
+        if (voce.stadio && (modifiche.di(tx, ty)?.parassiti ?? 0) > 0) {
+          const puntini = cuoci(ortoArte.PARASSITI, tavolozza);
+          fotogrammi[0] = sovrapposto(fotogrammi[0], puntini, 0, Math.max(0, fotogrammi[0].height - puntini.height));
+        }
         const sprite = fotogrammi[0];
         // Il suolo si dipinge qui e finisce lì: è terreno lavorato, quindi sta
         // sotto tutto quello che ci cammina sopra, sempre. Niente luce e
