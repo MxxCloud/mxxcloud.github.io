@@ -127,42 +127,117 @@ const CON_OMBRA = new Set([
   OGGETTO.TORCIA_PIANTATA,
 ]);
 
-// Dove cade l'ombra di una cosa a quest'ora, in coordinate del mondo, o
-// niente. Il sole va da est a ovest, quindi la mattina l'ombra scivola a
-// ovest e la sera a est, più lunga; a mezzogiorno sta sotto i piedi. Di notte
-// sparisce: la luce che c'è viene dai fuochi, e un'ombra del sole sarebbe
-// una bugia.
-export function ombraDi(cosa, ora, luce) {
+// Quello che si vede davvero in un disegno di una cosa del mondo: la riga
+// più bassa con un pixel, e la colonna più a sinistra e la larghezza di
+// tutto il disegno. Un sasso sta in un riquadro di sedici ma è largo
+// quattordici e tocca terra con quattro, e l'ombra lo deve sapere. Si conta
+// una volta per disegno: i disegni delle cose del mondo sono cotti quando si
+// prepara un settore, non a ogni fotogramma.
+const LIMITI = new WeakMap();
+const VUOTO = Object.freeze({ vuoto: true });
+export function limitiDi(sprite) {
+  if (!sprite || typeof sprite.getContext !== "function") return null;
+  const noti = LIMITI.get(sprite);
+  if (noti) return noti;
+  const { width: w, height: h } = sprite;
+  const dati = sprite.getContext("2d").getImageData(0, 0, w, h).data;
+  let sinistra = w, destra = -1, sotto = -1;
+  for (let y = 0; y < h; y += 1) {
+    for (let x = 0; x < w; x += 1) {
+      if (dati[(y * w + x) * 4 + 3] === 0) continue;
+      if (x < sinistra) sinistra = x;
+      if (x > destra) destra = x;
+      sotto = y;
+    }
+  }
+  const limiti = sotto < 0 ? VUOTO : { sinistra, larghezza: destra - sinistra + 1, sotto };
+  LIMITI.set(sprite, limiti);
+  return limiti;
+}
+
+// Dove cade l'ombra di una cosa a quest'ora, o niente. È un'ovale piatta
+// appena sotto la linea dei piedi: si vede davanti alla cosa e un poco ai
+// lati, e così un sasso tondo sembra appoggiato per terra invece di avere un
+// alone attorno alla base. Il sole va da est a ovest, quindi la mattina
+// l'ombra scivola a ovest e la sera a est, più lunga; a mezzogiorno sta sotto
+// i piedi. Di notte sparisce: la luce che c'è viene dai fuochi, e un'ombra
+// del sole sarebbe una bugia.
+//
+// Si dà in pixel interi e rispetto all'angolo del disegno (dx, dy), perché
+// il gioco mette i disegni sul pixel intero più vicino alla camera: in
+// M7.18.44 l'ombra si calcolava a parte, in posizioni frazionarie, e
+// camminando ballava di un pixel rispetto alla sua cosa.
+//
+// "limiti" è quello che si vede davvero nel disegno (vedi limitiDi). Chi
+// cammina non ne ha — il suo disegno cambia a ogni passo — e usa un'impronta
+// fissa, più stretta del riquadro.
+export function ombraDi(cosa, ora, luce, limiti = null) {
   if (typeof cosa.tipo === "number" && !CON_OMBRA.has(cosa.tipo)) return null;
-  const larghezza = cosa.sprite?.width ?? TASSELLO;
-  const forza = 0.3 * Math.min(1, Math.max(0, (luce - 0.25) / 0.6));
+  if (limiti?.vuoto) return null;
+  const forza = 0.28 * Math.min(1, Math.max(0, (luce - 0.25) / 0.6));
   if (forza <= 0) return null;
+  const w = cosa.sprite?.width ?? TASSELLO;
+  const h = cosa.sprite?.height ?? TASSELLO;
+  const larghezza = limiti ? limiti.larghezza : w * 0.7;
+  const centro = limiti ? limiti.sinistra + limiti.larghezza / 2 : w / 2;
+  const piedi = limiti ? limiti.sotto + 1 : h;
   const sole = Math.max(-1, Math.min(1, (ora - 12.5) / 6.5));
-  const rx = Math.min(larghezza * 0.4, 12) * (1 + 0.35 * Math.abs(sole));
+  const misura = Math.min(larghezza * 0.42, 12);
+  const rx = Math.max(2, Math.round(misura * (1 + 0.25 * Math.abs(sole))));
+  const ry = Math.max(2, Math.round(misura * 0.32));
   return {
-    x: cosa.x + larghezza / 2 + sole * 3,
-    y: cosa.base - 1.5,
+    dx: Math.round(centro + sole * 2) - rx,
+    // Il centro un pixel sotto i piedi: la metà alta finisce dietro la cosa.
+    dy: piedi + 1 - ry,
     rx,
-    ry: Math.max(2, Math.min(larghezza * 0.4, 12) * 0.36),
+    ry,
     forza,
   };
 }
 
+// L'ovale a pixel pieni, senza sfumature: sui bordi di un disegno a pixel
+// una macchia sfumata si legge come uno sbaffo. Una per misura, e sono poche.
+const OVALI = new Map();
+function ovale(rx, ry) {
+  const chiave = `${rx},${ry}`;
+  const nota = OVALI.get(chiave);
+  if (nota) return nota;
+  const c = document.createElement("canvas");
+  c.width = rx * 2;
+  c.height = ry * 2;
+  const x = c.getContext("2d");
+  x.fillStyle = "rgb(22 18 30)";
+  for (let py = 0; py < ry * 2; py += 1) {
+    const b = (py + 0.5 - ry) / ry;
+    const mezza = Math.round(rx * Math.sqrt(Math.max(0, 1 - b * b)));
+    if (mezza > 0) x.fillRect(rx - mezza, py, mezza * 2, 1);
+  }
+  OVALI.set(chiave, c);
+  return c;
+}
+
 // Sotto tutte le cose in piedi, prima di disegnarle: un'ombra sta per terra,
-// e quella di un albero non deve coprire chi gli passa davanti.
-export function disegnaOmbre(p, cose, q, ora, luce) {
+// e quella di un albero non deve coprire chi gli passa davanti. La posizione
+// si arrotonda come quella del disegno (vedi schermo.disegna), così l'ombra
+// sta ferma rispetto alla sua cosa anche mentre la vista scorre.
+export function disegnaOmbre(p, cose, camera, ora, luce) {
   if (!accesi) return;
   p.save();
-  p.fillStyle = "rgb(22 18 30)";
   for (const cosa of cose) {
-    const o = ombraDi(cosa, ora, luce);
+    const limiti = typeof cosa.tipo === "number" ? limitiDi(cosa.sprite) : null;
+    const o = ombraDi(cosa, ora, luce, limiti);
     if (!o) continue;
     p.globalAlpha = o.forza;
-    p.beginPath();
-    p.ellipse(o.x - q.sinistra, o.y - q.sopra, o.rx, o.ry, 0, 0, Math.PI * 2);
-    p.fill();
+    p.drawImage(ovale(o.rx, o.ry), Math.round(cosa.x - camera.x) + o.dx, Math.round(cosa.y - camera.y) + o.dy);
   }
   p.restore();
+}
+
+// La vista, dalla camera: la stessa di schermo.inquadratura().
+function vistaDi(camera) {
+  const sinistra = Math.floor(camera.x);
+  const sopra = Math.floor(camera.y);
+  return { sinistra, sopra, destra: sinistra + LARGHEZZA, sotto: sopra + ALTEZZA };
 }
 
 // --- la fiamma che trema ---------------------------------------------------------
@@ -180,7 +255,12 @@ export function tremolio(luce, secondi) {
 
 // Il calore sopra il buio: una pozza arancione, sommata e non stesa, che
 // conta solo quando fa scuro. Di giorno il fuoco non illumina niente.
-export function disegnaBagliori(p, q, lumi, luce, secondi) {
+//
+// Da M7.18.45 a metà forza: in M7.18.44 la notte attorno a un fuoco si
+// faceva troppo chiara. Il buco nel buio è quello di sempre; qui sopra resta
+// il colore, non altra luce.
+const CALORE = { pozza: 0.2, bordo: 0.1, cuore: 0.3 };
+export function disegnaBagliori(p, camera, lumi, luce, secondi) {
   if (!accesi) return;
   const notte = 1 - luce;
   if (notte <= 0.02) return;
@@ -189,19 +269,19 @@ export function disegnaBagliori(p, q, lumi, luce, secondi) {
   for (const l of lumi) {
     const t = tremolio(l, secondi);
     const raggio = l.raggio * 0.95 * t;
-    const x = l.x - q.sinistra;
-    const y = l.y - q.sopra;
+    const x = l.x - camera.x;
+    const y = l.y - camera.y;
     if (x + raggio < 0 || x - raggio > LARGHEZZA || y + raggio < 0 || y - raggio > ALTEZZA) continue;
     const k = notte * Math.min(1, l.intensita ?? 1) * (0.85 + 0.15 * t);
     const g = p.createRadialGradient(x, y, 0, x, y, raggio);
-    g.addColorStop(0, `rgb(255 176 92 / ${0.34 * k})`);
-    g.addColorStop(0.3, `rgb(255 128 48 / ${0.17 * k})`);
+    g.addColorStop(0, `rgb(255 176 92 / ${CALORE.pozza * k})`);
+    g.addColorStop(0.3, `rgb(255 128 48 / ${CALORE.bordo * k})`);
     g.addColorStop(1, "rgb(255 90 20 / 0)");
     p.fillStyle = g;
     p.fillRect(x - raggio, y - raggio, raggio * 2, raggio * 2);
     // Il cuore della fiamma, piccolo e chiaro.
     const c = p.createRadialGradient(x, y, 0, x, y, 7 * t);
-    c.addColorStop(0, `rgb(255 230 170 / ${0.5 * k})`);
+    c.addColorStop(0, `rgb(255 230 170 / ${CALORE.cuore * k})`);
     c.addColorStop(1, "rgb(255 200 120 / 0)");
     p.fillStyle = c;
     p.fillRect(x - 8, y - 8, 16, 16);
@@ -292,7 +372,7 @@ export function aggiorna(secondi, lumi, { piove = false } = {}) {
 
 // Il fumo prima del buio: di notte si spegne con tutto il resto, e resta
 // visibile solo dove c'è luce — com'è il fumo vero.
-export function disegnaFumo(p, q) {
+export function disegnaFumo(p, camera) {
   if (!accesi) return;
   p.save();
   for (const s of particelle) {
@@ -302,14 +382,14 @@ export function disegnaFumo(p, q) {
     p.globalAlpha = 0.22 * (1 - k) * Math.min(1, s.eta * 4);
     p.fillStyle = "rgb(150 146 140)";
     p.beginPath();
-    p.arc(s.x - q.sinistra, s.y - q.sopra, r, 0, Math.PI * 2);
+    p.arc(Math.round(s.x - camera.x), Math.round(s.y - camera.y), r, 0, Math.PI * 2);
     p.fill();
   }
   p.restore();
 }
 
 // Le scintille dopo il buio: brillano di luce loro.
-export function disegnaScintille(p, q) {
+export function disegnaScintille(p, camera) {
   if (!accesi) return;
   p.save();
   p.globalCompositeOperation = "lighter";
@@ -318,22 +398,34 @@ export function disegnaScintille(p, q) {
     const k = s.eta / s.vita;
     p.globalAlpha = (1 - k) * (0.6 + 0.4 * Math.sin(s.eta * 30 + s.fase));
     p.fillStyle = k < 0.4 ? "rgb(255 220 130)" : "rgb(255 130 50)";
-    p.fillRect(Math.round(s.x - q.sinistra), Math.round(s.y - q.sopra), 1, 1);
+    p.fillRect(Math.round(s.x - camera.x), Math.round(s.y - camera.y), 1, 1);
   }
   p.restore();
 }
 
 // --- l'acqua al sole ---------------------------------------------------------------
 
+// Quanto sole batte sull'acqua: solo nelle ore centrali delle stagioni
+// belle (M7.18.45). In primavera e d'estate, dalle dieci alle sedici, con
+// mezz'ora per accendersi e mezz'ora per spegnersi; la mattina, la sera,
+// d'autunno e d'inverno il sole è basso e l'acqua non abbaglia.
+const STAGIONI_DEL_SOLE = new Set(["primavera", "estate"]);
+export function soleSullAcqua(ora, stagione) {
+  if (!STAGIONI_DEL_SOLE.has(stagione)) return 0;
+  return Math.max(0, Math.min(1, ora - 9.5, 16.5 - ora));
+}
+
 // Dove luccica l'acqua adesso. Ogni tassello ha il suo giro di tre secondi e
-// in quel giro, per mezzo secondo, forse luccica: un tassello su quattro. Si
+// in quel giro, per mezzo secondo, forse luccica: un tassello su otto. Si
 // chiede se è acqua solo a quelli, che sono pochi, e non a tutti quelli in
 // vista a ogni fotogramma. Su uno specchio d'acqua che riempie la vista ne
-// brillano una decina alla volta.
+// brillano quattro o cinque alla volta.
 const GIRO_ACQUA = 3;
 const LAMPO = 0.5;
-export function luccichii(q, secondi, luce, eAcqua) {
-  if (!accesi || luce < 0.5) return [];
+const QUANTI_LUCCICANO = 0.12;
+export function luccichii(q, secondi, { ora, stagione }, eAcqua) {
+  const sole = soleSullAcqua(ora, stagione);
+  if (!accesi || sole <= 0) return [];
   const trovati = [];
   const x0 = Math.floor(q.sinistra / TASSELLO), x1 = Math.floor((q.destra - 1) / TASSELLO);
   const y0 = Math.floor(q.sopra / TASSELLO), y1 = Math.floor((q.sotto - 1) / TASSELLO);
@@ -342,21 +434,21 @@ export function luccichii(q, secondi, luce, eAcqua) {
       const tempo = secondi / GIRO_ACQUA + impronta(tx, ty, 0x51a7);
       const giro = Math.floor(tempo);
       const dentro = (tempo - giro) * GIRO_ACQUA;
-      if (dentro > LAMPO || impronta(tx, ty, giro) > 0.25) continue;
+      if (dentro > LAMPO || impronta(tx, ty, giro) > QUANTI_LUCCICANO) continue;
       if (!eAcqua(tx, ty)) continue;
       trovati.push({
         x: tx * TASSELLO + 3 + Math.floor(impronta(tx, giro, 0x3c) * 10),
         y: ty * TASSELLO + 3 + Math.floor(impronta(giro, ty, 0x3d) * 10),
-        forza: Math.sin((dentro / LAMPO) * Math.PI) * luce,
+        forza: Math.sin((dentro / LAMPO) * Math.PI) * sole,
       });
     }
   }
   return trovati;
 }
 
-export function disegnaLuccichii(p, q, secondi, luce, eAcqua) {
+export function disegnaLuccichii(p, camera, secondi, stato, eAcqua) {
   if (!accesi) return;
-  const lista = luccichii(q, secondi, luce, eAcqua);
+  const lista = luccichii(vistaDi(camera), secondi, stato, eAcqua);
   if (lista.length === 0) return;
   p.save();
   p.fillStyle = "rgb(236 248 255)";
@@ -364,7 +456,7 @@ export function disegnaLuccichii(p, q, secondi, luce, eAcqua) {
     // Un trattino che si allunga e si accorcia col lampo, più chiaro al
     // centro, e al culmine una scintilla sopra: il riflesso del sole su
     // un'onda, non un pixel bianco.
-    const x = l.x - q.sinistra, y = l.y - q.sopra;
+    const x = Math.round(l.x - camera.x), y = Math.round(l.y - camera.y);
     const mezzo = l.forza > 0.6 ? 2 : 1;
     p.globalAlpha = 0.5 * l.forza;
     p.fillRect(x - mezzo, y, mezzo * 2 + 1, 1);
@@ -381,17 +473,19 @@ export function disegnaLuccichii(p, q, secondi, luce, eAcqua) {
 // --- le lucciole -------------------------------------------------------------------
 
 // Nelle notti d'estate, all'aperto e senza pioggia. Stanno su una maglia del
-// mondo — una cella di tre tasselli su tre, e in una su tre c'è una lucciola
-// — così non spariscono e ricompaiono quando la vista si sposta: girano
-// attorno al loro posto, e si accendono e spengono ognuna col suo ritmo.
+// mondo — una cella di tre tasselli su tre, e in una su sei c'è una lucciola
+// (una su tre fino a M7.18.44: erano troppe) — così non spariscono e
+// ricompaiono quando la vista si sposta: girano attorno al loro posto, e si
+// accendono e spengono ognuna col suo ritmo.
 const MAGLIA = 48;
+const QUANTE_LUCCIOLE = 0.165;
 export function lucciole(q, secondi, { stagione, luce, alChiuso = false, piove = false }) {
   if (!accesi || stagione !== "estate" || luce > 0.45 || alChiuso || piove) return [];
   const trovate = [];
   const buio = Math.min(1, (0.45 - luce) / 0.25);
   for (let cy = Math.floor(q.sopra / MAGLIA) - 1; cy <= Math.floor(q.sotto / MAGLIA) + 1; cy += 1) {
     for (let cx = Math.floor(q.sinistra / MAGLIA) - 1; cx <= Math.floor(q.destra / MAGLIA) + 1; cx += 1) {
-      if (impronta(cx, cy, 0x1ecc) > 0.33) continue;
+      if (impronta(cx, cy, 0x1ecc) > QUANTE_LUCCIOLE) continue;
       const fase = impronta(cx, cy, 0x1ecd) * 6.283;
       const x = (cx + 0.5) * MAGLIA + Math.sin(secondi * 0.35 + fase) * 18 + Math.sin(secondi * 0.9 + fase * 2) * 5;
       const y = (cy + 0.5) * MAGLIA + Math.cos(secondi * 0.27 + fase) * 12 + Math.sin(secondi * 1.3 + fase) * 3;
@@ -403,13 +497,13 @@ export function lucciole(q, secondi, { stagione, luce, alChiuso = false, piove =
   return trovate;
 }
 
-export function disegnaLucciole(p, q, secondi, stato) {
-  const lista = lucciole(q, secondi, stato);
+export function disegnaLucciole(p, camera, secondi, stato) {
+  const lista = lucciole(vistaDi(camera), secondi, stato);
   if (lista.length === 0) return;
   p.save();
   p.globalCompositeOperation = "lighter";
   for (const l of lista) {
-    const x = Math.round(l.x - q.sinistra), y = Math.round(l.y - q.sopra);
+    const x = Math.round(l.x - camera.x), y = Math.round(l.y - camera.y);
     const alone = p.createRadialGradient(x + 0.5, y + 0.5, 0, x + 0.5, y + 0.5, 4);
     alone.addColorStop(0, `rgb(200 255 120 / ${0.45 * l.forza})`);
     alone.addColorStop(1, "rgb(200 255 120 / 0)");
