@@ -380,13 +380,15 @@ export function disegnaOrologio(p, { giorno, orologio, eNotte, stagione, giornoN
 
 export function disegnaMeteo(p, { evento, domani, bagnato, freddo = 0 }) {
   if (freddo > 0) testo.disegnaConOmbra(p, `FREDDO X${freddo}`, 7, 72, "#91b9cc");
-  const nomi = { arido: "ARIDO: SETE X3", pioggia: "PIOGGIA", neve: "NEVE: PASSO -28%", sereno: "SERENO" };
+  // La canicola (M7.18.42) in rosso caldo, oggi e il giorno prima: è l'unica
+  // previsione che chiede di fare qualcosa, e va vista.
+  const nomi = { arido: "ARIDO: SETE X3", canicola: "CANICOLA: INNAFFIA TUTTO", pioggia: "PIOGGIA", neve: "NEVE: PASSO -28%", sereno: "SERENO" };
   const scritta = nomi[evento];
   const x = schermo.LARGHEZZA - testo.larghezza(scritta) - 7;
-  testo.disegnaConOmbra(p, scritta, x, 33, evento === "arido" ? "#e0b46a" : "#abcdd7");
+  testo.disegnaConOmbra(p, scritta, x, 33, evento === "canicola" ? "#e0704a" : evento === "arido" ? "#e0b46a" : "#abcdd7");
   if (domani !== evento && domani !== "sereno") {
     const previsione = `DOMANI ${domani === "arido" ? "ARIDO" : domani.toUpperCase()}`;
-    testo.disegnaConOmbra(p, previsione, schermo.LARGHEZZA-testo.larghezza(previsione)-7, 42, TENUE);
+    testo.disegnaConOmbra(p, previsione, schermo.LARGHEZZA-testo.larghezza(previsione)-7, 42, domani === "canicola" ? "#e0704a" : TENUE);
   }
   // Tre stati e tre frasi, perché adesso vogliono dire tre cose diverse:
   // bagnato non costa niente, zuppo è l'avviso che manca poco, fradicio è il

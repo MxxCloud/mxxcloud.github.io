@@ -588,9 +588,14 @@ function sulTassello(eroe, cosaInMano, indice) {
   // concime, e il concime si dà anche a quello che cresce. Sulla terra già
   // grassa non serve, e lo si dice prima di sprecarla. Da M7.18.19 anche la
   // pollina, che vale uguale.
+  //
+  // E da M7.18.42 la cenere cura una pianta coi parassiti, anche sulla terra
+  // già grassa: li toglie e la tiene sana fino al raccolto. La pollina no.
   if (CONCIMI[cosaInMano] && (b.oggetto === OGGETTO.TERRA_ZAPPATA || orto.eColtura(b.oggetto))) {
+    const cura = cosaInMano === "cenere" && orto.infestata(modifiche.di(b.tx, b.ty));
     const piena = orto.fertilitaDi(modifiche.di(b.tx, b.ty)) >= orto.FERTILITA_MASSIMA;
-    return { tipo: "spargi", verbo: CONCIMI[cosaInMano], cosa: cosaInMano, bersaglio: b, impedito: piena ? "la terra è già grassa" : null };
+    return { tipo: "spargi", verbo: cura ? "Spargi la cenere sui parassiti" : CONCIMI[cosaInMano], cosa: cosaInMano, cura,
+      bersaglio: b, impedito: piena && !cura ? "la terra è già grassa" : null };
   }
 
   if (cosaInMano === "secchio_pieno" && orto.siPuoInnaffiare(b.oggetto)) {
@@ -616,8 +621,17 @@ function sulTassello(eroe, cosaInMano, indice) {
     const quanto = pianta?.buio ? "al chiuso: stanotte appassisce" : "al chiuso non cresce: la seconda notte muore";
     return { tipo: "coltura", verbo: "Guarda", bersaglio: b, impedito: quanto };
   }
-  if (orto.eColtura(b.oggetto) && pianta?.secco > 0) {
-    const quanto = orto.seccaStanotte(pianta) ? "ha sete: stanotte secca" : "ha sete: senz'acqua non cresce";
+  // I parassiti (M7.18.42) prima della sete: la sete aspetta un giorno, i
+  // parassiti intanto passano alle vicine.
+  if (orto.infestata(pianta)) {
+    const quanto = orto.muoreDiParassiti(pianta) ? "parassiti: stanotte muore, estirpa o spargi cenere" : "parassiti: estirpa o spargi cenere";
+    return { tipo: "coltura", verbo: "Guarda", bersaglio: b, impedito: quanto };
+  }
+  // Il giorno di canicola (M7.18.42) lo dice anche la pianta che stamattina
+  // non aveva ancora sete: stanotte secca comunque, se nessuno la innaffia.
+  if (orto.eColtura(b.oggetto) && (pianta?.secco > 0 || orto.seccaStanotte(pianta))) {
+    const quanto = !(pianta?.secco > 0) ? "canicola: senz'acqua stanotte secca"
+      : orto.seccaStanotte(pianta) ? "ha sete: stanotte secca" : "ha sete: senz'acqua non cresce";
     return { tipo: "coltura", verbo: "Guarda", bersaglio: b, impedito: quanto };
   }
 
@@ -1435,8 +1449,10 @@ function esegui(eroe, cosaInMano, indice, azione) {
 
   if (azione.tipo === "spargi") {
     if (!inventario.togli(azione.cosa, 1)) return null;
-    mappa.cambiaTassello(tx, ty, orto.concimata(modifiche.di(tx, ty) ?? { oggetto: azione.bersaglio.oggetto }));
-    return { tipo: "spargi", cosa: azione.cosa };
+    const prima = modifiche.di(tx, ty) ?? { oggetto: azione.bersaglio.oggetto };
+    const concimata = orto.fertilitaDi(prima) >= orto.FERTILITA_MASSIMA ? prima : orto.concimata(prima);
+    mappa.cambiaTassello(tx, ty, azione.cura ? orto.guarita(concimata) : concimata);
+    return { tipo: "spargi", cosa: azione.cosa, cura: azione.cura === true };
   }
 
   if (azione.tipo === "cenere") {
