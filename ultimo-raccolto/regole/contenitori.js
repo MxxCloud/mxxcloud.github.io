@@ -165,6 +165,19 @@ function dellaFattoria(tx, ty) {
   return tx >= f.tx0 && ty >= f.ty0 && tx < f.tx0 + f.larghezza && ty < f.ty0 + f.altezza;
 }
 
+// La cassa dell'orto della fattoria, quando l'orto del lino è lontano
+// (M7.18.43, vedi generazione.js). Il ripiego sta qui e non in un orto
+// spostato: il mondo resta quello della valle, e chi comincia in una valle
+// sfortunata trova i semi dove guarda per primo.
+const SEMI_DI_RIPIEGO = 3;
+function ripiegoDelLino(tx, ty) {
+  const f = mappa.laFattoria();
+  if (!f || !mappa.linoLontano()) return false;
+  const annesso = mappa.rovinaNellaCella(Math.floor(f.tx0 / mappa.CELLA_ROVINE), Math.floor(f.ty0 / mappa.CELLA_ROVINE))?.annesso;
+  return Boolean(annesso) && tx >= annesso.tx0 && ty >= annesso.ty0
+    && tx < annesso.tx0 + annesso.larghezza && ty < annesso.ty0 + annesso.altezza;
+}
+
 // Da una a tre pile. Mai vuota: una casa attraversata per venire a trovare una
 // cassa vuota insegna a non entrare più, e il viaggio deve pagare sempre
 // qualcosa — poco, ma qualcosa.
@@ -205,6 +218,9 @@ function bottinoDi(tx, ty) {
     // quello che regge da nuova: serve ancora, e non ti risolve la stagione.
     inventario.mettiIn(fila, voce.cosa, n, undefined, usiTrovati(voce.cosa, caso));
   }
+  // Dopo il resto e fuori dal generatore: il bottino di prima non cambia, si
+  // aggiunge una pila.
+  if (ripiegoDelLino(tx, ty)) inventario.mettiIn(fila, "semi_lino", SEMI_DI_RIPIEGO);
   return fila;
 }
 

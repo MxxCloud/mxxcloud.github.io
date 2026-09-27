@@ -4576,7 +4576,10 @@ test("la fattoria di partenza ha il suo orto abbandonato sotto la prima casa, co
   assert.equal(mappa.luogoIn(r.tx0+10,r.ty0+3),null,'la fattoria non è un luogo');
   const cassa=posti.find(p=>p.c==='c'),pile=contenitori.contenutoDi(cassa.tx,cassa.ty).filter(Boolean);
   const DELL_ORTO=['semi','semi_cavolo','patata','grano','fibra','zappa'];
-  assert.ok(pile.length>=1&&pile.length<=2);for(const p of pile)assert.ok(DELL_ORTO.includes(p.cosa),p.cosa);
+  // Da M7.18.43 in più i semi di lino del ripiego, quando l'orto del lino è lontano.
+  const altre=pile.filter(p=>p.cosa!=='semi_lino');
+  assert.equal(pile.length-altre.length,mappa.linoLontano()?1:0,'il ripiego solo se serve');
+  assert.ok(altre.length>=1&&altre.length<=2);for(const p of altre)assert.ok(DELL_ORTO.includes(p.cosa),p.cosa);
   assert.match(readFileSync(new URL('../interfaccia/mappa.js',import.meta.url),'utf8'),/\[trovata, trovata\.annesso\]/);
   // Le regole degli orti abbandonati.
   const fagiolo=posti.find(p=>p.c==='b'),patata=posti.find(p=>p.c==='q');
@@ -4997,4 +5000,110 @@ test('i parassiti si vedono sulla pianta, e l’alba li racconta',()=>{
   assert.equal(tempo.giornoCorrente(),g+1);
   const alba=simulazione.resoconto();
   assert.equal(alba.parassitiUccise,1);assert.equal(alba.parassitiContagiate,1);assert.equal(alba.parassitiNuovi,0);
+});
+
+// --- M7.18.43: il lino garantito ---------------------------------------------
+
+// L'orto abbandonato più vicino alla partenza, cercato qui per conto proprio e
+// su un raggio più largo di quello del gioco: se il gioco ne scegliesse un
+// altro, o se il suo raggio non bastasse, lo si vedrebbe.
+function ortoVicinoDaCapo() {
+  const f=mappa.laFattoria(),px=f?.tx??0,py=f?.ty??0;
+  let migliore=null,d=Infinity;
+  for(let cy=Math.floor(py/64)-12;cy<=Math.floor(py/64)+12;cy++)for(let cx=Math.floor(px/64)-12;cx<=Math.floor(px/64)+12;cx++){
+    const r=mappa.rovinaNellaCella(cx,cy);if(r?.luogo!=='orto')continue;
+    const dd=Math.hypot(r.tx0+r.larghezza/2-px,r.ty0+r.altezza/2-py);if(dd<d){d=dd;migliore=r;}
+  }
+  return {orto:migliore,distanza:d};
+}
+function pianteDellOrto(r) {
+  const viste=new Set();
+  r.pianta.forEach((riga,y)=>[...riga].forEach((c,x)=>{if(c==='s'||c==='u')viste.add(mappa.oggettoDi(r.tx0+x,r.ty0+y));}));
+  return viste;
+}
+function semiDiLinoNellaCassaDellaFattoria() {
+  const a=mappa.rovinaNellaCella(0,0)?.annesso;if(!a)return 0;
+  let n=0;
+  a.pianta.forEach((riga,y)=>[...riga].forEach((c,x)=>{
+    if(c==='c')n+=contenitori.contenutoDi(a.tx0+x,a.ty0+y).filter(p=>p?.cosa==='semi_lino').reduce((s,p)=>s+p.quantita,0);
+  }));
+  return n;
+}
+
+test('l’orto abbandonato più vicino alla partenza ha sempre il lino, e l’altra pianta resta a sorte',()=>{
+  let sorteggio=1;
+  for(let v=1;v<=40;v++){
+    modifiche.svuota();mappa.inizializza('valle-'+v);
+    const atteso=ortoVicinoDaCapo(),gioco=mappa.ortoPiuVicino();
+    assert.deepEqual([gioco.orto.tx0,gioco.orto.ty0],[atteso.orto.tx0,atteso.orto.ty0],'valle-'+v);
+    vicino(gioco.distanza,atteso.distanza);
+    const altre=new Set();
+    for(let s=0;s<12;s++){
+      mappa.impostaOrti(sorteggio=(Math.imul(sorteggio,1664525)+1013904223)>>>0);
+      const piante=pianteDellOrto(atteso.orto);
+      assert.ok(piante.has(OGGETTO.LINO_SELVATICO),`valle-${v}, sorteggio ${sorteggio}`);
+      assert.equal(piante.size,2,'due varietà, sempre diverse');
+      for(const p of piante)if(p!==OGGETTO.LINO_SELVATICO)altre.add(p);
+    }
+    assert.ok(altre.size>=2,`valle-${v}: l’altra pianta cambia da una partita all’altra`);
+  }
+  // Gli altri orti restano al sorteggio: il lino c'è in circa due su cinque.
+  mappa.inizializza('valle-1');
+  const vicinissimo=mappa.ortoPiuVicino().orto;
+  let orti=0,colLino=0;
+  for(let s=1;s<=40;s++){
+    mappa.impostaOrti(s*7919);
+    for(let cy=-4;cy<=4;cy++)for(let cx=-4;cx<=4;cx++){
+      const r=mappa.rovinaNellaCella(cx,cy);
+      if(r?.luogo!=='orto'||(r.tx0===vicinissimo.tx0&&r.ty0===vicinissimo.ty0))continue;
+      orti++;if(pianteDellOrto(r).has(OGGETTO.LINO_SELVATICO))colLino++;
+    }
+  }
+  assert.ok(orti>=100&&colLino/orti>0.3&&colLino/orti<0.5,`lino in ${colLino} orti su ${orti}`);
+});
+
+test('se l’orto del lino è oltre 150 tasselli, la cassa dell’orto della fattoria ha tre semi di lino',()=>{
+  assert.equal(mappa.LINO_ENTRO,150);
+  let lontane=0,vicine=0;
+  for(let v=1;v<=300;v++){
+    modifiche.svuota();mappa.inizializza('valle-'+v);
+    const {distanza}=mappa.ortoPiuVicino(),semi=semiDiLinoNellaCassaDellaFattoria();
+    assert.equal(mappa.linoLontano(),distanza>150,'valle-'+v);
+    if(!mappa.laFattoria()){assert.equal(semi,0,'senza fattoria non c’è la sua cassa');continue;}
+    if(distanza>150){lontane++;assert.equal(semi,3,`valle-${v}: orto del lino a ${Math.round(distanza)}`);}
+    else{vicine++;assert.equal(semi,0,`valle-${v}: orto del lino a ${Math.round(distanza)}`);}
+  }
+  // Una valle su quattro, circa: il ripiego c'è, ma non è la regola.
+  assert.ok(lontane>40&&lontane<100&&vicine>lontane,`ripiego in ${lontane} valli su 300`);
+  // Il seme dei collaudi è una valle lontana: i semi si prendono, e presi
+  // restano presi.
+  reset();
+  assert.ok(mappa.linoLontano());
+  const a=mappa.rovinaNellaCella(0,0).annesso;
+  let cassa=null;a.pianta.forEach((riga,y)=>[...riga].forEach((c,x)=>{if(c==='c')cassa={tx:a.tx0+x,ty:a.ty0+y};}));
+  mappa.cambiaTassello(cassa.tx,cassa.ty,null);
+  const pile=contenitori.contenutoDi(cassa.tx,cassa.ty);
+  assert.deepEqual(pile.filter(Boolean).at(-1),{cosa:'semi_lino',quantita:3},'dopo il bottino di sempre');
+  contenitori.scrivi(cassa.tx,cassa.ty,pile.map(p=>p?.cosa==='semi_lino'?null:p));
+  assert.equal(contenitori.contenutoDi(cassa.tx,cassa.ty).filter(p=>p?.cosa==='semi_lino').length,0);
+});
+
+test('il lino non è mai oltre 150 tasselli dalla partenza, in nessuna valle e in nessuna partita',()=>{
+  let sorteggio=99;
+  for(let v=1;v<=300;v++){
+    modifiche.svuota();mappa.inizializza('valle-'+v);
+    const {orto,distanza}=mappa.ortoPiuVicino();
+    for(let s=0;s<3;s++){
+      mappa.impostaOrti(sorteggio=(Math.imul(sorteggio,1664525)+1013904223)>>>0);
+      const nellOrto=distanza<=150&&pianteDellOrto(mappa.rovinaNellaCella(Math.floor(orto.tx0/64),Math.floor(orto.ty0/64))).has(OGGETTO.LINO_SELVATICO);
+      const nellaCassa=semiDiLinoNellaCassaDellaFattoria()>0;
+      // L'unica eccezione è la valle senza fattoria (una su mille): lì resta l'orto più vicino all'origine.
+      assert.ok(nellOrto||nellaCassa||!mappa.laFattoria(),`valle-${v}, sorteggio ${sorteggio}`);
+    }
+  }
+  // La valle senza fattoria si misura dall'origine, dove comincia la partita.
+  mappa.inizializza('valle-289');assert.equal(mappa.laFattoria(),null);
+  const {orto}=mappa.ortoPiuVicino();
+  assert.ok(pianteDellOrto(mappa.rovinaNellaCella(Math.floor(orto.tx0/64),Math.floor(orto.ty0/64))).has(OGGETTO.LINO_SELVATICO));
+  assert.match(readFileSync(new URL('../gioco.js',import.meta.url),'utf8'),/puntoDiPartenza\(fattoria\?\.tx \?\? 0, fattoria\?\.ty \?\? 0\)/);
 });
