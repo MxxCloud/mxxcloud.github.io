@@ -23,7 +23,9 @@ function preparaTelo() {
   pennelloTelo = fatto.contesto;
 }
 
-export function disegna(pennello, luceAmbiente, tinta, lumi) {
+// "tremolio" dice quanto è grande adesso il disegno di ogni luce rispetto al
+// suo raggio (M7.18.44): è solo disegno, e senza vale uno.
+export function disegna(pennello, luceAmbiente, tinta, lumi, tremolio = () => 1) {
   // In pieno giorno non c'è niente da coprire, e un telo trasparente steso
   // sessanta volte al secondo è comunque lavoro sprecato.
   if (luceAmbiente >= 0.999) return;
@@ -45,7 +47,7 @@ export function disegna(pennello, luceAmbiente, tinta, lumi) {
   for (const luce of lumi) {
     const x = Math.round(luce.x - schermo.camera.x);
     const y = Math.round(luce.y - schermo.camera.y);
-    const raggio = luce.raggio;
+    const raggio = luce.raggio * tremolio(luce);
     if (x + raggio < 0 || x - raggio > schermo.LARGHEZZA) continue;
     if (y + raggio < 0 || y - raggio > schermo.ALTEZZA) continue;
 

@@ -35,6 +35,8 @@ const MAPPA = {
   // ed è la ragione per cui in questo elenco le cose si chiamano con la loro
   // seconda lettera più ovvia invece che con la prima.
   KeyV: "suono",
+  // "L" come luce: gli effetti di luce e d'aria di M7.18.44, accesi o spenti.
+  KeyL: "luci",
   // "P" come partita. Non "S", che è già camminare all'indietro.
   KeyP: "partita",
   // Valgono solo dentro la schermata della partita, che è modale e se li

@@ -5107,3 +5107,135 @@ test('il lino non è mai oltre 150 tasselli dalla partenza, in nessuna valle e i
   assert.ok(pianteDellOrto(mappa.rovinaNellaCella(Math.floor(orto.tx0/64),Math.floor(orto.ty0/64))).has(OGGETTO.LINO_SELVATICO));
   assert.match(readFileSync(new URL('../gioco.js',import.meta.url),'utf8'),/puntoDiPartenza\(fattoria\?\.tx \?\? 0, fattoria\?\.ty \?\? 0\)/);
 });
+
+// --- M7.18.44: la luce e l'aria ------------------------------------------------
+
+// Il modulo si chiede dentro ogni prova: così, sul codice di prima, cadono
+// queste e non tutto il file.
+const effettiDi=()=>import('../arte/effetti.js');
+
+test('il colore dell’ora: rosato all’alba, caldo la sera, niente a mezzogiorno e di notte',async()=>{
+  const e=await effettiDi();
+  for(const ora of [0,3,9,12,15,16.4,21,23.5])assert.equal(e.coloreDellOra(ora).forza,0,'ora '+ora);
+  const alba=e.coloreDellOra(6.3),sera=e.coloreDellOra(18.8);
+  assert.ok(alba.forza>0.3&&alba.forza<=0.4);assert.equal(alba.colore,'rgb(255 178 132)');
+  assert.ok(sera.forza>0.45&&sera.forza<=0.5);assert.equal(sera.colore,'rgb(255 146 64)');
+  // Senza scalini: minuto per minuto cambia poco.
+  for(let m=0;m<24*60;m++){
+    const a=e.coloreDellOra(m/60).forza,b=e.coloreDellOra((m+1)/60).forza;
+    assert.ok(Math.abs(a-b)<0.02,`scalino alle ${m/60}`);
+  }
+  // Il gioco lo stende sopra il mondo e sotto il buio.
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  const i=(s)=>{const k=gioco.indexOf(s);assert.ok(k>0,s);return k;};
+  assert.ok(i('effetti.disegnaColoreDellOra(p, tempo.oraCorrente());')<i('disegnaBuio(secondi);'));
+});
+
+test('le ombre: sotto chi cammina e sotto le cose in piedi, non sotto i muri; il sole le sposta e la notte le toglie',async()=>{
+  const e=await effettiDi();
+  const albero={tipo:OGGETTO.ALBERO,x:0,y:0,base:32,sprite:{width:32}};
+  const mezzogiorno=e.ombraDi(albero,12.5,1),mattina=e.ombraDi(albero,7,1),sera=e.ombraDi(albero,18,1);
+  assert.equal(mezzogiorno.x,16);assert.equal(mezzogiorno.y,30.5,'ai piedi');
+  assert.ok(mattina.x<16&&sera.x>16,'la mattina a ovest, la sera a est');
+  assert.ok(mattina.rx>mezzogiorno.rx&&sera.rx>mezzogiorno.rx,'più lunghe col sole basso');
+  assert.equal(e.ombraDi(albero,23,0.1),null,'di notte niente ombre del sole');
+  assert.ok(e.ombraDi(albero,20,0.5).forza<mezzogiorno.forza,'al tramonto sbiadiscono');
+  for(const tipo of [OGGETTO.MURO,OGGETTO.MURO_ROTTO,OGGETTO.PORTA,OGGETTO.STECCATO,OGGETTO.CANCELLO])
+    assert.equal(e.ombraDi({tipo,x:0,base:16,sprite:{width:16}},12,1),null,'tipo '+tipo);
+  for(const tipo of ['giocatore','infetto',undefined])
+    assert.ok(e.ombraDi({tipo,x:0,base:16,sprite:{width:16}},12,1),'chi cammina: '+tipo);
+  // Il gioco le disegna prima delle cose in piedi.
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.ok(gioco.indexOf('effetti.disegnaOmbre(p, inPiedi')<gioco.indexOf('for (const cosa of inPiedi) schermo.disegna'));
+});
+
+test('la fiamma trema nel disegno, e la luce vera resta quella del catalogo',async()=>{
+  const e=await effettiDi();e.imposta(true);
+  const fuoco={x:120,y:88,raggio:64},altro={x:300,y:40,raggio:64};
+  const valori=[];for(let t=0;t<20;t+=0.05)valori.push(e.tremolio(fuoco,t));
+  assert.ok(Math.min(...valori)>0.88&&Math.max(...valori)<1.12);
+  assert.ok(Math.max(...valori)-Math.min(...valori)>0.1,'trema davvero');
+  assert.equal(e.tremolio(fuoco,3.2),e.tremolio({...fuoco},3.2),'stesso posto, stessa fiamma');
+  assert.notEqual(e.tremolio(fuoco,3.2),e.tremolio(altro,3.2),'due fuochi non tremano insieme');
+  assert.equal(e.tremolio({x:1,y:2,inMano:true},5),e.tremolio({x:90,y:7,inMano:true},5),'la torcia in mano non cambia ritmo camminando');
+  e.imposta(false);assert.equal(e.tremolio(fuoco,3.2),1,'spenti, niente tremolio');e.imposta(true);
+  // Il tremolio passa al buio come scala del disegno, e non tocca la luce.
+  const buio=readFileSync(new URL('../motore/oscurita.js',import.meta.url),'utf8');
+  assert.match(buio,/const raggio = luce\.raggio \* tremolio\(luce\);/);
+  assert.doesNotMatch(buio,/luce\.raggio\s*=[^=]/);
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/\(luce\) => effetti\.tremolio\(luce, secondi\)/);
+  assert.ok(gioco.indexOf('disegnaBuio(secondi);')<gioco.indexOf('effetti.disegnaBagliori(p, q, lumi, luce, secondi);'),'il calore sopra il buio');
+});
+
+test('fumo e scintille: il falò fa tutti e due, la torcia solo scintille, e c’è un tetto',async()=>{
+  const e=await effettiDi();e.imposta(true);
+  const corri=(lumi,secondi,da=0)=>{for(let t=da;t<=da+secondi;t+=1/60)e.aggiorna(t,lumi);return da+secondi;};
+  e.seminaParticelle(7);
+  corri([{x:100,y:100,raggio:64,intensita:1}],3);
+  // Circa tre scintille vive per volta (tre al secondo, un secondo di vita) e
+  // qualche sbuffo di fumo, che dura di più.
+  assert.ok(e.quanteParticelle('scintilla')>=2&&e.quanteParticelle('fumo')>=3,`scintille ${e.quanteParticelle('scintilla')}, fumo ${e.quanteParticelle('fumo')}`);
+  e.seminaParticelle(7);
+  corri([{x:100,y:100,raggio:46,intensita:0.9,inMano:true}],3);
+  assert.ok(e.quanteParticelle('scintilla')>0);assert.equal(e.quanteParticelle('fumo'),0,'la torcia non fuma');
+  e.seminaParticelle(7);
+  const trenta=[...Array(30)].map((_,i)=>({x:i*20,y:50,raggio:80}));
+  const fine=corri(trenta,10);
+  assert.ok(e.quanteParticelle()<=260,'tetto');
+  // Spento il fuoco, fumo e scintille finiscono.
+  corri([],6,fine);assert.equal(e.quanteParticelle(),0);
+  // Effetti spenti: niente particelle.
+  e.imposta(false);corri([{x:0,y:0,raggio:64}],2);assert.equal(e.quanteParticelle(),0);e.imposta(true);
+});
+
+test('l’acqua luccica di giorno, solo sull’acqua, e si chiede l’acqua a pochi tasselli',async()=>{
+  const e=await effettiDi();e.imposta(true);
+  const q={sinistra:0,sopra:0,destra:384,sotto:216};
+  let chieste=0;const sempre=()=>{chieste++;return true;};
+  let visti=0,campioni=0;
+  for(let t=0;t<6;t+=0.1){const l=e.luccichii(q,t,1,sempre);visti+=l.length;campioni++;
+    for(const p of l){assert.ok(p.forza>=0&&p.forza<=1);}
+  }
+  const media=visti/campioni;
+  assert.ok(media>5&&media<25,`luccichii per fotogramma: ${media.toFixed(1)}`);
+  assert.ok(chieste/campioni<24*14*0.3,'la domanda sull’acqua solo ai candidati');
+  assert.equal(e.luccichii(q,2,1,()=>false).length,0,'sulla terra niente');
+  assert.equal(e.luccichii(q,2,0.3,sempre).length,0,'di notte niente');
+  // Un luccichio sta dentro il suo tassello.
+  for(const p of e.luccichii(q,1.3,1,sempre)){assert.ok(p.x%16>=3&&p.x%16<=12&&p.y%16>=3&&p.y%16<=12);}
+});
+
+test('le lucciole: solo nelle notti d’estate, all’aperto e senza pioggia, ferme nel mondo',async()=>{
+  const e=await effettiDi();e.imposta(true);
+  const q={sinistra:0,sopra:0,destra:384,sotto:216};
+  const estate={stagione:'estate',luce:0.1};
+  let quante=0;for(let t=0;t<20;t+=0.5)quante+=e.lucciole(q,t,estate).length;
+  assert.ok(quante>20,`lucciole: ${quante}`);
+  for(const stato of [{stagione:'autunno',luce:0.1},{stagione:'estate',luce:0.9},{...estate,alChiuso:true},{...estate,piove:true}])
+    assert.equal(e.lucciole(q,4,stato).length,0,JSON.stringify(stato));
+  // Spostando la vista di poco, quelle che restano in vista sono le stesse.
+  const a=e.lucciole(q,7,estate),b=e.lucciole({sinistra:10,sopra:6,destra:394,sotto:222},7,estate);
+  const chiave=(l)=>`${l.x.toFixed(3)},${l.y.toFixed(3)}`;
+  const inB=new Set(b.map(chiave));
+  const dentro=a.filter(l=>l.x>=10+60&&l.x<=384-60&&l.y>=6+60&&l.y<=216-60);
+  assert.ok(dentro.every(l=>inB.has(chiave(l))));
+});
+
+test('gli effetti si accendono e si spengono con L, e la scelta resta nel browser',async()=>{
+  const e=await effettiDi();
+  const archivio=new Map();const prima=globalThis.localStorage;
+  globalThis.localStorage={getItem:(k)=>archivio.get(k)??null,setItem:(k,v)=>archivio.set(k,v)};
+  try{
+    e.imposta(true);assert.equal(e.attivi(),true);assert.equal(archivio.get('ultimo-raccolto/effetti'),'accesi');
+    assert.equal(e.alterna(),false);assert.equal(archivio.get('ultimo-raccolto/effetti'),'spenti');
+    assert.equal(e.coloreDellOra(18.8).forza>0,true,'il conto resta, è il disegno che si spegne');
+    assert.equal(e.alterna(),true);
+  }finally{globalThis.localStorage=prima;e.imposta(true);}
+  assert.match(readFileSync(new URL('../motore/comandi.js',import.meta.url),'utf8'),/KeyL: "luci"/);
+  const hud=await import('../interfaccia/hud.js');
+  assert.ok(hud.COMANDI.some(([t,c])=>t==='L'&&/EFFETTI DI LUCE/.test(c)));
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/comandi\.appenaPremuto\("luci"\)[\s\S]{0,80}effetti\.alterna\(\)/);
+  assert.match(readFileSync(new URL('../sw.js',import.meta.url),'utf8'),/"\.\/arte\/effetti\.js"/);
+});

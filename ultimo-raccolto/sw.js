@@ -11,7 +11,7 @@
 // dimenticato non darebbe errore online, e si scoprirebbe solo la prima volta
 // che qualcuno prova a giocare in treno.
 
-const VERSIONE = "ultimo-raccolto-v105";
+const VERSIONE = "ultimo-raccolto-v106";
 
 const RISORSE = [
   "./arte/luoghi.js",
@@ -84,6 +84,7 @@ const RISORSE = [
   "./regole/polli.js",
   "./regole/meteo.js",
   "./arte/atmosfera.js",
+  "./arte/effetti.js",
   "./regole/salvataggio.js",
   "./regole/sincronia.js",
   "./regole/stagioni.js",
