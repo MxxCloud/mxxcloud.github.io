@@ -12,6 +12,49 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.42 — imprevisti del raccolto: canicola e parassiti
+
+L'orto ha due nemici nuovi. Tutti e due si annunciano prima e si battono con
+gesti che esistono già: chiedono una scelta, non un lavoro in più.
+
+**La canicola.** Ogni estate uno dei giorni dal secondo al quarto è di
+canicola. Il giorno è sempre lo stesso per la stessa valle e lo stesso anno.
+- Si sa il giorno prima: nell'angolo del meteo c'è «DOMANI CANICOLA» in
+  rosso. Il giorno stesso c'è «CANICOLA: INNAFFIA TUTTO», e al mattino il
+  messaggio «oggi canicola: chi non beve, secca».
+- La notte che chiude la canicola, **ogni pianta spuntata che non è stata
+  innaffiata quel giorno secca subito**, senza il giorno di grazia. Anche se
+  il giorno prima non aveva sete. Chi innaffia non perde niente.
+- Il tasto davanti alla pianta non innaffiata lo dice: «canicola: senz'acqua
+  stanotte secca».
+- Per la sete la canicola conta come un giorno arido: vale due.
+
+**I parassiti.** In primavera, d'estate e d'autunno, **una notte su cinque
+in media una pianta dell'orto si infesta**. È una sola, per quante piante ci
+siano, e in inverno non succede.
+- Una pianta infestata ha dei **puntini neri** sulle foglie, e il tasto
+  davanti dice «parassiti: estirpa o spargi cenere».
+- **Ogni notte il contagio fa un passo:**
+  - le quattro piante vicine (sopra, sotto, a destra e a sinistra) si
+    infestano;
+  - la pianta infestata da una notte muore.
+  - Quindi ogni pianta infestata ha un giorno intero per essere salvata, e il
+    tasto avvisa quando «stanotte muore».
+- **I rimedi:**
+  - **estirparla con la X**, e il contagio si ferma lì;
+  - **spargerci la cenere** («Spargi la cenere sui parassiti»). La cenere
+    toglie i parassiti e **protegge la pianta fino al raccolto**: non si
+    infesta più. Si può spargere anche sulla terra già grassa; se la terra
+    non è grassa, la concima anche, come prima. La pollina concima ma non
+    cura.
+  - La pianta matura infestata si può anche raccogliere subito.
+- D'inverno il gelo ferma i parassiti come ferma il cavolo: non si
+  allargano e non uccidono, e a primavera ripartono da dove erano.
+- Al mattino si legge cosa è successo: «i parassiti sono nell'orto», «i
+  parassiti si allargano», «i parassiti hanno ucciso delle piante».
+
+I parassiti e la protezione della cenere si salvano con la partita.
+
 ## M7.18.41 — i tuoi segni sulla mappa
 
 Sulla mappa (TAB) puoi mettere **segni tuoi**, con un simbolo e un nome
@@ -2055,7 +2098,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.41**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.42**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -2766,7 +2809,7 @@ Da qui viene l'ordine, che non è quello immaginato all'inizio:
 | **M7.15** | L'essiccatoio | La carne impara ad aspettare: tre giorni di sole e tre stagioni di scorta. *Qui una struttura comincia a lavorare mentre non ci sei.* |
 | **M7.16** | L'orto si paga | I semi si guadagnano lasciando andare a seme, le piante hanno sete, un tassello non sfama più da solo. *Qui l'orto smette di essere una rendita.* |
 | **M7.17** | Cinque colture | Rapa, patata, fagioli, cavolo e lino: stagioni, rese e mestieri diversi, e semi da cercare nelle rovine. |
-| **M7.18** | La terra si stanca | La fertilità del tassello, la rotazione, il compost e la cenere, e le bestie che di notte mangiano l'orto. |
+| **M7.18** | La terra si stanca | La fertilità del tassello, la rotazione, il compost e la cenere, le bestie che di notte mangiano l'orto, la canicola e i parassiti. |
 | **M8** | Superstiti, abilità, rifinitura | |
 
 Le tappe con un numero in più — M7.5.1, M7.7.1, M7.8.1, M7.9.1, M7.9.2, M7.11.1 —

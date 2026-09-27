@@ -71,12 +71,19 @@ function sogliaDi(cambio) {
 
 // Quanta sete fa patire il giorno dato a chi non beve.
 function seteDi(giorno) {
-  return meteo.evento(giorno) === "arido" ? 2 : 1;
+  return meteo.arido(giorno) ? 2 : 1;
+}
+
+// Il giorno di canicola (M7.18.42) una pianta spuntata che nessuno ha
+// innaffiato secca la notte stessa, senza il giorno di grazia.
+function canicola(giorno) {
+  return meteo.evento(giorno) === "canicola";
 }
 
 // Una pianta assetata secca stanotte se nessuno la innaffia oggi? Serve a chi
 // la guarda: "ha sete" e "stanotte è morta" chiedono due fretta diverse.
 export function seccaStanotte(cambio, giorno = tempo.giornoCorrente()) {
+  if (canicola(giorno) && spuntata(cambio?.oggetto) && inCrescita(cambio?.oggetto) && !cambio.bagnato) return true;
   return (cambio?.secco ?? 0) + seteDi(giorno) >= sogliaDi(cambio);
 }
 
@@ -315,6 +322,10 @@ export function nuovoGiorno() {
       return;
     }
     if (!spuntata(cambio.oggetto)) return;
+    if (canicola(giorno - 1)) {
+      seccate.push({ tx, ty, cambio });
+      return;
+    }
     const secco = (cambio.secco ?? 0) + sete;
     // "Patito" resta scritto fino al raccolto: una pianta che ha avuto sete
     // non rende di più nemmeno su una terra grassa.
@@ -363,6 +374,7 @@ export function nuovoGiorno() {
     cresciute += 1;
   }
 
+  const parassitati = parassiti(giorno);
   const mangiate = bestie(giorno);
   const riposate = riposo(giorno);
 
@@ -385,6 +397,9 @@ export function nuovoGiorno() {
     aSeme: aSeme.length,
     mangiate,
     riposate,
+    parassitiNuovi: parassitati.nuovi,
+    parassitiContagiate: parassitati.contagiate,
+    parassitiUccise: parassitati.uccise,
     alBuio: alBuio.length,
     alChiuso: alChiuso.length,
   };
@@ -479,6 +494,104 @@ function bestie(giorno) {
   if (!scelta || protetta(scelta.tx, scelta.ty)) return 0;
   mappa.cambiaTassello(scelta.tx, scelta.ty, conLaTerra(scelta.cambio, { oggetto: OGGETTO.TERRA_ZAPPATA }));
   return 1;
+}
+
+// --- i parassiti (M7.18.42) ------------------------------------------------
+//
+// In primavera, d'estate e d'autunno, una notte su cinque in media una pianta
+// dell'orto si infesta: una sola, per quante piante ci siano. Da lì il
+// contagio fa un passo per notte — le quattro vicine si infestano — e la
+// pianta che era già infestata da una notte muore. Vuol dire che una pianta
+// infestata ha un giorno intero per essere salvata, e che si vede: i puntini
+// neri sulle foglie, e il tasto davanti che lo dice.
+//
+// I rimedi sono gesti che esistevano già: estirparla (X), o spargerci la
+// cenere, che la guarisce e la tiene sana fino al raccolto. Niente di nuovo da
+// imparare, e niente di ripetitivo: è una scelta — perdere una pianta o
+// spendere la cenere — non un lavoro da rifare ogni mattina.
+//
+// Il tiro è delle coordinate e del giorno, come le bestie: la stessa notte
+// nello stesso orto va sempre allo stesso modo.
+export const PROBABILITA_PARASSITI = 0.2;
+let parassitiAttivi = true;
+export function impostaParassiti(attivi) {
+  parassitiAttivi = attivi;
+}
+
+// Si può infestare: una pianta spuntata o matura, non già infestata e non
+// protetta dalla cenere.
+function infestabile(cambio) {
+  return cambio && PRELIBATE.has(cambio.oggetto) && !cambio.parassiti && !cambio.sana;
+}
+
+export function infestata(cambio) {
+  return eColtura(cambio?.oggetto) && (cambio?.parassiti ?? 0) > 0;
+}
+
+// Una pianta infestata da una notte muore stanotte, se nessuno fa niente.
+// D'inverno no: il gelo ferma i parassiti come ferma il cavolo, e a
+// primavera ripartono da dove erano.
+export function muoreDiParassiti(cambio, giorno = tempo.giornoCorrente()) {
+  return infestata(cambio) && cambio.parassiti >= 2 && stagioni.stagioneDi(giorno) !== "inverno";
+}
+
+function parassiti(giorno) {
+  const esito = { nuovi: 0, contagiate: 0, uccise: 0 };
+  if (!parassitiAttivi) return esito;
+  const stagione = stagioni.stagioneDi(giorno - 1);
+  if (stagione === "inverno") return esito;
+  const seme = mappa.semeCorrente().valore;
+
+  // Un passo solo per notte: si parte da una fotografia dell'orto, così una
+  // pianta infestata stanotte non contagia già stanotte le sue vicine.
+  const infestate = [];
+  modifiche.perOgnuno((tx, ty, cambio) => {
+    if (infestata(cambio)) infestate.push({ tx, ty, cambio });
+  });
+  const contagiate = new Map();
+  for (const { tx, ty } of infestate) {
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const vicino = modifiche.di(tx + dx, ty + dy);
+      if (infestabile(vicino)) contagiate.set(`${tx + dx},${ty + dy}`, { tx: tx + dx, ty: ty + dy, cambio: vicino });
+    }
+  }
+  for (const { tx, ty, cambio } of infestate) {
+    if (cambio.parassiti >= 2) {
+      mappa.cambiaTassello(tx, ty, conLaTerra(cambio, { oggetto: OGGETTO.APPASSITA }));
+      esito.uccise += 1;
+    } else {
+      mappa.cambiaTassello(tx, ty, { ...cambio, parassiti: 2 });
+    }
+  }
+  for (const { tx, ty, cambio } of contagiate.values()) {
+    mappa.cambiaTassello(tx, ty, { ...cambio, parassiti: 1 });
+    esito.contagiate += 1;
+  }
+
+  // Lo scoppio: una notte su cinque, una pianta sola.
+  if (impronta(giorno, 0, seme ^ 0x7a2a5171) < PROBABILITA_PARASSITI) {
+    let scelta = null;
+    let punteggio = Infinity;
+    modifiche.perOgnuno((tx, ty, cambio) => {
+      if (!infestabile(cambio)) return;
+      const p = impronta(tx + giorno * 11, ty - giorno * 5, seme ^ 0x2b9e44c3);
+      if (p < punteggio) {
+        punteggio = p;
+        scelta = { tx, ty, cambio };
+      }
+    });
+    if (scelta) {
+      mappa.cambiaTassello(scelta.tx, scelta.ty, { ...scelta.cambio, parassiti: 1 });
+      esito.nuovi = 1;
+    }
+  }
+  return esito;
+}
+
+// La cenere sulla pianta infestata: via i parassiti, e sana fino al raccolto.
+export function guarita(cambio) {
+  const { parassiti: _, ...resto } = cambio;
+  return { ...resto, sana: true };
 }
 
 export function innaffia(tx, ty, oggetto) {

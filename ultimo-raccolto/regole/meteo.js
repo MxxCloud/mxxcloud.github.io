@@ -1,5 +1,8 @@
 // Un giorno di maltempo per stagione, stabile per valle e anno: ricaricare
-// non cambia le previsioni. L'estate è invece arida per tutti e quattro i giorni.
+// non cambia le previsioni. L'estate è invece arida per tutti e quattro i giorni,
+// e da M7.18.42 uno di questi, dal secondo al quarto, è la canicola: vale come
+// arido, e in più le piante non innaffiate quel giorno seccano la notte
+// stessa (vedi orto.js). Si annuncia il giorno prima, come la pioggia.
 import * as tempo from "./tempo.js";
 import * as stagioni from "./stagioni.js";
 import * as mappa from "../mondo/mappa.js";
@@ -13,12 +16,22 @@ import * as orto from "./orto.js";
 
 export function evento(giorno = tempo.giornoCorrente()) {
   const stagione = stagioni.stagioneDi(giorno);
-  if (stagione === "estate") return "arido";
   const durata = stagioni.GIORNI_PER_STAGIONE;
   const periodo = Math.floor((giorno-1)/durata);
+  if (stagione === "estate") {
+    const canicola = 2 + Math.floor(impronta(periodo, 1, mappa.semeCorrente().valore ^ 0x5ca1d0) * (durata-1));
+    return stagioni.giornoNellaStagione(giorno) === Math.min(canicola, durata) ? "canicola" : "arido";
+  }
   const scelto = 2 + Math.floor(impronta(periodo, 0, mappa.semeCorrente().valore ^ 0x71ae0) * (durata-2));
   if (stagioni.giornoNellaStagione(giorno) !== scelto) return "sereno";
   return stagione === "inverno" ? "neve" : "pioggia";
+}
+
+// Arido o canicola: la canicola è un giorno arido più cattivo, e tutto quello
+// che guarda l'arido deve guardare anche lei.
+export function arido(giorno = tempo.giornoCorrente()) {
+  const e = evento(giorno);
+  return e === "arido" || e === "canicola";
 }
 
 let bagnato = 0;

@@ -319,3 +319,25 @@ export function tuttiIDisegni() {
   return Object.entries(DISEGNI).flatMap(([coltura, stadi]) =>
     Object.entries(stadi).map(([stadio, righe]) => ({ coltura, stadio, righe })));
 }
+
+// I parassiti (M7.18.42): puntini scuri sparsi sulle foglie, sopra qualunque
+// stadio. Il contorno "r" e non un colore nuovo: da lontano devono leggersi
+// come qualcosa che non dovrebbe esserci, non come un'altra pianta.
+export const PARASSITI = [
+  "................",
+  "................",
+  "................",
+  "......r.........",
+  "..........r.....",
+  "....r...........",
+  "........r...r...",
+  "...r............",
+  ".......r...r....",
+  "....r...........",
+  "..........r.....",
+  "......r.........",
+  "................",
+  "................",
+  "................",
+  "................",
+];

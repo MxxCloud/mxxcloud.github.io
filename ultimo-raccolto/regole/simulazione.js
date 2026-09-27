@@ -12,7 +12,7 @@ import * as ricrescita from "./ricrescita.js";
 import * as polli from "./polli.js";
 
 const vuoto = () => ({ uovaDeposte: 0, pulciniNati: 0, pulciniCresciuti: [], polliNelloZaino: 0, polloDomani: 0, polliScappati: 0, pulciniPersi: 0, polliAffamati: 0, polliDiFame: 0, polliDiFreddo: 0,
-  cresciute: 0, appassite: 0, seccate: 0, alBuio: 0, alChiuso: 0, assetate: 0, aSeme: 0, mangiate: 0, spentiLegna: 0, spentiPioggia: 0, torceFinite: 0, guaste: 0, inScadenza: 0, tornati: 0, risvegliForzati: 0 });
+  cresciute: 0, appassite: 0, seccate: 0, alBuio: 0, alChiuso: 0, assetate: 0, aSeme: 0, mangiate: 0, parassitiNuovi: 0, parassitiContagiate: 0, parassitiUccise: 0, spentiLegna: 0, spentiPioggia: 0, torceFinite: 0, guaste: 0, inScadenza: 0, tornati: 0, risvegliForzati: 0 });
 let eventi = vuoto();
 
 export function resoconto() {
@@ -75,6 +75,9 @@ export function avanza(secondi, { eroe = null, dorme = false, nelLetto = false, 
       eventi.seccate += orti.seccate;
       eventi.aSeme += orti.aSeme;
       eventi.mangiate += orti.mangiate;
+      eventi.parassitiNuovi += orti.parassitiNuovi;
+      eventi.parassitiContagiate += orti.parassitiContagiate;
+      eventi.parassitiUccise += orti.parassitiUccise;
       eventi.alBuio += orti.alBuio;
       // Come le assetate: è lo stato di stamattina, non una somma.
       eventi.alChiuso = orti.alChiuso;
