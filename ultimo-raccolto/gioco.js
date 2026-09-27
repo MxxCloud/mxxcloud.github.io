@@ -75,7 +75,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.44";
+const VERSIONE = "M7.18.45";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1720,13 +1720,13 @@ function disegna() {
   // Gli effetti (M7.18.44) contano in secondi veri: il fumo sale e la
   // fiamma trema anche a gioco fermo.
   const p = schermo.pennello();
-  const q = schermo.inquadratura();
+  const camera = schermo.camera;
   const secondi = performance.now() / 1000;
   const luce = tempo.luceAmbiente();
   raccogliLumi();
   effetti.aggiorna(secondi, lumi, { piove: meteo.evento() === "pioggia" });
   // Le ombre per terra, prima di tutto quello che ci sta in piedi sopra.
-  effetti.disegnaOmbre(p, inPiedi, q, tempo.oraCorrente(), luce);
+  effetti.disegnaOmbre(p, inPiedi, camera, tempo.oraCorrente(), luce);
 
   for (const cosa of inPiedi) schermo.disegna(cosa.sprite, cosa.x + tremolioDi(cosa), cosa.y);
 
@@ -1747,16 +1747,16 @@ function disegna() {
   // l'acqua che luccica per la stessa ragione, e il colore dell'ora sopra
   // tutto il mondo ma sotto il buio, che ha già la sua tinta.
   scheggie.disegna();
-  effetti.disegnaFumo(p, q);
-  effetti.disegnaLuccichii(p, q, secondi, luce, eAcqua);
+  effetti.disegnaFumo(p, camera);
+  effetti.disegnaLuccichii(p, camera, secondi, { ora: tempo.oraCorrente(), stagione: stagioni.stagioneCorrente() }, eAcqua);
   atmosfera.disegna(p, meteo.evento(), tempo.giornoCorrente()*tempo.SECONDI_PER_GIORNO + tempo.oraCorrente()/24*tempo.SECONDI_PER_GIORNO, riparo.stanza());
   effetti.disegnaColoreDellOra(p, tempo.oraCorrente());
   disegnaBuio(secondi);
   // Dopo il buio quello che ha luce sua: il calore dei fuochi, le scintille,
   // le lucciole.
-  effetti.disegnaBagliori(p, q, lumi, luce, secondi);
-  effetti.disegnaScintille(p, q);
-  effetti.disegnaLucciole(p, q, secondi, {
+  effetti.disegnaBagliori(p, camera, lumi, luce, secondi);
+  effetti.disegnaScintille(p, camera);
+  effetti.disegnaLucciole(p, camera, secondi, {
     stagione: stagioni.stagioneCorrente(), luce, alChiuso: riparo.alChiuso(), piove: meteo.evento() === "pioggia",
   });
   // Dopo il buio e prima dell'interfaccia: il lampo è una cosa che succede

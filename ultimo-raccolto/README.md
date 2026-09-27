@@ -12,6 +12,26 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.45 — la luce e l'aria, ritoccate
+
+Le correzioni dopo la prima prova di M7.18.44.
+- **La luce dei fuochi è a metà strada** fra quella di prima e quella di
+  M7.18.44: resta calda, ma la notte attorno a un fuoco non si fa più così
+  chiara.
+- **Le ombre seguono la forma vera delle cose.** Si misura quello che si
+  vede davvero in ogni disegno: un sasso è largo quattordici pixel e tocca
+  terra con quattro. L'ombra è un'ovale piatta appena sotto la base, larga
+  quanto la cosa, e così i sassi e i cespugli sembrano appoggiati invece di
+  avere un alone scuro attorno. È disegnata a pixel pieni, senza sfumature.
+- **Le ombre non tremano più camminando.** Il gioco mette ogni disegno sul
+  pixel intero più vicino, e l'ombra adesso fa lo stesso, sempre alla stessa
+  distanza dalla sua cosa. Prima, mentre la vista scorreva, ballava di un
+  pixel.
+- **L'acqua luccica meno e solo col sole alto**: in primavera e d'estate,
+  dalle dieci alle sedici, e più rada (la metà). La mattina, la sera,
+  d'autunno e d'inverno non luccica.
+- **Le lucciole sono la metà.**
+
 ## M7.18.44 — la luce e l'aria
 
 Il primo passo dell'upgrade grafico. I disegni restano quelli; cambiano la
@@ -2148,7 +2168,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.44**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.45**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
