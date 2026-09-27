@@ -12,6 +12,34 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.44 — la luce e l'aria
+
+Il primo passo dell'upgrade grafico. I disegni restano quelli; cambiano la
+luce e l'aria che ci passano sopra.
+- **Il fuoco scalda la notte.** Torce, falò e focolari fanno una pozza di
+  luce calda e arancione, con un cuore più chiaro, che **trema** come una
+  fiamma. Prima erano buchi grigi nel buio.
+- **L'alba e il tramonto hanno un colore.** L'alba è rosata. La sera, dalle
+  16:30, la luce si scalda fino al tramonto e poi lascia il posto al buio. Una
+  vignetta leggera tiene l'occhio al centro.
+- **Le ombre.** Chi cammina e le cose in piedi (alberi, sassi, cespugli,
+  casse, fuochi, spaventapasseri, pozzi, carri) hanno un'ombra morbida. La
+  mattina cade a ovest e la sera a est, più lunga col sole basso; di notte
+  sparisce. I muri e gli steccati non ne hanno.
+- **Fumo e scintille.** Falò e focolari fanno fumo e scintille; la torcia,
+  anche in mano, solo scintille. Il fumo resta sopra il suo fuoco anche se ti
+  sposti.
+- **L'acqua luccica** al sole, a lampi sparsi; quella gelata no.
+- **Le lucciole**, nelle notti d'estate, all'aperto e senza pioggia.
+
+**Si accende e si spegne con L**, per confrontare col prima; la scelta resta
+nel browser, come il volume. Parte accesa.
+
+È solo disegno: nessuna regola cambia. La luce che tiene lontani gli
+infetti è quella di sempre, il tremolio muove il disegno e non il raggio vero.
+Le foglie gialle della sete e i puntini dei parassiti restano leggibili sotto
+i colori dell'ora. Il gioco resta a 60 fotogrammi al secondo.
+
 ## M7.18.43 — il lino è sempre vicino
 
 Il lino dà il filo, e il filo apre il secondo gradino: letto, lenza, bende
@@ -2120,7 +2148,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.43**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.44**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

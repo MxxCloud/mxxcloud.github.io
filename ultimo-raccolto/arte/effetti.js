@@ -1,0 +1,424 @@
+// La luce e l'aria (M7.18.44): il primo passo dell'upgrade grafico.
+//
+// Non si ridisegna niente. I disegni restano quelli, a 384×216 e a sedici
+// pixel per tassello; cambia quello che ci passa sopra e sotto:
+//
+// - la luce di torce e fuochi è calda e trema, invece di un buco grigio nel
+//   buio;
+// - l'alba e il tramonto hanno un colore loro, e non solo di notte;
+// - le cose in piedi hanno un'ombra morbida, che il sole allunga la mattina
+//   e la sera;
+// - i fuochi fanno fumo e scintille;
+// - l'acqua luccica al sole;
+// - nelle notti d'estate ci sono le lucciole.
+//
+// Tutto è solo disegno: niente di quello che sta qui cambia una regola. Il
+// raggio delle luci che tiene lontani gli infetti resta quello del catalogo
+// — il tremolio allarga e stringe il disegno, non la luce vera — e gli avvisi
+// del gioco (le foglie gialle della sete, i puntini dei parassiti) restano
+// sotto colori che li scaldano senza coprirli.
+//
+// Si accende e si spegne col tasto L, e la scelta sta in localStorage come
+// il volume: è una cosa dello schermo di chi gioca, non della valle.
+//
+// Le parti di conto sono funzioni pure — che colore ha quest'ora, dove cade
+// un'ombra, quanto trema una fiamma, dove luccica l'acqua — e si provano
+// senza un browser; il disegno le chiama e basta.
+
+import { impronta, generatore } from "../motore/casuale.js";
+import { OGGETTO } from "../mondo/generazione.js";
+
+const LARGHEZZA = 384;
+const ALTEZZA = 216;
+const TASSELLO = 16;
+
+// --- acceso o spento ---------------------------------------------------------
+
+const CHIAVE = "ultimo-raccolto/effetti";
+let accesi = leggi();
+
+function leggi() {
+  try {
+    return globalThis.localStorage?.getItem(CHIAVE) !== "spenti";
+  } catch {
+    return true;
+  }
+}
+
+export function attivi() {
+  return accesi;
+}
+
+export function imposta(valore) {
+  accesi = Boolean(valore);
+  try {
+    globalThis.localStorage?.setItem(CHIAVE, accesi ? "accesi" : "spenti");
+  } catch {
+    // Non poterlo ricordare non è un guasto: vale per questa volta.
+  }
+  if (!accesi) svuota();
+  return accesi;
+}
+
+export function alterna() {
+  return imposta(!accesi);
+}
+
+// --- il colore dell'ora --------------------------------------------------------
+
+// Due passaggi e basta: la notte ha già la sua tinta nel buio (vedi
+// regole/tempo.js), e il mezzogiorno non ha bisogno di nessuno. L'alba è
+// rosata e breve; la sera comincia due ore prima del tramonto e si fa più
+// calda fino a che il buio la copre.
+const ALBA = { centro: 6.3, mezza: 1.8, forza: 0.36, colore: [255, 178, 132] };
+const SERA = { da: 16.5, picco: 18.8, a: 21, forza: 0.5, colore: [255, 146, 64] };
+
+export function coloreDellOra(ora) {
+  const alba = Math.max(0, 1 - Math.abs(ora - ALBA.centro) / ALBA.mezza);
+  let sera = 0;
+  if (ora > SERA.da && ora <= SERA.picco) sera = (ora - SERA.da) / (SERA.picco - SERA.da);
+  else if (ora > SERA.picco && ora < SERA.a) sera = 1 - (ora - SERA.picco) / (SERA.a - SERA.picco);
+  // Ammorbidito: una rampa dritta si vede cominciare.
+  const liscia = (x) => x * x * (3 - 2 * x);
+  const a = liscia(alba) * ALBA.forza;
+  const s = liscia(sera) * SERA.forza;
+  if (a <= 0 && s <= 0) return { forza: 0, colore: null };
+  return a >= s
+    ? { forza: a, colore: `rgb(${ALBA.colore.join(" ")})` }
+    : { forza: s, colore: `rgb(${SERA.colore.join(" ")})` };
+}
+
+export function disegnaColoreDellOra(p, ora) {
+  if (!accesi) return;
+  const { forza, colore } = coloreDellOra(ora);
+  p.save();
+  if (forza > 0) {
+    // "soft-light" scalda e dà un filo di contrasto senza velare: un
+    // "source-over" arancione sarebbe una pellicola sul vetro, e le foglie
+    // gialle della sete si confonderebbero col resto.
+    p.globalCompositeOperation = "soft-light";
+    p.globalAlpha = forza;
+    p.fillStyle = colore;
+    p.fillRect(0, 0, LARGHEZZA, ALTEZZA);
+  }
+  // Una vignetta leggera, sempre: tiene l'occhio al centro, dove sei tu.
+  p.globalCompositeOperation = "source-over";
+  p.globalAlpha = 1;
+  const v = p.createRadialGradient(LARGHEZZA / 2, ALTEZZA / 2, ALTEZZA * 0.45, LARGHEZZA / 2, ALTEZZA / 2, LARGHEZZA * 0.62);
+  v.addColorStop(0, "rgb(0 0 0 / 0)");
+  v.addColorStop(1, "rgb(0 0 0 / 0.22)");
+  p.fillStyle = v;
+  p.fillRect(0, 0, LARGHEZZA, ALTEZZA);
+  p.restore();
+}
+
+// --- le ombre --------------------------------------------------------------------
+
+// Chi ha un'ombra: chi cammina (le entità, che hanno un tipo a parole —
+// "giocatore", "infetto" — o nessuno) e le cose del mondo che stanno in piedi,
+// che hanno il numero del loro OGGETTO. Non i muri, le porte e gli steccati: sono
+// costruzioni lunghe, e un'ombra a ogni tassello si leggerebbe come una riga
+// sporca alla base di ogni parete.
+const CON_OMBRA = new Set([
+  OGGETTO.ALBERO, OGGETTO.SASSO, OGGETTO.CESPUGLIO, OGGETTO.CASSA, OGGETTO.BANCO,
+  OGGETTO.CARRO, OGGETTO.POZZO, OGGETTO.TRONCO, OGGETTO.ESSICCATOIO, OGGETTO.ESSICCATOIO_CARICO,
+  OGGETTO.ESSICCATOIO_PRONTO, OGGETTO.SPAVENTAPASSERI, OGGETTO.SPAVENTAPASSERI_ROTTO, OGGETTO.POLLAIO,
+  OGGETTO.FALO_ACCESO, OGGETTO.FALO_SPENTO, OGGETTO.FOCOLARE_ACCESO, OGGETTO.FOCOLARE_SPENTO,
+  OGGETTO.TORCIA_PIANTATA,
+]);
+
+// Dove cade l'ombra di una cosa a quest'ora, in coordinate del mondo, o
+// niente. Il sole va da est a ovest, quindi la mattina l'ombra scivola a
+// ovest e la sera a est, più lunga; a mezzogiorno sta sotto i piedi. Di notte
+// sparisce: la luce che c'è viene dai fuochi, e un'ombra del sole sarebbe
+// una bugia.
+export function ombraDi(cosa, ora, luce) {
+  if (typeof cosa.tipo === "number" && !CON_OMBRA.has(cosa.tipo)) return null;
+  const larghezza = cosa.sprite?.width ?? TASSELLO;
+  const forza = 0.3 * Math.min(1, Math.max(0, (luce - 0.25) / 0.6));
+  if (forza <= 0) return null;
+  const sole = Math.max(-1, Math.min(1, (ora - 12.5) / 6.5));
+  const rx = Math.min(larghezza * 0.4, 12) * (1 + 0.35 * Math.abs(sole));
+  return {
+    x: cosa.x + larghezza / 2 + sole * 3,
+    y: cosa.base - 1.5,
+    rx,
+    ry: Math.max(2, Math.min(larghezza * 0.4, 12) * 0.36),
+    forza,
+  };
+}
+
+// Sotto tutte le cose in piedi, prima di disegnarle: un'ombra sta per terra,
+// e quella di un albero non deve coprire chi gli passa davanti.
+export function disegnaOmbre(p, cose, q, ora, luce) {
+  if (!accesi) return;
+  p.save();
+  p.fillStyle = "rgb(22 18 30)";
+  for (const cosa of cose) {
+    const o = ombraDi(cosa, ora, luce);
+    if (!o) continue;
+    p.globalAlpha = o.forza;
+    p.beginPath();
+    p.ellipse(o.x - q.sinistra, o.y - q.sopra, o.rx, o.ry, 0, 0, Math.PI * 2);
+    p.fill();
+  }
+  p.restore();
+}
+
+// --- la fiamma che trema ---------------------------------------------------------
+
+// Quanto è grande adesso il disegno di una luce rispetto al suo raggio: tre
+// onde di passo diverso, così il tremolio non si ripete a occhio. La fase
+// viene dal posto, perché due fuochi vicini non tremino insieme; quella in
+// mano ha la sua, se no camminando cambierebbe ritmo a ogni passo.
+export function tremolio(luce, secondi) {
+  if (!accesi) return 1;
+  const fase = luce.inMano ? 1.3 : ((luce.x * 0.37 + luce.y * 0.61) % 6.283);
+  return 1 + 0.05 * Math.sin(secondi * 8.3 + fase) + 0.035 * Math.sin(secondi * 19.7 + fase * 2.3)
+    + 0.02 * Math.sin(secondi * 31 + fase * 0.7);
+}
+
+// Il calore sopra il buio: una pozza arancione, sommata e non stesa, che
+// conta solo quando fa scuro. Di giorno il fuoco non illumina niente.
+export function disegnaBagliori(p, q, lumi, luce, secondi) {
+  if (!accesi) return;
+  const notte = 1 - luce;
+  if (notte <= 0.02) return;
+  p.save();
+  p.globalCompositeOperation = "lighter";
+  for (const l of lumi) {
+    const t = tremolio(l, secondi);
+    const raggio = l.raggio * 0.95 * t;
+    const x = l.x - q.sinistra;
+    const y = l.y - q.sopra;
+    if (x + raggio < 0 || x - raggio > LARGHEZZA || y + raggio < 0 || y - raggio > ALTEZZA) continue;
+    const k = notte * Math.min(1, l.intensita ?? 1) * (0.85 + 0.15 * t);
+    const g = p.createRadialGradient(x, y, 0, x, y, raggio);
+    g.addColorStop(0, `rgb(255 176 92 / ${0.34 * k})`);
+    g.addColorStop(0.3, `rgb(255 128 48 / ${0.17 * k})`);
+    g.addColorStop(1, "rgb(255 90 20 / 0)");
+    p.fillStyle = g;
+    p.fillRect(x - raggio, y - raggio, raggio * 2, raggio * 2);
+    // Il cuore della fiamma, piccolo e chiaro.
+    const c = p.createRadialGradient(x, y, 0, x, y, 7 * t);
+    c.addColorStop(0, `rgb(255 230 170 / ${0.5 * k})`);
+    c.addColorStop(1, "rgb(255 200 120 / 0)");
+    p.fillStyle = c;
+    p.fillRect(x - 8, y - 8, 16, 16);
+  }
+  p.restore();
+}
+
+// --- fumo e scintille ------------------------------------------------------------
+
+// Particelle nel mondo, non sullo schermo: se ti sposti, il fumo resta sopra
+// il suo fuoco. Il fumo solo dai fuochi veri — falò e focolare, che hanno la
+// luce più larga — e le scintille da tutto quello che brucia, torcia in mano
+// compresa. Un tetto al numero, perché una notte con dieci fuochi non diventi
+// una nebbia.
+const MASSIMO = 260;
+const particelle = [];
+const accumulati = new Map();
+let caso = null;
+let ultimo = null;
+
+function pronto() {
+  if (caso) return;
+  const numero = new Uint32Array(1);
+  globalThis.crypto?.getRandomValues?.(numero);
+  caso = generatore(numero[0] || 0x5eed);
+}
+
+// I collaudi fissano il caso; il gioco no.
+export function seminaParticelle(seme) {
+  caso = generatore(seme >>> 0);
+  svuota();
+}
+
+export function svuota() {
+  particelle.length = 0;
+  accumulati.clear();
+  ultimo = null;
+}
+
+export function quanteParticelle(tipo) {
+  return tipo ? particelle.filter((x) => x.tipo === tipo).length : particelle.length;
+}
+
+function emetti(tipo, l) {
+  if (particelle.length >= MASSIMO) return;
+  const scintilla = tipo === "scintilla";
+  particelle.push({
+    tipo,
+    x: l.x + (caso() - 0.5) * (scintilla ? 4 : 5),
+    y: l.y - (scintilla ? 2 : 5),
+    vx: (caso() - 0.5) * (scintilla ? 10 : 4),
+    vy: -(scintilla ? 14 + caso() * 10 : 6 + caso() * 4),
+    eta: 0,
+    vita: scintilla ? 0.7 + caso() * 0.7 : 2.8 + caso() * 1.4,
+    fase: caso() * 6.283,
+  });
+}
+
+// Un passo del tempo vero. Si chiede l'ora del browser e non il passo del
+// gioco perché il fumo sale anche a gioco fermo, com'è giusto che faccia
+// una finestra aperta su un posto.
+export function aggiorna(secondi, lumi, { piove = false } = {}) {
+  if (!accesi) return;
+  pronto();
+  const passo = ultimo === null ? 0 : Math.min(0.1, Math.max(0, secondi - ultimo));
+  ultimo = secondi;
+  const visti = new Set();
+  for (const l of lumi) {
+    const chiave = l.inMano ? "mano" : `${Math.round(l.x)},${Math.round(l.y)}`;
+    visti.add(chiave);
+    const conto = accumulati.get(chiave) ?? { scintille: 0, fumo: 0 };
+    conto.scintille += passo * (l.inMano ? 1.5 : 3.2);
+    // Sotto la pioggia il fumo si schiaccia: meno, e più grigio.
+    if (l.raggio >= 60) conto.fumo += passo * (piove ? 0.8 : 1.6);
+    while (conto.scintille >= 1) { conto.scintille -= 1; emetti("scintilla", l); }
+    while (conto.fumo >= 1) { conto.fumo -= 1; emetti("fumo", l); }
+    accumulati.set(chiave, conto);
+  }
+  for (const chiave of accumulati.keys()) if (!visti.has(chiave)) accumulati.delete(chiave);
+  for (let i = particelle.length - 1; i >= 0; i -= 1) {
+    const s = particelle[i];
+    s.eta += passo;
+    if (s.eta >= s.vita) { particelle.splice(i, 1); continue; }
+    s.x += (s.vx + Math.sin(s.eta * 3 + s.fase) * (s.tipo === "fumo" ? 3 : 6)) * passo;
+    s.y += s.vy * passo;
+  }
+}
+
+// Il fumo prima del buio: di notte si spegne con tutto il resto, e resta
+// visibile solo dove c'è luce — com'è il fumo vero.
+export function disegnaFumo(p, q) {
+  if (!accesi) return;
+  p.save();
+  for (const s of particelle) {
+    if (s.tipo !== "fumo") continue;
+    const k = s.eta / s.vita;
+    const r = 1.5 + k * 4;
+    p.globalAlpha = 0.22 * (1 - k) * Math.min(1, s.eta * 4);
+    p.fillStyle = "rgb(150 146 140)";
+    p.beginPath();
+    p.arc(s.x - q.sinistra, s.y - q.sopra, r, 0, Math.PI * 2);
+    p.fill();
+  }
+  p.restore();
+}
+
+// Le scintille dopo il buio: brillano di luce loro.
+export function disegnaScintille(p, q) {
+  if (!accesi) return;
+  p.save();
+  p.globalCompositeOperation = "lighter";
+  for (const s of particelle) {
+    if (s.tipo !== "scintilla") continue;
+    const k = s.eta / s.vita;
+    p.globalAlpha = (1 - k) * (0.6 + 0.4 * Math.sin(s.eta * 30 + s.fase));
+    p.fillStyle = k < 0.4 ? "rgb(255 220 130)" : "rgb(255 130 50)";
+    p.fillRect(Math.round(s.x - q.sinistra), Math.round(s.y - q.sopra), 1, 1);
+  }
+  p.restore();
+}
+
+// --- l'acqua al sole ---------------------------------------------------------------
+
+// Dove luccica l'acqua adesso. Ogni tassello ha il suo giro di tre secondi e
+// in quel giro, per mezzo secondo, forse luccica: un tassello su quattro. Si
+// chiede se è acqua solo a quelli, che sono pochi, e non a tutti quelli in
+// vista a ogni fotogramma. Su uno specchio d'acqua che riempie la vista ne
+// brillano una decina alla volta.
+const GIRO_ACQUA = 3;
+const LAMPO = 0.5;
+export function luccichii(q, secondi, luce, eAcqua) {
+  if (!accesi || luce < 0.5) return [];
+  const trovati = [];
+  const x0 = Math.floor(q.sinistra / TASSELLO), x1 = Math.floor((q.destra - 1) / TASSELLO);
+  const y0 = Math.floor(q.sopra / TASSELLO), y1 = Math.floor((q.sotto - 1) / TASSELLO);
+  for (let ty = y0; ty <= y1; ty += 1) {
+    for (let tx = x0; tx <= x1; tx += 1) {
+      const tempo = secondi / GIRO_ACQUA + impronta(tx, ty, 0x51a7);
+      const giro = Math.floor(tempo);
+      const dentro = (tempo - giro) * GIRO_ACQUA;
+      if (dentro > LAMPO || impronta(tx, ty, giro) > 0.25) continue;
+      if (!eAcqua(tx, ty)) continue;
+      trovati.push({
+        x: tx * TASSELLO + 3 + Math.floor(impronta(tx, giro, 0x3c) * 10),
+        y: ty * TASSELLO + 3 + Math.floor(impronta(giro, ty, 0x3d) * 10),
+        forza: Math.sin((dentro / LAMPO) * Math.PI) * luce,
+      });
+    }
+  }
+  return trovati;
+}
+
+export function disegnaLuccichii(p, q, secondi, luce, eAcqua) {
+  if (!accesi) return;
+  const lista = luccichii(q, secondi, luce, eAcqua);
+  if (lista.length === 0) return;
+  p.save();
+  p.fillStyle = "rgb(236 248 255)";
+  for (const l of lista) {
+    // Un trattino che si allunga e si accorcia col lampo, più chiaro al
+    // centro, e al culmine una scintilla sopra: il riflesso del sole su
+    // un'onda, non un pixel bianco.
+    const x = l.x - q.sinistra, y = l.y - q.sopra;
+    const mezzo = l.forza > 0.6 ? 2 : 1;
+    p.globalAlpha = 0.5 * l.forza;
+    p.fillRect(x - mezzo, y, mezzo * 2 + 1, 1);
+    p.globalAlpha = 0.95 * l.forza;
+    p.fillRect(x, y, 1, 1);
+    if (l.forza > 0.8) {
+      p.globalAlpha = 0.6 * l.forza;
+      p.fillRect(x, y - 1, 1, 1);
+    }
+  }
+  p.restore();
+}
+
+// --- le lucciole -------------------------------------------------------------------
+
+// Nelle notti d'estate, all'aperto e senza pioggia. Stanno su una maglia del
+// mondo — una cella di tre tasselli su tre, e in una su tre c'è una lucciola
+// — così non spariscono e ricompaiono quando la vista si sposta: girano
+// attorno al loro posto, e si accendono e spengono ognuna col suo ritmo.
+const MAGLIA = 48;
+export function lucciole(q, secondi, { stagione, luce, alChiuso = false, piove = false }) {
+  if (!accesi || stagione !== "estate" || luce > 0.45 || alChiuso || piove) return [];
+  const trovate = [];
+  const buio = Math.min(1, (0.45 - luce) / 0.25);
+  for (let cy = Math.floor(q.sopra / MAGLIA) - 1; cy <= Math.floor(q.sotto / MAGLIA) + 1; cy += 1) {
+    for (let cx = Math.floor(q.sinistra / MAGLIA) - 1; cx <= Math.floor(q.destra / MAGLIA) + 1; cx += 1) {
+      if (impronta(cx, cy, 0x1ecc) > 0.33) continue;
+      const fase = impronta(cx, cy, 0x1ecd) * 6.283;
+      const x = (cx + 0.5) * MAGLIA + Math.sin(secondi * 0.35 + fase) * 18 + Math.sin(secondi * 0.9 + fase * 2) * 5;
+      const y = (cy + 0.5) * MAGLIA + Math.cos(secondi * 0.27 + fase) * 12 + Math.sin(secondi * 1.3 + fase) * 3;
+      const accesa = Math.pow(Math.max(0, Math.sin(secondi * (0.9 + fase * 0.1) + fase)), 3);
+      if (accesa < 0.05) continue;
+      trovate.push({ x, y, forza: accesa * buio });
+    }
+  }
+  return trovate;
+}
+
+export function disegnaLucciole(p, q, secondi, stato) {
+  const lista = lucciole(q, secondi, stato);
+  if (lista.length === 0) return;
+  p.save();
+  p.globalCompositeOperation = "lighter";
+  for (const l of lista) {
+    const x = Math.round(l.x - q.sinistra), y = Math.round(l.y - q.sopra);
+    const alone = p.createRadialGradient(x + 0.5, y + 0.5, 0, x + 0.5, y + 0.5, 4);
+    alone.addColorStop(0, `rgb(200 255 120 / ${0.45 * l.forza})`);
+    alone.addColorStop(1, "rgb(200 255 120 / 0)");
+    p.fillStyle = alone;
+    p.fillRect(x - 4, y - 4, 9, 9);
+    p.globalAlpha = l.forza;
+    p.fillStyle = "rgb(236 255 170)";
+    p.fillRect(x, y, 1, 1);
+    p.globalAlpha = 1;
+  }
+  p.restore();
+}

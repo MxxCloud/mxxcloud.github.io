@@ -47,6 +47,8 @@ import * as pesca from "./regole/pesca.js";
 import * as acqua from "./regole/acqua.js";
 import * as meteo from "./regole/meteo.js";
 import * as atmosfera from "./arte/atmosfera.js";
+import * as effetti from "./arte/effetti.js";
+import { TERRENO } from "./mondo/generazione.js";
 import * as sincronia from "./regole/sincronia.js";
 import { tavolozzaDi, tavolozzaBagnataDi } from "./arte/tavolozza.js";
 import { FIORI } from "./arte/sprite-fiori.js";
@@ -73,7 +75,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.43";
+const VERSIONE = "M7.18.44";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1101,6 +1103,12 @@ function leggiComandi(passo) {
     suono.suona(SCELTA);
     annuncia(`suono: ${adesso}`, "#8fa8d8");
   }
+  // Gli effetti di luce e d'aria (M7.18.44), per confrontarli col prima.
+  if (comandi.appenaPremuto("luci")) {
+    const accesi = effetti.alterna();
+    suono.suona(SCELTA);
+    annuncia(`effetti di luce: ${accesi ? "accesi" : "spenti"}`, "#e0b46a");
+  }
 
   if (comandi.appenaPremuto("mappa")) {
     mappaAperta = !mappaAperta;
@@ -1709,6 +1717,17 @@ function disegna() {
   // per ultimo. È tutta la profondità che serve a una vista dall'alto 3/4.
   inPiedi.sort((a, b) => a.base - b.base);
 
+  // Gli effetti (M7.18.44) contano in secondi veri: il fumo sale e la
+  // fiamma trema anche a gioco fermo.
+  const p = schermo.pennello();
+  const q = schermo.inquadratura();
+  const secondi = performance.now() / 1000;
+  const luce = tempo.luceAmbiente();
+  raccogliLumi();
+  effetti.aggiorna(secondi, lumi, { piove: meteo.evento() === "pioggia" });
+  // Le ombre per terra, prima di tutto quello che ci sta in piedi sopra.
+  effetti.disegnaOmbre(p, inPiedi, q, tempo.oraCorrente(), luce);
+
   for (const cosa of inPiedi) schermo.disegna(cosa.sprite, cosa.x + tremolioDi(cosa), cosa.y);
 
   const lenza = pesca.stato();
@@ -1724,10 +1743,22 @@ function disegna() {
   }
 
   // Prima del buio, così di notte anche le scheggie si spengono con tutto il
-  // resto invece di brillare sopra l'oscurità come scintille.
+  // resto invece di brillare sopra l'oscurità come scintille. Il fumo e
+  // l'acqua che luccica per la stessa ragione, e il colore dell'ora sopra
+  // tutto il mondo ma sotto il buio, che ha già la sua tinta.
   scheggie.disegna();
-  atmosfera.disegna(schermo.pennello(), meteo.evento(), tempo.giornoCorrente()*tempo.SECONDI_PER_GIORNO + tempo.oraCorrente()/24*tempo.SECONDI_PER_GIORNO, riparo.stanza());
-  disegnaBuio();
+  effetti.disegnaFumo(p, q);
+  effetti.disegnaLuccichii(p, q, secondi, luce, eAcqua);
+  atmosfera.disegna(p, meteo.evento(), tempo.giornoCorrente()*tempo.SECONDI_PER_GIORNO + tempo.oraCorrente()/24*tempo.SECONDI_PER_GIORNO, riparo.stanza());
+  effetti.disegnaColoreDellOra(p, tempo.oraCorrente());
+  disegnaBuio(secondi);
+  // Dopo il buio quello che ha luce sua: il calore dei fuochi, le scintille,
+  // le lucciole.
+  effetti.disegnaBagliori(p, q, lumi, luce, secondi);
+  effetti.disegnaScintille(p, q);
+  effetti.disegnaLucciole(p, q, secondi, {
+    stagione: stagioni.stagioneCorrente(), luce, alChiuso: riparo.alChiuso(), piove: meteo.evento() === "pioggia",
+  });
   // Dopo il buio e prima dell'interfaccia: il lampo è una cosa che succede
   // nel mondo, non un cartello sul vetro, quindi la notte non lo spegne ma i
   // pannelli gli stanno sopra.
@@ -1755,16 +1786,32 @@ function tremolioDi(cosa) {
   return Math.round(Math.sin(colpito.resta * 90) * AMPIEZZA_TREMOLIO * quanto);
 }
 
-function disegnaBuio() {
+// Le luci in vista, raccolte una volta per fotogramma: servono al buio e,
+// da M7.18.44, al calore e alle scintille che ci stanno sopra.
+function raccogliLumi() {
   lumi.length = 0;
   for (const luce of mappa.lumiVisibili()) lumi.push(luce);
   // La luce esce dalla fiamma disegnata in mano, non da un punto generico
   // sopra la testa: ora che la torcia si vede, la luce deve venire da lì.
   const luceInMano = CATALOGO[cosaInMano()]?.luce;
   if (luceInMano) {
-    lumi.push({ x: eroe.impugnatura.x, y: eroe.impugnatura.y, ...luceInMano });
+    lumi.push({ x: eroe.impugnatura.x, y: eroe.impugnatura.y, inMano: true, ...luceInMano });
   }
-  oscurita.disegna(schermo.pennello(), tempo.luceAmbiente(), tempo.tintaOscurita(), lumi);
+}
+
+// Il tremolio allarga e stringe il buco nel buio, non la luce vera: le
+// regole — gli infetti che vedono la torcia in mano, il crepitio dei fuochi
+// in udito.js — leggono il catalogo e le luci della mappa, non questo disegno.
+function disegnaBuio(secondi) {
+  oscurita.disegna(schermo.pennello(), tempo.luceAmbiente(), tempo.tintaOscurita(), lumi,
+    (luce) => effetti.tremolio(luce, secondi));
+}
+
+// L'acqua che può luccicare: non quella gelata.
+function eAcqua(tx, ty) {
+  if (mappa.gelato()) return false;
+  const t = mappa.terrenoDi(tx, ty);
+  return t === TERRENO.ACQUA || t === TERRENO.ACQUA_BASSA;
 }
 
 // Quello che il pannello delle partite deve sapere per disegnarsi. Sta in una
@@ -2091,6 +2138,8 @@ if (parametri.has("diagnostica")) {
     // aspettare, quindi è quella che dai tasti veri si prova peggio senza una
     // maniglia per guardarla mentre succede.
     meteo,
+    // Gli effetti di luce (M7.18.44), per confrontarli accesi e spenti.
+    effetti,
     infetti,
     fauna,
     polli,
