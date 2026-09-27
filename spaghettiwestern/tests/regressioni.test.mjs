@@ -5327,7 +5327,8 @@ test("la mangiatoia si fa al banco, sta in un recinto, si riempie di fieno o di 
   assert.ok(voce.icona.length===12&&voce.icona.every(r=>r.length===12));decodifica(voce.icona);decodifica(sprite.MANGIATOIA);
   assert.equal(mappa.solidoIn(tx+1,ty),false);
   inventario.aggiungi('mangiatoia',1);
-  assert.equal(azioni.azionePossibile(eroe,'mangiatoia',0).impedito,'la mangiatoia va messa in un recinto');
+  // Da W0.8 anche in una stalla (vedi più sotto).
+  assert.equal(azioni.azionePossibile(eroe,'mangiatoia',0).impedito,'la mangiatoia va messa in un recinto o in una stalla');
   // Dentro un recinto sì.
   recinto(tx+1,ty-3);const dentro={...eroe,...pos(tx+1,ty-3),guarda:'su'};
   assert.equal(azioni.azionePossibile(dentro,'mangiatoia',0).impedito,null);
@@ -5360,11 +5361,14 @@ test("la mangiatoia si fa al banco, sta in un recinto, si riempie di fieno o di 
 test("a mezzanotte il cavallo mangia dalla mangiatoia del suo recinto, al pascolo o dalla tua mano, e con due giorni di fame se ne va",()=>{
   recinto(tx-12,ty);
   modifiche.imposta(tx-13,ty-1,{oggetto:OGGETTO.MANGIATOIA,razioni:1});
+  // Da W0.8 le notti d'autunno e d'inverno fanno freddo fuori dalla stalla: un
+  // falò acceso accanto a ciascuno, per guardare la fame da sola.
+  modifiche.imposta(tx-11,ty+1,{oggetto:OGGETTO.FALO_ACCESO});modifiche.imposta(tx+2,ty+2,{oggetto:OGGETTO.FALO_ACCESO});
   const nel=cavalloMio(tx-12,ty),legato=cavalloMio(tx+2,ty,'legato');
   // D'autunno non si pascola: quello nel recinto mangia dalla mangiatoia,
   // quello alla corda resta a digiuno.
   let e=cavalli.nuovoGiorno('autunno');
-  assert.deepEqual(e,{rubati:0,affamati:1,scappati:0});
+  assert.deepEqual(e,{rubati:0,affamati:1,scappati:0,infreddoliti:0,scappatiDalFreddo:0});
   assert.equal(nel.fame,0);assert.equal(cavalli.razioniNella(tx-13,ty-1),0);
   assert.equal(legato.fame,1);assert.equal(cavalli.affamato(legato),true);
   // Imboccato a mano: fieno in mano, davanti a lui.
@@ -5380,7 +5384,7 @@ test("a mezzanotte il cavallo mangia dalla mangiatoia del suo recinto, al pascol
   // D'inverno niente pascolo: il secondo giorno di fame quello nel recinto se
   // ne va, e quello alla corda comincia ad aver fame.
   e=cavalli.nuovoGiorno('inverno');
-  assert.deepEqual(e,{rubati:0,affamati:1,scappati:1});
+  assert.deepEqual(e,{rubati:0,affamati:1,scappati:1,infreddoliti:0,scappatiDalFreddo:0});
   assert.equal(cavalli.tutte().includes(nel),false);assert.equal(legato.fame,1);
   // D'estate alla corda si pascola lungo la strada.
   e=cavalli.nuovoGiorno('estate');assert.equal(legato.fame,0);assert.equal(e.affamati,0);
@@ -5421,4 +5425,145 @@ test("il fiato si vede in sella, e la fame si dice al mattino e montando",()=>{
   for(const scritta of ['il cavallo è sfiancato: va al trotto','a cavallo: ha fame, non galoppa','il cavallo affamato ha rotto la corda ed è scappato','il cavallo ha fame: dagli fieno o biada'])
     assert.ok(gioco.includes(scritta),scritta);
   assert.match(leggi('regole/simulazione.js'),/eventi\.cavalliAffamati = scuderia\.affamati;/);
+});
+
+// --- Per un pugno di semi (W0.8): la stalla per l'autunno e l'inverno ---------
+
+// A mezzanotte guardiamo il freddo da solo: tutti hanno mangiato.
+const tuttiImboccati=()=>{for(const c of cavalli.tutte())c.pasto=true;};
+test("d'autunno e d'inverno il cavallo fuori dalla stalla prende freddo: una notte non galoppa, due se ne va",()=>{
+  stanza();recinto(tx-12,ty);
+  const stalla=cavalloMio(tx,ty),recintato=cavalloMio(tx-12,ty),corda=cavalloMio(tx+7,ty,'legato');
+  const fuoco=cavalloMio(tx+7,ty+4,'legato');modifiche.imposta(tx+8,ty+5,{oggetto:OGGETTO.FALO_ACCESO});
+  assert.equal(cavalli.inStalla(stalla),true);assert.equal(cavalli.inStalla(recintato),false);
+  assert.deepEqual([stalla,recintato,corda,fuoco].map(cavalli.alCaldo),[true,false,false,true]);
+  // D'estate e di primavera le notti non contano.
+  assert.equal(cavalli.siGelaLaNotte('estate'),false);assert.equal(cavalli.siGelaLaNotte('primavera'),false);
+  tuttiImboccati();let e=cavalli.nuovoGiorno('estate');
+  assert.equal(e.infreddoliti,0);assert.ok(cavalli.tutte().every(c=>c.freddo===0));
+  // D'autunno sì: nel recinto e alla corda prendono freddo, nella stalla e
+  // accanto al falò no. Chi ha freddo non galoppa.
+  tuttiImboccati();e=cavalli.nuovoGiorno('autunno');
+  assert.deepEqual(e,{rubati:0,affamati:0,scappati:0,infreddoliti:2,scappatiDalFreddo:0});
+  assert.deepEqual([stalla,recintato,corda,fuoco].map(c=>c.freddo),[0,1,1,0]);
+  assert.equal(cavalli.infreddolito(corda),true);
+  cavalli.monta(corda,eroe);assert.equal(cavalli.puoGaloppare(),false,'ha preso freddo');cavalli.scendi(eroe);
+  Object.assign(corda,pos(tx+7,ty));cavalli.lega(corda);
+  // La porta aperta non apre la stalla; una notte al caldo e il freddo passa.
+  modifiche.imposta(tx+2,ty,{oggetto:OGGETTO.PORTA_APERTA});
+  Object.assign(recintato,pos(tx-1,ty-1));assert.equal(cavalli.inStalla(recintato),true);
+  tuttiImboccati();e=cavalli.nuovoGiorno('inverno');
+  assert.equal(recintato.freddo,0);assert.equal(cavalli.puoGaloppare(),false,'non è in sella nessuno');
+  // La seconda notte di fila al freddo quello alla corda se ne va.
+  assert.deepEqual(e,{rubati:0,affamati:0,scappati:0,infreddoliti:0,scappatiDalFreddo:1});
+  assert.deepEqual(cavalli.tutte(),[stalla,recintato,fuoco]);
+  // Un muro crollato sì: la stalla col buco è fuori, e i banditi ci entrano.
+  modifiche.imposta(tx,ty-2,{oggetto:OGGETTO.MURO_ROTTO});
+  assert.equal(cavalli.inStalla(stalla),false);
+  tuttiImboccati();e=cavalli.nuovoGiorno('inverno');assert.equal(e.rubati,2);
+  assert.deepEqual(cavalli.tutte(),[fuoco]);
+  // Fame e freddo insieme: se ne va, e si conta la fame.
+  fuoco.fame=1;fuoco.freddo=1;modifiche.imposta(tx+8,ty+5,{oggetto:OGGETTO.NESSUNO});
+  e=cavalli.nuovoGiorno('inverno');assert.deepEqual([e.scappati,e.infreddoliti,e.scappatiDalFreddo],[1,0,0]);
+  assert.equal(cavalli.tutte().length,0);
+});
+test("la mangiatoia si posa anche nella stalla, e i cavalli liberi dentro mangiano da lì ma non dal prato",()=>{
+  // Una stalla su un prato: nove tasselli d'erba dentro, che in un recinto
+  // sfamerebbero un cavallo d'estate.
+  let c0=null;
+  cerca: for(let y=ty-30;y<=ty+30;y++)for(let x=tx-30;x<=tx+30;x++){
+    let erba=true;
+    for(let dy=-1;dy<=1&&erba;dy++)for(let dx=-1;dx<=1;dx++)if(mappa.terrenoNaturaleDi(x+dx,y+dy)!==TERRENO.ERBA||mappa.pavimentoIn(x+dx,y+dy)){erba=false;break;}
+    if(erba){c0={x,y};break cerca;}
+  }
+  assert.ok(c0,'un prato');
+  for(let y=c0.y-2;y<=c0.y+2;y++)for(let x=c0.x-2;x<=c0.x+2;x++)
+    modifiche.imposta(x,y,{oggetto:Math.abs(x-c0.x)===2||Math.abs(y-c0.y)===2?OGGETTO.MURO:OGGETTO.NESSUNO});
+  modifiche.imposta(c0.x+2,c0.y,{oggetto:OGGETTO.PORTA});
+  const dentro={...eroe,...pos(c0.x,c0.y),guarda:'su'};
+  inventario.aggiungi('mangiatoia',1);
+  assert.equal(azioni.azionePossibile(dentro,'mangiatoia',0).impedito,null);
+  assert.equal(azioni.agisci(dentro,'mangiatoia',0).tipo,'posa');
+  const m={tx:c0.x,ty:c0.y-1};assert.equal(mappa.oggettoDi(m.tx,m.ty),OGGETTO.MANGIATOIA);
+  inventario.aggiungi('fibra',1);assert.equal(azioni.agisci(dentro,'fibra',0).razioni,1);
+  const c=cavalloMio(c0.x+1,c0.y+1);
+  const g=azioni.agisci(dentro,null,0);
+  assert.deepEqual([g.tipo,g.razioni,g.cavalli,g.prato],['mangiatoiaGuardata',1,1,0]);
+  // D'inverno mangia dalla mangiatoia della stalla, ed è al caldo.
+  let e=cavalli.nuovoGiorno('inverno');
+  assert.deepEqual([c.fame,c.freddo,cavalli.razioniNella(m.tx,m.ty)],[0,0,0]);
+  assert.equal(e.affamati,0);
+  // D'estate, con la mangiatoia vuota, l'erba sotto il pavimento della stalla
+  // non lo sfama.
+  e=cavalli.nuovoGiorno('estate');assert.equal(c.fame,1);assert.equal(e.affamati,1);
+});
+test("il freddo si salva, e i cavalli di W0.7 si riaprono al caldo",()=>{
+  const c=cavalloMio(tx+1,ty);c.freddo=1;
+  const stato=salvataggio.istantanea(eroe,0);assert.ok(salvataggio.valido(stato));
+  cavalli.reimposta();salvataggio.applica(stato);assert.equal(cavalli.tutte()[0].freddo,1);
+  const vecchio=structuredClone(stato);delete vecchio.cavalli.cavalli[0].freddo;
+  assert.ok(salvataggio.valido(vecchio));salvataggio.applica(vecchio);assert.equal(cavalli.tutte()[0].freddo,0);
+  for(const storto of [2,-1,0.5,'1']){
+    const s=structuredClone(stato);s.cavalli.cavalli[0].freddo=storto;assert.equal(salvataggio.valido(s),false,String(storto));
+  }
+});
+test("la stalla del ranch si chiama Stalla, e chiusi i suoi tre buchi tiene i cavalli al caldo",()=>{
+  mappa.inizializza('review');modifiche.svuota();
+  const r=mappa.rovinaNellaCella(0,0),a=(x,y)=>({tx:r.tx0+x,ty:r.ty0+y});
+  assert.equal(mappa.postoIn(r.tx0+16,r.ty0+3,3)?.nome,'Stalla');
+  // La casa no: da lì si annuncia il ranch, ed è dove comincia la partita.
+  assert.equal(mappa.postoIn(r.tx0+3,r.ty0+3,3)?.nome,'Ranch abbandonato');
+  const f=mappa.laFattoria();assert.equal(mappa.postoIn(f.tx,f.ty,3)?.nome,'Ranch abbandonato');
+  const buchi=[a(13,3),a(19,4),a(15,5)];
+  for(const b of buchi)assert.equal(mappa.oggettoDi(b.tx,b.ty),OGGETTO.MURO_ROTTO);
+  const c=cavalloMio(r.tx0+17,r.ty0+3);
+  assert.equal(cavalli.inStalla(c),false,'col fienile sfondato è fuori');
+  modifiche.imposta(buchi[0].tx,buchi[0].ty,{oggetto:OGGETTO.MURO});modifiche.imposta(buchi[1].tx,buchi[1].ty,{oggetto:OGGETTO.MURO});
+  assert.equal(cavalli.inStalla(c),false,'ne manca uno');
+  modifiche.imposta(buchi[2].tx,buchi[2].ty,{oggetto:OGGETTO.PORTA});
+  assert.equal(cavalli.inStalla(c),true);
+  // La porta guarda il cancello del recinto dei cavalli, oltre il campo.
+  const recinto=r.annessi.find(x=>x.nome==='Recinto dei cavalli');
+  assert.equal(mappa.oggettoGenerato(buchi[2].tx,recinto.ty0),OGGETTO.CANCELLO);
+  const e=cavalli.nuovoGiorno('inverno');assert.equal(e.infreddoliti,0);assert.equal(e.rubati,0);
+});
+test("le scritte della stalla: lasciandolo, al mattino, montando e sul ferro",()=>{
+  stanza();recinto(tx-12,ty);
+  // L'ultimo giorno d'estate la notte che arriva è già d'autunno.
+  tempo.impostaGiorno(1);
+  const r=cavalloMio(tx-12,ty,'legato');
+  let e=cavalli.slega(r);assert.deepEqual([e.nelRecinto,e.inStalla,e.alFreddo],[true,false,false]);
+  cavalli.lega(r);tempo.impostaGiorno(4);
+  e=cavalli.slega(r);assert.deepEqual([e.nelRecinto,e.inStalla,e.alFreddo],[true,false,true]);
+  const s=cavalloMio(tx,ty,'legato');
+  e=cavalli.slega(s);assert.deepEqual([e.nelRecinto,e.inStalla,e.alFreddo],[false,true,false]);
+  // Il tasto per montare dice il freddo, e dopo la fame.
+  Object.assign(s,{px:eroe.px+16,py:eroe.py,freddo:1});
+  const dentro={...eroe,...pos(tx-1,ty)};Object.assign(s,pos(tx,ty));
+  assert.equal(azioni.azionePossibile(dentro,null,0).verbo,'Monta a cavallo (ha freddo)');
+  s.fame=1;assert.equal(azioni.azionePossibile(dentro,null,0).verbo,'Monta a cavallo (ha fame)');
+  const leggi=(f)=>readFileSync(new URL('../'+f,import.meta.url),'utf8');
+  const gioco=leggi('gioco.js'),hud=leggi('interfaccia/hud.js');
+  for(const scritta of ['il cavallo resta nella stalla','stanotte qui prende freddo: portalo in stalla','a cavallo: ha preso freddo, non galoppa',
+    "due notti al freddo: il cavallo se n'è andato",'il cavallo ha preso freddo: stanotte mettilo in stalla'])
+    assert.ok(gioco.includes(scritta),scritta);
+  assert.match(gioco,/annunciaLasciato\(esito, "slegato fuori dal recinto: stanotte è dei banditi"\);/);
+  assert.match(gioco,/annunciaLasciato\(esito, "sceso: il cavallo resta qui, di notte non lasciarlo fuori"\);/);
+  assert.match(hud,/const ferro = cavallo\.fame > 0 \? ROSSO : cavallo\.freddo > 0 \? FREDDO : null;/);
+});
+test("la mezzanotte vera: il freddo arriva al mattino, e il falò finito a mezzanotte ha scaldato la notte",()=>{
+  const fuori=cavalloMio(tx+3,ty,'legato'),alFalo=cavalloMio(tx-3,ty+3,'legato');
+  // Una legna sola: a mezzanotte d'autunno la brucia e si spegne.
+  modifiche.imposta(tx-4,ty+4,{oggetto:OGGETTO.FALO_ACCESO,legna:1});
+  fuori.pasto=true;alFalo.pasto=true;
+  tempo.impostaGiorno(5);tempo.impostaOra(23.9);simulazione.resoconto();simulazione.avanza(20);
+  assert.equal(mappa.oggettoDi(tx-4,ty+4),OGGETTO.FALO_SPENTO,'il falò si è spento');
+  const conto=simulazione.resoconto();
+  assert.equal(conto.cavalliInfreddoliti,1);assert.equal(conto.cavalliGelati,0);
+  assert.deepEqual([fuori.freddo,alFalo.freddo],[1,0]);
+  // La notte dopo, senza falò, quello di fuori se ne va.
+  fuori.pasto=true;alFalo.pasto=true;tempo.impostaOra(23.9);simulazione.avanza(20);
+  const dopo=simulazione.resoconto();
+  assert.equal(dopo.cavalliGelati,1);assert.equal(dopo.cavalliInfreddoliti,1);
+  assert.deepEqual(cavalli.tutte(),[alFalo]);
 });

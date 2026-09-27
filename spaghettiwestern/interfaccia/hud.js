@@ -282,11 +282,14 @@ export function disegnaBisogni(
   // Il fiato del cavallo (W0.7), staccato dalle tre dello straniero come la
   // salute sopra di loro: è di un altro. Il ferro è rosso quando ha fame —
   // allora non galoppa, qualunque cosa dica la barra — e la barra resta
-  // arancione finché è sfiancato, anche mentre si riempie.
+  // arancione finché è sfiancato, anche mentre si riempie. Da W0.8 il ferro
+  // è del colore del gelo quando ha preso freddo, che ferma il galoppo come
+  // la fame; con tutte e due vince la fame.
   if (cavallo) {
     const colore = cavallo.sfiancato ? "#d8a44a" : coloreBisogno(cavallo.fiato);
     barra(p, y + 3, indicatori.FERRO, cavallo.fiato, colore);
-    if (cavallo.fame > 0) p.drawImage(cuoci(indicatori.FERRO, tinta(ROSSO)), 5, y + 2);
+    const ferro = cavallo.fame > 0 ? ROSSO : cavallo.freddo > 0 ? FREDDO : null;
+    if (ferro) p.drawImage(cuoci(indicatori.FERRO, tinta(ferro)), 5, y + 2);
   }
 }
 

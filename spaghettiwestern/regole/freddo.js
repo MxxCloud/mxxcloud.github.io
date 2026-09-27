@@ -35,8 +35,9 @@ const { TASSELLO } = schermo;
 // Quanto lontano da un fuoco si comincia a gelare. Tre tasselli, cioè
 // quarantotto pixel: più o meno il cerchio di luce di un falò, che è anche il
 // modo in cui il giocatore impara il raggio senza che nessuno glielo dica —
-// si sta al caldo dove si vede.
-const RAGGIO_FUOCO = 3;
+// si sta al caldo dove si vede. Da W0.8 è anche il fuoco che scalda un
+// cavallo lasciato fuori dalla stalla (vedi cavalli.js).
+export const RAGGIO_FUOCO = 3;
 
 // Si risponde a ogni fotogramma, senza tenere da parte niente. La prima
 // versione teneva la risposta per un quarto di secondo per non rifare il giro

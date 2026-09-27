@@ -25,7 +25,7 @@
 // c'è un ciclo fra i due file.
 
 import { impronta } from "../motore/casuale.js";
-import { PIANTE, FATTORIA, PAESE, NOMI_DELLE_PIANTE, EDIFICI_DEL_PAESE, misuraDi } from "../arte/piante.js";
+import { PIANTE, FATTORIA, PAESE, NOMI_DELLE_PIANTE, EDIFICI_DEL_PAESE, EDIFICI_DEL_RANCH, misuraDi } from "../arte/piante.js";
 import { LUOGHI, ORTO_DELLA_FATTORIA } from "../arte/luoghi.js";
 
 export const CELLA = 64;
@@ -154,7 +154,8 @@ function cercaLaFattoria(adatto) {
             tx0: tx0 + ANNESSO_RECINTO.dx, ty0: ty0 + ANNESSO_RECINTO.dy, pianta: RECINTO,
             larghezza: ANNESSO_RECINTO.larghezza, altezza: ANNESSO_RECINTO.altezza, nome: "Recinto dei cavalli",
           };
-          return { tx0, ty0, pianta: FATTORIA, larghezza, altezza, nome: "Ranch abbandonato", annesso, annessi: [annesso, recinto] };
+          return { tx0, ty0, pianta: FATTORIA, larghezza, altezza, nome: "Ranch abbandonato", annesso, annessi: [annesso, recinto],
+            edifici: EDIFICI_DEL_RANCH };
         }
       }
     }

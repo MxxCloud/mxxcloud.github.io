@@ -18,6 +18,39 @@ Come l'originale non ha server né dipendenze: è HTML, CSS e JavaScript serviti
 così come sono. Tutto quello che segue è la storia di Ultimo raccolto fino al
 punto della copia.
 
+## W0.8 — la stalla per l'autunno e l'inverno
+
+Il recinto è della primavera e dell'estate. **D'autunno e d'inverno i cavalli
+dormono in stalla.**
+- **La stalla** è una **stanza murata**, come una casa: muri e una porta, che
+  conta anche aperta; un muro crollato invece la apre. Al ranch c'è già: è il
+  **fienile a destra del cortile**, che entrando adesso si annuncia
+  «**Stalla**». Ha **tre buchi** da chiudere, due sui fianchi e uno in basso,
+  dove va la porta: sta proprio davanti al cancello del recinto, oltre il
+  campo. Va bene anche una stanza costruita da te, o casa tua.
+- **Le notti fredde.** D'autunno e d'inverno, a mezzanotte, un cavallo che
+  non è in una stalla né **a tre tasselli da un falò o da un focolare accesi**
+  **prende freddo**. Il freddo fa come la fame: **una notte e non galoppa**,
+  **due di fila e se ne va**. Non importa dove sei tu: in sella o alla corda
+  il freddo è lo stesso, e la torcia non scalda nemmeno lui. Il falò che
+  brucia l'ultima legna a mezzanotte ha scaldato la notte. D'autunno lo
+  straniero non gela, ma un cavallo dorme in piedi sotto il cielo; ed è la
+  stagione giusta per rimettere in piedi la stalla prima della neve.
+- **La mangiatoia nella stalla.** Adesso si posa **in un recinto o in una
+  stalla**. I cavalli liberi nella stalla mangiano dalla sua mangiatoia, come
+  nel recinto; il prato no, perché la stalla ha il pavimento.
+- **Si legge.** Lasciandolo: «il cavallo resta nella stalla», oppure, nel
+  recinto quando la notte che arriva è fredda, «stanotte qui prende freddo:
+  portalo in stalla». Al mattino, «il cavallo ha preso freddo» o «due notti al
+  freddo: il cavallo se n'è andato». Il tasto dice «Monta a cavallo (ha
+  freddo)», e in sella il **ferro è azzurro**, il colore del gelo (rosso resta
+  per la fame, che vince se ci sono tutte e due).
+- Il freddo si salva con la partita; i cavalli salvati in W0.7 si riaprono al
+  caldo.
+- **Corretto:** da W0.6 un cavallo slegato o lasciato in una stanza chiusa
+  diceva «fuori dal recinto: stanotte è dei banditi», anche se lì era al
+  sicuro.
+
 ## W0.7 — la biada e il fiato
 
 Il cavallo adesso **mangia** e **si stanca**.

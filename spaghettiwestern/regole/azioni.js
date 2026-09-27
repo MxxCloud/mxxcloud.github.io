@@ -262,8 +262,10 @@ export function azionePossibile(eroe, cosaInMano, indice) {
         ? { tipo: "slega", verbo: "Slega il cavallo", cavallo: mio }
         : { tipo: "lega", verbo: "Lega il cavallo", cavallo: mio };
     }
-    // Affamato si monta lo stesso, e il tasto lo dice: non galopperà.
-    return { tipo: "monta", verbo: cavalli.affamato(mio) ? "Monta a cavallo (ha fame)" : "Monta a cavallo", cavallo: mio };
+    // Affamato si monta lo stesso, e il tasto lo dice: non galopperà. Così
+    // infreddolito (W0.8); con tutte e due si dice la fame, che si cura subito.
+    const perche = cavalli.affamato(mio) ? " (ha fame)" : cavalli.infreddolito(mio) ? " (ha freddo)" : "";
+    return { tipo: "monta", verbo: `Monta a cavallo${perche}`, cavallo: mio };
   }
 
   // Il pollo davanti: con un'arma in mano gli si tira il collo, a mani nude
@@ -408,6 +410,7 @@ function sulTassello(eroe, cosaInMano, indice) {
   // La mangiatoia (W0.7), come il pollaio: col fieno o la biada in mano la si
   // riempie, una razione per volta; altrimenti la si guarda, e dice quante
   // razioni restano, quanti cavalli ci mangiano e quanti ne sfama il prato.
+  // Da W0.8 anche nella stalla, dove il prato non c'è.
   if (b.oggetto === OGGETTO.MANGIATOIA) {
     const razioni = cavalli.razioniNella(b.tx, b.ty);
     if (cavalli.FORAGGI.has(cosaInMano)) {
@@ -712,9 +715,10 @@ function sulTassello(eroe, cosaInMano, indice) {
     // Il pollaio sta dentro un recinto: è lì che stanno i polli che ripara.
     if (cosaInMano === "pollaio" && !riparo.recintato(b.tx, b.ty))
       return { tipo: "posa", bersaglio: b, impedito: "il pollaio va messo in un recinto" };
-    // E la mangiatoia pure (W0.7): è lì che stanno i cavalli che sfama.
-    if (cosaInMano === "mangiatoia" && !riparo.recintato(b.tx, b.ty))
-      return { tipo: "posa", bersaglio: b, impedito: "la mangiatoia va messa in un recinto" };
+    // E la mangiatoia pure (W0.7): è lì che stanno i cavalli che sfama. Da
+    // W0.8 anche nella stalla, che è dove stanno d'autunno e d'inverno.
+    if (cosaInMano === "mangiatoia" && !riparo.recintato(b.tx, b.ty) && !riparo.murato(b.tx, b.ty))
+      return { tipo: "posa", bersaglio: b, impedito: "la mangiatoia va messa in un recinto o in una stalla" };
     return { tipo: "posa", verbo: "Posa", cosa: cosaInMano, bersaglio: b,
       impedito: ["muro", "porta", "steccato", "cancello"].includes(cosaInMano) && occupato(b.tx, b.ty, eroe) ? "passaggio occupato" : null };
   }

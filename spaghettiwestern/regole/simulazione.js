@@ -13,7 +13,7 @@ import * as polli from "./polli.js";
 import * as cavalli from "./cavalli.js";
 import * as stagioni from "./stagioni.js";
 
-const vuoto = () => ({ cavalliRubati: 0, cavalliAffamati: 0, cavalliScappati: 0, uovaDeposte: 0, pulciniNati: 0, pulciniCresciuti: [], polliNelloZaino: 0, polloDomani: 0, polliScappati: 0, pulciniPersi: 0, polliAffamati: 0, polliDiFame: 0, polliDiFreddo: 0,
+const vuoto = () => ({ cavalliRubati: 0, cavalliAffamati: 0, cavalliScappati: 0, cavalliInfreddoliti: 0, cavalliGelati: 0, uovaDeposte: 0, pulciniNati: 0, pulciniCresciuti: [], polliNelloZaino: 0, polloDomani: 0, polliScappati: 0, pulciniPersi: 0, polliAffamati: 0, polliDiFame: 0, polliDiFreddo: 0,
   cresciute: 0, appassite: 0, seccate: 0, alBuio: 0, alChiuso: 0, assetate: 0, aSeme: 0, mangiate: 0, spentiLegna: 0, spentiPioggia: 0, torceFinite: 0, guaste: 0, inScadenza: 0, tornati: 0, risvegliForzati: 0 });
 let eventi = vuoto();
 
@@ -70,6 +70,18 @@ export function avanza(secondi, { eroe = null, dorme = false, nelLetto = false, 
     trascorsi += passo;
     secondi -= passo;
     if (tempo.giornoCorrente() !== giorno) {
+      // I cavalli lasciati fuori (W0.6): a mezzanotte se li prendono i banditi.
+      // E da W0.7 la cena: chi non ha mangiato ha fame, chi ha fame da due
+      // giorni se ne va. Come le assetate, la fame è lo stato di stamattina.
+      // Da W0.8 anche il freddo, ed è per lui che i cavalli vengono prima dei
+      // fuochi: il falò che finisce la legna a mezzanotte ha scaldato la
+      // notte, come quello accanto al letto (vedi freddo.fuocoPerRiposo).
+      const scuderia = cavalli.nuovoGiorno(stagioni.stagioneDi(tempo.giornoCorrente()));
+      eventi.cavalliRubati += scuderia.rubati;
+      eventi.cavalliScappati += scuderia.scappati;
+      eventi.cavalliAffamati = scuderia.affamati;
+      eventi.cavalliGelati += scuderia.scappatiDalFreddo;
+      eventi.cavalliInfreddoliti = scuderia.infreddoliti;
       const orti = orto.nuovoGiorno();
       const lasciato = decadimento.nuovoGiorno();
       eventi.cresciute += orti.cresciute;
@@ -101,13 +113,6 @@ export function avanza(secondi, { eroe = null, dorme = false, nelLetto = false, 
       // Come le assetate: lo stato di stamattina.
       eventi.polloDomani = pollame.avvisoZaino;
       eventi.polliAffamati = pollame.affamati;
-      // I cavalli lasciati fuori (W0.6): a mezzanotte se li prendono i banditi.
-      // E da W0.7 la cena: chi non ha mangiato ha fame, chi ha fame da due
-      // giorni se ne va. Come le assetate, la fame è lo stato di stamattina.
-      const scuderia = cavalli.nuovoGiorno(stagioni.stagioneDi(tempo.giornoCorrente()));
-      eventi.cavalliRubati += scuderia.rubati;
-      eventi.cavalliScappati += scuderia.scappati;
-      eventi.cavalliAffamati = scuderia.affamati;
     }
   }
   return trascorsi;

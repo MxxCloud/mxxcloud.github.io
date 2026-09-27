@@ -26,6 +26,18 @@
 //   prateria. Non muore, come il pollo: se ne va;
 // - il galoppo gli toglie il fiato, e sfiancato va soltanto al trotto finché
 //   non l'ha ripreso.
+//
+// E da W0.8 d'autunno e d'inverno vuole la stalla:
+// - la stalla è una stanza murata, come una casa: il fienile del ranch con i
+//   suoi tre buchi chiusi, o quattro mura alzate da te. Il recinto è aperto
+//   al cielo, e resta il posto della primavera e dell'estate;
+// - le notti d'autunno e d'inverno un cavallo che non sta in una stalla né
+//   accanto a un fuoco prende freddo. Il freddo fa come la fame: una notte e
+//   non galoppa, due di fila e se ne va. Non c'entra dove sei tu — in sella o
+//   alla corda il freddo è lo stesso — e il fuoco che scalda è quello che
+//   scalda lo straniero: un falò o un focolare a tre tasselli;
+// - la mangiatoia si posa anche nella stalla, e i cavalli liberi nella stalla
+//   mangiano da lì. Il prato no: la stalla ha il pavimento.
 
 import * as mappa from "../mondo/mappa.js";
 import { vistaLibera } from "../mondo/ostacoli.js";
@@ -35,6 +47,8 @@ import * as schermo from "../motore/schermo.js";
 import * as riparo from "./riparo.js";
 import * as fauna from "./fauna.js";
 import * as stagioni from "./stagioni.js";
+import * as tempo from "./tempo.js";
+import { RAGGIO_FUOCO } from "./freddo.js";
 import * as modifiche from "../mondo/modifiche.js";
 import { OGGETTO, TERRENO } from "../mondo/generazione.js";
 import { cuoci, riflesso } from "../arte/sprite.js";
@@ -89,6 +103,17 @@ const GALOPPO_PIENO = 15;
 const RIPRESA = 25;
 const FIATO_PER_RIPARTIRE = 0.3;
 
+// --- la stalla (W0.8) -----------------------------------------------------------
+
+// Due notti fredde di fila e se ne va; una, e non galoppa. Come la fame, e
+// apposta: è la stessa regola detta da un'altra parte, e si impara una volta.
+export const NOTTI_DI_FREDDO = 2;
+// Le notti fredde per un cavallo. Lo straniero gela soltanto d'inverno, ma lui
+// dorme vestito; un cavallo dorme in piedi sotto il cielo, e d'autunno la
+// notte è già fredda e l'erba è già secca. È anche la stagione in cui c'è
+// tempo per rimettere in piedi la stalla prima che arrivi la neve.
+export const siGelaLaNotte = (stagione) => stagione === "autunno" || stagione === "inverno";
+
 const cavalli = [];
 
 export const tutte = () => cavalli;
@@ -99,7 +124,7 @@ export function reimposta() {
 
 function crea(px, py, stato, seme, destra = true) {
   return { px, py, stato, destra, passo: 0, seme: seme >>> 0, giro: 0, dx: 0, dy: 0,
-    fame: 0, fiato: 1, pasto: false, sfiancato: false };
+    fame: 0, fiato: 1, pasto: false, sfiancato: false, freddo: 0 };
 }
 
 // Un generatore per cavallo, conservato nel salvataggio, come per la fauna.
@@ -113,11 +138,13 @@ export function montato() {
 }
 
 export const affamato = (c) => c.fame > 0;
+export const infreddolito = (c) => c.freddo > 0;
 
-// Si galoppa se il cavallo sotto di te ha mangiato ieri e ha fiato.
+// Si galoppa se il cavallo sotto di te ha mangiato ieri, stanotte non ha
+// preso freddo e ha fiato.
 export function puoGaloppare() {
   const c = montato();
-  return Boolean(c) && !affamato(c) && !c.sfiancato;
+  return Boolean(c) && !affamato(c) && !infreddolito(c) && !c.sfiancato;
 }
 
 // --- dove si guarda ---------------------------------------------------------
@@ -184,6 +211,29 @@ function nelRecinto(c) {
   return riparo.dentroLoSteccato(tx, ty);
 }
 
+// In una stalla (W0.8): una stanza murata. La porta aperta non la apre, come
+// per il freddo dello straniero; un muro crollato sì.
+export function inStalla(c) {
+  const tx = Math.floor(c.px / schermo.TASSELLO);
+  const ty = Math.floor(c.py / schermo.TASSELLO);
+  return riparo.murato(tx, ty);
+}
+
+// Al caldo per la notte: nella stalla, o a tre tasselli da un falò o da un
+// focolare accesi. La torcia no, come per lo straniero (vedi freddo.js).
+export function alCaldo(c) {
+  const tx = Math.floor(c.px / schermo.TASSELLO);
+  const ty = Math.floor(c.py / schermo.TASSELLO);
+  return inStalla(c) || mappa.fuocoVicino(tx, ty, RAGGIO_FUOCO);
+}
+
+// Dove resta un cavallo lasciato: chi lo lascia deve sapere se stanotte è
+// al sicuro, e da W0.8 se prenderà freddo. La notte che conta è quella che
+// arriva, cioè la stagione di domani: l'ultimo giorno d'estate la mezzanotte
+// è già d'autunno (vedi simulazione.js).
+const lasciato = (c) => ({ nelRecinto: nelRecinto(c), inStalla: inStalla(c),
+  alFreddo: siGelaLaNotte(stagioni.stagioneDi(tempo.giornoCorrente() + 1)) && !alCaldo(c) });
+
 export function lega(c) {
   if (!cavalli.includes(c) || c.stato !== "libero") return null;
   c.stato = "legato";
@@ -193,7 +243,7 @@ export function lega(c) {
 export function slega(c) {
   if (!cavalli.includes(c) || c.stato !== "legato") return null;
   c.stato = "libero";
-  return { tipo: "cavalloSlegato", nelRecinto: nelRecinto(c) };
+  return { tipo: "cavalloSlegato", ...lasciato(c) };
 }
 
 // In sella. Il cavallo viene sotto di te, non tu sopra di lui: sei tu quello
@@ -218,7 +268,7 @@ export function scendi(eroe) {
   c.giro = 2;
   c.dx = 0;
   c.dy = 0;
-  return { tipo: "scesoDaCavallo", nelRecinto: nelRecinto(c) };
+  return { tipo: "scesoDaCavallo", ...lasciato(c) };
 }
 
 // Morendo si lascia andare tutto: il cavallo su cui eri e quelli alla corda
@@ -265,11 +315,23 @@ function togliRazione(tx, ty) {
 
 const tassello = (c) => ({ tx: Math.floor(c.px / schermo.TASSELLO), ty: Math.floor(c.py / schermo.TASSELLO) });
 
-// Il recinto di questa mangiatoia: quello di uno dei quattro tasselli accanto.
+// Il posto in cui mangiano i cavalli liberi di questo tassello: il suo
+// recinto, o da W0.8 la sua stalla. Tutti e due con i tasselli di dentro e le
+// pareti, fra cui stanno le mangiatoie; la stalla senza prato.
+function mangiatoiaDi(tx, ty) {
+  const recinto = riparo.recintoDi(tx, ty);
+  if (recinto) return { ...recinto, prato: true };
+  if (!riparo.murato(tx, ty)) return null;
+  const tasselli = riparo.stanzaDi(tx, ty);
+  return { tasselli, pareti: riparo.pareti(tasselli), prato: false };
+}
+
+// Il recinto o la stalla di questa mangiatoia: quello di uno dei quattro
+// tasselli accanto.
 function recintoAccantoA(tx, ty) {
   for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-    const recinto = riparo.recintoDi(tx + dx, ty + dy);
-    if (recinto) return recinto;
+    const posto = mangiatoiaDi(tx + dx, ty + dy);
+    if (posto) return posto;
   }
   return null;
 }
@@ -287,7 +349,7 @@ function pratoDi(recinto) {
 const siPascola = (stagione) => stagione === "primavera" || stagione === "estate";
 
 function sfamaIlPrato(recinto, stagione) {
-  return siPascola(stagione) ? Math.floor(pratoDi(recinto) / PRATO_PER_CAVALLO) : 0;
+  return recinto.prato && siPascola(stagione) ? Math.floor(pratoDi(recinto) / PRATO_PER_CAVALLO) : 0;
 }
 
 function dentroIl(recinto) {
@@ -296,7 +358,7 @@ function dentroIl(recinto) {
 }
 
 // Quello che serve a chi guarda la mangiatoia: quanti cavalli liberi stanno
-// nel suo recinto, e quanti ne sfama il prato oggi.
+// nel suo recinto o nella sua stalla, e quanti ne sfama il prato oggi.
 export function recintoDellaMangiatoia(tx, ty, stagione = stagioni.stagioneCorrente()) {
   const recinto = recintoAccantoA(tx, ty);
   if (!recinto) return { cavalli: 0, prato: 0 };
@@ -409,10 +471,11 @@ export function alSicuro(c) {
   return riparo.recintato(tx, ty) || riparo.murato(tx, ty);
 }
 
-// Prima i banditi, poi la cena. Restituisce quanti ne hanno rubati, quanti
-// hanno fame stamattina e quanti se ne sono andati per la fame.
+// Prima i banditi, poi la cena, poi il freddo (W0.8). Restituisce quanti ne
+// hanno rubati, quanti hanno fame o freddo stamattina, e quanti se ne sono
+// andati per la fame o per il freddo.
 export function nuovoGiorno(stagione = stagioni.stagioneCorrente()) {
-  const esito = { rubati: 0, affamati: 0, scappati: 0 };
+  const esito = { rubati: 0, affamati: 0, scappati: 0, infreddoliti: 0, scappatiDalFreddo: 0 };
   for (let i = cavalli.length - 1; i >= 0; i -= 1) {
     if (alSicuro(cavalli[i])) continue;
     cavalli.splice(i, 1);
@@ -421,7 +484,8 @@ export function nuovoGiorno(stagione = stagioni.stagioneCorrente()) {
 
   // Chi ha mangiato: imboccato oggi; alla corda o in sella, al pascolo lungo
   // la strada se è la stagione; libero in un recinto, dal prato e poi dalla
-  // mangiatoia — un recinto per volta, perché è lì che si divide il cibo.
+  // mangiatoia — un recinto per volta, perché è lì che si divide il cibo. E
+  // da W0.8 libero in una stalla, dalla sua mangiatoia.
   const sfamati = new Set(cavalli.filter((c) => c.pasto));
   if (siPascola(stagione)) {
     for (const c of cavalli) if (c.stato !== "libero") sfamati.add(c);
@@ -430,7 +494,7 @@ export function nuovoGiorno(stagione = stagioni.stagioneCorrente()) {
   for (const c of cavalli) {
     if (c.stato !== "libero" || visti.has(c)) continue;
     const { tx, ty } = tassello(c);
-    const recinto = riparo.recintoDi(tx, ty);
+    const recinto = mangiatoiaDi(tx, ty);
     if (!recinto) { visti.add(c); continue; }
     const dentro = dentroIl(recinto);
     const qui = cavalli.filter((k) => k.stato === "libero" && dentro(k));
@@ -453,23 +517,35 @@ export function nuovoGiorno(stagione = stagioni.stagioneCorrente()) {
     }
   }
 
+  // Chi ha passato la notte al freddo: d'autunno e d'inverno, fuori dalla
+  // stalla e lontano da un fuoco. Dove sta adesso, a mezzanotte, qualunque
+  // cosa faccia — in sella il cavallo sta dove sei tu.
+  const gelati = new Set(siGelaLaNotte(stagione) ? cavalli.filter((c) => !alCaldo(c)) : []);
+
   for (let i = cavalli.length - 1; i >= 0; i -= 1) {
     const c = cavalli[i];
     c.pasto = false;
-    if (sfamati.has(c)) { c.fame = 0; continue; }
-    c.fame += 1;
-    if (c.fame < GIORNI_DI_FAME) { esito.affamati += 1; continue; }
+    c.fame = sfamati.has(c) ? 0 : c.fame + 1;
+    c.freddo = gelati.has(c) ? c.freddo + 1 : 0;
     // Se ne va, anche da sotto di te: rompe la corda o ti disarciona. Chi
-    // orchestra deve accorgersene, perché la figura in sella sparisce.
-    cavalli.splice(i, 1);
-    esito.scappati += 1;
+    // orchestra deve accorgersene, perché la figura in sella sparisce. La
+    // fame si dice per prima: di due ragioni, è quella che ha già un rimedio
+    // in tasca.
+    if (c.fame >= GIORNI_DI_FAME || c.freddo >= NOTTI_DI_FREDDO) {
+      cavalli.splice(i, 1);
+      if (c.fame >= GIORNI_DI_FAME) esito.scappati += 1;
+      else esito.scappatiDalFreddo += 1;
+      continue;
+    }
+    if (c.fame > 0) esito.affamati += 1;
+    if (c.freddo > 0) esito.infreddoliti += 1;
   }
   return esito;
 }
 
 // --- salvataggio ------------------------------------------------------------
 
-const CAMPI = ["px", "py", "stato", "destra", "passo", "seme", "giro", "dx", "dy", "fame", "fiato", "pasto", "sfiancato"];
+const CAMPI = ["px", "py", "stato", "destra", "passo", "seme", "giro", "dx", "dy", "fame", "fiato", "pasto", "sfiancato", "freddo"];
 const STATI = ["libero", "legato", "montato"];
 
 export function istantanea() {
@@ -479,8 +555,9 @@ export function istantanea() {
 export function ripristina(dati) {
   reimposta();
   if (!dati) return;
-  // I cavalli salvati in W0.6 non sanno cos'è la fame: sazi e freschi.
-  for (const c of dati.cavalli) cavalli.push({ fame: 0, fiato: 1, pasto: false, sfiancato: false, ...c });
+  // I cavalli salvati in W0.6 non sanno cos'è la fame: sazi e freschi. Quelli
+  // di W0.7 non sanno cos'è il freddo: al caldo.
+  for (const c of dati.cavalli) cavalli.push({ fame: 0, fiato: 1, pasto: false, sfiancato: false, freddo: 0, ...c });
 }
 
 export function statoValido(dati) {
@@ -495,7 +572,8 @@ export function statoValido(dati) {
     && (c.fame === undefined || (Number.isSafeInteger(c.fame) && c.fame >= 0 && c.fame < GIORNI_DI_FAME))
     && (c.fiato === undefined || numero(c.fiato, 0, 1))
     && (c.pasto === undefined || typeof c.pasto === "boolean")
-    && (c.sfiancato === undefined || typeof c.sfiancato === "boolean"));
+    && (c.sfiancato === undefined || typeof c.sfiancato === "boolean")
+    && (c.freddo === undefined || (Number.isSafeInteger(c.freddo) && c.freddo >= 0 && c.freddo < NOTTI_DI_FREDDO)));
 }
 
 // --- disegno ------------------------------------------------------------------

@@ -76,7 +76,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "W0.7";
+const VERSIONE = "W0.8";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -204,6 +204,15 @@ function cosaInMano() {
 
 function annuncia(testo, colore) {
   messaggio = { testo: testo.toUpperCase(), colore, vita: 1 };
+}
+
+// Dove resta il cavallo che lasci, slegandolo o scendendo (W0.6). Fuori dal
+// recinto e dalla stalla vale "fuori", perché i banditi vengono prima di
+// tutto; poi, da W0.8, il freddo della notte che arriva.
+function annunciaLasciato(esito, fuori) {
+  if (!esito.nelRecinto && !esito.inStalla) annuncia(fuori, "#c9b189");
+  else if (esito.alFreddo) annuncia("stanotte qui prende freddo: portalo in stalla", "#c9b189");
+  else annuncia(esito.inStalla ? "il cavallo resta nella stalla" : "il cavallo resta nel recinto", "#9ec97e");
 }
 
 // La chiave del posto in cui sta l'eroe, la stessa che il giro calcola per
@@ -1293,8 +1302,7 @@ function leggiComandi(passo) {
   }
   if (esito.tipo === "cavalloSlegato") {
     suono.suona(POSA);
-    annuncia(esito.nelRecinto ? "il cavallo resta nel recinto" : "slegato fuori dal recinto: stanotte è dei banditi",
-      esito.nelRecinto ? "#9ec97e" : "#c9b189");
+    annunciaLasciato(esito, "slegato fuori dal recinto: stanotte è dei banditi");
   }
   if (esito.tipo === "aCavallo") {
     suono.suona(NITRITO, { tono: 1.15, volume: 0.6 });
@@ -1302,8 +1310,9 @@ function leggiComandi(passo) {
     // voltare il cavallo.
     if (eroe.guarda === "sinistra" || eroe.guarda === "destra") eroe.versoInSella = eroe.guarda;
     const sotto = cavalli.montato();
-    annuncia(sotto && cavalli.affamato(sotto) ? "a cavallo: ha fame, non galoppa" : "a cavallo: maiusc per galoppare",
-      sotto && cavalli.affamato(sotto) ? "#c9b189" : "#9ec97e");
+    if (sotto && cavalli.affamato(sotto)) annuncia("a cavallo: ha fame, non galoppa", "#c9b189");
+    else if (sotto && cavalli.infreddolito(sotto)) annuncia("a cavallo: ha preso freddo, non galoppa", "#c9b189");
+    else annuncia("a cavallo: maiusc per galoppare", "#9ec97e");
   }
   // Il fieno e la biada (W0.7).
   if (esito.tipo === "cavalloNutrito") {
@@ -1323,8 +1332,7 @@ function leggiComandi(passo) {
   }
   if (esito.tipo === "scesoDaCavallo") {
     suono.suona(POSA);
-    annuncia(esito.nelRecinto ? "il cavallo resta nel recinto" : "sceso: il cavallo resta qui, di notte non lasciarlo fuori",
-      esito.nelRecinto ? "#9ec97e" : "#c9b189");
+    annunciaLasciato(esito, "sceso: il cavallo resta qui, di notte non lasciarlo fuori");
   }
   // Guardare è l'unica azione che non cambia niente, e serve a questo: la
   // fiamma è uguale con una legna e con quattro, quindi il conto va chiesto.
@@ -1681,7 +1689,7 @@ function aggiorna(passo) {
     if (messaggio.vita <= 0) messaggio = null;
   }
 
-  const { cavalliRubati, cavalliScappati, cavalliAffamati, uovaDeposte, pulciniNati, pulciniCresciuti, polliNelloZaino, polloDomani, polliScappati, pulciniPersi, polliAffamati, polliDiFame, polliDiFreddo,
+  const { cavalliRubati, cavalliScappati, cavalliAffamati, cavalliGelati, cavalliInfreddoliti, uovaDeposte, pulciniNati, pulciniCresciuti, polliNelloZaino, polloDomani, polliScappati, pulciniPersi, polliAffamati, polliDiFame, polliDiFreddo,
     cresciute, appassite, seccate, alBuio, alChiuso, assetate, aSeme, mangiate, spentiLegna, spentiPioggia, torceFinite, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
 
   const arrivata = vestiLaValle();
@@ -1699,8 +1707,13 @@ function aggiorna(passo) {
   // Poi la fame (W0.7): chi se n'è andato, e chi stamattina non galopperà.
   else if (cavalliScappati > 0) annuncia(cavalliScappati === 1 ? "il cavallo affamato ha rotto la corda ed è scappato"
     : `dei cavalli affamati sono scappati: ${cavalliScappati}`, "#c0705f");
+  // E il freddo (W0.8), dopo la fame: chi se n'è andato, e chi non galopperà.
+  else if (cavalliGelati > 0) annuncia(cavalliGelati === 1 ? "due notti al freddo: il cavallo se n'è andato"
+    : `dei cavalli sono scappati dal freddo: ${cavalliGelati}`, "#c0705f");
   else if (cavalliAffamati > 0) annuncia(cavalliAffamati === 1 ? "il cavallo ha fame: dagli fieno o biada"
     : `dei cavalli hanno fame: ${cavalliAffamati}`, "#c9b189");
+  else if (cavalliInfreddoliti > 0) annuncia(cavalliInfreddoliti === 1 ? "il cavallo ha preso freddo: stanotte mettilo in stalla"
+    : `dei cavalli hanno preso freddo: ${cavalliInfreddoliti}`, "#c9b189");
   else if (polliDiFreddo > 0) annuncia(`il freddo si è portato via dei polli: ${polliDiFreddo}`, "#c0705f");
   else if (polliDiFame > 0) annuncia(`dei polli sono morti di fame: ${polliDiFame}`, "#c0705f");
   else if (polliNelloZaino > 0) annuncia("il pollo nello zaino è morto", "#c0705f");

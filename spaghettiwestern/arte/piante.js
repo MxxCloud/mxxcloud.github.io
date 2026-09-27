@@ -136,6 +136,14 @@ export const NOMI_DELLE_PIANTE = new Map([
   [FATTORIA, "Ranch abbandonato"],
 ]);
 
+// La stalla del ranch (W0.8), l'edificio a destra del cortile: è lì che i
+// cavalli passano le notti d'autunno e d'inverno, una volta chiusi i suoi tre
+// buchi. Il nome lo dice entrando, come gli edifici della cittadina; la casa
+// no, perché il ranch si annuncia da lì ed è il titolo di una partita nuova.
+export const EDIFICI_DEL_RANCH = [
+  { x: 13, y: 1, larghezza: 7, altezza: 5, nome: "Stalla" },
+];
+
 // Gli edifici della cittadina, rettangoli della pianta PAESE con il loro
 // nome. «Il becchino» è per Piripero, il fabbricante di bare di «Per un pugno
 // di dollari», l'unico in paese a cui gli affari vanno bene.
