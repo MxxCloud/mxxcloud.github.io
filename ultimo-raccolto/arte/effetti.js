@@ -10,7 +10,10 @@
 //   e la sera;
 // - i fuochi fanno fumo e scintille;
 // - l'acqua luccica al sole;
-// - nelle notti d'estate ci sono le lucciole.
+// - nelle notti d'estate ci sono le lucciole;
+// - da M7.18.46 c'è il vento: le chiome degli alberi, i cespugli, le piante
+//   selvatiche e i ciuffi d'erba piegano alle raffiche, il fumo va dove va il
+//   vento, e d'autunno cadono le foglie.
 //
 // Tutto è solo disegno: niente di quello che sta qui cambia una regola. Il
 // raggio delle luci che tiene lontani gli infetti resta quello del catalogo
@@ -27,6 +30,7 @@
 
 import { impronta, generatore } from "../motore/casuale.js";
 import { OGGETTO } from "../mondo/generazione.js";
+import { tavolozzaDi } from "./tavolozza.js";
 
 const LARGHEZZA = 384;
 const ALTEZZA = 216;
@@ -289,6 +293,129 @@ export function disegnaBagliori(p, camera, lumi, luce, secondi) {
   p.restore();
 }
 
+// --- il vento (M7.18.46) ---------------------------------------------------------------
+
+// Quanto tira adesso, da zero a poco più di uno e mezzo. Soffia sempre da
+// ovest — una valle ha il suo vento — a raffiche lente: due onde di passo
+// diverso, così una raffica non arriva a tempo come un metronomo. Con la
+// pioggia tira più forte, con la neve un po' di più.
+export function vento(secondi, evento) {
+  const raffica = 0.5 + 0.3 * Math.sin(secondi * 0.23) + 0.2 * Math.sin(secondi * 0.61 + 1.7);
+  const forza = evento === "pioggia" ? 1.6 : evento === "neve" ? 1.2 : 1;
+  return raffica * forza;
+}
+
+// Quanto piega adesso quello che sta in questo punto del mondo: sempre
+// sottovento, e di più o di meno col passare dell'onda, che corre da ovest a
+// est. Così un bosco non ondeggia tutto insieme: la raffica lo attraversa.
+export function piega(aria, secondi, x, y) {
+  return aria * (0.55 + 0.45 * Math.sin(secondi * 2.2 - x * 0.03 - y * 0.011));
+}
+
+// Chi si piega, e come: fasce del disegno dall'alto, ognuna con la sua parte
+// della piega; quello che resta sotto l'ultima fascia sta fermo. Un albero
+// piega la chioma (le prime quindici righe su ventitré) e non il tronco; un
+// cespuglio e una pianta selvatica la metà di sopra, e di un pixel al più.
+// Tutto in pixel interi: a questa risoluzione mezzo pixel non esiste, e un
+// disegno che si sposta di un pixel intero è il modo in cui la pixel art ha
+// sempre fatto muovere le foglie.
+const ALBERO_MOSSO = { fasce: [[0.33, 1], [0.65, 0.6]], massimo: 2, scala: 1.8 };
+const BASSO_MOSSO = { fasce: [[0.5, 1]], massimo: 1, scala: 1.5 };
+const MOSSI = new Map([
+  [OGGETTO.ALBERO, ALBERO_MOSSO],
+  [OGGETTO.CESPUGLIO, BASSO_MOSSO],
+  [OGGETTO.SPIGHE_SELVATICHE, BASSO_MOSSO],
+  [OGGETTO.LINO_SELVATICO, BASSO_MOSSO],
+  [OGGETTO.CAVOLO_SELVATICO, BASSO_MOSSO],
+  [OGGETTO.PATATA_SELVATICA, BASSO_MOSSO],
+  [OGGETTO.FAGIOLI_SELVATICI, BASSO_MOSSO],
+]);
+
+// Le fasce di un disegno mosso: [da, a, scarto] in righe e pixel, dall'alto.
+// L'ultima è ferma. Niente per chi non piega.
+export function fasceMosse(cosa, quanto) {
+  const modo = MOSSI.get(cosa.tipo);
+  if (!modo || !cosa.sprite) return null;
+  const h = cosa.sprite.height;
+  const scarto = Math.max(0, Math.min(modo.massimo, Math.round(quanto * modo.scala)));
+  const fasce = [];
+  let da = 0;
+  for (const [fino, peso] of modo.fasce) {
+    const a = Math.round(fino * h);
+    fasce.push([da, a, Math.round(scarto * peso)]);
+    da = a;
+  }
+  fasce.push([da, h, 0]);
+  return fasce;
+}
+
+// Disegna una cosa in piedi piegata dal vento, se è una che piega, e dice se
+// l'ha fatto: se no la disegna il gioco come sempre. "x" è già quella del
+// disegno, col sussulto di un colpo se c'è.
+export function disegnaMosso(p, cosa, x, camera, secondi, aria) {
+  if (!accesi) return false;
+  const quanto = piega(aria, secondi, cosa.x, cosa.base ?? cosa.y);
+  const fasce = fasceMosse(cosa, quanto);
+  if (!fasce) return false;
+  const sx = Math.round(x - camera.x);
+  const sy = Math.round(cosa.y - camera.y);
+  const w = cosa.sprite.width;
+  for (const [da, a, scarto] of fasce) {
+    if (a > da) p.drawImage(cosa.sprite, 0, da, w, a - da, sx + scarto, sy + da, w, a - da);
+  }
+  return true;
+}
+
+// I ciuffi d'erba: l'erba è una trama cotta nei settori e non si muove, quindi
+// sopra ci stanno dei ciuffi di tre fili, uno ogni quattro tasselli di prato
+// libero, che piegano col vento. Il posto di un ciuffo è del tassello, e si
+// chiede se è prato libero solo ai tasselli che ne hanno uno.
+const QUANTI_CIUFFI = 0.25;
+export function ciuffi(q, secondi, aria, ePratoLibero) {
+  if (!accesi) return [];
+  const trovati = [];
+  const x0 = Math.floor(q.sinistra / TASSELLO), x1 = Math.floor((q.destra - 1) / TASSELLO);
+  const y0 = Math.floor(q.sopra / TASSELLO), y1 = Math.floor((q.sotto - 1) / TASSELLO);
+  for (let ty = y0; ty <= y1 + 1; ty += 1) {
+    for (let tx = x0; tx <= x1; tx += 1) {
+      if (impronta(tx, ty, 0xc1f0) > QUANTI_CIUFFI) continue;
+      if (!ePratoLibero(tx, ty)) continue;
+      const x = tx * TASSELLO + 3 + Math.floor(impronta(tx, ty, 0xc1f1) * 10);
+      const y = ty * TASSELLO + 6 + Math.floor(impronta(tx, ty, 0xc1f2) * 9);
+      trovati.push({
+        x,
+        y,
+        alto: impronta(tx, ty, 0xc1f3) < 0.5 ? 3 : 4,
+        piega: Math.max(0, Math.min(2, Math.round(piega(aria, secondi, x, y) * 1.6))),
+      });
+    }
+  }
+  return trovati;
+}
+
+export function disegnaCiuffi(p, camera, secondi, aria, stagione, ePratoLibero) {
+  if (!accesi) return;
+  const q = vistaDi(camera);
+  const lista = ciuffi(q, secondi, aria, ePratoLibero);
+  if (lista.length === 0) return;
+  // I colori del prato di questa stagione: il più scuro alla radice, il più
+  // chiaro in punta. D'autunno i ciuffi sono secchi come il resto.
+  const t = tavolozzaDi(stagione);
+  const scuro = t["6"], chiaro = t["8"];
+  for (const c of lista) {
+    const bx = Math.round(c.x - camera.x), by = Math.round(c.y - camera.y);
+    // Tre fili: quello di mezzo più alto, i due di lato aperti in punta.
+    for (const [dx, alto, apertura] of [[-2, c.alto - 1, -1], [0, c.alto, 0], [2, c.alto - 1, 1]]) {
+      for (let k = 0; k < alto; k += 1) {
+        const quota = k / Math.max(1, alto - 1);
+        const spinta = Math.round((c.piega + apertura * 0.6) * quota * quota);
+        p.fillStyle = k === 0 ? scuro : chiaro;
+        p.fillRect(bx + dx + spinta, by - k, 1, 1);
+      }
+    }
+  }
+}
+
 // --- fumo e scintille ------------------------------------------------------------
 
 // Particelle nel mondo, non sullo schermo: se ti sposti, il fumo resta sopra
@@ -297,6 +424,9 @@ export function disegnaBagliori(p, camera, lumi, luce, secondi) {
 // compresa. Un tetto al numero, perché una notte con dieci fuochi non diventi
 // una nebbia.
 const MASSIMO = 260;
+// Le foglie hanno un tetto loro: un bosco d'autunno non deve lasciare senza
+// scintille il fuoco acceso lì accanto.
+const MASSIMO_FOGLIE = 60;
 const particelle = [];
 const accumulati = new Map();
 let caso = null;
@@ -325,6 +455,11 @@ export function quanteParticelle(tipo) {
   return tipo ? particelle.filter((x) => x.tipo === tipo).length : particelle.length;
 }
 
+// Dove stanno, per i collaudi.
+export function posizioniParticelle(tipo) {
+  return particelle.filter((x) => x.tipo === tipo).map(({ x, y }) => ({ x, y }));
+}
+
 function emetti(tipo, l) {
   if (particelle.length >= MASSIMO) return;
   const scintilla = tipo === "scintilla";
@@ -343,11 +478,23 @@ function emetti(tipo, l) {
 // Un passo del tempo vero. Si chiede l'ora del browser e non il passo del
 // gioco perché il fumo sale anche a gioco fermo, com'è giusto che faccia
 // una finestra aperta su un posto.
-export function aggiorna(secondi, lumi, { piove = false } = {}) {
+export function aggiorna(secondi, lumi, { piove = false, aria = 0, alberi = [], stagione = null } = {}) {
   if (!accesi) return;
   pronto();
   const passo = ultimo === null ? 0 : Math.min(0.1, Math.max(0, secondi - ultimo));
   ultimo = secondi;
+  // D'autunno le foglie: da ogni albero in vista, una ogni otto secondi o
+  // giù di lì, di più quando tira vento.
+  if (stagione === "autunno") {
+    for (const albero of alberi) {
+      if (albero.tipo !== OGGETTO.ALBERO) continue;
+      const chiave = `foglie ${albero.x},${albero.y}`;
+      const conto = accumulati.get(chiave) ?? { foglie: 0 };
+      conto.foglie += passo * (0.08 + 0.1 * aria);
+      while (conto.foglie >= 1) { conto.foglie -= 1; foglia(albero); }
+      accumulati.set(chiave, conto);
+    }
+  }
   const visti = new Set();
   for (const l of lumi) {
     const chiave = l.inMano ? "mano" : `${Math.round(l.x)},${Math.round(l.y)}`;
@@ -360,14 +507,67 @@ export function aggiorna(secondi, lumi, { piove = false } = {}) {
     while (conto.fumo >= 1) { conto.fumo -= 1; emetti("fumo", l); }
     accumulati.set(chiave, conto);
   }
-  for (const chiave of accumulati.keys()) if (!visti.has(chiave)) accumulati.delete(chiave);
+  for (const chiave of accumulati.keys()) {
+    if (!visti.has(chiave) && !chiave.startsWith("foglie ")) accumulati.delete(chiave);
+  }
+  if (accumulati.size > 400) for (const chiave of accumulati.keys()) if (chiave.startsWith("foglie ")) accumulati.delete(chiave);
   for (let i = particelle.length - 1; i >= 0; i -= 1) {
     const s = particelle[i];
     s.eta += passo;
     if (s.eta >= s.vita) { particelle.splice(i, 1); continue; }
-    s.x += (s.vx + Math.sin(s.eta * 3 + s.fase) * (s.tipo === "fumo" ? 3 : 6)) * passo;
+    if (s.tipo === "foglia") {
+      // Cade ondeggiando e il vento la porta; arrivata a terra ci resta un
+      // poco, e poi sparisce.
+      if (s.y < s.terra) {
+        s.x += (aria * 9 + Math.sin(s.eta * 2.6 + s.fase) * 10) * passo;
+        s.y = Math.min(s.terra, s.y + s.vy * passo);
+        if (s.y >= s.terra) s.vita = s.eta + 1.8;
+      }
+      continue;
+    }
+    // Il fumo va col vento, sempre di più man mano che sale.
+    const spinta = s.tipo === "fumo" ? aria * 7 * Math.min(1, s.eta) : 0;
+    s.x += (s.vx + spinta + Math.sin(s.eta * 3 + s.fase) * (s.tipo === "fumo" ? 3 : 6)) * passo;
     s.y += s.vy * passo;
   }
+}
+
+// Una foglia nasce nella chioma di un albero e cade fino a terra, poco sotto
+// il tronco o poco davanti.
+const COLORI_FOGLIE = ["rgb(201 120 47)", "rgb(163 69 42)", "rgb(216 168 58)", "rgb(138 90 42)"];
+function foglia(albero) {
+  if (particelle.length >= MASSIMO) return;
+  if (quanteParticelle("foglia") >= MASSIMO_FOGLIE) return;
+  const w = albero.sprite?.width ?? TASSELLO;
+  const h = albero.sprite?.height ?? TASSELLO * 1.5;
+  particelle.push({
+    tipo: "foglia",
+    x: albero.x + 2 + caso() * (w - 4),
+    y: albero.y + 1 + caso() * h * 0.55,
+    vx: 0,
+    vy: 7 + caso() * 5,
+    eta: 0,
+    vita: 30,
+    fase: caso() * 6.283,
+    terra: (albero.base ?? albero.y + h) - 3 + caso() * 9,
+    colore: COLORI_FOGLIE[Math.floor(caso() * COLORI_FOGLIE.length)],
+  });
+}
+
+// Le foglie prima del buio, come il fumo: di notte cadono al buio.
+export function disegnaFoglie(p, camera) {
+  if (!accesi) return;
+  p.save();
+  for (const s of particelle) {
+    if (s.tipo !== "foglia") continue;
+    const aTerra = s.y >= s.terra;
+    p.globalAlpha = aTerra ? Math.max(0, Math.min(1, (s.vita - s.eta) / 1.8)) : 1;
+    p.fillStyle = s.colore;
+    // Girando, una foglia si vede ora di piatto e ora di taglio.
+    const piatta = aTerra || Math.sin(s.eta * 7 + s.fase) > 0;
+    p.fillRect(Math.round(s.x - camera.x), Math.round(s.y - camera.y), piatta ? 2 : 1, 1);
+  }
+  p.restore();
 }
 
 // Il fumo prima del buio: di notte si spegne con tutto il resto, e resta

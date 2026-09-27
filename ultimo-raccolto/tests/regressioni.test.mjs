@@ -5166,7 +5166,7 @@ test('le ombre: sotto chi cammina e sotto le cose in piedi, non sotto i muri; il
   }
   // Il gioco le disegna prima delle cose in piedi.
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
-  assert.ok(gioco.indexOf('effetti.disegnaOmbre(p, inPiedi')<gioco.indexOf('for (const cosa of inPiedi) schermo.disegna'));
+  assert.ok(gioco.indexOf('effetti.disegnaOmbre(p, inPiedi')<gioco.indexOf('for (const cosa of inPiedi) {'));
 });
 
 test('un’ombra sta ferma rispetto alla sua cosa mentre la vista scorre, ed è a pixel pieni',async()=>{
@@ -5289,4 +5289,94 @@ test('gli effetti si accendono e si spengono con L, e la scelta resta nel browse
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
   assert.match(gioco,/comandi\.appenaPremuto\("luci"\)[\s\S]{0,80}effetti\.alterna\(\)/);
   assert.match(readFileSync(new URL('../sw.js',import.meta.url),'utf8'),/"\.\/arte\/effetti\.js"/);
+});
+
+// --- M7.18.46: il vento --------------------------------------------------------
+
+test('il vento: a raffiche, sempre da ovest, più forte con la pioggia, e passa da un albero all’altro',async()=>{
+  const e=await effettiDi();
+  let prima=e.vento(0,'sereno'),sereno=0,pioggia=0,n=0;
+  for(let t=0;t<600;t+=0.1){
+    const v=e.vento(t,'sereno');
+    assert.ok(v>=0&&v<=1.0001,`sereno ${v}`);
+    assert.ok(Math.abs(v-prima)<0.02,'cambia piano');prima=v;
+    const w=e.vento(t,'pioggia');assert.ok(w>=0&&w<=1.61);
+    sereno+=v;pioggia+=w;n++;
+    // Sempre sottovento: non piega mai controvento.
+    assert.ok(e.piega(v,t,t*37%400,50)>=0);
+  }
+  assert.ok(pioggia>sereno*1.4,'con la pioggia tira di più');
+  // L'onda corre: due alberi lontani non piegano insieme.
+  let diversi=0;for(let t=0;t<30;t+=0.5)if(Math.abs(e.piega(1,t,0,0)-e.piega(1,t,100,0))>0.1)diversi++;
+  assert.ok(diversi>20);
+});
+
+test('alberi, cespugli e piante selvatiche piegano la parte alta di pixel interi; il tronco e il resto stanno fermi',async()=>{
+  const e=await effettiDi();e.imposta(true);
+  const albero={tipo:OGGETTO.ALBERO,x:0,y:0,base:23,sprite:{width:16,height:23}};
+  const fasce=e.fasceMosse(albero,1.2);
+  assert.deepEqual(fasce.map(f=>[f[0],f[1]]),[[0,8],[8,15],[15,23]],'chioma in due fasce, tronco fermo');
+  assert.deepEqual(fasce.map(f=>f[2]),[2,1,0]);
+  assert.deepEqual(e.fasceMosse(albero,5).map(f=>f[2]),[2,1,0],'al più due pixel');
+  assert.deepEqual(e.fasceMosse(albero,0).map(f=>f[2]),[0,0,0]);
+  const cespuglio={tipo:OGGETTO.CESPUGLIO,x:0,y:0,base:12,sprite:{width:16,height:12}};
+  assert.deepEqual(e.fasceMosse(cespuglio,3),[[0,6,1],[6,12,0]],'un cespuglio al più un pixel');
+  for(const tipo of [OGGETTO.SPIGHE_SELVATICHE,OGGETTO.LINO_SELVATICO,OGGETTO.CAVOLO_SELVATICO,OGGETTO.PATATA_SELVATICA,OGGETTO.FAGIOLI_SELVATICI])
+    assert.ok(e.fasceMosse({tipo,sprite:{width:16,height:16}},1),'tipo '+tipo);
+  for(const tipo of [OGGETTO.SASSO,OGGETTO.CASSA,OGGETTO.MURO,OGGETTO.SPAVENTAPASSERI,'giocatore',undefined])
+    assert.equal(e.fasceMosse({tipo,sprite:{width:16,height:16}},1),null,'fermo: '+tipo);
+  // Col tempo sereno la chioma si muove a raffiche, non sempre; con la pioggia di più.
+  const quota=(evento)=>{let mossi=0,n=0;for(let t=0;t<120;t+=0.1){n++;if(e.fasceMosse(albero,e.piega(e.vento(t,evento),t,0,23))[0][2]>0)mossi++;}return mossi/n;};
+  const sereno=quota('sereno'),pioggia=quota('pioggia');
+  assert.ok(sereno>0.25&&sereno<0.6,`sereno ${sereno.toFixed(2)}`);assert.ok(pioggia>sereno);
+  // Il disegno a fasce copre tutte le righe, una volta sola, alla posizione arrotondata come quella del gioco.
+  const chiamate=[];const p={drawImage:(...a)=>chiamate.push(a)};
+  assert.equal(e.disegnaMosso(p,albero,100.4,{x:10.7,y:3.2},0,1),true);
+  const righe=chiamate.map(c=>[c[2],c[2]+c[4]]);assert.deepEqual(righe,[[0,8],[8,15],[15,23]]);
+  for(const c of chiamate){assert.equal(c[6]-c[2],Math.round(0-3.2)+0*0);assert.ok(Number.isInteger(c[5]));}
+  assert.equal(chiamate.at(-1)[5],Math.round(100.4-10.7),'il tronco dove sta il disegno');
+  assert.equal(e.disegnaMosso(p,{tipo:OGGETTO.SASSO,sprite:{width:16,height:10}},0,{x:0,y:0},0,1),false,'il resto lo disegna il gioco');
+  e.imposta(false);assert.equal(e.disegnaMosso(p,albero,0,{x:0,y:0},0,1),false,'spenti, fermi');e.imposta(true);
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/if \(!effetti\.disegnaMosso\(p, cosa, x, camera, secondi, aria\)\) schermo\.disegna\(cosa\.sprite, x, cosa\.y\);/);
+});
+
+test('i ciuffi d’erba: uno ogni quattro tasselli di prato libero, e si chiede il prato solo a quelli',async()=>{
+  const e=await effettiDi();e.imposta(true);
+  const q={sinistra:0,sopra:0,destra:384,sotto:216};
+  let chieste=0;const prato=()=>{chieste++;return true;};
+  const lista=e.ciuffi(q,3,1,prato),tasselli=24*15;
+  assert.ok(lista.length>tasselli*0.18&&lista.length<tasselli*0.32,`ciuffi ${lista.length}`);
+  assert.equal(chieste,lista.length,'solo ai candidati');
+  for(const c of lista){assert.ok(c.x%16>=3&&c.x%16<=12&&c.y%16>=6&&c.y%16<=14);assert.ok(c.piega>=0&&c.piega<=2);assert.ok(c.alto===3||c.alto===4);}
+  assert.deepEqual(e.ciuffi(q,3,1,()=>true).map(c=>[c.x,c.y]),lista.map(c=>[c.x,c.y]),'stanno fermi al loro posto');
+  assert.equal(e.ciuffi(q,3,1,()=>false).length,0,'niente fuori dal prato');
+  // Piegano col vento: senza vento dritti, con la raffica piegati.
+  assert.ok(e.ciuffi(q,3,0,()=>true).every(c=>c.piega===0));
+  assert.ok(e.ciuffi(q,3,1.5,()=>true).some(c=>c.piega>0));
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/mappa\.terrenoDi\(tx, ty\) === TERRENO\.ERBA && mappa\.oggettoDi\(tx, ty\) === OGGETTO\.NESSUNO/);
+  const i=(s)=>{const k=gioco.indexOf(s);assert.ok(k>0,s);return k;};
+  assert.ok(i('effetti.disegnaCiuffi(')<i('effetti.disegnaOmbre(')&&i('effetti.disegnaOmbre(')<i('for (const cosa of inPiedi) {'));
+});
+
+test('d’autunno cadono le foglie, e il vento le porta; il fumo va col vento',async()=>{
+  const e=await effettiDi();e.imposta(true);
+  const alberi=[0,1,2,3,4].map(i=>({tipo:OGGETTO.ALBERO,x:i*40,y:0,base:23,sprite:{width:16,height:23}}));
+  const corri=(secondi,opzioni,da=0)=>{for(let t=da;t<=da+secondi;t+=1/30)e.aggiorna(t,[],opzioni);return da+secondi;};
+  e.seminaParticelle(3);corri(20,{alberi,stagione:'estate',aria:1});
+  assert.equal(e.quanteParticelle('foglia'),0,'d’estate no');
+  e.seminaParticelle(3);let t=corri(20,{alberi,stagione:'autunno',aria:1});
+  const quante=e.quanteParticelle('foglia');assert.ok(quante>=3&&quante<=60,`foglie ${quante}`);
+  // Tante foglie, ma un tetto.
+  const bosco=[...Array(40)].map((_,i)=>({tipo:OGGETTO.ALBERO,x:i*20,y:0,base:23,sprite:{width:16,height:23}}));
+  t=corri(40,{alberi:bosco,stagione:'autunno',aria:1.6},t);assert.ok(e.quanteParticelle('foglia')<=60);
+  // Senza alberi in vista cadono, si posano e spariscono.
+  corri(30,{alberi:[],stagione:'autunno',aria:1},t);assert.equal(e.quanteParticelle('foglia'),0);
+  // Il fumo: col vento finisce sottovento.
+  const fuoco=[{x:100,y:100,raggio:64}];
+  const media=(aria)=>{e.seminaParticelle(9);for(let s=0;s<=6;s+=1/30)e.aggiorna(s,fuoco,{aria});return e.posizioniParticelle('fumo').reduce((a,p)=>a+p.x,0)/e.quanteParticelle('fumo');};
+  assert.ok(media(1.5)>media(0)+3,'il vento porta il fumo a est');
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.ok(gioco.indexOf('effetti.disegnaFoglie(p, camera);')<gioco.indexOf('disegnaBuio(secondi);'));
 });
