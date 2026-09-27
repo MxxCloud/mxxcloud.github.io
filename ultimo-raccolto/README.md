@@ -12,6 +12,28 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.43 — il lino è sempre vicino
+
+Il lino dà il filo, e il filo apre il secondo gradino: letto, lenza, bende
+di lino, essiccatoio. Finora dove trovarlo lo decideva il sorteggio degli
+orti, e in una partita su dieci l'orto col lino più vicino stava oltre 270
+tasselli dalla partenza. Adesso **il lino non è mai oltre 150 tasselli**.
+- **L'orto abbandonato più vicino alla partenza ha sempre il lino** fra le
+  sue due piante. L'altra resta a sorte e cambia da una partita all'altra.
+  Se il sorteggio non gli aveva dato il lino, il lino prende il posto della
+  seconda fila. Gli altri orti non cambiano.
+- In tre valli su quattro quell'orto sta entro 150 tasselli, e in metà
+  delle valli entro 104, cioè due ore e mezza di cammino. Va cercato come gli
+  altri, perché sulla mappa è un orto qualunque finché non ci si arriva.
+- **Il ripiego.** Nelle valli in cui quell'orto sta oltre 150 tasselli (una
+  su quattro), **la cassa dell'orto della fattoria ha anche tre semi di
+  lino**, in aggiunta al resto.
+- Vale anche per le partite già salvate: l'orto più vicino può cambiare
+  una delle sue piante, e la cassa dell'orto della fattoria, se non ci hai
+  ancora preso niente, può avere i semi di lino.
+- Nelle rarissime valli senza fattoria (una su mille) la partita comincia
+  dall'origine, e vale solo l'orto più vicino, senza ripiego.
+
 ## M7.18.42 — imprevisti del raccolto: canicola e parassiti
 
 L'orto ha due nemici nuovi. Tutti e due si annunciano prima e si battono con
@@ -2098,7 +2120,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.42**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.43**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

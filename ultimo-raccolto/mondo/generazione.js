@@ -276,7 +276,70 @@ export function varietaDellOrto(r, seme) {
   const base = (seme ^ sorteggio) >>> 0;
   const prima = Math.min(Math.floor(impronta(r.tx0, r.ty0, scarto(base, 11)) * n), n - 1);
   const salto = 1 + Math.min(Math.floor(impronta(r.tx0, r.ty0, scarto(base, 12)) * (n - 1)), n - 2);
-  return [INSELVATICHITE[prima], INSELVATICHITE[(prima + salto) % n]];
+  const coppia = [INSELVATICHITE[prima], INSELVATICHITE[(prima + salto) % n]];
+  // L'orto più vicino alla partenza ha sempre il lino (M7.18.43): se il
+  // sorteggio non gliel'ha dato, prende il posto della seconda fila. La prima
+  // resta quella del sorteggio, quindi l'altra pianta cambia ancora da una
+  // partita all'altra.
+  const vicino = ortoPiuVicino().orto;
+  if (vicino && vicino.tx0 === r.tx0 && vicino.ty0 === r.ty0 && !coppia.includes(OGGETTO.LINO_SELVATICO)) {
+    coppia[1] = OGGETTO.LINO_SELVATICO;
+  }
+  return coppia;
+}
+
+// --- il lino garantito (M7.18.43) --------------------------------------------
+//
+// Il lino è la porta del secondo gradino: senza filo non ci sono letto,
+// lenza, bende di lino né essiccatoio. Lasciato al sorteggio, in una partita
+// su dieci l'orto col lino più vicino stava oltre 270 tasselli, e il secondo
+// gradino dipendeva dalla fortuna invece che dalla voglia di esplorare.
+//
+// Adesso l'orto abbandonato più vicino alla partenza ha sempre il lino, e va
+// cercato come tutti gli altri: sulla mappa è un orto come gli altri finché
+// non ci si arriva. È una cosa della valle — il sorteggio cambia l'altra
+// pianta, non quale orto — e si misura in linea d'aria fino al suo centro.
+//
+// Nelle valli in cui quell'orto sta oltre LINO_ENTRO tasselli (una su
+// quattro) c'è anche un ripiego: la cassa dell'orto della fattoria ha dei
+// semi di lino (vedi contenitori.js). Così il lino non sta mai più lontano
+// di così.
+export const LINO_ENTRO = 150;
+// Quante celle attorno alla partenza si guardano. L'orto più vicino, su mille
+// valli, è stato al massimo a 304 tasselli, meno di cinque celle: otto
+// bastano, e oltre vale il ripiego.
+const CELLE_DEL_LINO = 8;
+let ortoDelLino = null;
+
+export function ortoPiuVicino() {
+  if (ortoDelLino?.seme === semeDelleRovine) return ortoDelLino;
+  // La partenza è la fattoria, e dove la fattoria non c'è l'origine: la
+  // stessa regola di doveSiComincia in gioco.js.
+  const f = laFattoria();
+  const px = f?.tx ?? 0;
+  const py = f?.ty ?? 0;
+  const cx0 = Math.floor(px / rovine.CELLA);
+  const cy0 = Math.floor(py / rovine.CELLA);
+  let orto = null;
+  let distanza = Infinity;
+  for (let cy = cy0 - CELLE_DEL_LINO; cy <= cy0 + CELLE_DEL_LINO; cy++) {
+    for (let cx = cx0 - CELLE_DEL_LINO; cx <= cx0 + CELLE_DEL_LINO; cx++) {
+      const r = rovinaNellaCella(cx, cy);
+      if (r?.luogo !== "orto") continue;
+      const d = Math.hypot(r.tx0 + r.larghezza / 2 - px, r.ty0 + r.altezza / 2 - py);
+      if (d < distanza) {
+        distanza = d;
+        orto = { tx0: r.tx0, ty0: r.ty0, larghezza: r.larghezza, altezza: r.altezza };
+      }
+    }
+  }
+  ortoDelLino = { seme: semeDelleRovine, orto, distanza };
+  return ortoDelLino;
+}
+
+// Serve il ripiego? Sì se l'orto del lino è oltre LINO_ENTRO, o se non c'è.
+export function linoLontano() {
+  return ortoPiuVicino().distanza > LINO_ENTRO;
 }
 
 function inselvatichitaIn(x, y, seme, fila) {
