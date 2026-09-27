@@ -48,7 +48,7 @@ import * as acqua from "./regole/acqua.js";
 import * as meteo from "./regole/meteo.js";
 import * as atmosfera from "./arte/atmosfera.js";
 import * as effetti from "./arte/effetti.js";
-import { TERRENO } from "./mondo/generazione.js";
+import { TERRENO, OGGETTO } from "./mondo/generazione.js";
 import * as sincronia from "./regole/sincronia.js";
 import { tavolozzaDi, tavolozzaBagnataDi } from "./arte/tavolozza.js";
 import { FIORI } from "./arte/sprite-fiori.js";
@@ -75,7 +75,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.45";
+const VERSIONE = "M7.18.46";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1724,11 +1724,20 @@ function disegna() {
   const secondi = performance.now() / 1000;
   const luce = tempo.luceAmbiente();
   raccogliLumi();
-  effetti.aggiorna(secondi, lumi, { piove: meteo.evento() === "pioggia" });
-  // Le ombre per terra, prima di tutto quello che ci sta in piedi sopra.
+  // Il vento (M7.18.46): uno solo per tutta la vista, a raffiche.
+  const aria = effetti.vento(secondi, meteo.evento());
+  const stagione = stagioni.stagioneCorrente();
+  effetti.aggiorna(secondi, lumi, { piove: meteo.evento() === "pioggia", aria, alberi: inPiedi, stagione });
+  // I ciuffi d'erba e le ombre per terra, prima di tutto quello che ci sta
+  // in piedi sopra: l'ombra cade anche sull'erba.
+  effetti.disegnaCiuffi(p, camera, secondi, aria, stagione, pratoLibero);
   effetti.disegnaOmbre(p, inPiedi, camera, tempo.oraCorrente(), luce);
 
-  for (const cosa of inPiedi) schermo.disegna(cosa.sprite, cosa.x + tremolioDi(cosa), cosa.y);
+  // Chi piega col vento lo disegnano gli effetti, a fasce; il resto come sempre.
+  for (const cosa of inPiedi) {
+    const x = cosa.x + tremolioDi(cosa);
+    if (!effetti.disegnaMosso(p, cosa, x, camera, secondi, aria)) schermo.disegna(cosa.sprite, x, cosa.y);
+  }
 
   const lenza = pesca.stato();
   if (lenza) {
@@ -1748,6 +1757,7 @@ function disegna() {
   // tutto il mondo ma sotto il buio, che ha già la sua tinta.
   scheggie.disegna();
   effetti.disegnaFumo(p, camera);
+  effetti.disegnaFoglie(p, camera);
   effetti.disegnaLuccichii(p, camera, secondi, { ora: tempo.oraCorrente(), stagione: stagioni.stagioneCorrente() }, eAcqua);
   atmosfera.disegna(p, meteo.evento(), tempo.giornoCorrente()*tempo.SECONDI_PER_GIORNO + tempo.oraCorrente()/24*tempo.SECONDI_PER_GIORNO, riparo.stanza());
   effetti.disegnaColoreDellOra(p, tempo.oraCorrente());
@@ -1757,7 +1767,7 @@ function disegna() {
   effetti.disegnaBagliori(p, camera, lumi, luce, secondi);
   effetti.disegnaScintille(p, camera);
   effetti.disegnaLucciole(p, camera, secondi, {
-    stagione: stagioni.stagioneCorrente(), luce, alChiuso: riparo.alChiuso(), piove: meteo.evento() === "pioggia",
+    stagione, luce, alChiuso: riparo.alChiuso(), piove: meteo.evento() === "pioggia",
   });
   // Dopo il buio e prima dell'interfaccia: il lampo è una cosa che succede
   // nel mondo, non un cartello sul vetro, quindi la notte non lo spegne ma i
@@ -1805,6 +1815,12 @@ function raccogliLumi() {
 function disegnaBuio(secondi) {
   oscurita.disegna(schermo.pennello(), tempo.luceAmbiente(), tempo.tintaOscurita(), lumi,
     (luce) => effetti.tremolio(luce, secondi));
+}
+
+// Il prato libero, dove crescono i ciuffi che piegano col vento: erba, e
+// sopra niente — né un albero, né un muro, né quello che hai posato.
+function pratoLibero(tx, ty) {
+  return mappa.terrenoDi(tx, ty) === TERRENO.ERBA && mappa.oggettoDi(tx, ty) === OGGETTO.NESSUNO;
 }
 
 // L'acqua che può luccicare: non quella gelata.

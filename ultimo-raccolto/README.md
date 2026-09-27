@@ -12,6 +12,27 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.46 — il vento
+
+L'ultimo pezzo del primo livello dell'upgrade grafico: la valle si muove.
+- **Il vento soffia da ovest, a raffiche.** Ci sono momenti di calma e
+  folate che arrivano e passano; con la pioggia tira più forte, con la neve
+  un po' di più.
+- **Gli alberi piegano la chioma**, fino a due pixel, e il tronco resta
+  fermo. **I cespugli e le piante selvatiche degli orti** piegano la parte
+  alta di un pixel. L'onda attraversa il bosco da ovest a est, quindi gli
+  alberi non ondeggiano tutti insieme.
+- **Ciuffi d'erba sui prati**: tre fili, uno ogni quattro tasselli di prato
+  libero, che piegano con le raffiche. Hanno i colori del prato della
+  stagione, secchi d'autunno.
+- **D'autunno cadono le foglie** dagli alberi in vista, arancioni, rosse e
+  gialle. Il vento le porta, girano cadendo, si posano e poi spariscono.
+- **Il fumo dei fuochi va col vento**, sempre più inclinato man mano che
+  sale.
+
+Anche questo si spegne con L, ed è solo disegno: niente di quello che piega
+cambia posto davvero.
+
 ## M7.18.45 — la luce e l'aria, ritoccate
 
 Le correzioni dopo la prima prova di M7.18.44.
@@ -2168,7 +2189,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.45**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.46**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -2952,6 +2973,23 @@ contenitori non erano un pezzo della costruzione fra gli altri, erano la
 condizione di un debito scritto tre volte nel progetto. Farli da soli li fa
 arrivare con la cosa che sbloccano — il guasto — invece che in mezzo a muri e
 riparo, dove sarebbero stati una cassa in più da costruire.
+
+## Promemoria per l'upgrade grafico
+
+Le idee messe da parte, da riprendere quando se ne parla. Non sono tappe né
+promesse: sono appunti, perché non si perdano.
+
+- **La luna.** Notti più chiare con la luna piena e più buie con la luna
+  nuova: una luna che cresce e cala nel corso dei giorni, magari disegnata
+  nel cielo o riflessa sull'acqua. Da decidere se cambia solo il disegno del
+  buio o anche le regole: quanto lontano vede un infetto, quanto si vede
+  senza torcia.
+- **Il secondo livello: una pixel art più ricca.** Più sfumature e qualche
+  colore in più nei disegni, varianti dei tasselli contro la ripetizione, più
+  animazioni (fermo, colpo, raccolta). Si comincia da terreno e alberi, che
+  sono quasi tutto lo schermo.
+
+Il primo livello, la luce e l'aria, è fatto: M7.18.44, M7.18.45 e M7.18.46.
 
 ## Comandi
 
