@@ -673,6 +673,69 @@ export function disegnaLuccichii(p, camera, secondi, stato, eAcqua) {
   p.restore();
 }
 
+// --- la riva (M7.18.49) ---------------------------------------------------------------
+
+// La schiuma dove l'acqua tocca terra, e la terra bagnata subito sopra. Il
+// confine vero lo dice la mappa (rivaDi: per ogni lato, quanti pixel entra la
+// frangia della terra in ogni punto); qui l'onda lo respira: la schiuma sta
+// sul confine e scivola in acqua fino a due pixel e torna, lenta, con l'onda
+// che corre lungo la riva, così non batte tutta insieme. Qualche buco, perché
+// una riga di schiuma continua è un bordo disegnato, non schiuma.
+//
+// Restituisce rettangoli di un pixel in coordinate del mondo: "schiuma", la
+// sua "scia" più tenue, e "bagnato" sul lato di terra.
+export function schiumaDi(riva, tx, ty, secondi) {
+  const pezzi = [];
+  if (!riva) return pezzi;
+  for (let q = 0; q < 4; q += 1) {
+    const profilo = riva[q];
+    if (!profilo) continue;
+    for (let k = 0; k < TASSELLO; k += 1) {
+      const lungo = (q === 0 || q === 2 ? tx * TASSELLO + k : ty * TASSELLO + k) + (q === 0 || q === 2 ? ty : tx) * 7;
+      const respiro = 0.5 + 0.5 * Math.sin(secondi * 1.1 - lungo * 0.19);
+      const arriva = Math.round(respiro * 2);
+      const d = profilo[k];
+      const punto = (dentro) => {
+        const i = Math.max(0, Math.min(TASSELLO - 1, dentro));
+        const [x, y] = q === 0 ? [k, i] : q === 1 ? [TASSELLO - 1 - i, k] : q === 2 ? [k, TASSELLO - 1 - i] : [i, k];
+        return [tx * TASSELLO + x, ty * TASSELLO + y];
+      };
+      if (d > 0) {
+        pezzi.push([...punto(d - 1), "bagnato"]);
+        if (respiro > 0.6 && d > 1) pezzi.push([...punto(d - 2), "bagnato"]);
+      }
+      if (impronta(lungo, q, 0xf0a) < 0.12) continue;
+      if (d + arriva < TASSELLO) pezzi.push([...punto(d + arriva), "schiuma"]);
+      if (arriva > 0 && d + arriva - 1 < TASSELLO) pezzi.push([...punto(d + arriva - 1), "scia"]);
+    }
+  }
+  return pezzi;
+}
+
+const TINTE_RIVA = {
+  schiuma: ["rgb(214 236 240)", 0.85],
+  scia: ["rgb(170 210 220)", 0.4],
+  bagnato: ["rgb(20 16 12)", 0.2],
+};
+export function disegnaRiva(p, camera, secondi, rivaDi, gelato = false) {
+  if (!accesi || gelato) return;
+  const q = vistaDi(camera);
+  p.save();
+  for (let ty = Math.floor(q.sopra / TASSELLO); ty <= Math.floor((q.sotto - 1) / TASSELLO); ty += 1) {
+    for (let tx = Math.floor(q.sinistra / TASSELLO); tx <= Math.floor((q.destra - 1) / TASSELLO); tx += 1) {
+      const riva = rivaDi(tx, ty);
+      if (!riva) continue;
+      for (const [x, y, tipo] of schiumaDi(riva, tx, ty, secondi)) {
+        const [colore, forza] = TINTE_RIVA[tipo];
+        p.fillStyle = colore;
+        p.globalAlpha = forza;
+        p.fillRect(Math.round(x - camera.x), Math.round(y - camera.y), 1, 1);
+      }
+    }
+  }
+  p.restore();
+}
+
 // --- le lucciole -------------------------------------------------------------------
 
 // Nelle notti d'estate, all'aperto e senza pioggia. Stanno su una maglia del

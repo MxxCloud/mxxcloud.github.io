@@ -12,6 +12,23 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.49 — l'acqua e la riva
+
+Il terzo passo del secondo livello grafico.
+- **L'acqua profonda ha le onde.** Prima era un rumore di pixel blu; adesso
+  è un fondo cupo con banchi più chiari e onde lunghe e basse, rade.
+- **Il bassofondo lascia vedere il fondo**, a macchie color sabbia, con
+  piccole increspature. È ben più chiaro dell'acqua profonda, perché è lì che
+  si guada e d'inverno gela.
+- **Il ghiaccio ha crepe e brina.**
+- **La riva si muove.** Dove l'acqua tocca terra c'è una riga di schiuma
+  che avanza e si ritira di due pixel col respiro dell'onda, e l'onda corre
+  lungo la riva, quindi non batte tutta insieme. Subito sopra, la terra è
+  bagnata. La schiuma segue il confine vero, cioè la frangia irregolare della
+  terra, non il bordo dritto del tassello.
+- Col gelo la schiuma sparisce. Si spegne col tasto L come gli altri
+  effetti, e resta a 60 fotogrammi anche col lago a tutto schermo.
+
 ## M7.18.48 — sassi, cespugli e piante selvatiche
 
 Il secondo passo del secondo livello grafico.
@@ -2228,7 +2245,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.48**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.49**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -3025,8 +3042,9 @@ promesse: sono appunti, perché non si perdano.
   senza torcia.
 - **Il secondo livello: una pixel art più ricca.** Cominciato con M7.18.47
   (terreno e alberi) e M7.18.48 (sassi, cespugli, ombre delle piante
-  selvatiche). Restano: l'acqua e la riva; i muri e le case; il superstite, gli infetti e gli animali, con più
-  animazioni (fermo, colpo, raccolta).
+  selvatiche) e M7.18.49 (acqua, riva, ghiaccio). Restano: i muri e le
+  case; il superstite, gli infetti e gli animali, con più animazioni (fermo,
+  colpo, raccolta).
 
 Il primo livello, la luce e l'aria, è fatto: M7.18.44, M7.18.45 e M7.18.46.
 

@@ -17,6 +17,11 @@ export const TAVOLOZZA = {
   "1": "#1d3a4a",
   "2": "#27556a",
   "3": "#4a8090",
+  // Da M7.18.49 il fondo cupo dell'acqua profonda, il fondo che si
+  // intravede nel bassofondo, e la cresta delle sue increspature.
+  H: "#152d3a",
+  I: "#6a8f86",
+  L: "#6fa3b0",
 
   // Ghiaccio distinto dall'acqua profonda anche nella tavolozza invernale.
   //
