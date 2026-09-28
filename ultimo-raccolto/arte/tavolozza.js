@@ -102,6 +102,12 @@ export const TAVOLOZZA = {
   p: "#6b7490",
 
   q: "#33261c", // capelli
+  // Da M7.18.51 il riflesso nei capelli e i pantaloni, di un bruno smorto
+  // diverso dalla giacca: a sedici pixel la figura si legge in due pezzi, e
+  // si vede quale gamba va avanti.
+  K: "#4d3a28",
+  J: "#4a4638",
+  F: "#34322a",
 
   // Il contorno non è nero pieno: sul fondo scuro del sito il nero puro
   // scaverebbe un buco, mentre questo grigio-blu resta un bordo.
@@ -228,6 +234,13 @@ export const TAVOLOZZA_INFETTO = {
   n: "#2f3330",
   o: "#454b44",
   g: "#241f1a",
+  // Da M7.18.51 le chiavi nuove dei personaggi, spente come il resto.
+  K: "#3a3a33",
+  l: "#6f7a60",
+  p: "#5a6158",
+  J: "#3a3d36",
+  F: "#2a2c27",
+  h: "#3a2f24",
 };
 
 // --- le stagioni ----------------------------------------------------------

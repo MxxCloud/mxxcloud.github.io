@@ -54,19 +54,42 @@ const caso = generatore(0x9a1f00d);
 
 // --- aspetto --------------------------------------------------------------
 
-// Tre direzioni per quattro fotogrammi: dodici immagini in tutto, cotte la
-// prima volta che servono e poi tenute. Niente oggetto in pugno, quindi
-// niente composizione — un infetto non impugna niente, ed è anche il motivo
-// per cui si distingue da lontano da un altro superstite.
+// Da M7.18.51 i disegni sono suoi (vedi sprite-personaggi.js): tre direzioni
+// per quattro fotogrammi di cammino, due di dondolo da fermo e uno col morso,
+// più le stesse col lampo di quando lo si colpisce. Cotte la prima volta che
+// servono e poi tenute. Niente oggetto in pugno, quindi niente composizione —
+// un infetto non impugna niente, ed è anche il motivo per cui si distingue da
+// lontano da un altro superstite.
 const cotti = new Map();
 
-function figura(direzione, fotogramma) {
-  const chiave = `${direzione}|${fotogramma}`;
+// Il lampo di quando lo si colpisce: chiaro, col contorno che resta.
+const LAMPO = Object.fromEntries(Object.entries(TAVOLOZZA_INFETTO).map(([k, v]) => [k, k === "r" ? v : "#d8dccb"]));
+// Quanto restano protese le braccia dopo un morso o un colpo al muro.
+const DURATA_SCATTO = 0.22;
+// Il dondolo da fermo: lento, e più lento del respiro del superstite.
+const MEZZO_DONDOLO = 1.3;
+
+export function posaDi(e) {
+  if (e.scatto > 0) return "morso";
+  if (e.passo > 0) return `passo${Math.floor(e.passo) % 4}`;
+  return `fermo${Math.floor((e.fermo ?? 0) / MEZZO_DONDOLO) % 2}`;
+}
+
+function righeDi(direzione, posa) {
+  if (posa.startsWith("passo")) {
+    const fotogrammi = direzione === "su" ? arte.INFETTO_SU : direzione === "giu" ? arte.INFETTO_GIU : arte.INFETTO_LATO;
+    return fotogrammi[Number(posa[5])];
+  }
+  const pose = arte.POSE_INFETTO[direzione];
+  return posa === "morso" ? pose.morso : pose.fermo[Number(posa[5])];
+}
+
+function figura(direzione, posa, lampo) {
+  const chiave = `${direzione}|${posa}|${lampo ? 1 : 0}`;
   const gia = cotti.get(chiave);
   if (gia) return gia;
 
-  const fotogrammi = direzione === "su" ? arte.SU : direzione === "giu" ? arte.GIU : arte.LATO;
-  const immagine = cuoci(fotogrammi[fotogramma], TAVOLOZZA_INFETTO);
+  const immagine = cuoci(righeDi(direzione, posa), lampo ? LAMPO : TAVOLOZZA_INFETTO);
   cotti.set(chiave, immagine);
   return immagine;
 }
@@ -76,11 +99,15 @@ export function figureCotte() {
 }
 
 function aggiornaAspetto(e) {
-  const fotogramma = Math.floor(e.passo) % 4;
+  const posa = posaDi(e);
   const direzione = e.guarda === "su" ? "su" : e.guarda === "giu" ? "giu" : "lato";
-  const immagine = figura(direzione, fotogramma);
+  const colpito = e.sussulto > 0;
+  const immagine = figura(direzione, posa, colpito);
+  e.posa = posa;
 
   e.sprite = e.guarda === "destra" ? riflesso(immagine) : immagine;
+  // Il tremito del colpo lo aggiunge già chi disegna (vedi gioco.js); qui
+  // basta il lampo.
   e.x = e.px - e.sprite.width / 2;
   e.y = e.py - e.sprite.height;
   e.base = e.py;
@@ -163,6 +190,7 @@ export function aggiorna(e, passo) {
   e.sfonda = false;
   e.bloccato = false;
   if (e.sussulto > 0) e.sussulto -= passo;
+  if (e.scatto > 0) e.scatto = Math.max(0, e.scatto - passo);
 
   if (e.preda) {
     const distanza = insegue(e, passo, e.preda.px, e.preda.py, PORTATA - 2);
@@ -185,6 +213,9 @@ export function aggiorna(e, passo) {
     vagabonda(e, passo);
   }
 
+  // Solo aspetto: le braccia avanti quando mena, il dondolo quando è fermo.
+  if (e.colpo || e.sfonda) e.scatto = DURATA_SCATTO;
+  e.fermo = e.passo > 0 ? 0 : (e.fermo ?? 0) + passo;
   aggiornaAspetto(e);
 }
 
@@ -219,6 +250,10 @@ export function crea(px, py) {
     // Quanto gli resta da tremare dopo averle prese. Serve al disegno, che è
     // l'unico modo che ha il giocatore di sapere di averlo colpito davvero.
     sussulto: 0,
+    // Da M7.18.51, solo aspetto: da quanto è fermo e le braccia protese.
+    fermo: 0,
+    scatto: 0,
+    posa: "fermo0",
     giro: 0,
     direzione: { x: 0, y: 0 },
   };

@@ -75,7 +75,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.50";
+const VERSIONE = "M7.18.51";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1191,6 +1191,9 @@ function leggiComandi(passo) {
 
   const esito = azioni.agisci(eroe, cosaInMano(), casellaScelta);
   if (!esito) return;
+  // Da M7.18.51 il superstite fa il gesto di quello che ha fatto: il braccio
+  // su e giù per un colpo, chinato per quello che si prende o si mette a terra.
+  giocatore.gesto(eroe, giocatore.gestoDi(esito));
 
   if (esito.tipo === "colpo" || esito.tipo === "raccolto") {
     const finale = esito.tipo === "raccolto";
@@ -1493,6 +1496,7 @@ function aggiorna(passo) {
     polli.aggiorna(passo, eroe);
     const morsi = infetti.raccogliIMorsi(eroe);
     if (morsi.morsi > 0) {
+      giocatore.morso(eroe);
       lampoDanno = DURATA_LAMPO;
       suono.suona(MORSO);
     }
