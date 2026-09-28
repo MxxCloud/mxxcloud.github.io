@@ -12,6 +12,19 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.53 — il cervo rifatto
+
+Una correzione a M7.18.52, chiesta dopo averlo visto in partita: il cervo
+aveva due stecchi grigi in testa, che si leggevano più come un cespuglio che
+come un palco.
+- **Il palco è vero.** Un ramo solo, bruno, che sale all'indietro con un
+  pugnale in avanti, una punta in mezzo e la forcella in cima, con le punte
+  color osso. Quando bruca, il palco si gira in avanti con la testa.
+- **Il resto del cervo è più cervo.** Il collo è più lungo e sottile, la
+  testa più piccola, il corpo più snello; l'orecchio va all'indietro. Il
+  disegno è più alto di prima per far posto al palco, ed è ancorato ai
+  piedi come sempre.
+
 ## M7.18.52 — animali e polli
 
 Il sesto passo del secondo livello grafico, e l'ultimo della lista.
@@ -2321,7 +2334,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.52**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.53**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -3120,8 +3133,8 @@ promesse: sono appunti, perché non si perdano.
   (terreno e alberi) e M7.18.48 (sassi, cespugli, ombre delle piante
   selvatiche), M7.18.49 (acqua, riva, ghiaccio), M7.18.50 (muri, porte,
   pavimento), M7.18.51 (il superstite e gli infetti, con le pose) e M7.18.52
-  (animali e polli). La lista è finita; restano solo i ritocchi che emergono
-  giocando.
+  (animali e polli), con il cervo rifatto in M7.18.53. La lista è finita;
+  restano solo i ritocchi che emergono giocando.
 
 Il primo livello, la luce e l'aria, è fatto: M7.18.44, M7.18.45 e M7.18.46.
 

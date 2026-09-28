@@ -5803,3 +5803,31 @@ test('i polli: quattro passi, beccano da fermi, dormono di notte; bianchi e brun
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
   assert.match(gioco,/fauna\.daDisegnare\(adesso\), \.\.\.polli\.daDisegnare\(adesso\)/);
 });
+
+// --- M7.18.53: il cervo rifatto --------------------------------------------------------
+
+test('il cervo ha un palco vero: ramificato, attaccato alla testa, con le punte color osso',()=>{
+  const {ANIMALI,PASCOLO}=arteFauna;
+  for(const f of [...ANIMALI.cervo,PASCOLO.cervo]){
+    // Più alto degli altri: c'è posto per il palco sopra la testa.
+    assert.equal(f.length,26);assert.ok(f.every(r=>r.length===26));
+    decodifica(f,TAVOLOZZA);
+    // Niente grigio: il palco è bruno (h) con le punte chiare (z).
+    assert.ok(!f.join('').includes('Y'));
+  }
+  const f=ANIMALI.cervo[0];
+  // Almeno quattro punte (pugnale, mezzo, forcella), tutte sopra la testa.
+  const punte=[];f.forEach((r,y)=>[...r].forEach((c,x)=>{if(c==='z'&&x>12)punte.push([x,y]);}));
+  assert.ok(punte.length>=4,`${punte.length} punte`);
+  // Il palco è un pezzo solo, attaccato alla testa: dalle punte si arriva al
+  // contorno del capo passando solo per il palco.
+  const palco=(x,y)=>'hz'.includes(f[y]?.[x]);
+  for(const [x0,y0] of punte){
+    const visti=new Set([`${x0},${y0}`]),coda=[[x0,y0]];let testa=false;
+    while(coda.length){const [x,y]=coda.pop();
+      for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]]){
+        const nx=x+dx,ny=y+dy,k=`${nx},${ny}`;if(visti.has(k))continue;visti.add(k);
+        if(palco(nx,ny))coda.push([nx,ny]);else if('gNw'.includes(f[ny]?.[nx]??'.')&&f[ny]?.[nx]!==undefined&&f[ny][nx]!=='.')testa=true;}}
+    assert.ok(testa,`la punta ${x0},${y0} non arriva alla testa`);
+  }
+});
