@@ -52,7 +52,7 @@ import { FATTORIA } from '../arte/piante.js';
 import { CATALOGO, RACCOLTA } from '../regole/oggetti.js';
 import { vistaLibera, fattoreSuono } from '../mondo/ostacoli.js';
 import * as sprite from '../arte/sprite-cose.js';
-import { TAVOLOZZA } from '../arte/tavolozza.js';
+import { TAVOLOZZA, TAVOLOZZA_INFETTO } from '../arte/tavolozza.js';
 
 let tx, ty, eroe;
 function reset() {
@@ -5612,4 +5612,120 @@ test('il muro crollato ha tre forme 16×8 in pietra; porta, porta aperta e pavim
   assert.ok(PORTA_APERTA.every((r,y)=>y<3||(r[0]!=='.'&&r[15]!=='.')),'gli stipiti restano');
   assert.equal(PAVIMENTO_LEGNO.length,16);assert.ok(PAVIMENTO_LEGNO.every(r=>r.length===16&&!r.includes('.')));
   decodifica(PAVIMENTO_LEGNO,tavolozzaDi('estate'));
+});
+
+// --- M7.18.51: il superstite e gli infetti -------------------------------------------
+
+const personaggiDi=()=>import('../arte/sprite-personaggi.js');
+// giocatore.js e infetto.js cuociono i disegni: basta una tela finta.
+async function conTelaFinta(fai){
+  const prima=globalThis.document,primaImmagine=globalThis.ImageData;
+  globalThis.document={createElement:()=>({width:0,height:0,getContext:()=>({putImageData(){},drawImage(){},translate(){},scale(){}})})};
+  globalThis.ImageData=class{constructor(d,w,h){this.data=d;this.width=w;this.height=h;}};
+  try{return await fai();}finally{globalThis.document=prima;globalThis.ImageData=primaImmagine;}
+}
+// Quanti piedi toccano terra: i pezzi di contorno nell'ultima riga.
+const piediATerra=f=>f[23].split('.').filter(Boolean).length;
+
+test('il superstite: tre direzioni per quattro passi, con luce e ombra, e gli appoggi dove li sente l’udito',async()=>{
+  const a=await personaggiDi();
+  for(const d of ['GIU','SU','LATO']){
+    assert.equal(a[d].length,4);
+    a[d].forEach((f,i)=>{
+      assert.equal(f.length,24);assert.ok(f.every(r=>r.length===16));
+      decodifica(f,TAVOLOZZA);decodifica(f,TAVOLOZZA_INFETTO);
+      // Appoggi 0 e 2 con due piedi a terra, falcate 1 e 3 con uno alzato.
+      assert.equal(piediATerra(f),i%2===0?2:1,`${d} ${i}`);
+    });
+    const tutto=a[d].join('');
+    for(const c of 'rqKmpnohJFg')assert.ok(tutto.includes(c),`${d}: ${c}`);
+    // Le braccia oscillano: le falcate non hanno il busto uguale all'appoggio.
+    assert.notDeepEqual(a[d][1].slice(9,16),a[d][0].slice(9,16),d);
+    assert.notDeepEqual(a[d][1].slice(9,16),a[d][3].slice(9,16),d);
+  }
+  for(const c of 'KJF')assert.ok(c in TAVOLOZZA&&c in TAVOLOZZA_INFETTO,c);
+});
+
+test('le pose del superstite: respiro, colpo, chino, con i piedi fermi a terra',async()=>{
+  const a=await personaggiDi();
+  for(const d of ['giu','su','lato']){
+    const p=a.POSE[d];
+    assert.equal(p.fermo.length,2);assert.equal(p.colpo.length,2);
+    for(const f of [...p.fermo,...p.colpo,p.chino]){
+      assert.equal(f.length,24);assert.ok(f.every(r=>r.length===16));
+      decodifica(f,TAVOLOZZA);
+      assert.equal(f[23],a[d.toUpperCase()][0][23],'i piedi non si muovono');
+    }
+    assert.deepEqual(p.fermo[0],a[d.toUpperCase()][0]);
+    // Il respiro abbassa la testa di un pixel, il chinarsi di due.
+    const cima=f=>f.findIndex(r=>/[^.]/.test(r.slice(3,12)));
+    assert.equal(cima(p.fermo[1]),cima(p.fermo[0])+1,d);
+    assert.equal(cima(p.chino),cima(p.fermo[0])+2,d);
+    assert.notDeepEqual(p.colpo[0],p.colpo[1]);
+  }
+});
+
+test('l’infetto ha una sagoma sua: più basso, curvo, zoppo, e i suoi passi cadono come quelli del superstite',async()=>{
+  const a=await personaggiDi();
+  for(const d of ['GIU','SU','LATO']){
+    const f=a['INFETTO_'+d];assert.equal(f.length,4);
+    f.forEach((x,i)=>{
+      assert.equal(x.length,24);assert.ok(x.every(r=>r.length===16));decodifica(x,TAVOLOZZA_INFETTO);
+      assert.notDeepEqual(x,a[d][i],'non è il superstite ricolorato');
+      assert.ok(x[0]===''.padEnd(16,'.')&&x[1]===''.padEnd(16,'.'),'la testa più bassa di due pixel');
+      assert.equal(piediATerra(x),i%2===0?2:1,`${d} ${i}`);
+    });
+    // Zoppo: le due falcate non sono una lo specchio dell'altra.
+    assert.notDeepEqual(f[1].slice(17),f[3].slice(17));
+    const p=a.POSE_INFETTO[d.toLowerCase()];
+    assert.equal(p.fermo.length,2);assert.deepEqual(p.fermo[0],f[0]);
+    for(const x of [...p.fermo,p.morso]){assert.equal(x.length,24);decodifica(x,TAVOLOZZA_INFETTO);}
+    assert.notDeepEqual(p.morso,f[0]);
+  }
+  // Sangue alla bocca, di fronte e di profilo.
+  assert.ok(a.INFETTO_GIU[0].join('').includes('A')&&a.INFETTO_LATO[0].join('').includes('A'));
+  const sorgente=readFileSync(new URL('../entita/infetto.js',import.meta.url),'utf8');
+  assert.match(sorgente,/arte\.INFETTO_GIU/);assert.match(sorgente,/arte\.POSE_INFETTO/);
+});
+
+test('i gesti del superstite: colpo e chino durano un attimo, il respiro da fermo, e niente si muove',async()=>{
+  await conTelaFinta(async()=>{
+    const g=await import('../entita/giocatore.js');
+    assert.equal(g.gestoDi({tipo:'colpo',voce:'legno'}),'colpo');
+    assert.equal(g.gestoDi({tipo:'combattuto'}),'colpo');
+    assert.equal(g.gestoDi({tipo:'raccolto',voce:'legno'}),'colpo');
+    assert.equal(g.gestoDi({tipo:'raccolto'}),'chino');
+    for(const tipo of ['zappa','semina','innaffia','preso','frugato','posa'])assert.equal(g.gestoDi({tipo}),'chino',tipo);
+    for(const tipo of ['bevi','dormi','zainoPieno','impedito'])assert.equal(g.gestoDi({tipo}),null,tipo);
+    assert.equal(g.gestoDi(null),null);
+    const e=g.crea(100,100);
+    assert.equal(g.posaDi(e),'fermo0');
+    g.gesto(e,'colpo');assert.equal(g.posaDi(e),'colpo0');
+    g.aggiorna(e,0.15);assert.equal(e.posa,'colpo1');assert.equal(e.px,100);assert.equal(e.py,100);assert.equal(e.passo,0);
+    g.aggiorna(e,0.15);assert.equal(e.gesto,null);assert.match(e.posa,/^fermo/);
+    g.gesto(e,'chino');g.aggiorna(e,0.1);assert.equal(e.posa,'chino');
+    g.aggiorna(e,0.3);assert.notEqual(e.posa,'chino');
+    // Il respiro: fermo si alternano le due pose, e il passo resta a zero.
+    const viste=new Set();for(let i=0;i<40;i++){g.aggiorna(e,0.1);viste.add(e.posa);assert.equal(e.passo,0);}
+    assert.deepEqual([...viste].sort(),['fermo0','fermo1']);
+    // Il morso: un lampo breve.
+    g.morso(e);g.aggiorna(e,0.05);assert.ok(e.morso>0);g.aggiorna(e,0.2);assert.equal(e.morso,0);
+    // Col braccio alzato l'attrezzo sporge sopra la testa, e la figura resta
+    // ancorata ai piedi.
+    e.impugnato=CATALOGO.ascia.impugnato;g.gesto(e,'colpo');g.aggiorna(e,0.01);
+    assert.equal(e.y+e.sprite.height,e.py);assert.ok(e.sprite.height>24);
+    // Le figure composte restano poche anche con tutti gli attrezzi.
+    for(const cosa of ['ascia','torcia','zappa','lancia','canna',null]){
+      e.impugnato=cosa?CATALOGO[cosa].impugnato:null;
+      for(const guarda of ['giu','su','sinistra','destra']){e.guarda=guarda;
+        for(const gesto of ['colpo','chino',null]){if(gesto)g.gesto(e,gesto);for(let i=0;i<8;i++)g.aggiorna(e,0.07);}}
+    }
+    assert.ok(g.figureComposte()<150,`${g.figureComposte()} figure`);
+    const i=await import('../entita/infetto.js');
+    const n=i.crea(0,0);assert.equal(i.posaDi(n),'fermo0');
+    n.scatto=0.2;assert.equal(i.posaDi(n),'morso');
+  });
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/giocatore\.gesto\(eroe, giocatore\.gestoDi\(esito\)\);/);
+  assert.match(gioco,/giocatore\.morso\(eroe\);/);
 });

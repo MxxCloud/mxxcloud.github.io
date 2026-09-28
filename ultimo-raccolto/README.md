@@ -12,6 +12,37 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.51 — il superstite e gli infetti
+
+Il quinto passo del secondo livello grafico.
+- **Il superstite ha luce e ombra.** Capelli con un riflesso, pelle con
+  l'ombra sotto il mento, giacca con la luce da sinistra e l'ombra a destra,
+  cintura con la fibbia. I pantaloni sono di un bruno diverso dalla giacca,
+  così si vede quale gamba va avanti. Camminando le braccia vanno in
+  controfase con le gambe, e la mano (e quello che tiene) va con loro.
+- **Da fermo respira**: ogni due secondi circa il busto scende e risale di un
+  pixel.
+- **Fa il gesto di quello che fa.**
+  - Per un colpo alza il braccio e lo abbassa: su un albero, su un sasso,
+    contro un infetto, anche a mani nude. Di fronte e di spalle l'attrezzo
+    sale sopra la testa, di profilo va indietro.
+  - Per quello che si prende o si mette a terra si china: raccogliere,
+    seminare, zappare, innaffiare, frugare, posare.
+  - Quando lo mordono ha un lampo.
+  I gesti durano un attimo e sono solo disegno: non rallentano niente e non
+  cambiano le regole.
+- **L'infetto ha una sagoma sua.** Prima era il superstite con altri colori.
+  Adesso:
+  - è curvo, con la testa avanti e più bassa di due pixel;
+  - ha le spalle storte e le braccia protese;
+  - ha un buco nella giacca e sangue alla bocca;
+  - trascina una gamba, perché le due falcate non sono uguali.
+  Si riconosce dalla forma, anche di notte, prima ancora che dai colori. Da
+  fermo dondola, quando morde o mena contro un muro le braccia scattano
+  avanti, e quando lo si colpisce ha un lampo oltre al tremito.
+- I passi di tutti e due si sentono come prima: gli appoggi sono rimasti
+  sugli stessi fotogrammi.
+
 ## M7.18.50 — muri e case
 
 Il quarto passo del secondo livello grafico.
@@ -2267,7 +2298,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.50**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.51**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -3064,9 +3095,10 @@ promesse: sono appunti, perché non si perdano.
   senza torcia.
 - **Il secondo livello: una pixel art più ricca.** Cominciato con M7.18.47
   (terreno e alberi) e M7.18.48 (sassi, cespugli, ombre delle piante
-  selvatiche), M7.18.49 (acqua, riva, ghiaccio) e M7.18.50 (muri, porte,
-  pavimento). Restano: il superstite, gli infetti e gli animali, con più animazioni (fermo,
-  colpo, raccolta).
+  selvatiche), M7.18.49 (acqua, riva, ghiaccio), M7.18.50 (muri, porte,
+  pavimento) e M7.18.51 (il superstite e gli infetti, con le pose). Restano,
+  per M7.18.52, gli animali selvatici e i polli: quattro fotogrammi di
+  cammino, e brucare, annusare, beccare.
 
 Il primo livello, la luce e l'aria, è fatto: M7.18.44, M7.18.45 e M7.18.46.
 
