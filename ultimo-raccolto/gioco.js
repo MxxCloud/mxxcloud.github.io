@@ -75,7 +75,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.48";
+const VERSIONE = "M7.18.49";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1730,6 +1730,8 @@ function disegna() {
   effetti.aggiorna(secondi, lumi, { piove: meteo.evento() === "pioggia", aria, alberi: inPiedi, stagione });
   // I ciuffi d'erba e le ombre per terra, prima di tutto quello che ci sta
   // in piedi sopra: l'ombra cade anche sull'erba.
+  // La riva (M7.18.49): schiuma e terra bagnata, sotto tutto quello che sta in piedi.
+  effetti.disegnaRiva(p, camera, secondi, mappa.rivaDi, mappa.gelato());
   effetti.disegnaCiuffi(p, camera, secondi, aria, stagione, pratoLibero);
   effetti.disegnaOmbre(p, inPiedi, camera, tempo.oraCorrente(), luce);
 

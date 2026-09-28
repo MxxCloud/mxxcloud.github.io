@@ -5474,3 +5474,74 @@ test('le piante selvatiche degli orti hanno l’ombra',async()=>{
   for(const tipo of [OGGETTO.SPIGHE_SELVATICHE,OGGETTO.LINO_SELVATICO,OGGETTO.CAVOLO_SELVATICO,OGGETTO.PATATA_SELVATICA,OGGETTO.FAGIOLI_SELVATICI])
     assert.ok(e.ombraDi({tipo,x:0,y:0,base:16,sprite:{width:16,height:12}},12.5,1),'tipo '+tipo);
 });
+
+// --- M7.18.49: acqua e riva ------------------------------------------------------
+
+test('l’acqua ridisegnata: onde e fondo invece del rumore, e il bassofondo più chiaro dell’acqua',async()=>{
+  const t=await import('../arte/sprite-terreno.js');
+  const chiaro=(k)=>{const c=TAVOLOZZA[k];return parseInt(c.slice(1,3),16)+parseInt(c.slice(3,5),16)+parseInt(c.slice(5,7),16);};
+  const media=(varianti)=>{let s=0,n=0;for(const v of varianti)for(const r of v)for(const c of r){s+=chiaro(c);n++;}return s/n;};
+  for(const [nome,quante,base] of [['ACQUA',6,'1'],['ACQUA_BASSA',6,'3'],['GHIACCIO',4,'G']]){
+    const varianti=t[nome];assert.equal(varianti.length,quante,nome);
+    for(const v of varianti){
+      assert.equal(v.length,16);assert.ok(v.every(r=>r.length===16));
+      for(const r of v)for(const c of r)assert.ok(c in TAVOLOZZA,`${nome}: ${c}`);
+      const bordo=v[0]+v[15]+v.map(r=>r[0]+r[15]).join('');assert.equal(new Set(bordo).size,1);assert.equal(bordo[0],base);
+      // Niente più rumore: pochi pixel senza un vicino uguale.
+      let soli=0;for(let y=1;y<15;y++)for(let x=1;x<15;x++){const c=v[y][x];if(c!==base&&v[y-1][x]!==c&&v[y+1][x]!==c&&v[y][x-1]!==c&&v[y][x+1]!==c)soli++;}
+      assert.ok(soli<=6,`${nome}: ${soli} pixel isolati`);
+    }
+  }
+  assert.ok(t.ACQUA.some(v=>v.join('').includes('H')));assert.ok(t.ACQUA_BASSA.some(v=>v.join('').includes('I')));
+  assert.ok(media(t.ACQUA_BASSA)>media(t.ACQUA)+60,'il bassofondo si distingue a colpo d’occhio');
+});
+
+test('la riva: la mappa sa dove la terra tocca l’acqua, e la schiuma respira sul confine vero',async()=>{
+  const e=await effettiDi();e.imposta(true);
+  mappa.inizializza('valle-1');
+  // Un tassello d'acqua sul lago con un lato di terra.
+  let trovato=null;
+  for(let y=50;y<90&&!trovato;y++)for(let x=-10;x<30&&!trovato;x++){const r=mappa.rivaDi(x,y);if(r)trovato={x,y,r};}
+  assert.ok(trovato);
+  const {x,y,r}=trovato;
+  assert.equal(mappa.rivaDi(x,y),r,'ricordata');
+  for(let q=0;q<4;q++){
+    const vicino=mappa.terrenoDi(x+[0,1,0,-1][q],y+[-1,0,1,0][q]);
+    const terra=![TERRENO.ACQUA,TERRENO.ACQUA_BASSA,TERRENO.GHIACCIO].includes(vicino);
+    assert.equal(Boolean(r[q]),terra,`lato ${q}`);
+    if(r[q]){assert.equal(r[q].length,16);assert.ok(r[q].every(d=>d>=3&&d<=10),r[q].join(','));}
+  }
+  // Sulla terra e sull'acqua aperta niente riva.
+  assert.equal(mappa.rivaDi(11,5),null);
+  // La schiuma: dentro il tassello, a pixel interi, sul confine o fino a due pixel in acqua, e si muove.
+  const q=r.findIndex(Boolean),profilo=r[q];
+  const dentro=(px,py)=>{const lx=px-x*16,ly=py-y*16;return [lx,ly];};
+  const profondita=(lx,ly)=>q===0?ly:q===1?15-lx:q===2?15-ly:lx;
+  const lungo=(lx,ly)=>q===0||q===2?lx:ly;
+  const viste=new Map();
+  for(let s=0;s<12;s+=0.25){
+    for(const [px,py,tipo] of e.schiumaDi(r,x,y,s)){
+      assert.ok(Number.isInteger(px)&&Number.isInteger(py));
+      const [lx,ly]=dentro(px,py);assert.ok(lx>=0&&lx<16&&ly>=0&&ly<16);
+      if(tipo!=='schiuma'||!r[q])continue;
+      const k=lungo(lx,ly),d=profondita(lx,ly);
+      if(profondita(lx,ly)===undefined)continue;
+      if(r.filter(Boolean).length===1){assert.ok(d>=profilo[k]&&d<=profilo[k]+2,`schiuma a ${d}, confine ${profilo[k]}`);}
+      viste.set(k,(viste.get(k)??new Set()).add(d));
+    }
+  }
+  assert.ok([...viste.values()].some(s=>s.size>=2),'avanza e si ritira');
+  assert.ok(e.schiumaDi(r,x,y,1).some(p=>p[2]==='bagnato'),'la terra bagnata');
+  assert.deepEqual(e.schiumaDi(null,x,y,1),[]);
+  // Col gelo il bassofondo diventa ghiaccio e la riva si ricalcola.
+  const bassi=[];for(let yy=50;yy<90;yy++)for(let xx=-10;xx<30;xx++)if(mappa.terrenoDi(xx,yy)===TERRENO.ACQUA_BASSA&&mappa.rivaDi(xx,yy))bassi.push([xx,yy]);
+  assert.ok(bassi.length>0);
+  mappa.impostaGelo(true);
+  try{for(const [xx,yy] of bassi)assert.equal(mappa.rivaDi(xx,yy),null,'ghiacciato, niente riva');}
+  finally{mappa.impostaGelo(false);}
+  assert.ok(mappa.rivaDi(...bassi[0]),'tornata col disgelo');
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/effetti\.disegnaRiva\(p, camera, secondi, mappa\.rivaDi, mappa\.gelato\(\)\);/);
+  assert.ok(gioco.indexOf('effetti.disegnaRiva(')<gioco.indexOf('for (const cosa of inPiedi) {'));
+  assert.match(readFileSync(new URL('../arte/effetti.js',import.meta.url),'utf8'),/if \(!accesi \|\| gelato\) return;/);
+});

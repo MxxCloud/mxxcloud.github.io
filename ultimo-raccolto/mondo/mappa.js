@@ -324,6 +324,7 @@ export function inizializza(nome) {
   nomeSeme = nome;
   seme = semeDaTesto(nome);
   settori.clear();
+  rive.clear();
   // Le rovine tengono una memoria per cella e un seme loro: cambiando valle va
   // buttata, altrimenti la valle nuova si troverebbe addosso le case della
   // vecchia.
@@ -345,7 +346,7 @@ export function semeCorrente() {
 let gelo = false;
 export function impostaGelo(attivo) {
   if (gelo === attivo) return false;
-  gelo = attivo; settori.clear(); return true;
+  gelo = attivo; settori.clear(); rive.clear(); return true;
 }
 // Sta gelando? La pone il pozzo, che deve ghiacciare insieme agli stagni e non
 // per conto suo: due calendari che decidono la stessa cosa prima o poi si
@@ -622,10 +623,55 @@ export function formaDellAlbero(tx, ty) {
 
 // La maschera cambia da un tassello all'altro lungo lo stesso confine: con una
 // sola frangia ripetuta, un bordo lungo si leggerebbe come una decalcomania.
-function mascheraLato(tx, ty, quarti) {
+function sceltaLato(tx, ty, quarti) {
   const forme = transizioniArte.LATO;
-  const scelta = Math.floor(impronta(tx + quarti * 37, ty, seme ^ 0x2f1b3d77) * forme.length) % forme.length;
-  return ruotato(cuoci(forme[scelta], transizioniArte.TAVOLOZZA_MASCHERA), quarti);
+  return forme[Math.floor(impronta(tx + quarti * 37, ty, seme ^ 0x2f1b3d77) * forme.length) % forme.length];
+}
+function mascheraLato(tx, ty, quarti) {
+  return ruotato(cuoci(sceltaLato(tx, ty, quarti), transizioniArte.TAVOLOZZA_MASCHERA), quarti);
+}
+
+// La riva di un tassello d'acqua (M7.18.49): per ogni lato che tocca terra,
+// quanti pixel entra la frangia della terra in ogni punto del lato — cioè
+// dov'è davvero il confine, che non è il bordo dritto del tassello ma la
+// maschera che ci ha disegnato sopra sfrangia(). Serve alla schiuma (vedi
+// arte/effetti.js). Null se il tassello non è acqua o non tocca terra; per
+// lato, null dove il vicino è acqua o ghiaccio.
+//
+// Il profilo si legge dalla stessa maschera, girata come la gira ruotato() (in
+// senso orario): la colonna c del nord diventa la riga c dell'est, la colonna
+// 15-c del sud e la riga 15-c dell'ovest. La posizione lungo un lato è la x per
+// nord e sud, la y per est e ovest.
+const rive = new Map();
+const ACQUE = new Set([TERRENO.ACQUA, TERRENO.ACQUA_BASSA]);
+export function rivaDi(tx, ty) {
+  const chiave = `${tx},${ty}`;
+  const nota = rive.get(chiave);
+  if (nota !== undefined) return nota;
+  if (rive.size > 20000) rive.clear();
+  const riva = calcolaRiva(tx, ty);
+  rive.set(chiave, riva);
+  return riva;
+}
+function calcolaRiva(tx, ty) {
+  const mio = terrenoDi(tx, ty);
+  if (!ACQUE.has(mio)) return null;
+  let lati = null;
+  for (let q = 0; q < 4; q += 1) {
+    const vicino = terrenoDi(tx + LATI[q][0], ty + LATI[q][1]);
+    if (ACQUE.has(vicino) || vicino === TERRENO.GHIACCIO || !(PRIORITA[vicino] > PRIORITA[mio])) continue;
+    const forma = sceltaLato(tx, ty, q);
+    const colonna = [];
+    for (let c = 0; c < TASSELLO; c += 1) {
+      let d = 0;
+      while (d < TASSELLO && forma[d][c] === "x") d += 1;
+      colonna.push(d);
+    }
+    const profilo = [];
+    for (let k = 0; k < TASSELLO; k += 1) profilo.push(q === 0 || q === 1 ? colonna[k] : colonna[TASSELLO - 1 - k]);
+    (lati ??= [null, null, null, null])[q] = profilo;
+  }
+  return lati;
 }
 
 function mascheraAngolo(tx, ty, quarti) {
