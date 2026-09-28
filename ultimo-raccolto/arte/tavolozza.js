@@ -37,27 +37,43 @@ export const TAVOLOZZA = {
   // Sabbia e ghiaia della riva.
   "4": "#a8905f",
   "5": "#c9b189",
+  // Da M7.18.47 il sole sulle creste delle increspature, e i sassolini.
+  T: "#dcc6a0",
+  U: "#7d6a48",
 
   // Erba viva.
   "6": "#2f4a26",
   "7": "#3f5f2d",
   "8": "#557a38",
+  // Da M7.18.47 l'ombra in fondo ai ciuffi e la punta dei fili al sole: con
+  // tre toni il prato era una stoffa, con cinque è erba.
+  P: "#253d20",
+  Q: "#6b9245",
 
   // Sterpaglia: erba andata a seme, il colore dell'incuria. Sta vicina
   // all'erba di proposito — è lo stesso prato più avanti nell'abbandono, non
   // un altro clima. Tinte più gialle facevano leggere un campo di grano.
   "9": "#6b6b3a",
   a: "#83804a",
+  // Da M7.18.47 il piede degli steli secchi e la paglia al sole.
+  R: "#57572f",
+  S: "#9d9860",
 
   // Terra battuta e zolle.
   b: "#5a4430",
   c: "#75583c",
+  // Da M7.18.47 l'ombra sotto le zolle e la polvere al sole.
+  V: "#45331f",
+  W: "#8c6d4c",
 
   // Roccia, grigio-bruna e non grigio-azzurra: la pietra fredda in una valle
   // calda di fine estate si legge come cemento.
   d: "#3b3a35",
   e: "#55534a",
   f: "#6e6b5f",
+  // Da M7.18.47 il fondo delle crepe e la luce sugli spigoli.
+  X: "#2b2a26",
+  Y: "#858172",
 
   // Legno: tronchi, assi, recinti.
   g: "#3b2a1c",
@@ -67,6 +83,9 @@ export const TAVOLOZZA = {
   i: "#24401f",
   j: "#355a26",
   k: "#48742f",
+  // Da M7.18.47 la luce sulla chioma, da sinistra in alto: senza, un albero
+  // era un disco verde.
+  Z: "#5f8f3c",
 
   // Pelle.
   l: "#a06e4e",
@@ -235,6 +254,11 @@ const VESTI = {
     i: "#4a3218",
     j: "#7a5320",
     k: "#a8762c",
+    P: "#3a2d1a",
+    Q: "#a5783a",
+    R: "#625a2b",
+    S: "#b09c5a",
+    Z: "#c9973f",
   },
 
   // L'inverno non è bianco. Una valle coperta di neve vorrebbe tasselli nuovi
@@ -254,6 +278,11 @@ const VESTI = {
     i: "#2e2a22",
     j: "#463d2f",
     k: "#5c5040",
+    P: "#4a524e",
+    Q: "#909d95",
+    R: "#5d6155",
+    S: "#a2a595",
+    Z: "#756650",
   },
 
   // La primavera è l'unica più viva della base: verdi più freddi e più chiari,
@@ -269,6 +298,11 @@ const VESTI = {
     i: "#26471f",
     j: "#3a6b28",
     k: "#55913a",
+    P: "#213f1f",
+    Q: "#71ac50",
+    R: "#5a6532",
+    S: "#a3ad6c",
+    Z: "#6aa64a",
   },
 };
 

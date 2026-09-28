@@ -12,6 +12,29 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.47 — il terreno e gli alberi, a pixel pieni
+
+Il primo passo del secondo livello dell'upgrade grafico: una pixel art più
+ricca, cominciando da quello che riempie lo schermo.
+- **Il terreno è a pixel pieni.** Erba, sterpaglia, sabbia, terra e roccia
+  erano disegnate a blocchi di due pixel, cioè a metà risoluzione; adesso
+  ogni pixel conta.
+  - Sul prato ci sono macchie d'ombra e qualche ciuffo con la punta al sole.
+  - Sulla sterpaglia ci sono steli secchi.
+  - La sabbia ha increspature e sassolini.
+  - La terra ha zolle e granelli.
+  - La roccia è una pietraia con piccole bozze in rilievo (luce sopra, ombra
+    sotto) e qualche crepa.
+- **Sei varianti per terreno** invece di due o tre, e **due toni in più** per
+  ciascuno: il prato non si legge più come una stoffa ripetuta. I toni dei
+  prati cambiano con le stagioni come prima.
+- **Gli alberi hanno tre forme**: tonda, alta e a due lobi, sparse per la
+  valle. La chioma è a grappoli con la luce da sinistra in alto, che
+  d'autunno si fa oro e d'inverno si spegne.
+- Tutto il resto è com'era: stesse misure e stessi urti, e le ombre e il
+  vento funzionano uguali su tutte e tre le forme. Orto, fiori, sete e
+  parassiti restano leggibili sopra il terreno nuovo.
+
 ## M7.18.46 — il vento
 
 L'ultimo pezzo del primo livello dell'upgrade grafico: la valle si muove.
@@ -2189,7 +2212,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.46**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.47**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -2984,10 +3007,10 @@ promesse: sono appunti, perché non si perdano.
   nel cielo o riflessa sull'acqua. Da decidere se cambia solo il disegno del
   buio o anche le regole: quanto lontano vede un infetto, quanto si vede
   senza torcia.
-- **Il secondo livello: una pixel art più ricca.** Più sfumature e qualche
-  colore in più nei disegni, varianti dei tasselli contro la ripetizione, più
-  animazioni (fermo, colpo, raccolta). Si comincia da terreno e alberi, che
-  sono quasi tutto lo schermo.
+- **Il secondo livello: una pixel art più ricca.** Cominciato con M7.18.47
+  (terreno e alberi). Restano: cespugli, sassi e piante selvatiche; l'acqua e
+  la riva; i muri e le case; il superstite, gli infetti e gli animali, con più
+  animazioni (fermo, colpo, raccolta).
 
 Il primo livello, la luce e l'aria, è fatto: M7.18.44, M7.18.45 e M7.18.46.
 

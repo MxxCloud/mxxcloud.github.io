@@ -602,6 +602,14 @@ function tasselloDi(tx, ty, terreno) {
   return cuoci(varianti[quale], tavolozzaMondo);
 }
 
+// La forma di un albero (M7.18.47): dall'impronta del tassello, come la
+// variante del terreno, così resta la stessa ogni volta che il settore si
+// ricuoce.
+export function formaDellAlbero(tx, ty) {
+  const forme = oggettiArte.ALBERI;
+  return forme[Math.floor(impronta(tx, ty, seme ^ 0x0a1be70) * forme.length) % forme.length];
+}
+
 // La maschera cambia da un tassello all'altro lungo lo stesso confine: con una
 // sola frangia ripetuta, un bordo lungo si leggerebbe come una decalcomania.
 function mascheraLato(tx, ty, quarti) {
@@ -702,6 +710,8 @@ function cuociSettore(sx, sy) {
           // E da M7.18.26 anche il cancello, che in una fila verticale si
           // gira con lei.
           : ortiSecchi && inselvatichitaNellOrto(tx, ty, oggetto) ? oggettiArte.PIANTA_SECCA
+          // E da M7.18.47 gli alberi hanno tre forme.
+          : oggetto === OGGETTO.ALBERO ? formaDellAlbero(tx, ty)
           : oggetto === OGGETTO.CANCELLO || oggetto === OGGETTO.CANCELLO_APERTO
             ? coseArte.cancelloVerso(oggetto === OGGETTO.CANCELLO_APERTO,
               collegaSteccato(tx, ty - 1), collegaSteccato(tx, ty + 1),

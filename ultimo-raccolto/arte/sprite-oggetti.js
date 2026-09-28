@@ -9,21 +9,27 @@
 
 // Chioma larga, tronco stretto: la silhouette deve leggersi anche quando metà
 // albero è coperta da un altro albero.
-export const ALBERO = [
+// Gli alberi della valle (M7.18.47): tre forme — tonda, alta e a due lobi —
+// scelte dall'impronta delle coordinate (vedi mondo/mappa.js), perché un
+// bosco di alberi tutti uguali si legge come carta da parati. La chioma è a
+// grappoli con la luce da sinistra in alto (Z), il verde pieno (k), l'ombra in
+// basso a destra (j) e il contorno (i). Stessa misura, stesso tronco e stessa
+// base per tutte e tre: urti, ombre e vento non se ne accorgono.
+export const ALBERO_TONDO = [
   "......iiii......",
-  "....iijjjjii....",
-  "...ijjjjjjjjji..",
-  "..ijjjkkkjjjjji.",
-  ".ijjjkkkkkjjjji.",
-  ".ijjkkkkkkkjjji.",
-  "ijjjkkkkkkkjjjji",
-  "ijjkkkkkkkkkjjji",
-  "ijjkkkkkkkkkjjji",
-  "ijjjkkkkkkkjjjji",
-  ".ijjjkkkkkjjjji.",
-  ".iijjjkkkjjjjii.",
-  "..iijjjjjjjjii..",
-  "...iiijjjjiii...",
+  "....iiZZkjii....",
+  "...iZZZkkkjji...",
+  "..iZZkkkjkkjji..",
+  ".iZZkkkjjiZkjji.",
+  ".iZkkkjjiZZkkji.",
+  "iZZkkjjjiZkkkjji",
+  "iZkkkjjjikkkjjji",
+  "ikkkjjjiikkjjjji",
+  "ijkkjjiiijjjjiji",
+  ".ijjjiijjjjjjii.",
+  ".iijjiijjjjjiii.",
+  "..iiiiijjjjiii..",
+  "...iiiiiiiiii...",
   ".....iiiiii.....",
   "......ghhg......",
   "......ghhg......",
@@ -34,6 +40,63 @@ export const ALBERO = [
   "....gghhhhgg....",
   "...ggg....ggg...",
 ];
+
+export const ALBERO_ALTO = [
+  ".......ii.......",
+  "......iZki......",
+  ".....iZZkji.....",
+  ".....iZkkji.....",
+  "....iZZkkjji....",
+  "....iZkkjjji....",
+  "....ikkjiZji....",
+  "...iZkjiZZkji...",
+  "...iZkkiZkkji...",
+  "...ikkjikkjjji..",
+  "...ijkjjkjjjii..",
+  "...iijjjjjjii...",
+  "....iijjjjii....",
+  ".....iiiiii.....",
+  "......iiii......",
+  "......ghhg......",
+  "......ghhg......",
+  "......ghhg......",
+  "......ghhg......",
+  "......ghhg......",
+  ".....gghhgg.....",
+  "....gghhhhgg....",
+  "...ggg....ggg...",
+];
+
+export const ALBERO_A_LOBI = [
+  ".........iiii...",
+  "..iii...iZZkii..",
+  ".iZZki.iZZkkkji.",
+  "iZZkkjiiZkkkjji.",
+  "iZkkkjjiZkkkjji.",
+  "iZkkjjjikkkjjji.",
+  "ikkjjjiikkjjjji.",
+  ".ijjjiiZZkjjjii.",
+  ".iijiiZZkkkjjji.",
+  "..iiiiZkkkkjjji.",
+  "...iiikkkjjjjii.",
+  "...iijkjjjjiii..",
+  "....iijjjjiii...",
+  ".....iiiiiii....",
+  "......iiiii.....",
+  "......ghhg......",
+  "......ghhg......",
+  "......ghhg......",
+  "......ghhg......",
+  "......ghhg......",
+  ".....gghhgg.....",
+  "....gghhhhgg....",
+  "...ggg....ggg...",
+];
+
+export const ALBERI = [ALBERO_TONDO, ALBERO_ALTO, ALBERO_A_LOBI];
+
+// L'albero di sempre, per chi lo chiede per nome: è quello tondo.
+export const ALBERO = ALBERO_TONDO;
 
 export const SASSO = [
   "......dddd......",
