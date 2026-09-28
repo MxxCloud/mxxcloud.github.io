@@ -12,7 +12,7 @@ import * as salute from './salute.js';
 import * as inventario from './inventario.js';
 import * as meteo from './meteo.js';
 import { cuoci, riflesso } from '../arte/sprite.js';
-import { ANIMALI, CARCASSE } from '../arte/sprite-fauna.js';
+import { ANIMALI, CARCASSE, PASCOLO } from '../arte/sprite-fauna.js';
 
 // Il cavallo è quello che non si fa avvicinare, e il resto dei suoi numeri
 // viene da lì. Prima era il pasto migliore e il più sicuro insieme — quattro
@@ -451,10 +451,33 @@ export function statoValido(dati) {
     return e.resti && intero(e.resti.carne_cruda,0,s.carne) && intero(e.resti.pelle,0,s.pelli);
   });
 }
-export function daDisegnare() {
+// Da M7.18.52 il disegno sceglie fra quattro passi e il pascolo. Se si sta
+// muovendo lo dice il passo, che cresce solo camminando: lo si confronta con
+// quello del fotogramma prima, tenuto qui e non nella bestia, perché è
+// aspetto e non va nel salvataggio.
+const passoPrima = new WeakMap();
+let orologio = 0;
+// Chi è calmo e fermo bruca a testa bassa, e ogni tanto la rialza a guardarsi
+// intorno: tre secondi giù, un secondo e mezzo su, sfasati per bestia.
+const BRUCA = 3, GUARDA = 1.5;
+export function posaDi(e, secondi = orologio) {
+  if(e.vita===0) return 'carcassa';
+  const prima=passoPrima.get(e);
+  passoPrima.set(e,e.passo);
+  if(prima!==undefined && prima!==e.passo) return `passo${Math.floor(e.passo)%4}`;
+  if(e.stato==='calmo') {
+    const t=(secondi+(e.seme%997)/97)%(BRUCA+GUARDA);
+    if(t<BRUCA) return 'pascolo';
+  }
+  return 'passo0';
+}
+export function daDisegnare(secondi = 0) {
   pulisci();
+  orologio=secondi;
   return animali.map(e=>{
-    const righe=e.vita===0?CARCASSE[e.specie]:ANIMALI[e.specie][Math.floor(e.passo)%2];
+    const posa=posaDi(e);
+    e.posa=posa;
+    const righe=posa==='carcassa'?CARCASSE[e.specie]:posa==='pascolo'?PASCOLO[e.specie]:ANIMALI[e.specie][Number(posa[5])];
     const cotto=cuoci(righe);
     e.sprite=e.destra?cotto:riflesso(cotto);e.x=e.px-e.sprite.width/2;e.y=e.py-e.sprite.height;e.base=e.py;
     return e;

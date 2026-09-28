@@ -5729,3 +5729,77 @@ test('i gesti del superstite: colpo e chino durano un attimo, il respiro da ferm
   assert.match(gioco,/giocatore\.gesto\(eroe, giocatore\.gestoDi\(esito\)\);/);
   assert.match(gioco,/giocatore\.morso\(eroe\);/);
 });
+
+// --- M7.18.52: animali e polli ----------------------------------------------------------
+
+// Quanti pezzi toccano terra nell'ultima riga.
+const aTerra=f=>f[f.length-1].split('.').filter(Boolean).length;
+
+test('le bestie hanno quattro passi, luce e ombra, e una posa ferma: brucare o fiutare',()=>{
+  for(const [specie,passi] of Object.entries(arteFauna.ANIMALI)){
+    assert.equal(passi.length,4,specie);
+    const pascolo=arteFauna.PASCOLO[specie];
+    for(const f of [...passi,pascolo]){
+      assert.equal(f.length,passi[0].length,specie);assert.ok(f.every(r=>r.length===26),specie);
+      for(const stagione of ['estate','inverno'])decodifica(f,tavolozzaDi(stagione));
+    }
+    // Appoggi uguali, con le quattro zampe a terra ben staccate; falcate
+    // diverse fra loro, coi piedi altrove.
+    assert.deepEqual(passi[0],passi[2]);assert.notDeepEqual(passi[1],passi[3]);assert.notDeepEqual(passi[0],passi[1]);
+    assert.equal(aTerra(passi[0]),4,specie);
+    for(const i of [1,3])assert.notEqual(passi[i].at(-1),passi[0].at(-1),specie);
+    // Almeno quattro toni: luce, corpo, ombra, contorno.
+    assert.ok(new Set(passi[0].join('').replaceAll('.','')).size>=4,specie);
+    // A testa bassa: la testa scende sotto la linea del dorso.
+    assert.notDeepEqual(pascolo,passi[0]);
+    const primaRiga=f=>f.findIndex(r=>/[^.]/.test(r.slice(20)));
+    assert.ok(primaRiga(pascolo)>primaRiga(passi[0]),specie);
+  }
+  assert.ok('N' in TAVOLOZZA&&'O' in TAVOLOZZA&&'M' in TAVOLOZZA);
+});
+
+test('le bestie camminano quando si muovono e brucano quando sono calme e ferme',async()=>{
+  fauna.reimposta();
+  const e=animale('cervo',200,3);e.stato='calmo';
+  const pose=new Set();
+  for(let t=0;t<10;t+=0.25)pose.add(fauna.posaDi(e,t));
+  assert.ok(pose.has('pascolo')&&pose.has('passo0'),[...pose].join());
+  // Si muove: il passo cresce, e il disegno segue i quattro fotogrammi.
+  const viste=new Set();
+  for(let i=0;i<8;i++){e.passo+=0.5;viste.add(fauna.posaDi(e,20));}
+  assert.deepEqual([...viste].sort(),['passo0','passo1','passo2','passo3']);
+  // In allerta e fermo tiene la testa alta.
+  e.stato='allerta';fauna.posaDi(e,1);assert.equal(fauna.posaDi(e,1.5),'passo0');
+  e.vita=0;assert.equal(fauna.posaDi(e,2),'carcassa');e.vita=6;
+  // Il disegno non cambia niente di quello che si salva.
+  const prima=JSON.stringify(fauna.istantanea());
+  await conTelaFinta(()=>fauna.daDisegnare(3));
+  assert.equal(JSON.stringify(fauna.istantanea()),prima);
+  fauna.reimposta();
+});
+
+test('i polli: quattro passi, beccano da fermi, dormono di notte; bianchi e bruni',async()=>{
+  for(const [passi,becca,dorme] of [[arteCose.POLLO,arteCose.POLLO_BECCA,arteCose.POLLO_DORME],
+    [arteCose.POLLO_SELVATICO,arteCose.POLLO_SELVATICO_BECCA,arteCose.POLLO_SELVATICO_DORME],
+    [arteCose.GALLO,arteCose.GALLO_BECCA_SPRITE,arteCose.GALLO_DORME_SPRITE],
+    [arteCose.GALLO_SELVATICO,arteCose.GALLO_SELVATICO_BECCA,arteCose.GALLO_SELVATICO_DORME],
+    [arteCose.PULCINO,arteCose.PULCINO_BECCA,arteCose.PULCINO_DORME]]){
+    assert.equal(passi.length,4);
+    for(const f of [...passi,becca,dorme]){assert.equal(f.length,passi[0].length);assert.ok(f.every(r=>r.length===passi[0][0].length));decodifica(f,TAVOLOZZA);}
+    assert.notDeepEqual(passi[1],passi[3]);assert.notDeepEqual(becca,passi[0]);
+    // Becca con la testa giù: le prime righe restano vuote.
+    assert.equal(becca[0].replaceAll('.',''),'');
+  }
+  assert.ok(arteCose.POLLO[0].join('').includes('O'),'l’ombra delle piume');
+  assert.ok(!arteCose.POLLO_SELVATICO[0].join('').includes('z'),'la selvatica è bruna');
+  // La posa: di notte dorme, camminando passa i fotogrammi, ferma becca a tratti.
+  polli.reimposta();tempo.impostaOra(12);
+  const p={px:0,py:0,domestico:true,seme:9,dx:0,dy:0,giro:3,destra:true,passo:0,fame:0,gallo:false,eta:null,deposto:null};
+  const pose=new Set();for(let t=0;t<3;t+=0.05)pose.add(polli.posaDi(p,t));
+  assert.ok(pose.has('becca')&&pose.has('passo0'),[...pose].join());
+  const passi=new Set();for(let i=0;i<8;i++){p.passo+=0.5;passi.add(polli.posaDi(p));}
+  assert.deepEqual([...passi].sort(),['passo0','passo1','passo2','passo3']);
+  tempo.impostaOra(23);assert.equal(polli.posaDi(p),'dorme');tempo.impostaOra(12);
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/fauna\.daDisegnare\(adesso\), \.\.\.polli\.daDisegnare\(adesso\)/);
+});
