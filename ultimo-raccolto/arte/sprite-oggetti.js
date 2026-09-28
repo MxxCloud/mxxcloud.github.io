@@ -153,28 +153,130 @@ export const SASSO = SASSO_TONDO;
 // l'intonaco caduto, e sono l'unica cosa che distingue un muro in rovina da
 // un muro. Un muro pulito in una valle dopo il collasso è un muro che qualcuno
 // sta ancora tenendo su.
-export const MURO = [
-  "ffffffffffffffff",
-  "ffffffffffffffff",
-  "eeeeeeeeeeeeeeee",
-  "dddddddddddddddd",
-  "eeeddeeeeeddeeee",
-  "eeeddeecceeddeee",
-  "eeeeeeecceeeeeee",
-  "dddddddddddddddd",
-  "eddeeeeeddeeeeee",
-  "eddeeeeeddeeeeee",
-  "eeeeeeeeeeeeeeee",
-  "dddddddddddddddd",
-  "eeeddeeeeeddeeee",
-  "cceddeeeeeddeeee",
-  "cceeeeeeeeeeeeee",
-  "dddddddddddddddd",
-  "eddeeeeeddeeeeee",
-  "eddeeeeeddeeeeee",
-  "eeeeeeeeeeeeeeee",
-  "dddddddddddddddd",
+// Da M7.18.50 il muro è in pietra vera: pietre irregolari su file sfalsate,
+// ognuna con la luce in alto a sinistra (Y, f), l'ombra in basso a destra (d)
+// e i giunti scuri (X), sotto un coronamento chiaro. Cinque varianti: le
+// prime tre pulite, le ultime due da rovina, con una crepa e il muschio
+// (le chiavi delle chiome, quindi vestito per stagione). Un muro costruito
+// dal giocatore pesca solo fra le pulite (vedi formaDi in mondo/mappa.js).
+export const MURO_1 = [
+  "fffYffffYfffffff",
+  "eeeeeeeeeedeeeed",
+  "XXXXXXXXXXXXXXXX",
+  "fffXYfXYffXYfffX",
+  "eeeXeeXeeeXeeeeX",
+  "eedXedXeedXeeedX",
+  "XXXXXXXXXXXXXXXX",
+  "YffffXYeeXYfXYff",
+  "eeeeeXdddXeeXeee",
+  "eeeedXdddXedXeed",
+  "XXXXXXXXXXXXXXXX",
+  "fffXYfXYfXYfffXY",
+  "eeeXeeXeeXeeeeXe",
+  "eedXedXedXeeedXe",
+  "XXXXXXXXXXXXXXXX",
+  "fXYffXYffXYffXYe",
+  "eXeeeXeeeXeeeXdd",
+  "dXeedXeedXeedXdd",
+  "XXXXXXXXXXXXXXXX",
+  "eeXYffXYffffXYff",
 ];
+
+export const MURO_2 = [
+  "YfffffYfffffYYff",
+  "deeedeeedeeeeeee",
+  "XXXXXXXXXXXXXXXX",
+  "ffXYffffXYfXYfff",
+  "eeXeeeeeXeeXeeee",
+  "edXeeeedXedXeeed",
+  "XXXXXXXXXXXXXXXX",
+  "ffXYffXYfXYeeeeX",
+  "eeXeeeXeeXdddddX",
+  "edXeedXedXdddddX",
+  "XXXXXXXXXXXXXXXX",
+  "fffXYfXYfffXYffX",
+  "eeeXeeXeeeeXeeeX",
+  "eedXedXeeedXeedX",
+  "XXXXXXXXXXXXXXXX",
+  "YfXYeeeXYfffXYee",
+  "eeXddddXeeeeXddd",
+  "edXddddXeeedXddd",
+  "XXXXXXXXXXXXXXXX",
+  "YfffXYeeXYffffXY",
+];
+
+export const MURO_3 = [
+  "fYYYffffffYYffff",
+  "eeeeeeeeeeeeeeee",
+  "XXXXXXXXXXXXXXXX",
+  "eeeXYffffXYfXYff",
+  "dddXeeeeeXeeXeee",
+  "dddXeeeedXedXeee",
+  "XXXXXXXXXXXXXXXX",
+  "eeeeXYfXYfXYffff",
+  "ddddXeeXeeXeeeee",
+  "ddddXedXedXeeeed",
+  "XXXXXXXXXXXXXXXX",
+  "YffXYffffXYffXYf",
+  "eeeXeeeeeXeeeXee",
+  "eedXeeeedXeedXee",
+  "XXXXXXXXXXXXXXXX",
+  "ffXYfffXYeXYfffX",
+  "eeXeeeeXddXeeeeX",
+  "edXeeedXddXeeedX",
+  "XXXXXXXXXXXXXXXX",
+  "ffffXYffffXYeeXY",
+];
+
+export const MURO_4 = [
+  "fkffYkkfffffYffY",
+  "eeeeeeeeeeeeedee",
+  "XXXXXXXXXXXXXXXX",
+  "ffXYfXYffXYeXYff",
+  "eeXeeXeeeXddXeee",
+  "edXedXeedXddXeee",
+  "XXXXXXXXXXXXXXXX",
+  "ffffXYeXYeXYeeXY",
+  "eeeeXddXddXXddXd",
+  "eeedXddXddXdXdXd",
+  "XXXkkkkXXXXXXXXX",
+  "fffjjYjfXYfXYXff",
+  "eeeeXeeeXeeXeeXe",
+  "eeedXeedXedXeeed",
+  "XXXXXXXXXXXXXXXX",
+  "fXYffXYffXYkkkYf",
+  "eXeeeXeeeXeejjee",
+  "dXeekkkkdXeedXee",
+  "XXXXjjjjXXXXXXXX",
+  "fXYffXYfXYfffXYf",
+];
+
+export const MURO_5 = [
+  "YYYYfffkYYffffYY",
+  "eeeeeeeeeeeeeded",
+  "XXXXXXXXXXXXXXXX",
+  "XYeeeeXYffffXYee",
+  "XdddddXeeeXeXddd",
+  "XdddddXeeXedXddd",
+  "XXXXXXXXXXXXXXXX",
+  "YffXYfXYfXfXYeee",
+  "eeeXeeXeXeeXdddd",
+  "eedXedXeXedXdddd",
+  "XXXXXXXXXXXXXXXX",
+  "ffXkkfffXYfffXYf",
+  "eeXjjeeeXeeeeXee",
+  "edXeeeedXeeedXee",
+  "XXkkkXXXXXXXXXXX",
+  "YeejjYffffXYeeee",
+  "ddddXeeeeeXddddd",
+  "ddkkkeeeedXddddd",
+  "XXjjjXXXXXXXXXXX",
+  "YffXYfXYfXYfXYfX",
+];
+
+export const MURI = [MURO_1, MURO_2, MURO_3, MURO_4, MURO_5];
+export const MURI_PULITI = [MURO_1, MURO_2, MURO_3];
+export const MURO = MURO_1;
 
 // Quello che resta dove il muro è venuto giù. Basso e non solido: ci si passa
 // sopra, ed è da qui che si entra.
@@ -183,16 +285,42 @@ export const MURO = [
 // sassi generico direbbe soltanto "ostacolo", mentre qui l'informazione è
 // "qui c'era un muro e adesso c'è un varco". È la differenza fra un sasso e
 // una porta.
-export const MURO_ROTTO = [
-  "....dd....dd....",
-  "...deed..deed...",
-  "..deeeed.deeed..",
-  ".deeccdeedeeeed.",
-  "deeeeeedeeeeeeed",
-  "deecceeeeeeeeeed",
-  "ddeeeeeeeeeeeedd",
-  ".dddddddddddddd.",
+// Da M7.18.50 tre forme, con le pietre del muro nuovo: luce, ombra, giunti.
+export const MURO_ROTTO_1 = [
+  "....XX....XX....",
+  "...XfYX..XYfX...",
+  "..XYffeX.XfeeX..",
+  ".XffeddXXfeeedX.",
+  "XYfeeeeXYfeeeedX",
+  "XfeeddeefeeddedX",
+  "XXeeeeddeeeeeeXX",
+  ".XXXXXXXXXXXXXX.",
 ];
+
+export const MURO_ROTTO_2 = [
+  "................",
+  "................",
+  "......XXX.......",
+  "..XX.XYfeX..XX..",
+  ".XYfXXfeedXXYfX.",
+  "XfeedXeeddXfeedX",
+  "XeeddeeeeeeeeddX",
+  ".XXXXXXXXXXXXXX.",
+];
+
+export const MURO_ROTTO_3 = [
+  "..XXXXX.........",
+  ".XYfffeX........",
+  ".XfeeeedX..XXX..",
+  ".XeeeeddX.XYfeX.",
+  "XXeeeddXXXfeeedX",
+  "XYfeddXXYfeeeddX",
+  "XfeeeeeeeeeeddXX",
+  ".XXXXXXXXXXXXXX.",
+];
+
+export const MURI_ROTTI = [MURO_ROTTO_1, MURO_ROTTO_2, MURO_ROTTO_3];
+export const MURO_ROTTO = MURO_ROTTO_1;
 
 // Le piante selvatiche (M7.18.30). Più basse e più rade del cespuglio, con i
 // colori delle colture da cui vengono, perché si riconoscano da lontano: le

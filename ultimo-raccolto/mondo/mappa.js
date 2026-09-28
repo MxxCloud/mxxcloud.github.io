@@ -612,9 +612,18 @@ const FORME = {
   [OGGETTO.ALBERO]: { forme: oggettiArte.ALBERI, scarto: 0x0a1be70 },
   [OGGETTO.SASSO]: { forme: oggettiArte.SASSI, scarto: 0x5a5501 },
   [OGGETTO.CESPUGLIO]: { forme: oggettiArte.CESPUGLI, scarto: 0xce59 },
+  // M7.18.50: cinque muri (tre puliti e due in rovina, col muschio) e tre
+  // mucchi di macerie.
+  [OGGETTO.MURO]: { forme: oggettiArte.MURI, scarto: 0x3a70 },
+  [OGGETTO.MURO_ROTTO]: { forme: oggettiArte.MURI_ROTTI, scarto: 0x3ac3e },
 };
 export function formaDi(oggetto, tx, ty) {
-  const { forme, scarto } = FORME[oggetto];
+  const { scarto } = FORME[oggetto];
+  // Un muro alzato dal giocatore è appena fatto: niente muschio né crepe.
+  // Conta dove non c'era un muro in origine, non la presenza di una
+  // modifica: un muro delle rovine preso a colpi resta una rovina.
+  const forme = oggetto === OGGETTO.MURO && oggettoGenerato(tx, ty) !== OGGETTO.MURO
+    ? oggettiArte.MURI_PULITI : FORME[oggetto].forme;
   return forme[Math.floor(impronta(tx, ty, seme ^ scarto) * forme.length) % forme.length];
 }
 export function formaDellAlbero(tx, ty) {
