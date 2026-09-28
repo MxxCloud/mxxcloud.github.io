@@ -12,6 +12,22 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.48 — sassi, cespugli e piante selvatiche
+
+Il secondo passo del secondo livello grafico.
+- **I sassi hanno tre forme**: tondo, piatto e a coppia. Hanno un contorno
+  scuro, la luce in alto a sinistra e l'ombra in basso a destra.
+- **I cespugli hanno tre forme**: tondo, largo e rado. Hanno la stessa luce
+  delle chiome degli alberi, e come loro cambiano colore con le stagioni e
+  piegano col vento.
+- La forma di ogni sasso, cespuglio e albero dipende dal posto, e resta
+  sempre la stessa. Sassi e alberi non scelgono la forma insieme: un sasso
+  tondo non cade per forza accanto a un albero tondo.
+- **Le piante selvatiche degli orti hanno l'ombra**, come il resto delle
+  cose in piedi.
+
+Misure, urti e raccolta non cambiano.
+
 ## M7.18.47 — il terreno e gli alberi, a pixel pieni
 
 Il primo passo del secondo livello dell'upgrade grafico: una pixel art più
@@ -2212,7 +2228,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.47**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.48**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -3008,8 +3024,8 @@ promesse: sono appunti, perché non si perdano.
   buio o anche le regole: quanto lontano vede un infetto, quanto si vede
   senza torcia.
 - **Il secondo livello: una pixel art più ricca.** Cominciato con M7.18.47
-  (terreno e alberi). Restano: cespugli, sassi e piante selvatiche; l'acqua e
-  la riva; i muri e le case; il superstite, gli infetti e gli animali, con più
+  (terreno e alberi) e M7.18.48 (sassi, cespugli, ombre delle piante
+  selvatiche). Restano: l'acqua e la riva; i muri e le case; il superstite, gli infetti e gli animali, con più
   animazioni (fermo, colpo, raccolta).
 
 Il primo livello, la luce e l'aria, è fatto: M7.18.44, M7.18.45 e M7.18.46.
