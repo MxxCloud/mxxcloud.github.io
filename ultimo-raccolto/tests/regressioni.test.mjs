@@ -5380,3 +5380,64 @@ test('d’autunno cadono le foglie, e il vento le porta; il fumo va col vento',a
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
   assert.ok(gioco.indexOf('effetti.disegnaFoglie(p, camera);')<gioco.indexOf('disegnaBuio(secondi);'));
 });
+
+// --- M7.18.47: il secondo livello grafico, terreno e alberi ---------------------
+
+test('il terreno è a pixel pieni: sei varianti per terreno, più toni, e nessuna figura sul bordo',async()=>{
+  const terreno=await import('../arte/sprite-terreno.js');
+  const BASE={ERBA:'7',STERPAGLIA:'9',SABBIA:'5',TERRA:'b',ROCCIA:'e'};
+  const NUOVE={ERBA:['P','Q'],STERPAGLIA:['R','S'],SABBIA:['T','U'],TERRA:['V','W'],ROCCIA:['X','Y']};
+  for(const [nome,base] of Object.entries(BASE)){
+    const varianti=terreno[nome];
+    assert.equal(varianti.length,6,nome);
+    const toni=new Set();
+    for(const v of varianti){
+      assert.equal(v.length,16);assert.ok(v.every(r=>r.length===16));
+      for(const r of v)for(const c of r){assert.ok(c in TAVOLOZZA,`${nome}: ${c}`);toni.add(c);}
+      // Il bordo è tutto del colore di fondo: affiancati, i tasselli non si cuciono.
+      const bordo=v[0]+v[15]+v.map(r=>r[0]+r[15]).join('');
+      assert.equal(new Set(bordo).size,1,nome);assert.equal(bordo[0],base);
+      // Non più a blocchi di due: le righe non vanno a coppie uguali.
+      let coppie=0;for(let y=0;y<16;y+=2)if(v[y]===v[y+1])coppie++;
+      assert.ok(coppie<8,`${nome} ancora a blocchi`);
+    }
+    assert.ok(toni.size>=4,`${nome}: ${[...toni].join('')}`);
+    for(const k of NUOVE[nome])assert.ok(toni.has(k),`${nome} usa ${k}`);
+  }
+  // Tutte le varianti diverse fra loro.
+  for(const nome of Object.keys(BASE))assert.equal(new Set(terreno[nome].map(v=>v.join(''))).size,6,nome);
+});
+
+test('i toni nuovi esistono in ogni stagione, e quelli dei prati e delle chiome cambiano con lei',async()=>{
+  const estate=tavolozzaDi('estate');
+  for(const k of ['P','Q','R','S','T','U','V','W','X','Y','Z'])
+    for(const stagione of ['estate','autunno','inverno','primavera'])assert.match(tavolozzaDi(stagione)[k]??'',/^#[0-9a-f]{6}$/,`${k} ${stagione}`);
+  for(const k of ['P','Q','R','S','Z'])
+    for(const stagione of ['autunno','inverno','primavera'])assert.notEqual(tavolozzaDi(stagione)[k],estate[k],`${k} ${stagione}`);
+  for(const k of ['T','U','V','W','X','Y'])assert.equal(tavolozzaDi('inverno')[k],estate[k],'sabbia, terra e roccia non si vestono');
+});
+
+test('gli alberi hanno tre forme, con la stessa misura e lo stesso tronco, e la forma sta ferma al suo posto',async()=>{
+  const forme=arteOggetti.ALBERI;
+  assert.equal(forme.length,3);assert.equal(arteOggetti.ALBERO,forme[0]);
+  for(const f of forme){
+    assert.equal(f.length,23);assert.ok(f.every(r=>r.length===16));
+    assert.deepEqual(f.slice(15),forme[0].slice(15),'stesso tronco e stessa base');
+    assert.ok(f.slice(0,15).join('').includes('Z'),'la luce sulla chioma');
+    for(const r of f)for(const c of r)assert.ok(c in TAVOLOZZA,c);
+    for(const stagione of ['estate','autunno','inverno','primavera'])decodifica(f,tavolozzaDi(stagione));
+  }
+  assert.equal(new Set(forme.map(f=>f.join(''))).size,3);
+  mappa.inizializza('valle-1');
+  const viste=new Map();
+  for(let y=0;y<30;y++)for(let x=0;x<30;x++){
+    const f=mappa.formaDellAlbero(x,y);assert.equal(mappa.formaDellAlbero(x,y),f,'stabile');
+    viste.set(f,(viste.get(f)??0)+1);
+  }
+  assert.equal(viste.size,3);for(const n of viste.values())assert.ok(n>200,'tutte e tre, più o meno alla pari');
+  const sorgente=readFileSync(new URL('../mondo/mappa.js',import.meta.url),'utf8');
+  assert.match(sorgente,/oggetto === OGGETTO\.ALBERO \? formaDellAlbero\(tx, ty\)/);
+  // Il vento e le ombre non se ne accorgono: stessa altezza, stessa chioma di quindici righe.
+  const e=await effettiDi();
+  for(const f of forme)assert.deepEqual(e.fasceMosse({tipo:OGGETTO.ALBERO,sprite:{width:16,height:f.length}},1).map(x=>[x[0],x[1]]),[[0,8],[8,15],[15,23]]);
+});
