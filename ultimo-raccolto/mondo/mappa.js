@@ -605,9 +605,19 @@ function tasselloDi(tx, ty, terreno) {
 // La forma di un albero (M7.18.47): dall'impronta del tassello, come la
 // variante del terreno, così resta la stessa ogni volta che il settore si
 // ricuoce.
+// Da M7.18.48 vale anche per sassi e cespugli, ognuno col suo scarto: un
+// sasso tondo non deve cadere sempre accanto a un albero tondo.
+const FORME = {
+  [OGGETTO.ALBERO]: { forme: oggettiArte.ALBERI, scarto: 0x0a1be70 },
+  [OGGETTO.SASSO]: { forme: oggettiArte.SASSI, scarto: 0x5a5501 },
+  [OGGETTO.CESPUGLIO]: { forme: oggettiArte.CESPUGLI, scarto: 0xce59 },
+};
+export function formaDi(oggetto, tx, ty) {
+  const { forme, scarto } = FORME[oggetto];
+  return forme[Math.floor(impronta(tx, ty, seme ^ scarto) * forme.length) % forme.length];
+}
 export function formaDellAlbero(tx, ty) {
-  const forme = oggettiArte.ALBERI;
-  return forme[Math.floor(impronta(tx, ty, seme ^ 0x0a1be70) * forme.length) % forme.length];
+  return formaDi(OGGETTO.ALBERO, tx, ty);
 }
 
 // La maschera cambia da un tassello all'altro lungo lo stesso confine: con una
@@ -711,7 +721,8 @@ function cuociSettore(sx, sy) {
           // gira con lei.
           : ortiSecchi && inselvatichitaNellOrto(tx, ty, oggetto) ? oggettiArte.PIANTA_SECCA
           // E da M7.18.47 gli alberi hanno tre forme.
-          : oggetto === OGGETTO.ALBERO ? formaDellAlbero(tx, ty)
+          // e da M7.18.48 anche i sassi e i cespugli.
+          : FORME[oggetto] ? formaDi(oggetto, tx, ty)
           : oggetto === OGGETTO.CANCELLO || oggetto === OGGETTO.CANCELLO_APERTO
             ? coseArte.cancelloVerso(oggetto === OGGETTO.CANCELLO_APERTO,
               collegaSteccato(tx, ty - 1), collegaSteccato(tx, ty + 1),

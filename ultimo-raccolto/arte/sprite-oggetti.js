@@ -98,18 +98,50 @@ export const ALBERI = [ALBERO_TONDO, ALBERO_ALTO, ALBERO_A_LOBI];
 // L'albero di sempre, per chi lo chiede per nome: è quello tondo.
 export const ALBERO = ALBERO_TONDO;
 
-export const SASSO = [
-  "......dddd......",
-  "....ddeeeedd....",
-  "...deeeffeeed...",
-  "..deeffffffeed..",
-  "..deeffffffeed..",
-  ".ddeeeffffeeedd.",
-  ".deeeeeeeeeeeed.",
-  "..dddeeeeeeddd..",
-  "....dddddddd....",
-  "......dddd......",
+// I sassi (M7.18.47, secondo passo): tre forme — tondo, piatto e a coppia —
+// col contorno scuro della fessura (X), la luce in alto a sinistra (Y, f) e
+// l'ombra in basso a destra (d). Stessa misura di prima.
+export const SASSO_TONDO = [
+  "................",
+  "......XXXX......",
+  "....XXYYffXX....",
+  "...XYYfffeedX...",
+  "..XYffffeeeddX..",
+  "..XfffeeeeeddX..",
+  ".XffeeeeeedddX..",
+  ".XeeeeeeeddddX..",
+  "..XXddddddddXX..",
+  "....XXXXXXXX....",
 ];
+
+export const SASSO_PIATTO = [
+  "................",
+  "................",
+  "................",
+  "................",
+  "....XXXXXXX.....",
+  "..XXYYffffeXX...",
+  ".XYfffeeeeeedX..",
+  "XffeeeeeeeeddX..",
+  ".XXeeedddddddXX.",
+  "...XXXXXXXXXXX..",
+];
+
+export const SASSO_A_COPPIA = [
+  "................",
+  "................",
+  "...XXXX.........",
+  "..XYYfeX........",
+  ".XYffeedX.XXX...",
+  ".XfeeeddXXYfeX..",
+  ".XeeeddXXfffedX.",
+  "..XdddXXfeeeedX.",
+  "...XXXXXdddddX..",
+  "........XXXXX...",
+];
+
+export const SASSI = [SASSO_TONDO, SASSO_PIATTO, SASSO_A_COPPIA];
+export const SASSO = SASSO_TONDO;
 
 // Il muro di una casa che non c'è più.
 //
@@ -291,17 +323,53 @@ export const SPAVENTAPASSERI_ROTTO = [
   ".....dghd.......",
 ];
 
-export const CESPUGLIO = [
+// I cespugli (M7.18.47, secondo passo): tre forme — tondo, largo e rado —
+// con le stesse chiavi delle chiome degli alberi, quindi con la stessa luce
+// (Z) e le stesse stagioni. Stessa misura di prima.
+export const CESPUGLIO_TONDO = [
   "................",
-  "......jjjj......",
-  "....jjkkkkjj....",
-  "...jkkkkkkkkj...",
-  "..jkkkkkkkkkkj..",
-  ".jkkkkkkkkkkkkj.",
-  ".jkkkkkkkkkkkkj.",
-  "jjkkkkkkkkkkkkjj",
-  "jjkkkkkkkkkkkkjj",
-  ".jjkkkkkkkkkkjj.",
-  "..ijjkkkkkkjji..",
-  "....iijjjjii....",
+  "......iiii......",
+  "....iiZZkjii....",
+  "...iZZkkkkjji...",
+  "..iZkkkjkkkjji..",
+  ".iZZkkjiZkkjjji.",
+  ".iZkkjjiZkkjjji.",
+  "iZkkkjjikkkjjjii",
+  "ikkjjjiikjjjjjii",
+  ".ijjjiijjjjjiii.",
+  "..iiijjjjjiiii..",
+  "....iiiiiiii....",
 ];
+
+export const CESPUGLIO_LARGO = [
+  "................",
+  "................",
+  "................",
+  "................",
+  "...iiii...iii...",
+  "..iZZkjiiiZkji..",
+  ".iZkkkjiZZkkjji.",
+  "iZkkkjjiZkkkjjji",
+  "ikkkjjjikkkjjjji",
+  "ijkjjjiijkjjjjii",
+  ".iijjiiijjjjjii.",
+  "..iiiiiiiiiiii..",
+];
+
+export const CESPUGLIO_RADO = [
+  "................",
+  "................",
+  ".......i........",
+  "...i..iZi..i....",
+  "..iZi.iki.iZi...",
+  "..ikkiikjiikji..",
+  ".iZkjiZkkjikkji.",
+  ".ikkjjkkjjjkjji.",
+  "iZkjjjkjjjjjjji.",
+  "ikkjjjjjjjjjjii.",
+  ".iijjjjjjjjjii..",
+  "...iiiiiiiiii...",
+];
+
+export const CESPUGLI = [CESPUGLIO_TONDO, CESPUGLIO_LARGO, CESPUGLIO_RADO];
+export const CESPUGLIO = CESPUGLIO_TONDO;

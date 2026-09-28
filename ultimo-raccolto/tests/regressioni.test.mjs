@@ -5436,8 +5436,41 @@ test('gli alberi hanno tre forme, con la stessa misura e lo stesso tronco, e la 
   }
   assert.equal(viste.size,3);for(const n of viste.values())assert.ok(n>200,'tutte e tre, più o meno alla pari');
   const sorgente=readFileSync(new URL('../mondo/mappa.js',import.meta.url),'utf8');
-  assert.match(sorgente,/oggetto === OGGETTO\.ALBERO \? formaDellAlbero\(tx, ty\)/);
+  assert.match(sorgente,/: FORME\[oggetto\] \? formaDi\(oggetto, tx, ty\)/);
   // Il vento e le ombre non se ne accorgono: stessa altezza, stessa chioma di quindici righe.
   const e=await effettiDi();
   for(const f of forme)assert.deepEqual(e.fasceMosse({tipo:OGGETTO.ALBERO,sprite:{width:16,height:f.length}},1).map(x=>[x[0],x[1]]),[[0,8],[8,15],[15,23]]);
+});
+
+// --- M7.18.48: sassi, cespugli e piante selvatiche ------------------------------
+
+test('sassi e cespugli hanno tre forme ciascuno, con la luce, la stessa misura, e la forma ferma al suo posto',async()=>{
+  for(const [nome,forme,uno,alto,luce] of [['sassi',arteOggetti.SASSI,arteOggetti.SASSO,10,'Y'],['cespugli',arteOggetti.CESPUGLI,arteOggetti.CESPUGLIO,12,'Z']]){
+    assert.equal(forme.length,3,nome);assert.equal(uno,forme[0]);
+    assert.equal(new Set(forme.map(f=>f.join(''))).size,3);
+    for(const f of forme){
+      assert.equal(f.length,alto,nome);assert.ok(f.every(r=>r.length===16));
+      assert.ok(f.join('').includes(luce),`${nome}: la luce`);
+      assert.ok(/[^.]/.test(f[alto-1]),`${nome}: poggia sull'ultima riga`);
+      for(const stagione of ['estate','autunno','inverno','primavera'])decodifica(f,tavolozzaDi(stagione));
+    }
+  }
+  mappa.inizializza('valle-1');
+  for(const [oggetto,forme] of [[OGGETTO.SASSO,arteOggetti.SASSI],[OGGETTO.CESPUGLIO,arteOggetti.CESPUGLI],[OGGETTO.ALBERO,arteOggetti.ALBERI]]){
+    const viste=new Map();
+    for(let y=0;y<30;y++)for(let x=0;x<30;x++){const f=mappa.formaDi(oggetto,x,y);assert.equal(mappa.formaDi(oggetto,x,y),f);assert.ok(forme.includes(f));viste.set(f,(viste.get(f)??0)+1);}
+    assert.equal(viste.size,3);
+  }
+  // Scarti diversi: sassi e alberi non scelgono la stessa forma negli stessi posti.
+  let uguali=0;for(let x=0;x<300;x++)if(arteOggetti.SASSI.indexOf(mappa.formaDi(OGGETTO.SASSO,x,7))===arteOggetti.ALBERI.indexOf(mappa.formaDi(OGGETTO.ALBERO,x,7)))uguali++;
+  assert.ok(uguali<160,`${uguali} su 300`);
+  // Il vento piega i cespugli nuovi come il vecchio.
+  const e=await effettiDi();
+  for(const f of arteOggetti.CESPUGLI)assert.deepEqual(e.fasceMosse({tipo:OGGETTO.CESPUGLIO,sprite:{width:16,height:f.length}},3),[[0,6,1],[6,12,0]]);
+});
+
+test('le piante selvatiche degli orti hanno l’ombra',async()=>{
+  const e=await effettiDi();
+  for(const tipo of [OGGETTO.SPIGHE_SELVATICHE,OGGETTO.LINO_SELVATICO,OGGETTO.CAVOLO_SELVATICO,OGGETTO.PATATA_SELVATICA,OGGETTO.FAGIOLI_SELVATICI])
+    assert.ok(e.ombraDi({tipo,x:0,y:0,base:16,sprite:{width:16,height:12}},12.5,1),'tipo '+tipo);
 });
