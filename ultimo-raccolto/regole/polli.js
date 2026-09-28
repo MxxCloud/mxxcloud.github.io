@@ -558,17 +558,37 @@ export function statoValido(dati) {
 
 // --- disegno ------------------------------------------------------------------
 
-export function daDisegnare() {
-  const notte = tempo.eNotte();
+// Da M7.18.52 quattro passi e il beccare. Se si muove lo dice il passo, che
+// cresce solo camminando, confrontato con quello del fotogramma prima: tenuto
+// qui e non nel pollo, perché è aspetto e non va nel salvataggio.
+const passoPrima = new WeakMap();
+let orologio = 0;
+// Fermo becca: due colpi di becco in poco più di un secondo, sfasati per pollo.
+const CICLO_BECCA = 1.3;
+export function posaDi(p, secondi = orologio) {
+  if (tempo.eNotte()) return "dorme";
+  const prima = passoPrima.get(p);
+  passoPrima.set(p, p.passo);
+  if (prima !== undefined && prima !== p.passo) return `passo${Math.floor(p.passo) % 4}`;
+  const t = (secondi + (p.seme % 991) / 83) % CICLO_BECCA;
+  return t < 0.25 || (t > 0.5 && t < 0.75) ? "becca" : "passo0";
+}
+
+export function daDisegnare(secondi = 0) {
+  orologio = secondi;
   return polli.map(p => {
-    const passo = Math.floor(p.passo) % 2;
+    const posa = posaDi(p);
+    p.posa = posa;
+    const passo = posa.startsWith("passo") ? Number(posa[5]) : 0;
     let righe;
-    if (pulcino(p)) righe = notte ? arte.PULCINO_DORME : arte.PULCINO[passo];
-    else if (p.gallo) righe = notte
+    if (pulcino(p)) righe = posa === "dorme" ? arte.PULCINO_DORME : posa === "becca" ? arte.PULCINO_BECCA : arte.PULCINO[passo];
+    else if (p.gallo) righe = posa === "dorme"
       ? (p.domestico ? arte.GALLO_DORME_SPRITE : arte.GALLO_SELVATICO_DORME)
+      : posa === "becca" ? (p.domestico ? arte.GALLO_BECCA_SPRITE : arte.GALLO_SELVATICO_BECCA)
       : (p.domestico ? arte.GALLO : arte.GALLO_SELVATICO)[passo];
-    else righe = notte
+    else righe = posa === "dorme"
       ? (p.domestico ? arte.POLLO_DORME : arte.POLLO_SELVATICO_DORME)
+      : posa === "becca" ? (p.domestico ? arte.POLLO_BECCA : arte.POLLO_SELVATICO_BECCA)
       : (p.domestico ? arte.POLLO : arte.POLLO_SELVATICO)[passo];
     const cotto = cuoci(righe);
     p.sprite = p.destra ? cotto : riflesso(cotto);

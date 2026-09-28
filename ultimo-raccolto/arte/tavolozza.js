@@ -106,6 +106,11 @@ export const TAVOLOZZA = {
   // diverso dalla giacca: a sedici pixel la figura si legge in due pezzi, e
   // si vede quale gamba va avanti.
   K: "#4d3a28",
+  // M7.18.52: la luce sul mantello del cervo, fulva.
+  N: "#a88a5e",
+  // M7.18.52: l'ombra delle piume bianche e del piumino giallo del pulcino.
+  O: "#b4b19c",
+  M: "#c9a33e",
   J: "#4a4638",
   F: "#34322a",
 

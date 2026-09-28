@@ -12,6 +12,29 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.52 — animali e polli
+
+Il sesto passo del secondo livello grafico, e l'ultimo della lista.
+- **Cervo, cavallo, bufalo e orso sono ridisegnati.** Prima erano sagome
+  piatte in due toni. Adesso hanno la luce sul dorso, l'ombra sotto la
+  pancia e un contorno scuro. Le zampe lontane sono più scure e staccate da
+  quelle vicine. Il cervo ha il mantello fulvo e la coda bianca, il cavallo
+  la criniera e la coda che pende, il bufalo la gobba e il vello scuro con le
+  corna chiare, l'orso la gobba sulle spalle.
+- **Quattro passi invece di due**, con le zampe che vanno davvero avanti e
+  indietro.
+- **Da ferme e calme brucano.** Cervo, cavallo e bufalo abbassano la testa
+  sull'erba per qualche secondo e poi la rialzano a guardarsi intorno;
+  l'orso fiuta il terreno. Ognuna ha il suo ritmo, quindi un branco non
+  bruca a tempo. In allerta tengono la testa alta. Le carcasse restano come
+  prima.
+- **I polli hanno l'ombra delle piume e l'ala**, quattro passi con la testa
+  che va avanti e indietro, e da fermi beccano per terra. Di notte dormono
+  accovacciati come prima. Vale per la gallina, il gallo e il pulcino, bianchi
+  o bruni.
+- Tutto questo è solo disegno: velocità, fughe, cariche e salvataggi non
+  cambiano, e le pose non si salvano.
+
 ## M7.18.51 — il superstite e gli infetti
 
 Il quinto passo del secondo livello grafico.
@@ -2298,7 +2321,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.51**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.52**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -3096,9 +3119,9 @@ promesse: sono appunti, perché non si perdano.
 - **Il secondo livello: una pixel art più ricca.** Cominciato con M7.18.47
   (terreno e alberi) e M7.18.48 (sassi, cespugli, ombre delle piante
   selvatiche), M7.18.49 (acqua, riva, ghiaccio), M7.18.50 (muri, porte,
-  pavimento) e M7.18.51 (il superstite e gli infetti, con le pose). Restano,
-  per M7.18.52, gli animali selvatici e i polli: quattro fotogrammi di
-  cammino, e brucare, annusare, beccare.
+  pavimento), M7.18.51 (il superstite e gli infetti, con le pose) e M7.18.52
+  (animali e polli). La lista è finita; restano solo i ritocchi che emergono
+  giocando.
 
 Il primo livello, la luce e l'aria, è fatto: M7.18.44, M7.18.45 e M7.18.46.
 

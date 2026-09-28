@@ -1125,27 +1125,64 @@ export const CANCELLO_ICONA = [
 // quella allevata; bruna quella inselvatichita, che è la stessa gallina
 // rimasta sola da un anno — si distinguono a colpo d'occhio, ed è la
 // differenza che conta: una scappa, l'altra è tua.
-const GALLINA_A = [
-  "......tt..",
-  ".....zzr..",
-  ".....zzzu.",
-  "z...zzzz..",
-  "zz.zzzzz..",
-  "zzzzzzzz..",
-  ".zzzzzzz..",
-  "..zzzzz...",
-  "...u..u...",
+// Da M7.18.52 con l'ombra delle piume (O) e l'ala, quattro passi con la
+// testa che va avanti e indietro, e il beccare quando sta ferma.
+const GALLINA = [
+  [
+    "......tt..",
+    ".....zzr..",
+    ".....zzzu.",
+    "z...zzzz..",
+    "zz.zzzzz..",
+    "zzzOOOzz..",
+    ".zzzOOzO..",
+    "..OOOOO...",
+    "...u..u...",
+  ],
+  [
+    ".......tt.",
+    "......zzr.",
+    "......zzzu",
+    "z...zzzz..",
+    "zz.zzzzz..",
+    "zzzOOOzz..",
+    ".zzzOOzO..",
+    "..OOOOO...",
+    "....uu....",
+  ],
+  [
+    "......tt..",
+    ".....zzr..",
+    ".....zzzu.",
+    "z...zzzz..",
+    "zz.zzzzz..",
+    "zzzOOOzz..",
+    ".zzzOOzO..",
+    "..OOOOO...",
+    "...u..u...",
+  ],
+  [
+    ".......tt.",
+    "......zzr.",
+    "......zzzu",
+    "z...zzzz..",
+    "zz.zzzzz..",
+    "zzzOOOzz..",
+    ".zzzOOzO..",
+    "..OOOOO...",
+    "..u....u..",
+  ],
 ];
-const GALLINA_B = [
-  "......tt..",
-  ".....zzr..",
-  ".....zzzu.",
-  "z...zzzz..",
+const GALLINA_BECCA = [
+  "..........",
+  "..........",
+  "..........",
+  "z...zzz...",
   "zz.zzzzz..",
-  "zzzzzzzz..",
-  ".zzzzzzz..",
-  "..zzzzz...",
-  "....uu....",
+  "zzzOOOzztt",
+  ".zzzOOzzzr",
+  "..OOOOO.Ou",
+  "...u..u...",
 ];
 // Di notte dorme accovacciata, con la testa nelle piume: più bassa, e senza
 // zampe. È quello che dice che adesso si lascia prendere.
@@ -1155,15 +1192,17 @@ const GALLINA_DORME = [
   "......tt..",
   ".....zzz..",
   "z...zzzzu.",
-  "zzzzzzzz..",
-  "zzzzzzzz..",
-  ".zzzzzzz..",
+  "zzzzOOzz..",
+  "zzzOOOzz..",
+  ".OOOOOOO..",
   "..........",
 ];
-const bruna = (righe) => righe.map(r => r.replaceAll("z", "c"));
-export const POLLO = [GALLINA_A, GALLINA_B];
+const bruna = (righe) => righe.map(r => r.replaceAll("z", "w").replaceAll("O", "c"));
+export const POLLO = GALLINA;
+export const POLLO_BECCA = GALLINA_BECCA;
 export const POLLO_DORME = GALLINA_DORME;
-export const POLLO_SELVATICO = [bruna(GALLINA_A), bruna(GALLINA_B)];
+export const POLLO_SELVATICO = GALLINA.map(bruna);
+export const POLLO_SELVATICO_BECCA = bruna(GALLINA_BECCA);
 export const POLLO_SELVATICO_DORME = bruna(GALLINA_DORME);
 
 export const POLLO_ICONA = [
@@ -1184,19 +1223,68 @@ export const POLLO_ICONA = [
 // Il gallo (M7.18.19): la stessa sagoma con la cresta grande, i bargigli e la
 // coda scura. Una coda che si vede da lontano, perché nel recinto serve
 // sapere a colpo d'occhio se c'è.
-const GALLO_A = [
-  ".....ttt..",
-  "......tt..",
-  ".....zzr..",
-  ".....zzzu.",
-  "g...zzzt..",
-  "gg.zzzzz..",
-  "jgzzzzzz..",
-  ".gzzzzzz..",
-  "..zzzzz...",
+const GALLO_PASSI = [
+  [
+    ".....ttt..",
+    "......tt..",
+    ".....zzr..",
+    ".....zzzu.",
+    "g...zzzt..",
+    "gg.zzzzz..",
+    "jgzOOOzz..",
+    ".gzzOOzO..",
+    "..OOOOO...",
+    "...u..u...",
+  ],
+  [
+    "......ttt.",
+    ".......tt.",
+    "......zzr.",
+    "......zzzu",
+    "g...zzzt..",
+    "gg.zzzzz..",
+    "jgzOOOzz..",
+    ".gzzOOzO..",
+    "..OOOOO...",
+    "....uu....",
+  ],
+  [
+    ".....ttt..",
+    "......tt..",
+    ".....zzr..",
+    ".....zzzu.",
+    "g...zzzt..",
+    "gg.zzzzz..",
+    "jgzOOOzz..",
+    ".gzzOOzO..",
+    "..OOOOO...",
+    "...u..u...",
+  ],
+  [
+    "......ttt.",
+    ".......tt.",
+    "......zzr.",
+    "......zzzu",
+    "g...zzzt..",
+    "gg.zzzzz..",
+    "jgzOOOzz..",
+    ".gzzOOzO..",
+    "..OOOOO...",
+    "..u....u..",
+  ],
+];
+const GALLO_BECCA = [
+  "..........",
+  "..........",
+  "..........",
+  "..........",
+  "g...zzz...",
+  "gg.zzzzztt",
+  "jgzOOOzzzt",
+  ".gzzOOzzzr",
+  "..OOOOO.tu",
   "...u..u...",
 ];
-const GALLO_B = [...GALLO_A.slice(0, 9), "....uu...."];
 const GALLO_DORME = [
   "..........",
   "..........",
@@ -1204,23 +1292,28 @@ const GALLO_DORME = [
   "......t...",
   ".....zzz..",
   "g...zzzzu.",
-  "jgzzzzzz..",
-  ".gzzzzzz..",
-  "..zzzzzz..",
+  "jgzzOOzz..",
+  ".gzOOOzz..",
+  "..OOOOOO..",
   "..........",
 ];
-export const GALLO = [GALLO_A, GALLO_B];
+export const GALLO = GALLO_PASSI;
+export const GALLO_BECCA_SPRITE = GALLO_BECCA;
 export const GALLO_DORME_SPRITE = GALLO_DORME;
-export const GALLO_SELVATICO = [bruna(GALLO_A), bruna(GALLO_B)];
+export const GALLO_SELVATICO = GALLO_PASSI.map(bruna);
+export const GALLO_SELVATICO_BECCA = bruna(GALLO_BECCA);
 export const GALLO_SELVATICO_DORME = bruna(GALLO_DORME);
 
 // Il pulcino: una pallina gialla, piccola abbastanza da capire che non è
-// ancora un pollo.
+// ancora un pollo. Da M7.18.52 con l'ombra (M) e quattro passi.
 export const PULCINO = [
-  ["..vv..", ".vvvr.", "vvvvvu", ".vvvv.", "..u.u."],
-  ["..vv..", ".vvvr.", "vvvvvu", ".vvvv.", "...uu."],
+  ["..vv..", ".vvvr.", "vvvvvu", ".MMMv.", "..u.u."],
+  ["..vv..", ".vvvr.", "vvvvvu", ".MMMv.", "...uu."],
+  ["..vv..", ".vvvr.", "vvvvvu", ".MMMv.", "..u.u."],
+  ["...vv.", "..vvvr", "vvvvvu", ".MMMv.", ".u..u."],
 ];
-export const PULCINO_DORME = ["......", "..vv..", ".vvvvu", "vvvvv.", "......"];
+export const PULCINO_BECCA = ["......", "......", "vv.vv.", "vvvvvr", ".MMMvu"];
+export const PULCINO_DORME = ["......", "..vv..", ".vvvvu", "vMMMv.", "......"];
 
 export const GALLO_ICONA = [
   ".......ttt..",

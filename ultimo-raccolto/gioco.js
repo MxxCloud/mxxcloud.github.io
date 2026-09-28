@@ -75,7 +75,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.51";
+const VERSIONE = "M7.18.52";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1714,7 +1714,9 @@ function disegna() {
 
   inPiedi.length = 0;
   for (const o of oggetti) inPiedi.push(o);
-  for (const e of [...entita.daDisegnare(), ...fauna.daDisegnare(), ...polli.daDisegnare()]) {
+  // Da M7.18.52 bestie e polli brucano e beccano col tempo vero, come il fumo.
+  const adesso = performance.now() / 1000;
+  for (const e of [...entita.daDisegnare(), ...fauna.daDisegnare(adesso), ...polli.daDisegnare(adesso)]) {
     if (schermo.visibile(e.x, e.y, e.sprite.width, e.sprite.height)) inPiedi.push(e);
   }
   // Chi ha i piedi più in basso è più vicino a chi guarda, quindi va disegnato
