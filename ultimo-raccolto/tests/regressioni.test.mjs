@@ -5545,3 +5545,71 @@ test('la riva: la mappa sa dove la terra tocca l’acqua, e la schiuma respira s
   assert.ok(gioco.indexOf('effetti.disegnaRiva(')<gioco.indexOf('for (const cosa of inPiedi) {'));
   assert.match(readFileSync(new URL('../arte/effetti.js',import.meta.url),'utf8'),/if \(!accesi \|\| gelato\) return;/);
 });
+
+// --- M7.18.50: muri e case ---------------------------------------------------------
+
+test('cinque muri in pietra: tre puliti e due in rovina col muschio, tutti 16×20 col coronamento',()=>{
+  const {MURI,MURI_PULITI,MURO}=arteOggetti;
+  assert.equal(MURI.length,5);assert.equal(MURO,MURI[0]);
+  assert.equal(new Set(MURI.map(f=>f.join(''))).size,5);
+  assert.deepEqual(MURI_PULITI,MURI.slice(0,3));
+  for(const f of MURI){
+    assert.equal(f.length,20);assert.ok(f.every(r=>r.length===16));
+    assert.ok(!f.join('').includes('.'),'pieno');
+    // Coronamento: la prima riga è la più chiara, la seconda il corpo, la
+    // terza il giunto scuro che lo separa dalla muratura.
+    assert.ok(/^[fYkj]+$/.test(f[0]),f[0]);assert.ok(/^[ed]+$/.test(f[1]),f[1]);assert.ok(/^[Xkj]+$/.test(f[2]),f[2]);
+    for(const c of 'XYfed')assert.ok(f.join('').includes(c),c);
+    for(const stagione of ['estate','autunno','inverno','primavera'])decodifica(f,tavolozzaDi(stagione));
+  }
+  for(const f of MURI_PULITI)assert.ok(!/[jk]/.test(f.join('')),'un muro pulito non ha muschio');
+  for(const f of MURI.slice(3))assert.ok(/k/.test(f.join(''))&&/j/.test(f.join('')),'la rovina ha il muschio');
+});
+
+test('i muri delle rovine pescano fra tutti e cinque, quelli costruiti solo fra i puliti',()=>{
+  mappa.inizializza('valle-1');modifiche.svuota();
+  const generati=[];
+  for(let y=-200;y<200&&generati.length<200;y++)for(let x=-200;x<200;x++)if(mappa.oggettoGenerato(x,y)===OGGETTO.MURO)generati.push([x,y]);
+  assert.ok(generati.length>=100);
+  const viste=new Set();
+  for(const [x,y] of generati){const f=mappa.formaDi(OGGETTO.MURO,x,y);assert.equal(mappa.formaDi(OGGETTO.MURO,x,y),f);viste.add(f);}
+  assert.equal(viste.size,5,'compaiono anche le rovine');
+  // Un muro delle rovine preso a colpi resta com'era.
+  const [gx,gy]=generati[0];const prima=mappa.formaDi(OGGETTO.MURO,gx,gy);
+  mappa.annotaTassello(gx,gy,{colpi:2});
+  assert.equal(mappa.formaDi(OGGETTO.MURO,gx,gy),prima);
+  // Un muro alzato dove non c'era: solo i tre puliti, e tutti e tre.
+  const nuovi=new Set();
+  for(let x=0;x<60;x++){const y=500;if(mappa.oggettoGenerato(x,y)===OGGETTO.MURO)continue;
+    mappa.cambiaTassello(x,y,{oggetto:OGGETTO.MURO});
+    const f=mappa.formaDi(OGGETTO.MURO,x,y);assert.ok(arteOggetti.MURI_PULITI.includes(f));nuovi.add(f);}
+  assert.equal(nuovi.size,3);
+  modifiche.svuota();mappa.inizializza('valle-1');
+});
+
+test('il muro crollato ha tre forme 16×8 in pietra; porta, porta aperta e pavimento restano della loro misura',()=>{
+  const {MURI_ROTTI,MURO_ROTTO}=arteOggetti;
+  assert.equal(MURI_ROTTI.length,3);assert.equal(MURO_ROTTO,MURI_ROTTI[0]);
+  assert.equal(new Set(MURI_ROTTI.map(f=>f.join(''))).size,3);
+  for(const f of MURI_ROTTI){
+    assert.equal(f.length,8);assert.ok(f.every(r=>r.length===16));
+    for(const c of 'XYed')assert.ok(f.join('').includes(c),c);
+    assert.ok(/[^.]/.test(f[7]),'poggia a terra');
+    for(const stagione of ['estate','autunno','inverno','primavera'])decodifica(f,tavolozzaDi(stagione));
+  }
+  mappa.inizializza('valle-1');
+  const viste=new Set();for(let y=0;y<30;y++)for(let x=0;x<30;x++)viste.add(mappa.formaDi(OGGETTO.MURO_ROTTO,x,y));
+  assert.equal(viste.size,3);
+  const {PORTA,PORTA_APERTA,PAVIMENTO_LEGNO}=arteCose;
+  for(const f of [PORTA,PORTA_APERTA]){assert.equal(f.length,20);assert.ok(f.every(r=>r.length===16));
+    for(const stagione of ['estate','inverno'])decodifica(f,tavolozzaDi(stagione));}
+  // Gli stipiti in pietra come il muro, le assi con la venatura, il ferro.
+  assert.deepEqual(PORTA.slice(0,3),PORTA_APERTA.slice(0,3));
+  for(const c of 'XYhgws')assert.ok(PORTA.join('').includes(c),c);
+  assert.ok(!PORTA.join('').includes('.'));
+  // La porta aperta è vuota dove lo era prima (colonne 5–13 dalla riga 4 in giù).
+  for(let y=4;y<20;y++)assert.equal(PORTA_APERTA[y].slice(5,14),'.........',`riga ${y}`);
+  assert.ok(PORTA_APERTA.every((r,y)=>y<3||(r[0]!=='.'&&r[15]!=='.')),'gli stipiti restano');
+  assert.equal(PAVIMENTO_LEGNO.length,16);assert.ok(PAVIMENTO_LEGNO.every(r=>r.length===16&&!r.includes('.')));
+  decodifica(PAVIMENTO_LEGNO,tavolozzaDi('estate'));
+});

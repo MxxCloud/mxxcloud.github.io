@@ -12,6 +12,28 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.50 — muri e case
+
+Il quarto passo del secondo livello grafico.
+- **Il muro è di pietra vera.** Prima erano file regolari di mattoni in tre
+  grigi. Adesso sono pietre di larghezze diverse su file sfalsate, con la luce
+  in alto a sinistra e l'ombra in basso a destra. In cima c'è un coronamento
+  più chiaro, che dice «questo è in piedi». Le murature sono tre, scelte per
+  tassello e sempre le stesse.
+- **Le rovine hanno il muschio.** Due varianti in più hanno una crepa e
+  qualche chiazza di muschio, che cambia con la stagione: verde, oro
+  d'autunno, spento d'inverno. I muri delle rovine pescano fra tutte e cinque.
+  Un muro alzato dal giocatore usa solo le tre pulite, perché è appena fatto.
+  Un muro delle rovine preso a colpi resta una rovina.
+- **Il muro crollato** ha tre forme di macerie, con le pietre dello stesso
+  disegno: si legge ancora che lì c'era un muro.
+- **La porta** ha gli stipiti nella stessa pietra del muro e le assi con la
+  venatura, più due fasce di ferro chiodate. La porta aperta è vuota dove lo
+  era prima.
+- **Il pavimento di legno** ha ancora le assi chiare, ma con venatura, nodi e
+  giunti sfalsati. Resta abbastanza chiaro da far leggere i mobili sopra.
+- Misure, urti, sfondamento e costi non cambiano.
+
 ## M7.18.49 — l'acqua e la riva
 
 Il terzo passo del secondo livello grafico.
@@ -2245,7 +2267,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.49**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.50**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -3042,8 +3064,8 @@ promesse: sono appunti, perché non si perdano.
   senza torcia.
 - **Il secondo livello: una pixel art più ricca.** Cominciato con M7.18.47
   (terreno e alberi) e M7.18.48 (sassi, cespugli, ombre delle piante
-  selvatiche) e M7.18.49 (acqua, riva, ghiaccio). Restano: i muri e le
-  case; il superstite, gli infetti e gli animali, con più animazioni (fermo,
+  selvatiche), M7.18.49 (acqua, riva, ghiaccio) e M7.18.50 (muri, porte,
+  pavimento). Restano: il superstite, gli infetti e gli animali, con più animazioni (fermo,
   colpo, raccolta).
 
 Il primo livello, la luce e l'aria, è fatto: M7.18.44, M7.18.45 e M7.18.46.
