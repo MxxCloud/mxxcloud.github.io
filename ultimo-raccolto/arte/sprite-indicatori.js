@@ -92,3 +92,37 @@ export const INSEGUITO = [
   ".......",
   "..xxx..",
 ];
+
+// Le facce della luna (M7.18.54), accanto all'ora: la luna di stanotte, da
+// guardare di giorno per decidere come passare la notte. Non sagome da
+// tingere ma disegni fatti: la parte al buio (e) si vede lo stesso, perché
+// anche la luna nuova è un'informazione. La crescente è chiara a destra.
+const DISCO = [
+  "..xxx..",
+  ".xxxxx.",
+  "xxxxxxx",
+  "xxxxxxx",
+  "xxxxxxx",
+  ".xxxxx.",
+  "..xxx..",
+];
+// Da che colonna in poi è illuminata (crescente) o fino a quale (calante).
+const faccia = (chiara) => DISCO.map((r) => [...r].map((c, x) => (c === "." ? "." : chiara(x) ? "z" : "e")).join(""));
+export const LUNE = [
+  faccia(() => false),
+  faccia((x) => x >= 5),
+  faccia((x) => x >= 2),
+  faccia(() => true),
+  faccia((x) => x <= 4),
+  faccia((x) => x <= 1),
+];
+// Coperta: le nuvole davanti, e dietro un filo di luna.
+export const LUNA_COPERTA = [
+  "..eee..",
+  ".eeeee.",
+  "eeYYYee",
+  "eYfffYe",
+  "YfffffY",
+  "fffffff",
+  ".fffff.",
+];

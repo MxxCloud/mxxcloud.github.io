@@ -178,17 +178,27 @@ export function limitiDi(sprite) {
 // "limiti" è quello che si vede davvero nel disegno (vedi limitiDi). Chi
 // cammina non ne ha — il suo disegno cambia a ogni passo — e usa un'impronta
 // fissa, più stretta del riquadro.
-export function ombraDi(cosa, ora, luce, limiti = null) {
+//
+// Da M7.18.54 c'è anche l'ombra della luna: di notte, quando la luna è almeno
+// a tre quarti e il cielo è sgombro, un'ombra più tenue che gira con lei — sorge
+// la sera dove il sole sorge la mattina, e cala all'alba.
+const LUNA_CHE_FA_OMBRA = 0.5;
+export function ombraDi(cosa, ora, luce, limiti = null, luna = 0) {
   if (typeof cosa.tipo === "number" && !CON_OMBRA.has(cosa.tipo)) return null;
   if (limiti?.vuoto) return null;
-  const forza = 0.28 * Math.min(1, Math.max(0, (luce - 0.25) / 0.6));
-  if (forza <= 0) return null;
+  let forza = 0.28 * Math.min(1, Math.max(0, (luce - 0.25) / 0.6));
+  let sole = Math.max(-1, Math.min(1, (ora - 12.5) / 6.5));
+  if (forza <= 0) {
+    if (luna < LUNA_CHE_FA_OMBRA || luce > 0.3) return null;
+    forza = 0.2 * luna;
+    const dallaSera = (ora - 19 + 24) % 24;
+    sole = Math.max(-1, Math.min(1, dallaSera / 6 - 1));
+  }
   const w = cosa.sprite?.width ?? TASSELLO;
   const h = cosa.sprite?.height ?? TASSELLO;
   const larghezza = limiti ? limiti.larghezza : w * 0.7;
   const centro = limiti ? limiti.sinistra + limiti.larghezza / 2 : w / 2;
   const piedi = limiti ? limiti.sotto + 1 : h;
-  const sole = Math.max(-1, Math.min(1, (ora - 12.5) / 6.5));
   const misura = Math.min(larghezza * 0.42, 12);
   const rx = Math.max(2, Math.round(misura * (1 + 0.25 * Math.abs(sole))));
   const ry = Math.max(2, Math.round(misura * 0.32));
@@ -227,12 +237,12 @@ function ovale(rx, ry) {
 // e quella di un albero non deve coprire chi gli passa davanti. La posizione
 // si arrotonda come quella del disegno (vedi schermo.disegna), così l'ombra
 // sta ferma rispetto alla sua cosa anche mentre la vista scorre.
-export function disegnaOmbre(p, cose, camera, ora, luce) {
+export function disegnaOmbre(p, cose, camera, ora, luce, luna = 0) {
   if (!accesi) return;
   p.save();
   for (const cosa of cose) {
     const limiti = typeof cosa.tipo === "number" ? limitiDi(cosa.sprite) : null;
-    const o = ombraDi(cosa, ora, luce, limiti);
+    const o = ombraDi(cosa, ora, luce, limiti, luna);
     if (!o) continue;
     p.globalAlpha = o.forza;
     p.drawImage(ovale(o.rx, o.ry), Math.round(cosa.x - camera.x) + o.dx, Math.round(cosa.y - camera.y) + o.dy);
@@ -669,6 +679,57 @@ export function disegnaLuccichii(p, camera, secondi, stato, eAcqua) {
       p.globalAlpha = 0.6 * l.forza;
       p.fillRect(x, y - 1, 1, 1);
     }
+  }
+  p.restore();
+}
+
+// --- l'acqua sotto la luna (M7.18.54) ----------------------------------------------
+
+// Le notti di luna chiara l'acqua ha dei riflessi d'argento: più radi e più
+// lenti di quelli del sole, e disegnati sopra il buio — sono luce, e sotto il
+// telo della notte sparirebbero come tutto il resto. Col cielo coperto la luna
+// non c'è (vedi regole/luna.js), e sul ghiaccio non c'è acqua che si muova.
+const GIRO_LUNA = 4;
+const LAMPO_LUNA = 0.9;
+const QUANTI_SOTTO_LA_LUNA = 0.3;
+export function riflessiLunari(q, secondi, { luna, luce }, eAcqua) {
+  if (!accesi || luna < LUNA_CHE_FA_OMBRA || luce > 0.3) return [];
+  const notte = Math.min(1, (0.3 - luce) / 0.15);
+  const quanti = QUANTI_SOTTO_LA_LUNA * luna;
+  const trovati = [];
+  const x0 = Math.floor(q.sinistra / TASSELLO), x1 = Math.floor((q.destra - 1) / TASSELLO);
+  const y0 = Math.floor(q.sopra / TASSELLO), y1 = Math.floor((q.sotto - 1) / TASSELLO);
+  for (let ty = y0; ty <= y1; ty += 1) {
+    for (let tx = x0; tx <= x1; tx += 1) {
+      const tempo = secondi / GIRO_LUNA + impronta(tx, ty, 0x1a0a);
+      const giro = Math.floor(tempo);
+      const dentro = (tempo - giro) * GIRO_LUNA;
+      if (dentro > LAMPO_LUNA || impronta(tx, ty, giro ^ 0x10) > quanti) continue;
+      if (!eAcqua(tx, ty)) continue;
+      trovati.push({
+        x: tx * TASSELLO + 3 + Math.floor(impronta(tx, giro, 0x1c) * 10),
+        y: ty * TASSELLO + 3 + Math.floor(impronta(giro, ty, 0x1d) * 10),
+        forza: Math.sin((dentro / LAMPO_LUNA) * Math.PI) * luna * notte,
+      });
+    }
+  }
+  return trovati;
+}
+
+export function disegnaRiflessiLunari(p, camera, secondi, stato, eAcqua) {
+  if (!accesi) return;
+  const lista = riflessiLunari(vistaDi(camera), secondi, stato, eAcqua);
+  if (lista.length === 0) return;
+  p.save();
+  p.fillStyle = "rgb(214 224 240)";
+  for (const l of lista) {
+    // Un trattino d'argento, lungo e basso, senza la scintilla del sole.
+    const x = Math.round(l.x - camera.x), y = Math.round(l.y - camera.y);
+    const mezzo = l.forza > 0.5 ? 3 : 2;
+    p.globalAlpha = 0.45 * l.forza;
+    p.fillRect(x - mezzo, y, mezzo * 2 + 1, 1);
+    p.globalAlpha = 0.85 * l.forza;
+    p.fillRect(x, y, 1, 1);
   }
   p.restore();
 }
