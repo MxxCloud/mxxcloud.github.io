@@ -12,6 +12,40 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.54 — la luna
+
+Un'idea dei promemoria, decisa insieme: la luna cambia quanto vedi, non
+quello che fanno gli altri.
+- **Un ciclo di sei notti**: nuova, falce crescente, gibbosa crescente,
+  piena, gibbosa calante, falce calante. L'anno ne dura sedici, quindi la
+  piena scivola di anno in anno e ogni tanto cade d'inverno. È scritta nel
+  calendario come il meteo: la stessa valle ha le stesse lune, e il
+  salvataggio non si porta dietro niente di nuovo.
+- **Il buio segue la luna.** Nel cuore della notte il telo scuro copriva il
+  74% di tutte le notti. Adesso con la luna nuova copre l'82%, più nero di
+  prima, e con la piena si apre al 60%, con una tinta argentea invece che
+  blu. Schiarisce davvero solo intorno alla piena, e in media sulle sei
+  notti è quello di prima: la notte non diventa più facile, diventa diversa.
+- **Le nuvole la nascondono.** Nelle notti di pioggia o di neve la luna non
+  c'è, e il buio è quello della luna nuova.
+- **Cosa cambia per chi gioca.** Una notte di luna piena si attraversa senza
+  torcia, quindi senza essere un faro per gli infetti. In una di luna nuova
+  la torcia torna l'unica risposta, con il suo prezzo. Gli infetti escono e
+  vedono come prima: quanti ne escono lo decide ancora la luce del sole, che
+  la luna non tocca.
+- **Si vede arrivare.**
+  - Accanto all'ora, nell'orologio, c'è la luna di stanotte, oppure le
+    nuvole: la si guarda di giorno per decidere come passare la notte.
+  - Sotto le previsioni compare "STANOTTE LUNA PIENA" oppure "STANOTTE
+    LUNA NUOVA: BUIO FITTO", e il giorno prima "DOMANI LUNA PIENA / NUOVA",
+    come per la pioggia.
+- **Sotto la luna**, con gli effetti accesi (tasto L):
+  - l'acqua ha dei riflessi d'argento, radi e lenti;
+  - alberi, sassi e persone hanno un'ombra tenue, che gira con la luna
+    dalla sera all'alba.
+  La luce della luna invece resta anche a effetti spenti: è vista, non
+  decorazione.
+
 ## M7.18.53 — il cervo rifatto
 
 Una correzione a M7.18.52, chiesta dopo averlo visto in partita: il cervo
@@ -2334,7 +2368,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.53**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.54**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -3124,11 +3158,10 @@ riparo, dove sarebbero stati una cassa in più da costruire.
 Le idee messe da parte, da riprendere quando se ne parla. Non sono tappe né
 promesse: sono appunti, perché non si perdano.
 
-- **La luna.** Notti più chiare con la luna piena e più buie con la luna
-  nuova: una luna che cresce e cala nel corso dei giorni, magari disegnata
-  nel cielo o riflessa sull'acqua. Da decidere se cambia solo il disegno del
-  buio o anche le regole: quanto lontano vede un infetto, quanto si vede
-  senza torcia.
+- **La luna.** Fatta in M7.18.54: cambia il buio e quanto vedi, non le
+  regole degli infetti. Se un giorno si volesse farle toccare anche loro
+  (a luna piena ti vedono da più lontano, o ne esce uno in più), il valore da
+  usare è `luna.luceAdesso()`, non `tempo.luceAmbiente()`.
 - **Il secondo livello: una pixel art più ricca.** Cominciato con M7.18.47
   (terreno e alberi) e M7.18.48 (sassi, cespugli, ombre delle piante
   selvatiche), M7.18.49 (acqua, riva, ghiaccio), M7.18.50 (muri, porte,

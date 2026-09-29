@@ -357,7 +357,10 @@ const TINTA_STAGIONE = {
   primavera: "#7fb85a",
 };
 
-export function disegnaOrologio(p, { giorno, orologio, eNotte, stagione, giornoNellaStagione, giorniPerStagione }) {
+// Da M7.18.54 accanto all'ora c'è la luna di stanotte: la si guarda di giorno,
+// quando c'è ancora tempo per decidere se uscire al buio o accendere la
+// torcia. Col cielo coperto si vedono le nuvole.
+export function disegnaOrologio(p, { giorno, orologio, eNotte, stagione, giornoNellaStagione, giorniPerStagione, luna = null }) {
   const riga1 = `GIORNO ${giorno}`;
   // Il giorno dentro la stagione e non solo il nome: "inverno" da solo non
   // dice se conviene ancora seminare o se è meglio andare a fare legna.
@@ -366,7 +369,7 @@ export function disegnaOrologio(p, { giorno, orologio, eNotte, stagione, giornoN
   const larghezza = Math.max(
     testo.larghezza(riga1),
     testo.larghezza(riga2),
-    testo.larghezza(riga3)
+    testo.larghezza(riga3) + (luna ? 10 : 0)
   );
   const x = schermo.LARGHEZZA - larghezza - 7;
 
@@ -374,11 +377,29 @@ export function disegnaOrologio(p, { giorno, orologio, eNotte, stagione, giornoN
   testo.disegna(p, riga1, x, 6, TENUE);
   testo.disegna(p, riga2, x, 13, TINTA_STAGIONE[stagione] ?? TENUE);
   testo.disegna(p, riga3, x, 20, eNotte ? "#8fa8d8" : CHIARO);
+  if (luna) {
+    const icona = luna.nascosta ? indicatori.LUNA_COPERTA : indicatori.LUNE[luna.fase];
+    p.drawImage(cuoci(icona), x + larghezza - 7, 19);
+  }
+}
+
+// La riga della luna sotto le previsioni: solo quando conta, cioè la piena e
+// la nuova, stanotte o domani. Col cielo coperto non si dice niente: le
+// nuvole nell'orologio bastano.
+const ARGENTO = "#c8d2e0";
+export function rigaDellaLuna(luna) {
+  if (!luna) return null;
+  const { stanotte, domani } = luna;
+  if (!stanotte.nascosta && stanotte.fase === 3) return { scritta: "STANOTTE LUNA PIENA", colore: ARGENTO };
+  if (!stanotte.nascosta && stanotte.fase === 0) return { scritta: "STANOTTE LUNA NUOVA: BUIO FITTO", colore: TENUE };
+  if (!domani.nascosta && domani.fase === 3) return { scritta: "DOMANI LUNA PIENA", colore: TENUE };
+  if (!domani.nascosta && domani.fase === 0) return { scritta: "DOMANI LUNA NUOVA", colore: TENUE };
+  return null;
 }
 
 // --- suggerimento dell'azione --------------------------------------------
 
-export function disegnaMeteo(p, { evento, domani, bagnato, freddo = 0 }) {
+export function disegnaMeteo(p, { evento, domani, bagnato, freddo = 0, luna = null }) {
   if (freddo > 0) testo.disegnaConOmbra(p, `FREDDO X${freddo}`, 7, 72, "#91b9cc");
   // La canicola (M7.18.42) in rosso caldo, oggi e il giorno prima: è l'unica
   // previsione che chiede di fare qualcosa, e va vista.
@@ -386,10 +407,14 @@ export function disegnaMeteo(p, { evento, domani, bagnato, freddo = 0 }) {
   const scritta = nomi[evento];
   const x = schermo.LARGHEZZA - testo.larghezza(scritta) - 7;
   testo.disegnaConOmbra(p, scritta, x, 33, evento === "canicola" ? "#e0704a" : evento === "arido" ? "#e0b46a" : "#abcdd7");
+  let y = 42;
   if (domani !== evento && domani !== "sereno") {
     const previsione = `DOMANI ${domani === "arido" ? "ARIDO" : domani.toUpperCase()}`;
-    testo.disegnaConOmbra(p, previsione, schermo.LARGHEZZA-testo.larghezza(previsione)-7, 42, domani === "canicola" ? "#e0704a" : TENUE);
+    testo.disegnaConOmbra(p, previsione, schermo.LARGHEZZA-testo.larghezza(previsione)-7, y, domani === "canicola" ? "#e0704a" : TENUE);
+    y += 9;
   }
+  const riga = rigaDellaLuna(luna);
+  if (riga) testo.disegnaConOmbra(p, riga.scritta, schermo.LARGHEZZA - testo.larghezza(riga.scritta) - 7, y, riga.colore);
   // Tre stati e tre frasi, perché adesso vogliono dire tre cose diverse:
   // bagnato non costa niente, zuppo è l'avviso che manca poco, fradicio è il
   // punto da cui la salute cala. Dirli tutti "cerca calore" sarebbe stato un

@@ -13,6 +13,21 @@ import { telaio } from "../arte/sprite.js";
 // notte inquietante invece che vuota.
 const COPERTURA_MASSIMA = 0.82;
 
+// La luna (M7.18.54) sposta quel massimo: una notte di luna nuova, o coperta,
+// è più nera di come era la notte prima di lei (0,82 di copertura invece di
+// 0,74), una di luna piena si apre a 0,60. Il quadrato fa sì che schiarisca
+// davvero solo intorno alla piena: su un ciclo la media resta quella di prima
+// (con le notti di nuvole è persino un filo più buia), e la notte non diventa
+// più facile — cambia solo che alcune notti si possono attraversare al buio e
+// altre no.
+const LUNA_NUOVA = 1.11;
+const SCHIARITA_DI_LUNA = 0.297;
+
+export function coperturaDi(luceAmbiente, luna = 0) {
+  if (luceAmbiente >= 0.999) return 0;
+  return (1 - luceAmbiente) * COPERTURA_MASSIMA * (LUNA_NUOVA - SCHIARITA_DI_LUNA * luna * luna);
+}
+
 let telo = null;
 let pennelloTelo = null;
 
@@ -24,14 +39,15 @@ function preparaTelo() {
 }
 
 // "tremolio" dice quanto è grande adesso il disegno di ogni luce rispetto al
-// suo raggio (M7.18.44): è solo disegno, e senza vale uno.
-export function disegna(pennello, luceAmbiente, tinta, lumi, tremolio = () => 1) {
+// suo raggio (M7.18.44): è solo disegno, e senza vale uno. "luna" è quanta
+// luna c'è, da 0 a 1 (vedi regole/luna.js).
+export function disegna(pennello, luceAmbiente, tinta, lumi, tremolio = () => 1, luna = 0) {
   // In pieno giorno non c'è niente da coprire, e un telo trasparente steso
   // sessanta volte al secondo è comunque lavoro sprecato.
   if (luceAmbiente >= 0.999) return;
 
   preparaTelo();
-  const copertura = (1 - luceAmbiente) * COPERTURA_MASSIMA;
+  const copertura = coperturaDi(luceAmbiente, luna);
 
   pennelloTelo.globalCompositeOperation = "source-over";
   pennelloTelo.clearRect(0, 0, schermo.LARGHEZZA, schermo.ALTEZZA);

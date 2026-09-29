@@ -46,6 +46,7 @@ import * as ricrescita from "./regole/ricrescita.js";
 import * as pesca from "./regole/pesca.js";
 import * as acqua from "./regole/acqua.js";
 import * as meteo from "./regole/meteo.js";
+import * as luna from "./regole/luna.js";
 import * as atmosfera from "./arte/atmosfera.js";
 import * as effetti from "./arte/effetti.js";
 import { TERRENO, OGGETTO } from "./mondo/generazione.js";
@@ -75,7 +76,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.53";
+const VERSIONE = "M7.18.54";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1729,6 +1730,9 @@ function disegna() {
   const camera = schermo.camera;
   const secondi = performance.now() / 1000;
   const luce = tempo.luceAmbiente();
+  // La luna (M7.18.54) è solo per gli occhi: la luce del sole, quella che
+  // decide quanti infetti escono, resta "luce".
+  const chiaroDiLuna = luna.luceAdesso();
   raccogliLumi();
   // Il vento (M7.18.46): uno solo per tutta la vista, a raffiche.
   const aria = effetti.vento(secondi, meteo.evento());
@@ -1739,7 +1743,7 @@ function disegna() {
   // La riva (M7.18.49): schiuma e terra bagnata, sotto tutto quello che sta in piedi.
   effetti.disegnaRiva(p, camera, secondi, mappa.rivaDi, mappa.gelato());
   effetti.disegnaCiuffi(p, camera, secondi, aria, stagione, pratoLibero);
-  effetti.disegnaOmbre(p, inPiedi, camera, tempo.oraCorrente(), luce);
+  effetti.disegnaOmbre(p, inPiedi, camera, tempo.oraCorrente(), luce, chiaroDiLuna);
 
   // Chi piega col vento lo disegnano gli effetti, a fasce; il resto come sempre.
   for (const cosa of inPiedi) {
@@ -1769,7 +1773,9 @@ function disegna() {
   effetti.disegnaLuccichii(p, camera, secondi, { ora: tempo.oraCorrente(), stagione: stagioni.stagioneCorrente() }, eAcqua);
   atmosfera.disegna(p, meteo.evento(), tempo.giornoCorrente()*tempo.SECONDI_PER_GIORNO + tempo.oraCorrente()/24*tempo.SECONDI_PER_GIORNO, riparo.stanza());
   effetti.disegnaColoreDellOra(p, tempo.oraCorrente());
-  disegnaBuio(secondi);
+  disegnaBuio(secondi, chiaroDiLuna);
+  // I riflessi della luna sull'acqua sopra il buio: sono luce.
+  effetti.disegnaRiflessiLunari(p, camera, secondi, { luna: chiaroDiLuna, luce }, eAcqua);
   // Dopo il buio quello che ha luce sua: il calore dei fuochi, le scintille,
   // le lucciole.
   effetti.disegnaBagliori(p, camera, lumi, luce, secondi);
@@ -1820,9 +1826,9 @@ function raccogliLumi() {
 // Il tremolio allarga e stringe il buco nel buio, non la luce vera: le
 // regole — gli infetti che vedono la torcia in mano, il crepitio dei fuochi
 // in udito.js — leggono il catalogo e le luci della mappa, non questo disegno.
-function disegnaBuio(secondi) {
-  oscurita.disegna(schermo.pennello(), tempo.luceAmbiente(), tempo.tintaOscurita(), lumi,
-    (luce) => effetti.tremolio(luce, secondi));
+function disegnaBuio(secondi, chiaroDiLuna = 0) {
+  oscurita.disegna(schermo.pennello(), tempo.luceAmbiente(), tempo.tintaOscurita(chiaroDiLuna), lumi,
+    (luce) => effetti.tremolio(luce, secondi), chiaroDiLuna);
 }
 
 // Il prato libero, dove crescono i ciuffi che piegano col vento: erba, e
@@ -1906,13 +1912,15 @@ function disegnaInterfaccia() {
     stagione: stagioni.stagioneCorrente(),
     giornoNellaStagione: stagioni.giornoNellaStagione(),
     giorniPerStagione: stagioni.GIORNI_PER_STAGIONE,
+    luna: luna.stanotte(),
   });
   // Il moltiplicatore è quello del gelo: il bagnato non ha gradini e resta a
   // uno, e mostrargli la scala di un'altra regola sarebbe un numero che mente.
   const scalaFreddo = gelando === "gelo"
     ? salute.moltiplicatoreFreddo(Boolean(addosso.dati()?.gradiniFermi) && !meteo.zuppo())
     : gelando ? 1 : 0;
-  hud.disegnaMeteo(p, { evento: meteo.evento(), domani: meteo.evento(tempo.giornoCorrente()+1), bagnato: meteo.livelloBagnato(), freddo: scalaFreddo });
+  hud.disegnaMeteo(p, { evento: meteo.evento(), domani: meteo.evento(tempo.giornoCorrente()+1), bagnato: meteo.livelloBagnato(), freddo: scalaFreddo,
+    luna: { stanotte: luna.stanotte(), domani: luna.domani() } });
   hud.disegnaAzione(p, azioneCorrente);
   const lenza = pesca.stato();
   if (lenza) {
@@ -1975,7 +1983,7 @@ function aggiornaDiagnostica() {
     `bisogni  ${bisogni.ELENCO.map((n) => n[0] + " " + bisogni.livello(n).toFixed(2)).join("  ")}  velocità ${bisogni.fattoreVelocita().toFixed(2)}`,
     `salute   ${salute.livelloCorrente().toFixed(3)}  freddo ${gelando ?? "no"}  ${salute.eInfetto() ? "infetto" : "sano"}  ${mortoDi ? `morto ${mortoDi}` : "vivo"}`,
     `infetti  ${infetti.quanti()}  inseguono ${infetti.inseguono()}  chiasso ${chiasso.quanto()} (${Math.round(chiasso.raggio())}px)`,
-    `ora      ${tempo.orologio()}  giorno ${tempo.giornoCorrente()}  luce ${tempo.luceAmbiente().toFixed(2)}`,
+    `ora      ${tempo.orologio()}  giorno ${tempo.giornoCorrente()}  luce ${tempo.luceAmbiente().toFixed(2)}  luna ${luna.stanotte().nome} ${luna.luceAdesso().toFixed(2)}`,
     `settori  ${mappa.settoriInMemoria()}  in piedi ${inPiedi.length}  lumi ${lumi.length}`,
     `scheggie ${scheggie.vive()}  figure ${giocatore.figureComposte()}`,
     `suono    ${suono.stato().livello}  contesto ${suono.stato().contesto}  voci ${suono.stato().vive}  emesse ${suono.stato().avviate}`,

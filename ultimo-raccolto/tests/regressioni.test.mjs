@@ -5128,7 +5128,7 @@ test('il colore dell’ora: rosato all’alba, caldo la sera, niente a mezzogior
   // Il gioco lo stende sopra il mondo e sotto il buio.
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
   const i=(s)=>{const k=gioco.indexOf(s);assert.ok(k>0,s);return k;};
-  assert.ok(i('effetti.disegnaColoreDellOra(p, tempo.oraCorrente());')<i('disegnaBuio(secondi);'));
+  assert.ok(i('effetti.disegnaColoreDellOra(p, tempo.oraCorrente());')<i('disegnaBuio(secondi, chiaroDiLuna);'));
 });
 
 // Un disegno finto con getImageData: basta per contare i pixel pieni.
@@ -5202,7 +5202,7 @@ test('la fiamma trema nel disegno, e la luce vera resta quella del catalogo',asy
   assert.doesNotMatch(buio,/luce\.raggio\s*=[^=]/);
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
   assert.match(gioco,/\(luce\) => effetti\.tremolio\(luce, secondi\)/);
-  assert.ok(gioco.indexOf('disegnaBuio(secondi);')<gioco.indexOf('effetti.disegnaBagliori(p, camera, lumi, luce, secondi);'),'il calore sopra il buio');
+  assert.ok(gioco.indexOf('disegnaBuio(secondi, chiaroDiLuna);')<gioco.indexOf('effetti.disegnaBagliori(p, camera, lumi, luce, secondi);'),'il calore sopra il buio');
   // Il calore a metà di M7.18.44, che faceva la notte troppo chiara.
   assert.match(readFileSync(new URL('../arte/effetti.js',import.meta.url),'utf8'),/const CALORE = \{ pozza: 0\.2, bordo: 0\.1, cuore: 0\.3 \};/);
 });
@@ -5378,7 +5378,7 @@ test('d’autunno cadono le foglie, e il vento le porta; il fumo va col vento',a
   const media=(aria)=>{e.seminaParticelle(9);for(let s=0;s<=6;s+=1/30)e.aggiorna(s,fuoco,{aria});return e.posizioniParticelle('fumo').reduce((a,p)=>a+p.x,0)/e.quanteParticelle('fumo');};
   assert.ok(media(1.5)>media(0)+3,'il vento porta il fumo a est');
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
-  assert.ok(gioco.indexOf('effetti.disegnaFoglie(p, camera);')<gioco.indexOf('disegnaBuio(secondi);'));
+  assert.ok(gioco.indexOf('effetti.disegnaFoglie(p, camera);')<gioco.indexOf('disegnaBuio(secondi, chiaroDiLuna);'));
 });
 
 // --- M7.18.47: il secondo livello grafico, terreno e alberi ---------------------
@@ -5830,4 +5830,113 @@ test('il cervo ha un palco vero: ramificato, attaccato alla testa, con le punte 
         if(palco(nx,ny))coda.push([nx,ny]);else if('gNw'.includes(f[ny]?.[nx]??'.')&&f[ny]?.[nx]!==undefined&&f[ny][nx]!=='.')testa=true;}}
     assert.ok(testa,`la punta ${x0},${y0} non arriva alla testa`);
   }
+});
+
+// --- M7.18.54: la luna ----------------------------------------------------------------------
+
+const lunaDi=()=>import('../regole/luna.js');
+
+test('il calendario della luna: sei notti, stabile per valle, piena anche d’inverno negli anni',async()=>{
+  const l=await lunaDi();
+  mappa.inizializza('valle-1');
+  const fasi=[];for(let g=1;g<=48;g++){fasi.push(l.fase(g));assert.equal(l.fase(g),l.fase(g));assert.equal(l.fase(g+l.CICLO),l.fase(g));}
+  assert.deepEqual(new Set(fasi.slice(0,6)).size,6);
+  // In tre anni la piena cade in tutte e quattro le stagioni.
+  const stagioniDellaPiena=new Set(fasi.map((f,i)=>f===l.PIENA?stagioni.stagioneDi(i+1):null).filter(Boolean));
+  assert.equal(stagioniDellaPiena.size,4,[...stagioniDellaPiena].join());
+  assert.deepEqual([0,1,2,3,4,5].map(l.illuminata),[0,0.25,0.75,1,0.75,0.25]);
+  assert.equal(l.NOMI[l.PIENA],'piena');assert.equal(l.NOMI[l.NUOVA],'nuova');
+  // Ogni valle ha il suo sfasamento.
+  const sfasamenti=new Set();for(const v of ['valle-1','valle-2','valle-3','valle-4','valle-5','valle-6']){mappa.inizializza(v);sfasamenti.add(l.fase(1));}
+  assert.ok(sfasamenti.size>=2);
+  mappa.inizializza('valle-1');
+  // Fino alle sette è ancora la notte del giorno prima.
+  assert.equal(l.notteDi(5,3),4);assert.equal(l.notteDi(5,6.9),4);assert.equal(l.notteDi(5,7),5);assert.equal(l.notteDi(5,23),5);
+});
+
+test('la luna si nasconde dietro le nuvole, e non tocca le regole degli infetti',async()=>{
+  const l=await lunaDi();
+  mappa.inizializza('valle-1');
+  const coperte=[];for(let g=1;g<=16;g++){const e=meteo.evento(g);assert.equal(l.nascosta(g),e==='pioggia'||e==='neve',`giorno ${g}`);if(l.nascosta(g))coperte.push(g);}
+  assert.ok(coperte.length>0);
+  tempo.impostaGiorno(coperte[0]);tempo.impostaOra(23);
+  assert.equal(l.stanotte().luce,0);assert.equal(l.luceAdesso(),0);
+  // Luce del sole e notte identiche con la piena e con la nuova: è quella
+  // luce che decide quanti infetti escono, e la luna non la sposta.
+  const piena=[...Array(16).keys()].map(i=>i+1).find(g=>l.fase(g)===l.PIENA&&!l.nascosta(g));
+  const nuova=[...Array(16).keys()].map(i=>i+1).find(g=>l.fase(g)===l.NUOVA&&!l.nascosta(g));
+  const misura=g=>{tempo.impostaGiorno(g);return [0,3,6,19.5,21,23].map(o=>{tempo.impostaOra(o);return [tempo.luceAmbiente(),tempo.eNotte()];});};
+  assert.deepEqual(misura(piena),misura(nuova));
+  tempo.impostaGiorno(piena);tempo.impostaOra(23);assert.equal(l.luceAdesso(),1);
+  tempo.impostaGiorno(nuova);tempo.impostaOra(23);assert.equal(l.luceAdesso(),0);
+  for(const f of ['infetti.js','tempo.js','polli.js','freddo.js','riposo.js'])
+    assert.doesNotMatch(readFileSync(new URL('../regole/'+f,import.meta.url),'utf8'),/luna\.js/,f);
+  tempo.impostaGiorno(1);tempo.impostaOra(12);
+});
+
+test('il buio della luna: nero a luna nuova, aperto a luna piena, e in media come prima',async()=>{
+  const o=await import('../motore/oscurita.js');
+  const notte=0.1,prima=(1-notte)*0.82;
+  assert.ok(Math.abs(o.coperturaDi(notte,0)-0.82)<0.01,`${o.coperturaDi(notte,0)}`);
+  assert.ok(Math.abs(o.coperturaDi(notte,1)-0.60)<0.01,`${o.coperturaDi(notte,1)}`);
+  assert.equal(o.coperturaDi(1,0),0);assert.equal(o.coperturaDi(1,1),0);
+  const media=[0,0.25,0.75,1,0.75,0.25].reduce((s,x)=>s+o.coperturaDi(notte,x),0)/6;
+  assert.ok(Math.abs(media-prima)<0.01,`media ${media} contro ${prima}`);
+  // Più luna, meno buio, sempre.
+  for(let x=0;x<1;x+=0.1)assert.ok(o.coperturaDi(notte,x+0.1)<o.coperturaDi(notte,x));
+  // La tinta: senza luna quella di prima, con la luna più chiara.
+  tempo.impostaOra(0);
+  assert.equal(tempo.tintaOscurita(),'rgb(14 20 44)');assert.equal(tempo.tintaOscurita(0),'rgb(14 20 44)');
+  const somma=t=>t.match(/\d+/g).map(Number).reduce((a,b)=>a+b,0);
+  assert.ok(somma(tempo.tintaOscurita(1))>somma(tempo.tintaOscurita(0))+50);
+  tempo.impostaOra(12);
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/tempo\.tintaOscurita\(chiaroDiLuna\), lumi,\n\s+\(luce\) => effetti\.tremolio\(luce, secondi\), chiaroDiLuna\);/);
+  assert.match(gioco,/const chiaroDiLuna = luna\.luceAdesso\(\);/);
+});
+
+test('sotto la luna: riflessi d’argento sull’acqua e ombre tenui, solo quando c’è',async()=>{
+  const e=await effettiDi();
+  const q={sinistra:0,destra:32*16,sopra:0,sotto:20*16},acqua=()=>true;
+  const conta=(stato,a=acqua)=>{let n=0;for(let t=0;t<8;t+=0.25)n+=e.riflessiLunari(q,t,stato,a).length;return n;};
+  assert.ok(conta({luna:1,luce:0.1})>0);
+  assert.equal(conta({luna:0,luce:0.1}),0,'luna nuova');
+  assert.equal(conta({luna:0.25,luce:0.1}),0,'falce');
+  assert.equal(conta({luna:1,luce:1}),0,'di giorno');
+  assert.equal(conta({luna:1,luce:0.1},()=>false),0,'niente acqua (o ghiaccio)');
+  assert.ok(conta({luna:1,luce:0.1})>conta({luna:0.75,luce:0.1}));
+  e.imposta(false);try{assert.equal(conta({luna:1,luce:0.1}),0,'effetti spenti');}finally{e.imposta(true);}
+  for(const r of e.riflessiLunari(q,1,{luna:1,luce:0.1},acqua))assert.ok(r.forza>=0&&r.forza<=1);
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.ok(gioco.indexOf('disegnaBuio(secondi, chiaroDiLuna);')<gioco.indexOf('effetti.disegnaRiflessiLunari('),'sopra il buio');
+  // Le ombre: di notte senza luna niente, con la piena un'ombra tenue; di
+  // giorno quella di sempre, con o senza luna.
+  const chi={tipo:'giocatore',x:0,y:0,base:24,sprite:{width:16,height:24}};
+  assert.equal(e.ombraDi(chi,23,0.1,null,0),null);
+  assert.equal(e.ombraDi(chi,23,0.1,null,0.25),null);
+  const lunare=e.ombraDi(chi,23,0.1,null,1);assert.ok(lunare&&lunare.forza>0&&lunare.forza<=0.2);
+  assert.deepEqual(e.ombraDi(chi,12,1,null,1),e.ombraDi(chi,12,1,null,0));
+  assert.deepEqual(e.ombraDi(chi,12,1),e.ombraDi(chi,12,1,null,0));
+  // Gira con la luna: la sera da una parte, all'alba dall'altra.
+  assert.notEqual(e.ombraDi(chi,20,0.1,null,1).dx,e.ombraDi(chi,5,0.1,null,1).dx);
+  assert.match(gioco,/effetti\.disegnaOmbre\(p, inPiedi, camera, tempo\.oraCorrente\(\), luce, chiaroDiLuna\);/);
+});
+
+test('la luna nell’orologio e nelle previsioni',async()=>{
+  const ind=await import('../arte/sprite-indicatori.js');
+  assert.equal(ind.LUNE.length,6);
+  for(const f of [...ind.LUNE,ind.LUNA_COPERTA]){assert.equal(f.length,7);assert.ok(f.every(r=>r.length===7));decodifica(f,TAVOLOZZA);}
+  assert.ok(!ind.LUNE[0].join('').includes('z'),'la nuova è tutta al buio');
+  assert.ok(!ind.LUNE[3].join('').includes('e'),'la piena è tutta chiara');
+  assert.equal(ind.LUNE[1][3][6],'z');assert.equal(ind.LUNE[1][3][0],'e');   // crescente: chiara a destra
+  assert.equal(ind.LUNE[5][3][0],'z');assert.equal(ind.LUNE[5][3][6],'e');   // calante: a sinistra
+  const hud=readFileSync(new URL('../interfaccia/hud.js',import.meta.url),'utf8');
+  assert.match(hud,/indicatori\.LUNA_COPERTA : indicatori\.LUNE\[luna\.fase\]/);
+  for(const s of ['STANOTTE LUNA PIENA','STANOTTE LUNA NUOVA: BUIO FITTO','DOMANI LUNA PIENA','DOMANI LUNA NUOVA'])assert.ok(hud.includes(s),s);
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/luna: luna\.stanotte\(\),/);
+  assert.match(gioco,/luna: \{ stanotte: luna\.stanotte\(\), domani: luna\.domani\(\) \}/);
+  // Il modulo nuovo è nella cache e nella mappa degli import.
+  assert.ok(readFileSync(new URL('../sw.js',import.meta.url),'utf8').includes('"./regole/luna.js"'));
+  assert.match(readFileSync(new URL('../index.html',import.meta.url),'utf8'),/"\.\/regole\/luna\.js": "\.\/regole\/luna\.js\?v=/);
 });

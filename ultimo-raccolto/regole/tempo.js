@@ -82,14 +82,18 @@ export function eNotte() {
 // del giorno.
 const NOTTE = [14, 20, 44];
 const PASSAGGIO = [58, 34, 26];
+// Da M7.18.54 la luna piena sbianca il blu verso un argento: la notte chiara
+// si riconosce dal colore prima ancora che da quanto si vede.
+const ARGENTO = [46, 54, 72];
 
-export function tintaOscurita() {
+export function tintaOscurita(luna = 0) {
   const vicinanzaAlPassaggio = Math.max(
     1 - Math.abs(ore - (TRAMONTO + NOTTE_PIENA) / 2) / 2.5,
     1 - Math.abs(ore - (ALBA + GIORNO_PIENO) / 2) / 2.5
   );
   const q = Math.min(1, Math.max(0, vicinanzaAlPassaggio));
-  const c = NOTTE.map((n, i) => Math.round(n + (PASSAGGIO[i] - n) * q));
+  const notte = NOTTE.map((n, i) => n + (ARGENTO[i] - n) * Math.min(1, Math.max(0, luna)));
+  const c = notte.map((n, i) => Math.round(n + (PASSAGGIO[i] - n) * q));
   return `rgb(${c[0]} ${c[1]} ${c[2]})`;
 }
 
