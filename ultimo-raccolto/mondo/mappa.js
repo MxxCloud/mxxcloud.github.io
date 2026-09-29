@@ -617,17 +617,6 @@ const FORME = {
   [OGGETTO.MURO]: { forme: oggettiArte.MURI, scarto: 0x3a70 },
   [OGGETTO.MURO_ROTTO]: { forme: oggettiArte.MURI_ROTTI, scarto: 0x3ac3e },
 };
-// D'inverno (M7.18.55) gli alberi prendono il vestito della stagione: la
-// stessa forma, dall'elenco d'inverno. Lo dice gioco.js al cambio di
-// stagione, come per gli orti secchi, e si ricuociono i settori.
-let inverno = false;
-export function impostaInverno(si) {
-  if (si === inverno) return false;
-  inverno = si;
-  settori.clear();
-  return true;
-}
-
 export function formaDi(oggetto, tx, ty) {
   const { scarto } = FORME[oggetto];
   // Un muro alzato dal giocatore è appena fatto: niente muschio né crepe.
@@ -635,9 +624,7 @@ export function formaDi(oggetto, tx, ty) {
   // modifica: un muro delle rovine preso a colpi resta una rovina.
   const forme = oggetto === OGGETTO.MURO && oggettoGenerato(tx, ty) !== OGGETTO.MURO
     ? oggettiArte.MURI_PULITI : FORME[oggetto].forme;
-  const quale = Math.floor(impronta(tx, ty, seme ^ scarto) * forme.length) % forme.length;
-  if (inverno && oggetto === OGGETTO.ALBERO) return oggettiArte.ALBERI_INVERNO[quale];
-  return forme[quale];
+  return forme[Math.floor(impronta(tx, ty, seme ^ scarto) * forme.length) % forme.length];
 }
 export function formaDellAlbero(tx, ty) {
   return formaDi(OGGETTO.ALBERO, tx, ty);

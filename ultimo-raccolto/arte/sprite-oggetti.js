@@ -41,26 +41,22 @@ export const ALBERO_TONDO = [
   "...ggg....ggg...",
 ];
 
-// Da M7.18.55 l'albero alto è un abete: sempreverde, a palchi, con le sue
-// chiavi (0 il contorno, x il corpo, y la luce) che le stagioni non toccano.
-// D'inverno è l'unico verde del bosco, ed è quello che tiene il paesaggio
-// lontano dal grigio della pietra.
 export const ALBERO_ALTO = [
-  "......0xx0......",
-  "......0xx0......",
-  ".....0yxxx0.....",
-  ".....0yxxx0.....",
-  "....000xx000....",
-  ".....0yxxx0.....",
-  "....0yyxxxx0....",
-  "...0yyyxxxxx0...",
-  "...00yyxxxx00...",
-  "...0yyyxxxxx0...",
-  "..0yyyyxxxxxx0..",
-  ".0000yyxxxx0000.",
-  "..0yyyyxxxxxx0..",
-  "00yyyyyxxxxxxx00",
-  "0000000000000000",
+  ".......ii.......",
+  "......iZki......",
+  ".....iZZkji.....",
+  ".....iZkkji.....",
+  "....iZZkkjji....",
+  "....iZkkjjji....",
+  "....ikkjiZji....",
+  "...iZkjiZZkji...",
+  "...iZkkiZkkji...",
+  "...ikkjikkjjji..",
+  "...ijkjjkjjjii..",
+  "...iijjjjjjii...",
+  "....iijjjjii....",
+  ".....iiiiii.....",
+  "......iiii......",
   "......ghhg......",
   "......ghhg......",
   "......ghhg......",
@@ -98,88 +94,6 @@ export const ALBERO_A_LOBI = [
 ];
 
 export const ALBERI = [ALBERO_TONDO, ALBERO_ALTO, ALBERO_A_LOBI];
-
-// L'inverno (M7.18.55): il tondo e quello a lobi perdono le foglie e restano
-// rami, aperti come era la chioma, con un filo di neve sopra; l'abete tiene
-// gli aghi e prende la neve sui palchi. Stessa misura, stesso tronco, stessa
-// base: urti, ombre e vento non se ne accorgono, e ogni albero resta della
-// sua specie — cambia solo il vestito (vedi formaDi in mondo/mappa.js).
-export const SPOGLIO_TONDO = [
-  "............z...",
-  "....g..g....g...",
-  "..g..g.g..gg.g..",
-  "..gz.gzg.zg.zg..",
-  "...g..gg.g..g...",
-  "...g..gg.g..g...",
-  ".gggg.gg.g.g.g..",
-  "....ggzhgzgg..g.",
-  ".....gghhgg.....",
-  "...gg.ghhg.gg...",
-  "..g....hh....g..",
-  ".......hh.......",
-  ".......hh.......",
-  ".......hh.......",
-  ".......hh.......",
-  "......ghhg......",
-  "......ghhg......",
-  "......ghhg......",
-  "......ghhg......",
-  "......ghhg......",
-  ".....gghhgg.....",
-  "....gghhhhgg....",
-  "...ggg....ggg...",
-];
-export const ABETE_INNEVATO = [
-  "......0zz0......",
-  "......0zz0......",
-  ".....0yxxx0.....",
-  ".....0yxxx0.....",
-  "....000xx000....",
-  ".....0zzzO0.....",
-  "....0yyxxxx0....",
-  "...0yyyxxxxx0...",
-  "...00yyxxxx00...",
-  "...0zzzxxOOO0...",
-  "..0yyyyxxxxxx0..",
-  ".0000yyxxxx0000.",
-  "..0zzzzzzOOOO0..",
-  "00yyyyyxxxxxxx00",
-  "0000000000000000",
-  "......ghhg......",
-  "......ghhg......",
-  "......ghhg......",
-  "......ghhg......",
-  "......ghhg......",
-  ".....gghhgg.....",
-  "....gghhhhgg....",
-  "...ggg....ggg...",
-];
-export const SPOGLIO_A_LOBI = [
-  "..........g.....",
-  "..........g.....",
-  "....g...gz.gz.g.",
-  ".g.zg....g.ggg..",
-  "..gg.....ggg....",
-  "...g......g.....",
-  "...zg....zggz...",
-  ".gggggz..g..gg..",
-  ".....gg..g....g.",
-  "......ghhggg....",
-  ".......hh..gg...",
-  ".....gghh....g..",
-  "...gg..hh.......",
-  ".......hh.......",
-  ".......hh.......",
-  "......ghhg......",
-  "......ghhg......",
-  "......ghhg......",
-  "......ghhg......",
-  "......ghhg......",
-  ".....gghhgg.....",
-  "....gghhhhgg....",
-  "...ggg....ggg...",
-];
-export const ALBERI_INVERNO = [SPOGLIO_TONDO, ABETE_INNEVATO, SPOGLIO_A_LOBI];
 
 // L'albero di sempre, per chi lo chiede per nome: è quello tondo.
 export const ALBERO = ALBERO_TONDO;

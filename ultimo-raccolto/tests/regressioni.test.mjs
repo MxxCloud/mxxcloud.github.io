@@ -5423,9 +5423,7 @@ test('gli alberi hanno tre forme, con la stessa misura e lo stesso tronco, e la 
   for(const f of forme){
     assert.equal(f.length,23);assert.ok(f.every(r=>r.length===16));
     assert.deepEqual(f.slice(15),forme[0].slice(15),'stesso tronco e stessa base');
-    // La luce sulla chioma: Z, e da M7.18.55 per l'abete la sua y, che non
-    // cambia con le stagioni.
-    assert.ok(f.slice(0,15).join('').includes(f===arteOggetti.ALBERO_ALTO?'y':'Z'),'la luce sulla chioma');
+    assert.ok(f.slice(0,15).join('').includes('Z'),'la luce sulla chioma');
     for(const r of f)for(const c of r)assert.ok(c in TAVOLOZZA,c);
     for(const stagione of ['estate','autunno','inverno','primavera'])decodifica(f,tavolozzaDi(stagione));
   }
@@ -5941,55 +5939,4 @@ test('la luna nell’orologio e nelle previsioni',async()=>{
   // Il modulo nuovo è nella cache e nella mappa degli import.
   assert.ok(readFileSync(new URL('../sw.js',import.meta.url),'utf8').includes('"./regole/luna.js"'));
   assert.match(readFileSync(new URL('../index.html',import.meta.url),'utf8'),/"\.\/regole\/luna\.js": "\.\/regole\/luna\.js\?v=/);
-});
-
-// --- M7.18.55: l'inverno con più colore ------------------------------------------------------
-
-const saturazione=hex=>{const [r,g,b]=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255);const M=Math.max(r,g,b),m=Math.min(r,g,b),l=(M+m)/2;return M===m?0:(M-m)/(1-Math.abs(2*l-1));};
-
-test('l’abete è sempreverde, e d’inverno gli altri alberi si spogliano mentre lui prende la neve',()=>{
-  const {ALBERI,ALBERI_INVERNO,ALBERO_ALTO,ABETE_INNEVATO,SPOGLIO_TONDO,SPOGLIO_A_LOBI}=arteOggetti;
-  assert.equal(ALBERI_INVERNO.length,3);assert.deepEqual(ALBERI_INVERNO,[SPOGLIO_TONDO,ABETE_INNEVATO,SPOGLIO_A_LOBI]);
-  // L'abete non usa chiavi stagionali: è verde uguale tutto l'anno.
-  for(const f of [ALBERO_ALTO,ABETE_INNEVATO])assert.ok(!/[ijkZ]/.test(f.join('')),'niente chiavi della chioma');
-  for(const st of ['estate','autunno','primavera'])assert.deepEqual(tavolozzaDi(st)['0'],tavolozzaDi('inverno')['0']);
-  assert.ok(!/[ijkZ]/.test(SPOGLIO_TONDO.join(''))&&!/[ijkZ]/.test(SPOGLIO_A_LOBI.join('')),'gli spogli sono solo rami');
-  for(const f of ALBERI_INVERNO){
-    assert.equal(f.length,23);assert.ok(f.every(r=>r.length===16));
-    assert.deepEqual(f.slice(15),ALBERI[0].slice(15),'stesso tronco e stessa base');
-    assert.ok(f.slice(0,15).join('').includes('z'),'la neve');
-    for(const st of ['estate','autunno','inverno','primavera'])decodifica(f,tavolozzaDi(st));
-  }
-  // Gli spogli hanno rami che si aprono: legno anche lontano dal tronco.
-  for(const f of [SPOGLIO_TONDO,SPOGLIO_A_LOBI])assert.ok(f.slice(0,10).some(r=>/[gh]/.test(r.slice(0,4))&&/[gh]/.test(r.slice(11))));
-  // La stessa forma, col vestito della stagione.
-  mappa.inizializza('valle-1');
-  const prima=[];for(let x=0;x<40;x++)prima.push(mappa.formaDi(OGGETTO.ALBERO,x,3));
-  assert.equal(mappa.impostaInverno(true),true);assert.equal(mappa.impostaInverno(true),false);
-  try{
-    for(let x=0;x<40;x++)assert.equal(mappa.formaDi(OGGETTO.ALBERO,x,3),ALBERI_INVERNO[ALBERI.indexOf(prima[x])]);
-    // I cespugli non cambiano forma.
-    assert.ok(arteOggetti.CESPUGLI.includes(mappa.formaDi(OGGETTO.CESPUGLIO,1,1)));
-  }finally{mappa.impostaInverno(false);}
-  for(let x=0;x<40;x++)assert.equal(mappa.formaDi(OGGETTO.ALBERO,x,3),prima[x]);
-  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
-  assert.match(gioco,/mappa\.impostaInverno\(stagione === "inverno"\);/);
-});
-
-test('l’inverno ha più colore: prato salvia, rami rossicci, neve sulle chiome, e non è la pietra',async()=>{
-  const inv=tavolozzaDi('inverno');
-  for(const k of ['6','7','8','P','Q','i','j','k'])assert.ok(saturazione(inv[k])>=0.12,`${k} ${inv[k]} troppo grigio`);
-  // Non la pietra: la pietra resta grigia, il prato è verde-salvia e i rami
-  // rossicci, cioè tinte diverse e più sature.
-  const tinta=hex=>{const [r,g,b]=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));const M=Math.max(r,g,b),m=Math.min(r,g,b);if(M===m)return 0;
-    let h=M===r?((g-b)/(M-m))%6:M===g?(b-r)/(M-m)+2:(r-g)/(M-m)+4;return (h*60+360)%360;};
-  for(const k of ['6','7','8','P','Q'])assert.ok(tinta(inv[k])>=95&&tinta(inv[k])<=180,`${k} non è verde: ${tinta(inv[k])}`);
-  for(const k of ['i','j','k'])assert.ok(tinta(inv[k])<=25,`${k} non è rossiccio: ${tinta(inv[k])}`);
-  const pietra=Math.max(...['d','e','f','X','Y'].map(r=>saturazione(inv[r])));
-  for(const k of ['6','7','8','j','k'])assert.ok(saturazione(inv[k])>pietra+0.03,`${k} satura come la pietra`);
-  // Z d'inverno è neve: chiara e appena azzurra.
-  const [r,g,b]=[1,3,5].map(i=>parseInt(inv.Z.slice(i,i+2),16));assert.ok(r>200&&g>200&&b>=r);
-  // Il vento piega gli alberi d'inverno come quelli d'estate.
-  const e=await effettiDi();
-  for(const f of arteOggetti.ALBERI_INVERNO)assert.deepEqual(e.fasceMosse({tipo:OGGETTO.ALBERO,sprite:{width:16,height:f.length}},1).map(x=>[x[0],x[1]]),[[0,8],[8,15],[15,23]]);
 });
