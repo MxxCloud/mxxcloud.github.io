@@ -12,6 +12,22 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.55 — l'inverno con più colore
+
+Chiesto dopo averlo visto in partita: d'inverno alberi, cespugli, prato e
+pietra erano tutti dello stesso grigio spento, e il paesaggio diventava una
+cosa sola.
+- **L'albero alto è un abete**, sempreverde tutto l'anno: a palchi, verde
+  scuro e freddo, con colori suoi che le stagioni non toccano. D'inverno
+  prende la neve sui palchi ed è il verde del bosco.
+- **Il tondo e quello a lobi d'inverno si spogliano.** Restano i rami, aperti
+  come era la chioma, con un filo di neve sopra. Ogni albero resta della sua
+  specie: stesso posto, stesso tronco, cambia solo il vestito.
+- **La tavolozza d'inverno ha più colore.** L'erba è un salvia freddo invece
+  del grigio-verde, la sterpaglia color paglia pallida, i rami dei cespugli
+  bruno-rossicci, e la luce in cima alle chiome è neve.
+- Misure, urti, ombre, vento e legna non cambiano.
+
 ## M7.18.54 — la luna
 
 Un'idea dei promemoria, decisa insieme: la luna cambia quanto vedi, non
@@ -2368,7 +2384,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.54**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.55**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
