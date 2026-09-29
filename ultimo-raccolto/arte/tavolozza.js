@@ -91,10 +91,6 @@ export const TAVOLOZZA = {
   // Da M7.18.47 la luce sulla chioma, da sinistra in alto: senza, un albero
   // era un disco verde.
   Z: "#5f8f3c",
-  // M7.18.55: il contorno e l'ombra dell'abete, un verde quasi nero e freddo.
-  // Non è una chiave della chioma: l'abete è sempreverde, e le sue chiavi
-  // (0, x, y) non cambiano con la stagione.
-  "0": "#1c3226",
 
   // Pelle.
   l: "#a06e4e",
@@ -290,30 +286,26 @@ const VESTI = {
 
   // L'inverno non è bianco. Una valle coperta di neve vorrebbe tasselli nuovi
   // e un mondo dove il terreno non si legge più; questo è il gelo secco che
-  // toglie colore alle cose senza nasconderle.
-  //
-  // Da M7.18.55 però non è più grigio. La prima versione spegneva tutto verso
-  // lo stesso grigio della pietra, e cespugli, prato e rocce diventavano una
-  // cosa sola. Adesso l'erba è un salvia freddo, la sterpaglia paglia
-  // pallida, i rami dei cespugli bruno-rossicci come il corniolo, e la luce
-  // in cima alle chiome (Z) è neve. Gli alberi hanno il loro vestito
-  // d'inverno (spogli, o abeti innevati: vedi sprite-oggetti.js).
+  // toglie il colore alle cose senza nasconderle — l'erba spenta, le chiome
+  // ridotte a rami. Si riconosce a colpo d'occhio e resta leggibile.
   inverno: {
-    // Più chiara della roccia e virata al freddo, ma con un po' di verde:
-    // un campo e una pietraia devono restare due cose diverse.
-    "6": "#4a6457",
-    "7": "#5d7a66",
-    "8": "#76987a",
-    "9": "#7d7652",
-    a: "#a39a6e",
-    i: "#352420",
-    j: "#5c392d",
-    k: "#7a4d3a",
-    P: "#3d5548",
-    Q: "#94ad96",
-    R: "#6b6446",
-    S: "#b8ad82",
-    Z: "#dfe7ea",
+    // Più chiara della roccia e appena virata al freddo. La prima versione
+    // era grigio-verde e finiva sulla stessa tinta della roccia: un campo e
+    // una pietraia indistinguibili sono peggio di una stagione che non si
+    // vede, perché tolgono la lettura del terreno invece di un colore.
+    "6": "#56605c",
+    "7": "#68746e",
+    "8": "#7d8a83",
+    "9": "#6f7466",
+    a: "#888c7c",
+    i: "#2e2a22",
+    j: "#463d2f",
+    k: "#5c5040",
+    P: "#4a524e",
+    Q: "#909d95",
+    R: "#5d6155",
+    S: "#a2a595",
+    Z: "#756650",
   },
 
   // La primavera è l'unica più viva della base: verdi più freddi e più chiari,

@@ -76,7 +76,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.55";
+const VERSIONE = "M7.18.54";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -393,8 +393,6 @@ function vestiLaValle() {
   mappa.impostaFioritura(stagioni.fiorisce(stagione) ? FIORI : null);
   // E d'inverno le piante degli orti abbandonati seccano (M7.18.33).
   mappa.impostaOrtiSecchi(stagione === "inverno");
-  // E gli alberi si spogliano, tranne gli abeti che prendono la neve (M7.18.55).
-  mappa.impostaInverno(stagione === "inverno");
   // Al primo giro non si annuncia niente: "è arrivata l'estate" appena aperto
   // il gioco è rumore, perché non è arrivato niente — si è cominciato lì.
   return prima === null ? null : stagione;
