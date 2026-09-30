@@ -35,9 +35,10 @@ import * as riparo from "./riparo.js";
 // cade d'inverno.
 //
 // Il sasso non è in questa tabella e non è una dimenticanza: la pietra è
-// minerale, non ricresce, e una cava che si ricarica toglierebbe l'unica
-// risorsa finita del gioco. Se un giorno servirà la pietra rinnovabile, sarà
-// una miniera da scavare, non un sasso che rispunta.
+// minerale, non ricresce. La pietra rinnovabile, da M7.18.56, è la cava: le
+// sue pareti tornano all'inizio di ogni stagione, e stanno in un posto solo
+// per regione, lontano da casa. Il sasso sotto casa resta finito.
+const OGNI_STAGIONE = "ogni stagione";
 const RITORNO = {
   [OGGETTO.CESPUGLIO]: "primavera",
   // Il bosco dopo, quando la primavera ha finito: un albero che torna con i
@@ -50,6 +51,9 @@ const RITORNO = {
   [OGGETTO.CAVOLO_SELVATICO]: "primavera",
   [OGGETTO.PATATA_SELVATICA]: "primavera",
   [OGGETTO.FAGIOLI_SELVATICI]: "primavera",
+  // La parete della cava (M7.18.56) torna all'inizio di ogni stagione, anche
+  // d'inverno: non è una pianta, è una vena che si scopre di nuovo.
+  [OGGETTO.PARETE_CAVA]: OGNI_STAGIONE,
 };
 
 // La terra del campo senza niente di vivo sopra: quello che la pianta di un
@@ -117,7 +121,8 @@ export function nuovoGiorno() {
     }
 
     const ritorno = RITORNO[generato];
-    if (ritorno === undefined || ritorno !== comincia) return;
+    if (ritorno === undefined || comincia === null) return;
+    if (ritorno !== comincia && ritorno !== OGNI_STAGIONE) return;
     // Il giorno è uno solo anche per chi è al chiuso: se quella mattina la
     // casa c'è, si riprova l'anno dopo. Riaprirla d'autunno non fa spuntare un
     // cespuglio fuori stagione.

@@ -103,6 +103,17 @@ export const CATALOGO = {
     // all'orecchio.
     impugnato: { nome: "ascia", righe: impugnati.ASCIA, scartoY: 5 },
   },
+  // Il piccone (M7.18.56) non si fabbrica: si trova solo nella cassa della
+  // cava, già usato come ogni attrezzo trovato, e si ripara al banco come
+  // l'ascia. Meno durevole di lei, perché la pietra smussa più del legno.
+  piccone: {
+    durata: 50,
+    serve: ["raccolta", "combatti"],
+    nome: "Piccone",
+    icona: arte.PICCONE,
+    pila: 1,
+    impugnato: { nome: "piccone", righe: impugnati.PICCONE, scartoY: 5 },
+  },
   zappa: {
     durata: 40,
     serve: ["zappa"],
@@ -453,6 +464,15 @@ export const ATTREZZI = {
   // attrezzo più veloce ad arma — senza aggiungere una spada, che avrebbe
   // voluto dire un secondo oggetto per un gesto che già esiste.
   ascia: { colpi: { [OGGETTO.ALBERO]: 2, [OGGETTO.CARRO]: 2, [OGGETTO.TRONCO]: 1 }, danno: 3 },
+  // Il piccone è l'ascia della pietra (M7.18.56): un muro in due colpi invece
+  // di cinque, un sasso in uno, la parete della cava in due. Come arma vale
+  // meno — due di danno, come la lancia ma senza la sua portata — perché è
+  // pesante e sbilanciato, e chi va alla cava deve ancora scegliere cosa
+  // tenere in mano al ritorno.
+  piccone: {
+    colpi: { [OGGETTO.SASSO]: 1, [OGGETTO.MURO]: 2, [OGGETTO.MURO_ROTTO]: 1, [OGGETTO.PARETE_CAVA]: 2 },
+    danno: 2,
+  },
   // La zappa non accorcia niente: apre un'azione che senza di lei non
   // esiste. È il secondo modo in cui un attrezzo può contare.
   zappa: { zappa: true },
@@ -713,9 +733,9 @@ export const RACCOLTA = {
   // I muri di chi c'era prima si abbattono, e rendono pietra.
   //
   // Cinque colpi, più di un albero: un muro è la cosa più solida della valle e
-  // deve sembrarlo. L'ascia non aiuta — è fatta per il legno — e questo è
-  // l'unico posto del gioco in cui avere l'attrezzo giusto non serve: la
-  // pietra vorrebbe un piccone, e un piccone che non esiste non si finge.
+  // deve sembrarlo. L'ascia non aiuta — è fatta per il legno. La pietra
+  // vorrebbe un piccone, e da M7.18.56 c'è: non si fabbrica, si va a prendere
+  // alla cava, e ne bastano due.
   //
   // È anche l'unica fonte di pietra che non sia un sasso, e la pietra era
   // l'unica risorsa dichiarata finita del gioco. Una casa in rovina ne ha
@@ -723,6 +743,16 @@ export const RACCOLTA = {
   [OGGETTO.MURO]: {
     verbo: "Abbatti",
     colpi: 5,
+    voce: "pietra",
+    scheggie: ["e", "f", "d"],
+    resa: [{ cosa: "pietra", quante: 3 }],
+  },
+  // La parete della cava (M7.18.56). Rende come un muro e costa un colpo in
+  // meno, perché è fatta per essere cavata; e torna ogni stagione (vedi
+  // ricrescita.js). È la prima pietra che non finisce, e sta lontano da casa.
+  [OGGETTO.PARETE_CAVA]: {
+    verbo: "Spacca",
+    colpi: 4,
     voce: "pietra",
     scheggie: ["e", "f", "d"],
     resa: [{ cosa: "pietra", quante: 3 }],

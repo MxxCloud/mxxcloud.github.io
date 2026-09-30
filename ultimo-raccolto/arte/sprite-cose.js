@@ -343,6 +343,23 @@ export function essiccatoioSteso(quante = 0, cosa = "carne_cruda", secco = false
   }
   return righe.map((r) => r.join(""));
 }
+// Il piccone (M7.18.56): la testa di ferro ricurva, il manico di legno. Si
+// trova solo nelle cave.
+export const PICCONE = [
+  "............",
+  "...ffffff...",
+  "..f.ehge.f..",
+  ".f...hg...f.",
+  ".....hg.....",
+  ".....hg.....",
+  ".....hg.....",
+  ".....hg.....",
+  ".....hg.....",
+  ".....gg.....",
+  "............",
+  "............",
+];
+
 export const ASCIA = [
   "............",
   "..eeee......",

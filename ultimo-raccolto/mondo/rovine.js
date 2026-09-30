@@ -26,7 +26,7 @@
 
 import { impronta } from "../motore/casuale.js";
 import { PIANTE, FATTORIA, misuraDi } from "../arte/piante.js";
-import { LUOGHI, ORTO_DELLA_FATTORIA } from "../arte/luoghi.js";
+import { LUOGHI, ORTO_DELLA_FATTORIA, UNICI } from "../arte/luoghi.js";
 
 export const CELLA = 64;
 
@@ -71,6 +71,7 @@ const CELLE_TENUTE = 64;
 export function inizializza(seme) {
   semeCorrente = seme;
   risolte.clear();
+  regioni.clear();
 }
 
 export function quanteInMemoria() {
@@ -233,6 +234,93 @@ function piccoloLuogo(cx, cy, adatto) {
   return null;
 }
 
+// --- i luoghi unici (M7.18.56) ----------------------------------------------
+
+// La valle si divide in regioni di 4×4 celle — 256 tasselli, poco più di dieci
+// schermate — e in ognuna c'è un luogo unico, uno solo. La regione della
+// fattoria è centrata sull'origine (celle da -2 a 1), così il suo luogo non è
+// mai lontano.
+//
+// Quale luogo lo decide la posizione della regione e non un tiro di dadi:
+// (rx + 2·ry) mod 4. Due regioni vicine non hanno mai lo stesso luogo, in ogni
+// blocco di 2×2 regioni ci sono tutti e quattro, e la regione della fattoria
+// ha sempre il primo, la torre: dall'alto si vede dove sono gli altri. Finché
+// i luoghi sono due, i posti del terzo e del quarto restano natura.
+//
+// Il luogo va solo in una cella rimasta natura — niente casa, niente piccolo
+// luogo — così le valli già in gioco non perdono niente di quello che avevano,
+// e le modifiche salvate restano dove erano. Nella regione della fattoria si
+// prova prima la cella più vicina alla fattoria; nelle altre l'ordine lo dà
+// l'impronta. Se nessuna cella regge (acqua dappertutto), la regione resta
+// senza.
+export const REGIONE = 4;
+export const TIPI_UNICI = ["torre", "cava", "mulino", "chiesa"];
+const regioni = new Map();
+
+export function regioneDi(cx, cy) {
+  return { rx: Math.floor((cx + 2) / REGIONE), ry: Math.floor((cy + 2) / REGIONE) };
+}
+
+export function tipoDellaRegione(rx, ry) {
+  return TIPI_UNICI[(((rx + 2 * ry) % 4) + 4) % 4];
+}
+
+function naturale(cx, cy, adatto) {
+  if (cx === 0 && cy === 0) return false;
+  return risolvi(cx, cy, adatto) === null && piccoloLuogo(cx, cy, adatto) === null;
+}
+
+function unicoNellaCella(cx, cy, luogo, adatto) {
+  const { larghezza, altezza } = misuraDi(luogo.pianta);
+  for (let i = 0; i < 4; i++) {
+    const tx0 = cx * CELLA + MARGINE + Math.floor(impronta(cx, cy, scarto(semeCorrente, 60 + i * 2)) * (CELLA - larghezza - MARGINE * 2 + 1));
+    const ty0 = cy * CELLA + MARGINE + Math.floor(impronta(cx, cy, scarto(semeCorrente, 61 + i * 2)) * (CELLA - altezza - MARGINE * 2 + 1));
+    if (reggeIlTerreno(tx0, ty0, larghezza, altezza, adatto)) {
+      return { tx0, ty0, pianta: luogo.pianta, larghezza, altezza, luogo: luogo.id, nome: luogo.nome,
+        unico: luogo.id, iscrizione: luogo.iscrizione };
+    }
+  }
+  return null;
+}
+
+// Il luogo unico di una regione, o null. Si risolve una volta e si tiene,
+// come le celle: sono sedici celle da guardare.
+export function unicoDellaRegione(rx, ry, adatto) {
+  const chiave = `${rx},${ry}`;
+  if (regioni.has(chiave)) return regioni.get(chiave);
+  if (regioni.size > CELLE_TENUTE) regioni.clear();
+  const luogo = UNICI.find((u) => u.id === tipoDellaRegione(rx, ry));
+  let trovato = null;
+  if (luogo) {
+    const celle = [];
+    for (let dy = 0; dy < REGIONE; dy++) for (let dx = 0; dx < REGIONE; dx++) {
+      const cx = rx * REGIONE - 2 + dx, cy = ry * REGIONE - 2 + dy;
+      const ordine = rx === 0 && ry === 0 ? Math.hypot(cx, cy) : impronta(cx, cy, scarto(semeCorrente, 50));
+      celle.push({ cx, cy, ordine });
+    }
+    celle.sort((a, b) => a.ordine - b.ordine);
+    for (const { cx, cy } of celle) {
+      if (!naturale(cx, cy, adatto)) continue;
+      trovato = unicoNellaCella(cx, cy, luogo, adatto);
+      if (trovato) { trovato.cx = cx; trovato.cy = cy; break; }
+    }
+  }
+  regioni.set(chiave, trovato);
+  return trovato;
+}
+
+// I luoghi unici delle regioni attorno a questa cella, fino a "quante"
+// regioni di distanza. Serve alla torre.
+export function uniciAttorno(cx, cy, quante, adatto) {
+  const { rx, ry } = regioneDi(cx, cy);
+  const trovati = [];
+  for (let y = ry - quante; y <= ry + quante; y++) for (let x = rx - quante; x <= rx + quante; x++) {
+    const u = unicoDellaRegione(x, y, adatto);
+    if (u) trovati.push(u);
+  }
+  return trovati;
+}
+
 // La rovina di una cella, o null. "adatto" arriva da fuori — da
 // generazione.js, che è l'unico a sapere cosa sia l'acqua — e questo è ciò che
 // tiene le dipendenze in una direzione sola.
@@ -240,7 +328,12 @@ export function nellaCella(cx, cy, adatto) {
   const chiave = `${cx},${cy}`;
   if (risolte.has(chiave)) return risolte.get(chiave);
   if (risolte.size > CELLE_TENUTE) risolte.clear();
-  const rovina = risolvi(cx, cy, adatto) ?? piccoloLuogo(cx, cy, adatto);
+  let rovina = risolvi(cx, cy, adatto) ?? piccoloLuogo(cx, cy, adatto);
+  if (!rovina) {
+    const { rx, ry } = regioneDi(cx, cy);
+    const unico = unicoDellaRegione(rx, ry, adatto);
+    if (unico && unico.cx === cx && unico.cy === cy) rovina = unico;
+  }
   risolte.set(chiave, rovina);
   return rovina;
 }

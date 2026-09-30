@@ -131,6 +131,10 @@ export const OGGETTO = {
   SPAVENTAPASSERI_ROTTO: 42,
   // I fagioli inselvatichiti (M7.18.32): come la patata, solo negli orti.
   FAGIOLI_SELVATICI: 43,
+  // I luoghi unici (M7.18.56): la torre di avvistamento, su cui si sale, e la
+  // parete della cava, che si spacca col piccone e torna ogni stagione.
+  TORRE: 44,
+  PARETE_CAVA: 45,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati
@@ -236,6 +240,10 @@ const COSTRUITO = {
   // L'orto della fattoria di partenza (M7.18.36): sempre fagioli e patate.
   b: OGGETTO.FAGIOLI_SELVATICI,
   q: OGGETTO.PATATA_SELVATICA,
+  // I luoghi unici (M7.18.56). "," è il fondo della cava: niente sopra.
+  T: OGGETTO.TORRE,
+  k: OGGETTO.PARETE_CAVA,
+  ",": OGGETTO.NESSUNO,
 };
 
 // L'orto abbandonato (M7.18.30): le piante delle aiuole non sono morte, sono
@@ -352,6 +360,12 @@ export function rovinaNellaCella(cx, cy) {
   return rovine.nellaCella(cx, cy, adatto);
 }
 
+// I luoghi unici (M7.18.56) delle regioni attorno a questo tassello, fino a
+// "quante" regioni di distanza.
+export function uniciAttorno(tx, ty, quante) {
+  return rovine.uniciAttorno(Math.floor(tx / rovine.CELLA), Math.floor(ty / rovine.CELLA), quante, adatto);
+}
+
 // Identità del piccolo luogo solo entro la sua impronta (o il margine
 // richiesto per l'annuncio). Nessuna scansione del mondo circostante.
 // L'orto della fattoria (M7.18.36) è un luogo anche lui, attaccato alla
@@ -371,7 +385,10 @@ export function laFattoria() {
 // tinta, voce di catalogo, ed è persino zappabile — e non lo produceva
 // nessuno. Era un terreno in attesa di un motivo, e questo è il motivo.
 export function terrenoIn(x, y, seme) {
-  if (rovine.tasselloDi(x, y, adatto) !== null) return PAVIMENTO;
+  // La cava (M7.18.56) è tutta roccia, anche sotto la cassa e il carrello:
+  // non è una casa, e non ha la terra battuta.
+  const segno = rovine.tasselloDi(x, y, adatto);
+  if (segno !== null) return luogoIn(x, y)?.unico === "cava" ? TERRENO.ROCCIA : PAVIMENTO;
   return terrenoDelRumore(x, y, seme);
 }
 

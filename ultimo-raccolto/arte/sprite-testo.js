@@ -83,4 +83,7 @@ export const GLIFI = {
   "(": [".x", "x.", "x.", "x.", ".x"],
   ")": ["x.", ".x", ".x", ".x", "x."],
   "×": ["...", "x.x", ".x.", "x.x", "..."],
+  // Le iscrizioni dei luoghi unici (M7.18.56) stanno fra caporali.
+  "«": ["....", ".x.x", "x.x.", ".x.x", "...."],
+  "»": ["....", "x.x.", ".x.x", "x.x.", "...."],
 };

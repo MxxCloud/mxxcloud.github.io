@@ -465,7 +465,12 @@ export function disegnaMessaggio(p, messaggio) {
   // errore di disegno, uno che si muove sembra una notifica.
   const y = 26 - Math.round((1 - messaggio.vita) * 5);
   testo.disegnaConOmbra(p, messaggio.testo, x, y, messaggio.colore ?? CHIARO);
+  if (messaggio.sotto) {
+    const xs = Math.round((schermo.LARGHEZZA - testo.larghezza(messaggio.sotto)) / 2);
+    testo.disegnaConOmbra(p, messaggio.sotto, xs, y + testo.ALTEZZA + 4, GRIGIO_ISCRIZIONE);
+  }
 }
+const GRIGIO_ISCRIZIONE = "#b8b2a2";
 
 // --- pannello delle ricette ----------------------------------------------
 

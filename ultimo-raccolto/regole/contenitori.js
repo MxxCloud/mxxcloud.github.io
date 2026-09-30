@@ -137,6 +137,22 @@ const BOTTINO_LUOGHI = {
   ],
 };
 
+// Le casse dei luoghi unici (M7.18.56) non tirano a sorte cosa c'è: c'è
+// sempre tutto, ed è la ragione per andarci. Tira a sorte solo quanto. La
+// cava è l'unico posto dove si trova il piccone; la torre era una vedetta, e
+// ha quello che serve a chi passa la notte di guardia.
+const BOTTINO_UNICI = {
+  cava: [
+    { cosa: "piccone", da: 1, a: 1 },
+    { cosa: "pietra", da: 3, a: 5 },
+  ],
+  torre: [
+    { cosa: "torcia", da: 1, a: 2 },
+    { cosa: "bacche_secche", da: 2, a: 3 },
+    { cosa: "fibra", da: 2, a: 3 },
+  ],
+};
+
 // Quanto ne resta a un attrezzo lasciato lì da qualcun altro. Dal generatore
 // della cassa e non da un tiro nuovo, come tutto il resto del bottino: la
 // stessa cassa dà sempre la stessa ascia, con la stessa lena dentro.
@@ -191,6 +207,14 @@ function bottinoDi(tx, ty) {
   // si è toccata non deve rimescolare quello che c'è dentro.
   const caso = generatore(Math.floor(impronta(tx, ty, 0xb07715) * 4294967296));
   const luogo = mappa.luogoIn(tx, ty);
+  const fisso = BOTTINO_UNICI[luogo?.unico];
+  if (fisso) {
+    for (const voce of fisso) {
+      const n = voce.da + Math.floor(caso() * (voce.a - voce.da + 1));
+      inventario.mettiIn(fila, voce.cosa, n, undefined, usiTrovati(voce.cosa, caso));
+    }
+    return fila;
+  }
   const tavolaLuogo = BOTTINO_LUOGHI[luogo?.luogo];
   const tavola = dellaFattoria(tx, ty) ? BOTTINO_FATTORIA : tavolaLuogo ?? BOTTINO;
   const totale = pesoDi(tavola);
