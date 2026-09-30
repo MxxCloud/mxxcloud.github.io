@@ -959,7 +959,9 @@ test('bagnato persistente; salvataggi vecchi asciutti e valori corrotti respinti
 test('precipitazioni disegnate soltanto negli eventi e con numero limitato di particelle',()=>{
   let n=0;const p={save(){},restore(){},fillRect(){n++;}};
   atmosfera.disegna(p,'arido',1);assert.equal(n,0);
-  atmosfera.disegna(p,'pioggia',1);assert.equal(n,70);
+  // Da M7.18.55 la pioggia ha due piani di gocce inclinate, disegnate pixel
+  // per pixel: 45 lontane da 3 e 40 vicine da 5. Sempre un numero fisso.
+  atmosfera.disegna(p,'pioggia',1);assert.equal(n,45*3+40*5);
   n=0;atmosfera.disegna(p,'neve',1);assert.equal(n,90);
 });
 
@@ -5128,7 +5130,7 @@ test('il colore dell’ora: rosato all’alba, caldo la sera, niente a mezzogior
   // Il gioco lo stende sopra il mondo e sotto il buio.
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
   const i=(s)=>{const k=gioco.indexOf(s);assert.ok(k>0,s);return k;};
-  assert.ok(i('effetti.disegnaColoreDellOra(p, tempo.oraCorrente());')<i('disegnaBuio(secondi, chiaroDiLuna);'));
+  assert.ok(i('effetti.disegnaColoreDellOra(p, tempo.oraCorrente());')<i('disegnaBuio(secondi, chiaroDiLuna, lampo);'));
 });
 
 // Un disegno finto con getImageData: basta per contare i pixel pieni.
@@ -5202,7 +5204,7 @@ test('la fiamma trema nel disegno, e la luce vera resta quella del catalogo',asy
   assert.doesNotMatch(buio,/luce\.raggio\s*=[^=]/);
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
   assert.match(gioco,/\(luce\) => effetti\.tremolio\(luce, secondi\)/);
-  assert.ok(gioco.indexOf('disegnaBuio(secondi, chiaroDiLuna);')<gioco.indexOf('effetti.disegnaBagliori(p, camera, lumi, luce, secondi);'),'il calore sopra il buio');
+  assert.ok(gioco.indexOf('disegnaBuio(secondi, chiaroDiLuna, lampo);')<gioco.indexOf('effetti.disegnaBagliori(p, camera, lumi, luce, secondi);'),'il calore sopra il buio');
   // Il calore a metà di M7.18.44, che faceva la notte troppo chiara.
   assert.match(readFileSync(new URL('../arte/effetti.js',import.meta.url),'utf8'),/const CALORE = \{ pozza: 0\.2, bordo: 0\.1, cuore: 0\.3 \};/);
 });
@@ -5378,7 +5380,7 @@ test('d’autunno cadono le foglie, e il vento le porta; il fumo va col vento',a
   const media=(aria)=>{e.seminaParticelle(9);for(let s=0;s<=6;s+=1/30)e.aggiorna(s,fuoco,{aria});return e.posizioniParticelle('fumo').reduce((a,p)=>a+p.x,0)/e.quanteParticelle('fumo');};
   assert.ok(media(1.5)>media(0)+3,'il vento porta il fumo a est');
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
-  assert.ok(gioco.indexOf('effetti.disegnaFoglie(p, camera);')<gioco.indexOf('disegnaBuio(secondi, chiaroDiLuna);'));
+  assert.ok(gioco.indexOf('effetti.disegnaFoglie(p, camera);')<gioco.indexOf('disegnaBuio(secondi, chiaroDiLuna, lampo);'));
 });
 
 // --- M7.18.47: il secondo livello grafico, terreno e alberi ---------------------
@@ -5908,7 +5910,7 @@ test('sotto la luna: riflessi d’argento sull’acqua e ombre tenui, solo quand
   e.imposta(false);try{assert.equal(conta({luna:1,luce:0.1}),0,'effetti spenti');}finally{e.imposta(true);}
   for(const r of e.riflessiLunari(q,1,{luna:1,luce:0.1},acqua))assert.ok(r.forza>=0&&r.forza<=1);
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
-  assert.ok(gioco.indexOf('disegnaBuio(secondi, chiaroDiLuna);')<gioco.indexOf('effetti.disegnaRiflessiLunari('),'sopra il buio');
+  assert.ok(gioco.indexOf('disegnaBuio(secondi, chiaroDiLuna, lampo);')<gioco.indexOf('effetti.disegnaRiflessiLunari('),'sopra il buio');
   // Le ombre: di notte senza luna niente, con la piena un'ombra tenue; di
   // giorno quella di sempre, con o senza luna.
   const chi={tipo:'giocatore',x:0,y:0,base:24,sprite:{width:16,height:24}};
@@ -5939,4 +5941,90 @@ test('la luna nell’orologio e nelle previsioni',async()=>{
   // Il modulo nuovo è nella cache e nella mappa degli import.
   assert.ok(readFileSync(new URL('../sw.js',import.meta.url),'utf8').includes('"./regole/luna.js"'));
   assert.match(readFileSync(new URL('../index.html',import.meta.url),'utf8'),/"\.\/regole\/luna\.js": "\.\/regole\/luna\.js\?v=/);
+});
+
+// --- M7.18.55: il meteo che si vede ---------------------------------------------------------
+
+const cieloDi=()=>import('../regole/cielo.js');
+
+test('la neve si posa nel giorno di neve e si scioglie il giorno dopo',async()=>{
+  const c=await cieloDi();mappa.inizializza('valle-1');
+  const neve=[...Array(48).keys()].map(i=>i+1).find(g=>meteo.evento(g)==='neve'&&meteo.evento(g+1)!=='neve');
+  assert.ok(neve);
+  assert.equal(c.neveAPosa(neve,0),0);assert.ok(c.neveAPosa(neve,4)>0&&c.neveAPosa(neve,4)<1);assert.equal(c.neveAPosa(neve,9),1);
+  assert.equal(c.neveAPosa(neve+1,6),1);assert.ok(c.neveAPosa(neve+1,13)>0&&c.neveAPosa(neve+1,13)<1);assert.equal(c.neveAPosa(neve+1,20),0);
+  for(let g=1;g<=48;g++)for(const o of [0,6,12,18,23]){const v=c.neveAPosa(g,o);assert.ok(v>=0&&v<=1);
+    if(meteo.evento(g)!=='neve'&&meteo.evento(g-1)!=='neve')assert.equal(v,0,`giorno ${g}`);}
+});
+
+test('le chiazze di neve: più neve più terreno bianco, mai tutto, e passano da un tassello all’altro',async()=>{
+  const a=await import('../arte/atmosfera.js');
+  const coperti=q=>{let n=0;for(let y=0;y<160;y++)for(let x=0;x<160;x++)if(a.innevato(x,y,q))n++;return n/25600;};
+  const poca=coperti(0.3),piena=coperti(1);
+  assert.ok(poca>0.01&&poca<piena,`${poca} ${piena}`);
+  assert.ok(piena>0.4&&piena<0.9,`piena ${piena}: fra le chiazze resta il terreno`);
+  assert.equal(coperti(0),0);
+  // Continua: un pixel innevato ha quasi sempre un vicino innevato, anche
+  // oltre il bordo del tassello.
+  let soli=0,tot=0;for(let y=1;y<159;y++)for(let x=1;x<159;x++)if(a.innevato(x,y,1)){tot++;if(![[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>a.innevato(x+dx,y+dy,1)))soli++;}
+  assert.ok(soli/tot<0.02);
+  let attraverso=0;for(let y=0;y<160;y++)if(a.innevato(15,y,1)&&a.innevato(16,y,1))attraverso++;assert.ok(attraverso>10);
+  // Né nella stanza né su acqua e roccia: lo decide chi disegna.
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/TERRENI_DI_NEVE = new Set\(\[TERRENO\.ERBA, TERRENO\.STERPAGLIA, TERRENO\.TERRA, TERRENO\.SABBIA\]\)/);
+  assert.match(gioco,/atmosfera\.tasselliCoperti\(riparo\.stanza\(\)\)/);
+  assert.ok(gioco.indexOf('atmosfera.disegnaNevePosata(')<gioco.indexOf('for (const cosa of inPiedi) {'),'sotto le cose in piedi');
+});
+
+test('i temporali: giorni di pioggia d’autunno e di primavera, lampi irregolari, tuono',async()=>{
+  const c=await cieloDi();mappa.inizializza('valle-1');
+  const temporali=[];
+  for(let g=1;g<=48;g++){if(c.temporale(g)){temporali.push(g);assert.equal(meteo.evento(g),'pioggia');assert.ok(['autunno','primavera'].includes(stagioni.stagioneDi(g)));}
+    assert.equal(c.temporale(g),c.temporale(g));}
+  assert.ok(temporali.length>=1);
+  const g=temporali[0];
+  assert.ok(!c.temporaleAdesso(g,10));assert.ok(c.temporaleAdesso(g,16));assert.ok(!c.temporaleAdesso(g,23.5));
+  // Lampi: fra uno e l'altro da 7 a 18 secondi.
+  const inizi=[];let prima=null;
+  for(let t=0;t<600;t+=0.01){const l=c.lampoDi(t);if(l.forza>0&&l.numero!==prima){prima=l.numero;inizi.push(l.inizio);}}
+  assert.ok(inizi.length>30);
+  for(let i=1;i<inizi.length;i++){const d=inizi[i]-inizi[i-1];assert.ok(d>=6.99&&d<=18.01,`${d}`);}
+  const l=c.lampoDi(inizi[3]+0.02);assert.ok(l.forza>0&&l.tuonoDopo>=0.4&&l.tuonoDopo<=2);
+  assert.equal(c.lampoDi(inizi[3]+1).forza,0);
+  const voci=await import('../arte/voci.js');assert.equal(voci.TUONO.onda,'rumore');assert.ok(voci.TUONO.coda>2);
+  const hud=readFileSync(new URL('../interfaccia/hud.js',import.meta.url),'utf8');
+  assert.ok(hud.includes('"TEMPORALE"')&&hud.includes('"TEMPORALE"'));
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.ok(gioco.indexOf('disegnaBuio(secondi, chiaroDiLuna, lampo);')<gioco.indexOf('atmosfera.disegnaLampo(p, lampo);'));
+  assert.match(gioco,/suono\.suona\(TUONO,/);
+  // Il lampo non tocca le regole: la luce del sole resta quella.
+  assert.match(gioco,/luce \+ \(1 - luce\) \* 0\.85 \* lampo/);
+});
+
+test('la foschia dell’alba: d’autunno e dopo la pioggia, mai d’estate né col cielo coperto',async()=>{
+  const c=await cieloDi();mappa.inizializza('valle-1');
+  for(let g=1;g<=48;g++){
+    const st=stagioni.stagioneDi(g);
+    if(st==='estate'||c.coperto(g))assert.equal(c.foschia(g,6),0,`giorno ${g}`);
+    assert.equal(c.foschia(g,10),0);assert.equal(c.foschia(g,2),0);
+    if(st==='autunno'&&!c.coperto(g))assert.equal(c.foschia(g,6),1);
+    if((st==='primavera'||st==='inverno')&&!c.coperto(g))assert.equal(c.foschia(g,6),meteo.evento(g-1)==='pioggia'?1:0,`giorno ${g}`);
+  }
+  const a=await import('../arte/atmosfera.js');
+  const q={sinistra:0,destra:384,sopra:0,sotto:216};
+  const f1=a.fasceDiFoschia(q,0,0.5),f2=a.fasceDiFoschia(q,10,0.5);
+  assert.ok(f1.length>=6);assert.ok(f2[0].x!==f1[0].x||f2.length!==f1.length,'scivola col vento');
+});
+
+test('la pioggia migliore: schizzi fuori dall’acqua, cerchi solo sull’acqua, e le regole del meteo non cambiano',async()=>{
+  const a=await import('../arte/atmosfera.js');
+  const q={sinistra:0,destra:384,sopra:0,sotto:216},acqua=(tx)=>tx<10;
+  for(const s of a.schizzi(q,3.3,acqua))assert.ok(Math.floor(s.x/16)>=10);
+  const c=[];for(let t=0;t<6;t+=0.5)c.push(...a.cerchi(q,t,acqua));
+  assert.ok(c.length>0);for(const x of c)assert.ok(Math.floor(x.x/16)<10&&x.raggio>=1&&x.raggio<=4);
+  assert.deepEqual(a.cerchi(q,1,null),[]);
+  for(const f of ['meteo.js','infetti.js','orto.js','freddo.js'])
+    assert.doesNotMatch(readFileSync(new URL('../regole/'+f,import.meta.url),'utf8'),/cielo\.js/,f);
+  assert.ok(readFileSync(new URL('../sw.js',import.meta.url),'utf8').includes('"./regole/cielo.js"'));
+  assert.match(readFileSync(new URL('../index.html',import.meta.url),'utf8'),/"\.\/regole\/cielo\.js": "\.\/regole\/cielo\.js\?v=/);
 });

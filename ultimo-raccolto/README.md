@@ -12,6 +12,32 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.55 — il meteo che si vede
+
+Il meteo non cambia regole: cambia com'è la valle quando piove, nevica o
+tuona. Tutto il nuovo si spegne col tasto L, come gli altri effetti.
+- **La neve si posa.** Nel giorno di neve il terreno si imbianca a chiazze
+  nelle prime otto ore. Le chiazze passano da un tassello all'altro e si
+  allargano, ma fra una e l'altra resta il terreno, che si legge ancora. Il
+  giorno dopo si sciolgono piano, fra le sette e le diciannove. Niente neve
+  su acqua, ghiaccio e roccia, e niente dentro la stanza.
+- **La pioggia è più pioggia.** Le gocce si piegano col vento, su due piani:
+  le lontane corte e tenui, le vicine lunghe. Per terra ci sono piccoli
+  schizzi, e sull'acqua anelli che si allargano. Nei giorni di pioggia e di
+  neve un velo grigio di cielo coperto spegne un po' i colori.
+- **I temporali.** Un giorno di pioggia su due, d'autunno e di primavera, è
+  un temporale: nell'HUD si legge «TEMPORALE», e il giorno prima «DOMANI
+  TEMPORALE». Per le regole resta pioggia.
+  - Dalle 14 alle 23 cade un lampo ogni 7–18 secondi, mai a ritmo. Per un
+    istante il buio si ritira e si vede tutta la valle, anche di notte. È
+    solo disegno: gli infetti non vedono di più.
+  - Poi arriva il tuono, tanto più tardi quanto più il lampo era lontano.
+- **La foschia dell'alba.** D'autunno ogni mattina, e in primavera e
+  d'inverno la mattina dopo una pioggia, c'è una nebbia bassa. È piena fra
+  le cinque e le otto e sparisce entro le nove e mezza. Sono grandi fasce
+  che il vento porta piano e che stanno ferme rispetto al mondo, così
+  camminando ci si passa dentro.
+
 ## M7.18.54 — la luna
 
 Un'idea dei promemoria, decisa insieme: la luna cambia quanto vedi, non
@@ -2368,7 +2394,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.54**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.55**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

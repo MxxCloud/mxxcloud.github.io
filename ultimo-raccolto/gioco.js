@@ -47,6 +47,7 @@ import * as pesca from "./regole/pesca.js";
 import * as acqua from "./regole/acqua.js";
 import * as meteo from "./regole/meteo.js";
 import * as luna from "./regole/luna.js";
+import * as cielo from "./regole/cielo.js";
 import * as atmosfera from "./arte/atmosfera.js";
 import * as effetti from "./arte/effetti.js";
 import { TERRENO, OGGETTO } from "./mondo/generazione.js";
@@ -58,7 +59,7 @@ import { FIORI } from "./arte/sprite-fiori.js";
 // nello stesso file sono l'errore che si scopre tardi.
 import {
   colpoDi, MORSO, COLPO_A_SEGNO, CADUTO, ZAPPA, SEMINA, ACQUA, SORSO, MANGIA,
-  BENDA, POSA, SCELTA, FATTO, NEGATO, PRESO, GELO, MORTE, COPERCHIO, ROTTURA,
+  BENDA, POSA, SCELTA, FATTO, NEGATO, PRESO, GELO, MORTE, COPERCHIO, ROTTURA, TUONO,
 } from "./arte/voci.js";
 import * as inventario from "./regole/inventario.js";
 import * as azioni from "./regole/azioni.js";
@@ -76,7 +77,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.54";
+const VERSIONE = "M7.18.55";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1743,6 +1744,11 @@ function disegna() {
   // La riva (M7.18.49): schiuma e terra bagnata, sotto tutto quello che sta in piedi.
   effetti.disegnaRiva(p, camera, secondi, mappa.rivaDi, mappa.gelato());
   effetti.disegnaCiuffi(p, camera, secondi, aria, stagione, pratoLibero);
+  // La neve posata (M7.18.55): sopra l'erba, sotto tutto quello che sta in piedi.
+  if (effetti.attivi()) {
+    atmosfera.disegnaNevePosata(p, cielo.neveAPosa(tempo.giornoCorrente(), tempo.oraCorrente()),
+      copribileDiNeve, atmosfera.tasselliCoperti(riparo.stanza()));
+  }
   effetti.disegnaOmbre(p, inPiedi, camera, tempo.oraCorrente(), luce, chiaroDiLuna);
 
   // Chi piega col vento lo disegnano gli effetti, a fasce; il resto come sempre.
@@ -1771,9 +1777,20 @@ function disegna() {
   effetti.disegnaFumo(p, camera);
   effetti.disegnaFoglie(p, camera);
   effetti.disegnaLuccichii(p, camera, secondi, { ora: tempo.oraCorrente(), stagione: stagioni.stagioneCorrente() }, eAcqua);
-  atmosfera.disegna(p, meteo.evento(), tempo.giornoCorrente()*tempo.SECONDI_PER_GIORNO + tempo.oraCorrente()/24*tempo.SECONDI_PER_GIORNO, riparo.stanza());
+  atmosfera.disegna(p, meteo.evento(), tempo.giornoCorrente()*tempo.SECONDI_PER_GIORNO + tempo.oraCorrente()/24*tempo.SECONDI_PER_GIORNO, riparo.stanza(),
+    { aria, eAcqua, effetti: effetti.attivi() });
+  // La foschia dell'alba e il cielo coperto (M7.18.55), prima del colore
+  // dell'ora e del buio: sono aria, non luce.
+  if (effetti.attivi()) {
+    atmosfera.disegnaFoschia(p, secondi, cielo.foschia(tempo.giornoCorrente(), tempo.oraCorrente()), aria);
+    atmosfera.disegnaCieloCoperto(p, cielo.coperto(tempo.giornoCorrente()) ? luce : 0);
+  }
   effetti.disegnaColoreDellOra(p, tempo.oraCorrente());
-  disegnaBuio(secondi, chiaroDiLuna);
+  // Il lampo del temporale: per un istante il buio si ritira e si vede tutta
+  // la valle, poi un velo bianco leggero sopra. Il tuono arriva dopo.
+  const lampo = lampoAdesso(secondi);
+  disegnaBuio(secondi, chiaroDiLuna, lampo);
+  atmosfera.disegnaLampo(p, lampo);
   // I riflessi della luna sull'acqua sopra il buio: sono luce.
   effetti.disegnaRiflessiLunari(p, camera, secondi, { luna: chiaroDiLuna, luce }, eAcqua);
   // Dopo il buio quello che ha luce sua: il calore dei fuochi, le scintille,
@@ -1826,8 +1843,40 @@ function raccogliLumi() {
 // Il tremolio allarga e stringe il buco nel buio, non la luce vera: le
 // regole — gli infetti che vedono la torcia in mano, il crepitio dei fuochi
 // in udito.js — leggono il catalogo e le luci della mappa, non questo disegno.
-function disegnaBuio(secondi, chiaroDiLuna = 0) {
-  oscurita.disegna(schermo.pennello(), tempo.luceAmbiente(), tempo.tintaOscurita(chiaroDiLuna), lumi,
+// Il temporale (M7.18.55): il lampo si disegna, il tuono si mette in coda e
+// suona quando è ora. Un tuono per lampo, e niente a effetti spenti.
+let ultimoLampo = null;
+let tuonoAlle = null;
+let tuonoVicino = 1;
+function lampoAdesso(secondi) {
+  if (!effetti.attivi() || !cielo.temporaleAdesso(tempo.giornoCorrente(), tempo.oraCorrente())) {
+    tuonoAlle = null;
+    return 0;
+  }
+  const lampo = cielo.lampoDi(secondi);
+  if (lampo.forza > 0 && lampo.numero !== ultimoLampo) {
+    ultimoLampo = lampo.numero;
+    tuonoAlle = lampo.inizio + lampo.tuonoDopo;
+    tuonoVicino = lampo.vicino;
+  }
+  if (tuonoAlle !== null && secondi >= tuonoAlle) {
+    suono.suona(TUONO, { volume: 0.6 + 0.4 * tuonoVicino, tono: 0.85 + 0.3 * (1 - tuonoVicino) });
+    tuonoAlle = null;
+  }
+  return lampo.forza;
+}
+
+// Dove si posa la neve: erba, sterpaglia, terra e sabbia; non acqua, ghiaccio
+// e roccia.
+const TERRENI_DI_NEVE = new Set([TERRENO.ERBA, TERRENO.STERPAGLIA, TERRENO.TERRA, TERRENO.SABBIA]);
+function copribileDiNeve(tx, ty) {
+  return TERRENI_DI_NEVE.has(mappa.terrenoDi(tx, ty));
+}
+
+function disegnaBuio(secondi, chiaroDiLuna = 0, lampo = 0) {
+  // Il lampo è solo disegno: la luce che leggono le regole resta quella.
+  const luce = tempo.luceAmbiente();
+  oscurita.disegna(schermo.pennello(), luce + (1 - luce) * 0.85 * lampo, tempo.tintaOscurita(chiaroDiLuna), lumi,
     (luce) => effetti.tremolio(luce, secondi), chiaroDiLuna);
 }
 
@@ -1920,6 +1969,7 @@ function disegnaInterfaccia() {
     ? salute.moltiplicatoreFreddo(Boolean(addosso.dati()?.gradiniFermi) && !meteo.zuppo())
     : gelando ? 1 : 0;
   hud.disegnaMeteo(p, { evento: meteo.evento(), domani: meteo.evento(tempo.giornoCorrente()+1), bagnato: meteo.livelloBagnato(), freddo: scalaFreddo,
+    temporale: cielo.temporale(tempo.giornoCorrente()), temporaleDomani: cielo.temporale(tempo.giornoCorrente() + 1),
     luna: { stanotte: luna.stanotte(), domani: luna.domani() } });
   hud.disegnaAzione(p, azioneCorrente);
   const lenza = pesca.stato();
