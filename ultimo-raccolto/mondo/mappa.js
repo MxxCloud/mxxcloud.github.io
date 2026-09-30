@@ -49,6 +49,10 @@ const CATALOGO_OGGETTI = {
   [OGGETTO.CARRO]: { sprite: luoghiArte.CARRO, solido: true },
   [OGGETTO.POZZO]: { sprite: luoghiArte.POZZO, solido: true },
   [OGGETTO.TRONCO]: { sprite: luoghiArte.TRONCO, solido: true },
+  // I luoghi unici (M7.18.56): la torre su cui si sale e la parete della
+  // cava. Fermano tutte e due; la parete ferma anche lo sguardo.
+  [OGGETTO.TORRE]: { sprite: luoghiArte.TORRE, solido: true },
+  [OGGETTO.PARETE_CAVA]: { sprite: luoghiArte.PARETE_CAVA, solido: true },
   [OGGETTO.ALBERO]: { sprite: oggettiArte.ALBERO, solido: true },
   [OGGETTO.SASSO]: { sprite: oggettiArte.SASSO, solido: true },
   [OGGETTO.CESPUGLIO]: { sprite: oggettiArte.CESPUGLIO, solido: false },
@@ -334,7 +338,7 @@ export function inizializza(nome) {
 // La rovina di una cella, per chi disegna la mappa grande. Il mondo la sa già
 // — la maglia è in rovine.js — e passare di qui evita che l'interfaccia debba
 // sapere che esiste un seme.
-export { rovinaNellaCella, laFattoria, luogoIn, inselvatichitaNellOrto, ortoPiuVicino, linoLontano, LINO_ENTRO } from "./generazione.js";
+export { rovinaNellaCella, uniciAttorno, laFattoria, luogoIn, inselvatichitaNellOrto, ortoPiuVicino, linoLontano, LINO_ENTRO } from "./generazione.js";
 export { CELLA as CELLA_ROVINE } from "./rovine.js";
 
 export function semeCorrente() {
@@ -527,7 +531,7 @@ export function recintaIn(tx, ty) {
 // e quello va misurato per conto suo, non di sbieco mentre si aggiungono i
 // muri. Qui ci sono le due cose che si costruiscono apposta perché non ti
 // vedano.
-const CIECHI = new Set([OGGETTO.MURO, OGGETTO.PORTA]);
+const CIECHI = new Set([OGGETTO.MURO, OGGETTO.PORTA, OGGETTO.PARETE_CAVA]);
 
 // Da questo tassello si vede quell'altro? Una camminata alla Bresenham lungo
 // la linea, saltando i due capi: il tassello su cui si sta e quello su cui sta

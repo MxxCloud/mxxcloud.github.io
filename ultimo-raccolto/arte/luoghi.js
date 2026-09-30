@@ -49,3 +49,36 @@ export const LUOGHI = [
 // primo orto del giocatore nasce da qui.
 const ORTO = LUOGHI.find((l) => l.id === "orto");
 export const ORTO_DELLA_FATTORIA = ORTO.pianta.map((riga) => riga.replaceAll("s", "b").replaceAll("u", "q"));
+
+// I luoghi unici (M7.18.56): uno per regione, a rotazione (vedi rovine.js).
+// Non stanno in LUOGHI, e non per ordine: un indice nuovo lì cambierebbe il
+// sorteggio di tutte le valli già generate. Ogni luogo unico ha qualcosa che
+// non si trova altrove, e una frase sola, scritta da chi c'era.
+//
+// T torre, k parete di cava, "," pavimento di roccia (vedi generazione.js),
+// % macerie, v carrello (il carro), c cassa.
+export const UNICI = [
+  { id: "torre", nome: "Torre di avvistamento",
+    iscrizione: "«Da quassù si vedeva arrivare il fumo. Poi, loro.»",
+    pianta: [
+      "  %.%.%  ",
+      " ....... ",
+      "%.......%",
+      "....T....",
+      "%.......%",
+      " ...c... ",
+      "  %...%  ",
+    ] },
+  { id: "cava", nome: "Cava di pietra",
+    iscrizione: "«Qui si cavava la pietra per tutta la valle.»",
+    pianta: [
+      "  kkkkkkkkk  ",
+      " kk,,,,,,,kk ",
+      "kk,,,,,,,,,kk",
+      "k,,,,v,,,,,,k",
+      "k,,,,,,,,c,,k",
+      "kk,,,,,,,,,kk",
+      " kk,,,,,,,,, ",
+      "  kkkk,,,,,  ",
+    ] },
+];

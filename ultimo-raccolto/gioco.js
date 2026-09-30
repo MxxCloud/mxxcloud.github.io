@@ -77,7 +77,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.55";
+const VERSIONE = "M7.18.56";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -196,8 +196,10 @@ function cosaInMano() {
   return inventario.contenuto()[casellaScelta]?.cosa ?? null;
 }
 
-function annuncia(testo, colore) {
-  messaggio = { testo: testo.toUpperCase(), colore, vita: 1 };
+// "sotto" è una seconda riga, più tenue: l'iscrizione di un luogo unico
+// (M7.18.56). Un messaggio con due righe resta di più, perché si legge.
+function annuncia(testo, colore, sotto = null) {
+  messaggio = { testo: testo.toUpperCase(), colore, vita: 1, sotto: sotto?.toUpperCase() ?? null, durata: sotto ? 6 : 2.2 };
 }
 
 // Chiudere la schermata iniziale accende anche il suono.
@@ -1257,6 +1259,17 @@ function leggiComandi(passo) {
     avvisoRisveglio = esito.messaggio ?? `dormito ${(esito.secondi / riposo.ORA).toFixed(1)} ore: +${Math.round(esito.recuperata * 100)}% stamina`;
   }
 
+  // Dalla torre (M7.18.56): la carta si riempie in un colpo, e si dice quanti
+  // luoghi unici si sono visti. I nomi stanno sulla carta, non qui: in una
+  // riga sola non ci starebbero.
+  if (esito.tipo === "salito") {
+    if (esito.scoperti.length > 0) mappaGrande.aggiungi(esito.scoperti);
+    suono.suona(SCELTA);
+    const n = esito.avvistati.length;
+    annuncia(n > 0 ? `dalla torre: ${n} ${n === 1 ? "luogo nuovo" : "luoghi nuovi"}` : "dalla torre, niente di nuovo",
+      "#f0c95a", n > 0 || esito.scoperti.length > 0 ? "guarda la mappa con TAB" : null);
+  }
+
   // Il focolare che si carica è una cosa che si sente: è il gesto per cui si
   // torna a casa, e senza una riga sarebbe l'unica azione muta del gioco.
   //
@@ -1547,7 +1560,7 @@ function aggiorna(passo) {
     if (scoperti.length > 0) mappaGrande.aggiungi(scoperti);
     const luogo = mappa.luogoIn(Math.floor(eroe.px / TASSELLO), Math.floor(eroe.py / TASSELLO), 3);
     const chiaveLuogo = luogo ? `${luogo.tx0},${luogo.ty0}` : null;
-    if (chiaveLuogo && chiaveLuogo !== luogoAttuale) annuncia(luogo.nome, "#c9b189");
+    if (chiaveLuogo && chiaveLuogo !== luogoAttuale) annuncia(luogo.nome, luogo.unico ? "#f0c95a" : "#c9b189", luogo.iscrizione);
     // Un orto a cui si arriva finisce sulla mappa con le sue piante (M7.18.40).
     if (luogo?.luogo === "orto") esplorato.segnaOrto(luogo);
     luogoAttuale = chiaveLuogo;
@@ -1574,7 +1587,7 @@ function aggiorna(passo) {
   smontaggioCorrente = mondoFermo() ? null : azioni.smontaggioPossibile(eroe, cosaInMano());
 
   if (messaggio) {
-    messaggio.vita -= passo / 2.2;
+    messaggio.vita -= passo / messaggio.durata;
     if (messaggio.vita <= 0) messaggio = null;
   }
 

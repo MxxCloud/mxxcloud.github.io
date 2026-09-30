@@ -63,7 +63,7 @@ function reset() {
   meteo.reimposta();
   pesca.interrompi(); mappa.impostaGelo(false); orto.impostaBestie(false); orto.impostaParassiti(false);
   riparo.reimposta(); tempo.reimposta(); bisogni.reimposta(); salute.reimposta();
-  inventario.svuota(); modifiche.svuota(); entita.svuota(); simulazione.resoconto();
+  inventario.svuota(); modifiche.svuota(); entita.svuota(); simulazione.resoconto(); esplorato.svuota();
   mappa.inizializza('review');
   const f=mappa.laFattoria();
   tx=f.tx;ty=f.ty;
@@ -1640,21 +1640,24 @@ test('il pozzo gela d’inverno e torna a dare acqua col disgelo',()=>{
 
 test('la valle resta più natura che costruito, e il conto è misurato non dichiarato',()=>{
   const R=12;
-  let celle=0,case_=0,luoghi=0;
+  let celle=0,case_=0,luoghi=0,unici=0;
   for(const seme of ['valle-1','prova']) {
     mappa.inizializza(seme);
     for(let cy=-R;cy<=R;cy++)for(let cx=-R;cx<=R;cx++) {
       celle++;
       const c=mappa.rovinaNellaCella(cx,cy);
       if(!c) continue;
-      c.luogo ? luoghi++ : case_++;
+      c.unico ? unici++ : c.luogo ? luoghi++ : case_++;
     }
   }
-  const pc=n=>100*n/celle, natura=pc(celle-case_-luoghi);
+  const pc=n=>100*n/celle, natura=pc(celle-case_-luoghi-unici);
   // Le rovine non si toccano: è la riga che protegge i mondi già in gioco.
   assert.ok(pc(case_)>22 && pc(case_)<27,`rovine ${pc(case_).toFixed(1)}%`);
   assert.ok(pc(luoghi)>28 && pc(luoghi)<34,`luoghi ${pc(luoghi).toFixed(1)}%`);
-  assert.ok(natura>42,`natura ${natura.toFixed(1)}%: la valle si sta riempiendo`);
+  // I luoghi unici (M7.18.56) si contano a parte: uno ogni sedici celle, e
+  // per ora solo torre e cava, quindi circa una cella su trentadue.
+  assert.ok(pc(unici)>1.5 && pc(unici)<4.5,`unici ${pc(unici).toFixed(1)}%`);
+  assert.ok(natura>40,`natura ${natura.toFixed(1)}%: la valle si sta riempiendo`);
 });
 
 test('il cadavere regge una voce più dello zaino: è un mucchio, non uno zaino',()=>{
@@ -4324,10 +4327,18 @@ test('il cancello in una fila verticale si vede di taglio: lungo da palo a palo,
 const SELVATICHE=[OGGETTO.SPIGHE_SELVATICHE,OGGETTO.LINO_SELVATICO,OGGETTO.CAVOLO_SELVATICO,OGGETTO.PATATA_SELVATICA,OGGETTO.FAGIOLI_SELVATICI];
 const GIA_NELLA_VALLE=new Set([OGGETTO.ALBERO,OGGETTO.SASSO,OGGETTO.CESPUGLIO,OGGETTO.CASSA,OGGETTO.MURO,OGGETTO.MURO_ROTTO,
   OGGETTO.CARRO,OGGETTO.POZZO,OGGETTO.TRONCO,OGGETTO.GIACIGLIO,OGGETTO.FALO_SPENTO]);
+// Dentro un luogo unico (M7.18.56) la natura lascia il posto alla torre o
+// alla cava, ed è voluto: stanno solo dove prima non c'era né una casa né un
+// piccolo luogo. Fuori, niente deve essersi spostato.
+function inUnLuogoUnico(x,y){
+  const r=generazione.rovinaNellaCella(Math.floor(x/64),Math.floor(y/64));
+  return !!r?.unico&&x>=r.tx0&&x<r.tx0+r.larghezza&&y>=r.ty0&&y<r.ty0+r.altezza;
+}
 function valle(seme){
   generazione.preparaRovine(seme);
   let h=0,n=0;const piante=[];
   for(let y=-120;y<120;y++)for(let x=-120;x<120;x++){
+    if(inUnLuogoUnico(x,y))continue;
     const t=generazione.terrenoIn(x,y,seme),o=generazione.oggettoIn(x,y,seme,t);
     if(GIA_NELLA_VALLE.has(o)){h=(Math.imul(h,31)+(x*7919+y*104729+o*13))|0;n++;}
     if(SELVATICHE.includes(o))piante.push({x,y,o,t});
@@ -4341,8 +4352,12 @@ test("le piante selvatiche nascono solo negli orti abbandonati, e alberi, sassi 
   // (vedi DIVENTA_ORTO in rovine.js): con DIVENTA_ORTO a zero torna quella
   // di M7.18.29, 2028556980 su 7358 oggetti. Tutte e due rimisurate a
   // M7.18.36 per i muretti e la cassa dell'orto della fattoria: senza l'annesso
-  // tornano 1752206296 su 8823 e 167087167 su 7363.
-  const impronte=[[12345,-1755284879,8831],[777,-187510781,7364]];
+  // tornano 1752206296 su 8823 e 167087167 su 7363. Da M7.18.56 si saltano
+  // i tasselli dei luoghi unici (la torre, qui, per tutti e due i semi): la
+  // generazione di M7.18.55, saltando gli stessi tasselli, dà esattamente
+  // questi numeri. Contandoli tutti erano -1755284879 su 8831 e -187510781
+  // su 7364.
+  const impronte=[[12345,-1420792303,8812],[777,1305259828,7354]];
   for(const [seme,h,n] of impronte){
     const v=valle(seme);assert.equal(v.h,h,'seme '+seme);assert.equal(v.n,n,'seme '+seme);
     // Da M7.18.38 fuori dagli orti (quelli abbandonati e quello della
@@ -6027,4 +6042,190 @@ test('la pioggia migliore: schizzi fuori dall’acqua, cerchi solo sull’acqua,
     assert.doesNotMatch(readFileSync(new URL('../regole/'+f,import.meta.url),'utf8'),/cielo\.js/,f);
   assert.ok(readFileSync(new URL('../sw.js',import.meta.url),'utf8').includes('"./regole/cielo.js"'));
   assert.match(readFileSync(new URL('../index.html',import.meta.url),'utf8'),/"\.\/regole\/cielo\.js": "\.\/regole\/cielo\.js\?v=/);
+});
+
+// M7.18.56 — i luoghi unici: le regioni, la torre, la cava e il piccone.
+const uniciDi=(tipo,quante=2)=>{const f=mappa.laFattoria();return generazione.uniciAttorno(f.tx,f.ty,quante).filter(u=>!tipo||u.unico===tipo);};
+test('i luoghi unici: uno per regione, a rotazione, e la regione della fattoria ha la torre',()=>{
+  // Il tipo va a rotazione: due regioni vicine mai uguali, e in ogni blocco
+  // di 2×2 ci sono tutti e quattro.
+  for(let ry=-4;ry<=4;ry++)for(let rx=-4;rx<=4;rx++){
+    const t=rovine.tipoDellaRegione(rx,ry);
+    assert.notEqual(t,rovine.tipoDellaRegione(rx+1,ry));assert.notEqual(t,rovine.tipoDellaRegione(rx,ry+1));
+    const blocco=new Set([t,rovine.tipoDellaRegione(rx+1,ry),rovine.tipoDellaRegione(rx,ry+1),rovine.tipoDellaRegione(rx+1,ry+1)]);
+    assert.equal(blocco.size,4);
+  }
+  assert.equal(rovine.tipoDellaRegione(0,0),'torre');
+  let regioni=0,conIlLuogo=0;
+  for(const seme of ['valle-1','prova','review','12345']){
+    mappa.inizializza(seme);
+    const f=mappa.laFattoria(),r0=rovine.regioneDi(Math.floor(f.tx/64),Math.floor(f.ty/64));
+    assert.deepEqual(r0,{rx:0,ry:0},'la fattoria sta nella regione di mezzo');
+    const torre=uniciDi('torre',0)[0];
+    assert.ok(torre,'la torre della fattoria, '+seme);
+    assert.ok(Math.hypot(torre.tx0-f.tx,torre.ty0-f.ty)<200,'non lontana: '+seme);
+    // Contati sulle celle: ogni regione ne ha al massimo uno, del suo tipo.
+    const perRegione=new Map();
+    for(let cy=-10;cy<=9;cy++)for(let cx=-10;cx<=9;cx++){
+      const r=mappa.rovinaNellaCella(cx,cy);if(!r?.unico)continue;
+      const {rx,ry}=rovine.regioneDi(cx,cy),k=rx+','+ry;
+      assert.equal(perRegione.has(k),false,'uno solo per regione: '+k);perRegione.set(k,r);
+      assert.equal(r.unico,rovine.tipoDellaRegione(rx,ry));
+      assert.ok(r.nome&&r.iscrizione);assert.equal(r.luogo,r.unico);
+    }
+    for(let ry=-2;ry<=2;ry++)for(let rx=-2;rx<=2;rx++){
+      const t=rovine.tipoDellaRegione(rx,ry);
+      // Il mulino e la chiesa arrivano con M7.18.57: fino ad allora i loro
+      // posti restano natura.
+      if(t==='mulino'||t==='chiesa'){assert.equal(perRegione.has(rx+','+ry),false);continue;}
+      regioni++;if(perRegione.has(rx+','+ry))conIlLuogo++;
+    }
+    // Stabili: ricalcolati da capo sono gli stessi.
+    const prima=uniciDi().map(u=>[u.unico,u.tx0,u.ty0]);
+    mappa.inizializza(seme);assert.deepEqual(uniciDi().map(u=>[u.unico,u.tx0,u.ty0]),prima);
+  }
+  // Misurato: quante regioni trovano posto per il loro luogo.
+  assert.ok(conIlLuogo/regioni>0.9,`${conIlLuogo} su ${regioni}`);
+});
+test('le piante della torre e della cava: la torre sul pavimento, la cava tutta roccia e chiusa da pareti',()=>{
+  const torre=uniciDi('torre',0)[0],cava=uniciDi('cava')[0];
+  assert.ok(cava,'una cava entro due regioni');
+  const t=segnoNelLuogo(torre,'T');
+  assert.equal(mappa.oggettoGenerato(t.tx,t.ty),OGGETTO.TORRE);
+  assert.equal(mappa.oggettoGenerato(segnoNelLuogo(torre,'c').tx,segnoNelLuogo(torre,'c').ty),OGGETTO.CASSA);
+  let pareti=0;
+  for(let y=0;y<cava.altezza;y++)for(let x=0;x<cava.larghezza;x++){
+    if(cava.pianta[y][x]===' ')continue;
+    const tx0=cava.tx0+x,ty0=cava.ty0+y;
+    assert.equal(generazione.terrenoIn(tx0,ty0,mappa.semeCorrente().valore),TERRENO.ROCCIA,`${x},${y}`);
+    if(cava.pianta[y][x]==='k'){pareti++;assert.equal(mappa.oggettoGenerato(tx0,ty0),OGGETTO.PARETE_CAVA);}
+  }
+  assert.ok(pareti>=20,'pareti: '+pareti);
+  // La parete ferma anche lo sguardo, come un muro: da una parte all'altra
+  // di una parete non ci si vede, e tolta sì.
+  const k=segnoNelLuogo(cava,'k');
+  assert.equal(mappa.vedeDa(k.tx,k.ty-1,k.tx,k.ty+1),false);
+  modifiche.imposta(k.tx,k.ty,{oggetto:OGGETTO.NESSUNO});
+  assert.equal(mappa.vedeDa(k.tx,k.ty-1,k.tx,k.ty+1),true);
+});
+test('salire sulla torre: un’ora e fiato, la valle per centosessanta tasselli e i luoghi unici di due regioni; di notte no',()=>{
+  const torre=uniciDi('torre',0)[0],t=segnoNelLuogo(torre,'T');
+  const sotto={...pos(t.tx,t.ty+1),guarda:'su'};
+  tempo.impostaOra(23);
+  const notte=azioni.azionePossibile(sotto,null);
+  assert.equal(notte.tipo,'sali');assert.match(notte.impedito,/notte/);
+  assert.equal(azioni.agisci(sotto,null),null);assert.equal(esplorato.quanti(),0);
+  tempo.impostaOra(10);
+  const giorno=azioni.azionePossibile(sotto,null);
+  assert.equal(giorno.verbo,'Sali sulla torre');assert.equal(giorno.impedito,null);
+  const esito=azioni.agisci(sotto,null);
+  assert.equal(esito.tipo,'salito');
+  vicino(tempo.oraCorrente(),11,1e-6);
+  assert.ok(bisogni.livello('stanchezza')<=0.9);
+  // Il raggio: dentro sì, fuori no.
+  const sx=Math.floor(t.tx/16),sy=Math.floor(t.ty/16);
+  assert.ok(esplorato.eVisto(sx+9,sy));assert.ok(esplorato.eVisto(sx,sy-9));
+  assert.equal(esplorato.eVisto(sx+11,sy),false);assert.equal(esplorato.eVisto(sx+8,sy+8),false);
+  assert.equal(esito.scoperti.length/2,esplorato.quanti());
+  // Tutti i luoghi unici entro due regioni sono avvistati, anche quelli
+  // fuori dal raggio: è la ragione per salire.
+  const vicini=uniciDi();
+  assert.ok(vicini.length>=6,'luoghi: '+vicini.length);
+  for(const u of vicini)assert.ok(esplorato.eAvvistato(u),u.nome+' '+u.tx0);
+  assert.ok(vicini.some(u=>Math.hypot(u.tx0-t.tx,u.ty0-t.ty)>200));
+  assert.equal(esito.avvistati.length,vicini.length-1,'la torre su cui si sta non si conta');
+  // Risalire non mostra niente di nuovo, ma costa lo stesso.
+  const fiato=bisogni.livello('stanchezza');
+  const ancora=azioni.agisci(sotto,null);
+  assert.deepEqual([ancora.scoperti.length,ancora.avvistati.length],[0,0]);
+  assert.ok(bisogni.livello('stanchezza')<=fiato-0.1+1e-9);
+  // Stanchi non si sale.
+  bisogni.consuma('stanchezza',1);
+  assert.match(azioni.azionePossibile(sotto,null).impedito,/stanco/);
+});
+test('i luoghi avvistati si salvano; un salvataggio di prima si apre senza, uno storto si rifiuta',()=>{
+  const [a,b]=uniciDi();
+  esplorato.avvista(a);
+  const stato=salvataggio.istantanea(eroe,0);
+  assert.deepEqual(stato.avvistati,[`${a.tx0},${a.ty0}`]);
+  esplorato.avvista(b);assert.ok(salvataggio.applica(stato));
+  assert.ok(esplorato.eAvvistato(a));assert.equal(esplorato.eAvvistato(b),false);
+  const vecchio={...stato};delete vecchio.avvistati;
+  assert.ok(salvataggio.valido(vecchio));assert.ok(salvataggio.applica(vecchio));assert.equal(esplorato.eAvvistato(a),false);
+  assert.equal(salvataggio.valido({...stato,avvistati:['a,b']}),false);
+  assert.equal(salvataggio.valido({...stato,avvistati:'1,2'}),false);
+});
+test('la cassa della cava ha sempre il piccone, già usato, e la pietra; quella della torre torce e provviste',()=>{
+  let cave=0;
+  for(const seme of ['valle-1','prova','review','12345']){
+    mappa.inizializza(seme);
+    for(const cava of uniciDi('cava')){
+      cave++;
+      const c=segnoNelLuogo(cava,'c'),dentro=contenitori.contenutoDi(c.tx,c.ty).filter(Boolean);
+      const piccone=dentro.find(v=>v.cosa==='piccone');
+      assert.ok(piccone,'il piccone c’è sempre');
+      assert.ok(piccone.usi>=1&&piccone.usi<CATALOGO.piccone.durata,'usato: '+piccone.usi);
+      const pietra=dentro.find(v=>v.cosa==='pietra');assert.ok(pietra.quantita>=3&&pietra.quantita<=5);
+      assert.deepEqual(contenitori.contenutoDi(c.tx,c.ty),contenitori.contenutoDi(c.tx,c.ty),'sempre lo stesso');
+    }
+    const torre=uniciDi('torre',0)[0],c=segnoNelLuogo(torre,'c');
+    assert.deepEqual(contenitori.contenutoDi(c.tx,c.ty).filter(Boolean).map(v=>v.cosa).sort(),['bacche_secche','fibra','torcia']);
+  }
+  assert.ok(cave>=8,'cave: '+cave);
+  // Non si fabbrica: si trova solo lì, e al banco si ripara.
+  assert.equal(ricette.RICETTE.some(r=>r.produce?.cosa==='piccone'&&!r.ripara),false);
+  const ripara=ricette.RICETTE.find(r=>r.id==='ripara_piccone');
+  assert.ok(ripara?.banco);assert.deepEqual(ripara.costo,[{cosa:'pietra',quante:1},{cosa:'fibra',quante:2}]);
+});
+test('il piccone: il muro in due colpi invece di cinque, la parete in due invece di quattro, e come arma vale meno dell’ascia',async()=>{
+  const {colpiNecessari,dannoDi}=await import('../regole/oggetti.js');
+  assert.deepEqual([OGGETTO.SASSO,OGGETTO.MURO,OGGETTO.MURO_ROTTO,OGGETTO.PARETE_CAVA].map(o=>colpiNecessari(o,'piccone')),[1,2,1,2]);
+  assert.deepEqual([OGGETTO.SASSO,OGGETTO.MURO,OGGETTO.MURO_ROTTO,OGGETTO.PARETE_CAVA].map(o=>colpiNecessari(o,null)),[2,5,1,4]);
+  assert.equal(colpiNecessari(OGGETTO.PARETE_CAVA,'ascia'),4,'l’ascia non aiuta sulla pietra');
+  assert.equal(colpiNecessari(OGGETTO.ALBERO,'piccone'),4,'né il piccone sul legno');
+  assert.equal(dannoDi('piccone'),2);assert.ok(dannoDi('piccone')<dannoDi('ascia'));
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.PARETE_CAVA});
+  inventario.aggiungi('piccone',1);
+  assert.equal(azioni.agisci(eroe,'piccone').tipo,'colpo');
+  const esito=azioni.agisci(eroe,'piccone');
+  assert.equal(esito.tipo,'raccolto');assert.equal(inventario.quante('pietra'),3);
+  assert.equal(mappa.oggettoDi(tx+1,ty),OGGETTO.NESSUNO);
+  assert.equal(inventario.attrezzo('piccone').usi,48,'si consuma come gli altri');
+  // Sul legno il piccone non è l'attrezzo del gesto, ma per la raccolta sì:
+  // si consuma lo stesso, come l'ascia su un sasso.
+  const imp=await import('../arte/sprite-impugnati.js');
+  assert.ok(imp.PICCONE.every(r=>r.length===imp.PICCONE[0].length));
+  assert.equal(CATALOGO.piccone.impugnato.righe,imp.PICCONE);
+});
+test('la parete della cava torna all’inizio di ogni stagione, anche d’inverno; il sasso no',()=>{
+  const cava=uniciDi('cava')[0],k=segnoNelLuogo(cava,'k');
+  const tornati=[];
+  modifiche.imposta(k.tx,k.ty,{oggetto:OGGETTO.NESSUNO});
+  for(let g=2;g<=17;g++){
+    tempo.impostaGiorno(g);ricrescita.nuovoGiorno();
+    if(mappa.oggettoDi(k.tx,k.ty)===OGGETTO.PARETE_CAVA){tornati.push(g);modifiche.imposta(k.tx,k.ty,{oggetto:OGGETTO.NESSUNO});}
+  }
+  assert.deepEqual(tornati,[5,9,13,17]);
+  // Il sasso resta finito.
+  let sasso=null;
+  for(let y=-60;y<60&&!sasso;y++)for(let x=-60;x<60&&!sasso;x++)if(mappa.oggettoGenerato(x,y)===OGGETTO.SASSO)sasso={x,y};
+  modifiche.imposta(sasso.x,sasso.y,{oggetto:OGGETTO.NESSUNO});
+  for(let g=2;g<=40;g++){tempo.impostaGiorno(g);ricrescita.nuovoGiorno();}
+  assert.equal(mappa.oggettoDi(sasso.x,sasso.y),OGGETTO.NESSUNO);
+});
+test('arrivando a un luogo unico si legge l’iscrizione, e il carattere ha tutte le sue lettere',async()=>{
+  const {UNICI}=await import('../arte/luoghi.js');
+  const {GLIFI}=await import('../arte/sprite-testo.js');
+  for(const u of UNICI){
+    assert.match(u.iscrizione,/^«.+»$/);
+    for(const ch of (u.nome+u.iscrizione).toUpperCase())assert.ok(GLIFI[ch],`manca il glifo «${ch}» (${u.id})`);
+  }
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/annuncia\(luogo\.nome, [^)]*luogo\.iscrizione\)/);
+  assert.match(gioco,/messaggio\.vita -= passo \/ messaggio\.durata/);
+  const hud=readFileSync(new URL('../interfaccia/hud.js',import.meta.url),'utf8');
+  assert.match(hud,/messaggio\.sotto/);
+  const carta=readFileSync(new URL('../interfaccia/mappa.js',import.meta.url),'utf8');
+  assert.match(carta,/\["torre", "TORRE"\], \["cava", "CAVA"\]/);
+  assert.match(carta.slice(carta.indexOf('function confini'),carta.indexOf('function confini')+900),/tuttiGliAvvistati/);
 });

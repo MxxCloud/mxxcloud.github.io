@@ -173,7 +173,7 @@ export const RICETTE = [
   // --- al banco -----------------------------------------------------------
   // Gli attrezzi di pietra si rilegano con la fibra; la canna no, perché
   // quello che si consuma è la lenza, e una lenza si rifà di filo.
-  ...["ascia", "zappa", "lancia", "canna"].map(cosa => ({
+  ...["ascia", "zappa", "lancia", "canna", "piccone"].map(cosa => ({
     id: "ripara_" + cosa, ripara: cosa, banco: true,
     produce: { cosa, quante: 1 },
     costo: [{ cosa: "pietra", quante: 1 }, { cosa: cosa === "canna" ? "filo" : "fibra", quante: 2 }],

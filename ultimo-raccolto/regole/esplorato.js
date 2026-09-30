@@ -70,6 +70,27 @@ export function segna(eroe) {
   return appenaVisti;
 }
 
+// Dall'alto della torre (M7.18.56): tutti i settori entro il raggio, in
+// tasselli, contando il centro del settore. Restituisce i nuovi come segna(),
+// ma in un elenco suo: sono centinaia, e si fa una volta sola.
+export function rivela(tx, ty, raggio) {
+  const nuovi = [];
+  const primo = Math.floor((tx - raggio) / SETTORE);
+  const ultimo = Math.floor((tx + raggio) / SETTORE);
+  const sopra = Math.floor((ty - raggio) / SETTORE);
+  const sotto = Math.floor((ty + raggio) / SETTORE);
+  for (let sy = sopra; sy <= sotto; sy += 1) {
+    for (let sx = primo; sx <= ultimo; sx += 1) {
+      if (Math.hypot((sx + 0.5) * SETTORE - tx, (sy + 0.5) * SETTORE - ty) > raggio) continue;
+      const k = chiave(sx, sy);
+      if (visti.has(k)) continue;
+      visti.add(k);
+      nuovi.push(sx, sy);
+    }
+  }
+  return nuovi;
+}
+
 export function eVisto(sx, sy) {
   return visti.has(chiave(sx, sy));
 }
@@ -125,6 +146,29 @@ export function ripristinaOrti(elenco) {
   ortiVisti.clear();
   if (!Array.isArray(elenco)) return;
   for (const k of elenco) if (typeof k === "string" && /^-?\d+,-?\d+$/.test(k)) ortiVisti.add(k);
+}
+
+// I luoghi unici avvistati dall'alto della torre (M7.18.56): la mappa li
+// segna anche se non ci sei mai passato vicino. Stessa chiave degli orti,
+// l'angolo della pianta.
+const avvistati = new Set();
+
+export function avvista(luogo) {
+  avvistati.add(chiave(luogo.tx0, luogo.ty0));
+}
+
+export function eAvvistato(luogo) {
+  return avvistati.has(chiave(luogo.tx0, luogo.ty0));
+}
+
+export function tuttiGliAvvistati() {
+  return [...avvistati];
+}
+
+export function ripristinaAvvistati(elenco) {
+  avvistati.clear();
+  if (!Array.isArray(elenco)) return;
+  for (const k of elenco) if (typeof k === "string" && /^-?\d+,-?\d+$/.test(k)) avvistati.add(k);
 }
 
 // I segnaposti del giocatore (M7.18.41): un simbolo e un testo breve messi
@@ -184,6 +228,7 @@ export function segnoValidoPerIlSalvataggio(s) {
 export function svuota() {
   segnaposti.length = 0;
   ortiVisti.clear();
+  avvistati.clear();
   visti.clear();
   ultimoTx = null;
   ultimoTy = null;

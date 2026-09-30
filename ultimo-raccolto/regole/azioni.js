@@ -28,6 +28,7 @@ import * as pesca from "./pesca.js";
 import * as riparo from "./riparo.js";
 import * as decadimento from "./decadimento.js";
 import * as polli from "./polli.js";
+import * as esplorato from "./esplorato.js";
 
 const { TASSELLO } = schermo;
 
@@ -162,7 +163,8 @@ const CONCIMI = { cenere: "Spargi la cenere", pollina: "Spargi la pollina" };
 // Quello che la zappa e il seme rispondono dentro un posto murato.
 const AL_CHIUSO = "al chiuso non arriva la luce";
 
-const COLPI_DURI = new Set([OGGETTO.ALBERO, OGGETTO.SASSO, OGGETTO.MURO, OGGETTO.MURO_ROTTO, OGGETTO.CARRO, OGGETTO.TRONCO]);
+const COLPI_DURI = new Set([OGGETTO.ALBERO, OGGETTO.SASSO, OGGETTO.MURO, OGGETTO.MURO_ROTTO, OGGETTO.CARRO, OGGETTO.TRONCO,
+  OGGETTO.PARETE_CAVA]);
 
 // Su cosa si dorme, e quanto rende. Due letti e due condizioni: scritto come
 // ternario annidato — `inverno ? (fuoco ? x : y) : z` — reggeva finché il letto
@@ -294,6 +296,16 @@ function sulTassello(eroe, cosaInMano, indice) {
     if (daRiempire(cosaInMano, indice)) return { tipo: "riempi", verbo: "Attingi acqua", annaffiatoio: true, bersaglio: b, impedito: gelato };
     return { tipo: "bevi", verbo: "Bevi dal pozzo", bersaglio: b,
       impedito: gelato ?? (bisogni.livello("sete") >= 1 ? "non hai sete" : null) };
+  }
+
+  // La torre di avvistamento (M7.18.56). Salire costa un'ora e un po' di
+  // fiato, e da lassù si vede la valle per dieci schermate attorno, con i
+  // luoghi unici delle regioni vicine. Di notte non si vede niente, e il tasto
+  // lo dice invece di far salire per niente.
+  if (b.oggetto === OGGETTO.TORRE) {
+    return { tipo: "sali", verbo: "Sali sulla torre", bersaglio: b,
+      impedito: tempo.eNotte() ? "di notte non si vede niente"
+        : bisogni.livello("stanchezza") < SALITA.fatica ? "troppo stanco per salire" : null };
   }
 
   const sottoUnArredo = gestoDelPavimento(b, cosaInMano);
@@ -1246,6 +1258,12 @@ export function agisci(eroe, cosaInMano, indice) {
   return esito;
 }
 
+// Quanto costa la torre e quanto si vede: centosessanta tasselli di raggio,
+// e i luoghi unici fino a due regioni di distanza — le otto attorno e le
+// sedici dopo. Si può risalire quando si vuole: la seconda volta non mostra
+// niente di nuovo, ma costa lo stesso.
+export const SALITA = { fatica: 0.1, raggio: 160, regioni: 2 };
+
 function esegui(eroe, cosaInMano, indice, azione) {
   if (pesca.stato()) { pesca.interrompi(); return { tipo: "pescaInterrotta" }; }
   if (!azione || azione.impedito) return null;
@@ -1271,6 +1289,19 @@ function esegui(eroe, cosaInMano, indice, azione) {
   }
 
   const { tx, ty } = azione.bersaglio;
+
+  if (azione.tipo === "sali") {
+    bisogni.consuma("stanchezza", SALITA.fatica);
+    const secondi = simulazione.avanza(riposo.ORA, { eroe, alFreddo: () => freddo.tipo(eroe) });
+    const scoperti = esplorato.rivela(tx, ty, SALITA.raggio);
+    const avvistati = [];
+    for (const u of mappa.uniciAttorno(tx, ty, SALITA.regioni)) {
+      const qui = tx >= u.tx0 && ty >= u.ty0 && tx < u.tx0 + u.larghezza && ty < u.ty0 + u.altezza;
+      if (!qui && !esplorato.eAvvistato(u)) avvistati.push(u.nome);
+      esplorato.avvista(u);
+    }
+    return { tipo: "salito", secondi, scoperti, avvistati };
+  }
 
   if (azione.tipo === "bevi") {
     bisogni.ristora("sete", SORSO);

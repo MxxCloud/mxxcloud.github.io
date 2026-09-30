@@ -128,6 +128,8 @@ export function istantanea(eroe, casellaScelta) {
     // I segnaposti messi sulla mappa (M7.18.41). Come sopra: senza, si
     // riapre senza segni, e il formato non sale.
     segnaposti: esplorato.segni(),
+    // I luoghi unici avvistati dalla torre (M7.18.56). Come sopra.
+    avvistati: esplorato.tuttiGliAvvistati(),
   };
 }
 
@@ -327,6 +329,8 @@ export function valido(stato) {
     v.every(esplorato.segnoValidoPerIlSalvataggio))) return false;
   if (!presente(stato, "ortiVisti", v => Array.isArray(v) && v.length <= 100000 &&
     v.every(k => typeof k === "string" && /^-?\d+,-?\d+$/.test(k)))) return false;
+  if (!presente(stato, "avvistati", v => Array.isArray(v) && v.length <= 100000 &&
+    v.every(k => typeof k === "string" && /^-?\d+,-?\d+$/.test(k)))) return false;
   return true;
 }
 
@@ -387,6 +391,7 @@ export function applica(stato) {
   esplorato.ripristina(stato.esplorato);
   esplorato.ripristinaOrti(stato.ortiVisti);
   esplorato.ripristinaSegni(stato.segnaposti);
+  esplorato.ripristinaAvvistati(stato.avvistati);
 
   return {
     eroe: stato.eroe,

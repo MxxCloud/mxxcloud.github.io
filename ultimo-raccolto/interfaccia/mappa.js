@@ -102,6 +102,10 @@ const POZZO = "#7fb6e0";
 const LUOGO = "#d9a45f";
 const ROVINA = "#c9b49a";
 const FATTORIA = "#9db8ec";
+// I luoghi unici (M7.18.56): oro, il colore più acceso della carta, perché
+// sono le destinazioni. Ognuno ha la sua sagoma.
+const UNICO = "#f0c95a";
+const TIPI_UNICI = new Set(["torre", "cava"]);
 
 // --- l'atlante dei settori ------------------------------------------------
 
@@ -166,7 +170,7 @@ function disegnaSettore(sx, sy) {
     for (let x = 0; x < SETTORE; x += 1) {
       const o = oggetti[(y + 1) * B + x + 1];
       let classe;
-      if (o === OGGETTO.MURO || o === OGGETTO.MURO_ROTTO) classe = MURO;
+      if (o === OGGETTO.MURO || o === OGGETTO.MURO_ROTTO || o === OGGETTO.PARETE_CAVA || o === OGGETTO.TORRE) classe = MURO;
       else {
         let vicini = 0;
         for (let dy = 0; dy < 3; dy += 1) for (let dx = 0; dx < 3; dx += 1) vicini += alberi[(y + dy) * B + x + dx];
@@ -307,15 +311,22 @@ export function stato() {
 }
 
 // Il riquadro dell'esplorato, in tasselli: la carta non va oltre quello che
-// hai visto, così non ci si perde nel buio.
+// hai visto, così non ci si perde nel buio. I luoghi unici avvistati dalla
+// torre (M7.18.56) ci stanno dentro: sono lontani apposta, e una carta che
+// non ci arriva non li mostrerebbe.
 function confini() {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  esplorato.perOgnuno((sx, sy) => {
+  const allarga = (sx, sy) => {
     if (sx < minX) minX = sx;
     if (sy < minY) minY = sy;
     if (sx > maxX) maxX = sx;
     if (sy > maxY) maxY = sy;
-  });
+  };
+  esplorato.perOgnuno(allarga);
+  for (const k of esplorato.tuttiGliAvvistati()) {
+    const [tx0, ty0] = k.split(",").map(Number);
+    allarga(Math.floor(tx0 / SETTORE), Math.floor(ty0 / SETTORE));
+  }
   if (minX === Infinity) return null;
   return { x0: minX * SETTORE, y0: minY * SETTORE, x1: (maxX + 1) * SETTORE, y1: (maxY + 1) * SETTORE };
 }
@@ -651,6 +662,12 @@ function luoghi(c, u, suCarta, inVista, nomi) {
   esplorato.perOgnuno((sx, sy) => {
     celleViste.add(`${Math.floor(sx * SETTORE / mappa.CELLA_ROVINE)},${Math.floor(sy * SETTORE / mappa.CELLA_ROVINE)}`);
   });
+  // Quelli avvistati dalla torre (M7.18.56) stanno sulla carta anche se non
+  // ci si è mai passati.
+  for (const k of esplorato.tuttiGliAvvistati()) {
+    const [tx0, ty0] = k.split(",").map(Number);
+    celleViste.add(`${Math.floor(tx0 / mappa.CELLA_ROVINE)},${Math.floor(ty0 / mappa.CELLA_ROVINE)}`);
+  }
   for (const chiave of celleViste) {
     const [cx, cy] = chiave.split(",").map(Number);
     const trovata = mappa.rovinaNellaCella(cx, cy);
@@ -663,10 +680,12 @@ function luoghi(c, u, suCarta, inVista, nomi) {
       const ty = rovina.ty0 + rovina.altezza / 2;
       // Una cella è più grande di un settore: si segna solo quello che si è
       // visto davvero.
-      if (!esplorato.eVisto(Math.floor(tx / SETTORE), Math.floor(ty / SETTORE))) continue;
+      const avvistato = rovina.unico && esplorato.eAvvistato(rovina);
+      if (!avvistato && !esplorato.eVisto(Math.floor(tx / SETTORE), Math.floor(ty / SETTORE))) continue;
       const punto = suCarta(tx, ty);
       if (!inVista(punto)) continue;
-      const tipo = rovina.luogo === "orto" ? "orto" : rovina.luogo === "pozzo" ? "pozzo" : rovina.luogo ? "luogo" : "rovina";
+      const tipo = TIPI_UNICI.has(rovina.unico) ? rovina.unico
+        : rovina.luogo === "orto" ? "orto" : rovina.luogo === "pozzo" ? "pozzo" : rovina.luogo ? "luogo" : "rovina";
       segno(c, tipo, punto.x, punto.y, u);
       // Un orto visitato dice le sue piante (M7.18.40): due pallini accanto
       // al segno, a ogni zoom, e i nomi al posto di «orto abbandonato».
@@ -675,7 +694,7 @@ function luoghi(c, u, suCarta, inVista, nomi) {
         piante.forEach((pianta, i) => cerchio(c, punto.x + (4.6 + i * 3.8) * u, punto.y, 1.7 * u, PIANTE[pianta].colore));
         nomi.push({ testo: piante.map((pianta) => PIANTE[pianta].nome).join(" · "), x: punto.x, y: punto.y + 3.6 * u, colore: ORTO });
       } else if (rovina.nome) {
-        const colore = tipo === "orto" ? ORTO : tipo === "pozzo" ? POZZO : LUOGO;
+        const colore = tipo === "orto" ? ORTO : tipo === "pozzo" ? POZZO : TIPI_UNICI.has(tipo) ? UNICO : LUOGO;
         nomi.push({ testo: rovina.nome.toUpperCase(), x: punto.x, y: punto.y + 3.6 * u, colore });
       }
     }
@@ -732,6 +751,37 @@ function segno(c, tipo, x, y, u) {
     c.lineTo(x - 2.3 * u, y);
     c.closePath();
     c.fillStyle = LUOGO;
+    c.fill();
+    c.stroke();
+    return;
+  }
+  // La torre è alta e stretta, con la cabina in cima; la cava è un monte
+  // spaccato. Tutte e due in oro.
+  if (tipo === "torre") {
+    c.beginPath();
+    c.moveTo(x - 1.2 * u, y + 2.8 * u);
+    c.lineTo(x - 0.7 * u, y - 1 * u);
+    c.lineTo(x - 1.6 * u, y - 1 * u);
+    c.lineTo(x - 1.6 * u, y - 2.8 * u);
+    c.lineTo(x + 1.6 * u, y - 2.8 * u);
+    c.lineTo(x + 1.6 * u, y - 1 * u);
+    c.lineTo(x + 0.7 * u, y - 1 * u);
+    c.lineTo(x + 1.2 * u, y + 2.8 * u);
+    c.closePath();
+    c.fillStyle = UNICO;
+    c.fill();
+    c.stroke();
+    return;
+  }
+  if (tipo === "cava") {
+    c.beginPath();
+    c.moveTo(x - 3 * u, y + 2.2 * u);
+    c.lineTo(x - 0.8 * u, y - 2.4 * u);
+    c.lineTo(x, y - 0.6 * u);
+    c.lineTo(x + 0.9 * u, y - 1.6 * u);
+    c.lineTo(x + 3 * u, y + 2.2 * u);
+    c.closePath();
+    c.fillStyle = UNICO;
     c.fill();
     c.stroke();
     return;
@@ -991,6 +1041,7 @@ function titolo(c, u, W) {
 // il segno accanto a ogni nome.
 const VOCI_LEGENDA = [
   ["tu", "TU"], ["fattoria", "FATTORIA"], ["orto", "ORTO ABBANDONATO"], ["pozzo", "POZZO"],
+  ["torre", "TORRE"], ["cava", "CAVA"],
   ["luogo", "ALTRI LUOGHI"], ["rovina", "CASA"], ["cassa", "CASSA"], ["letto", "LETTO"],
   ["fuoco", "FUOCO"], ["corpo", "IL TUO CORPO"],
 ];

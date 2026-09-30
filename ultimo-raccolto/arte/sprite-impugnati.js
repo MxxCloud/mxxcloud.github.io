@@ -55,6 +55,19 @@ export const LANCIA = [
   ".g.",
 ];
 
+// Il piccone (M7.18.56), come l'ascia: la testa in alto, il manico nel pugno.
+export const PICCONE = [
+  "effff",
+  "f.hge",
+  "..hg.",
+  "..hg.",
+  "..hg.",
+  "..hg.",
+  "..hg.",
+  "..hg.",
+  "..gg.",
+];
+
 export const ZAPPA = [
   "eee..",
   "eee..",

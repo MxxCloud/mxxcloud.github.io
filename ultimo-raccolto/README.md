@@ -12,6 +12,54 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.56 — i luoghi unici: la torre e la cava
+
+Il primo passo per dare alla valle un'avventura, oltre alla sopravvivenza.
+Finora rovine e luoghi erano uguali dappertutto, e niente dava un motivo
+per andare lontano. Adesso ci sono posti che esistono una volta sola per
+regione, ognuno con una cosa che si trova solo lì.
+- **Le regioni.** La valle è divisa in regioni di 4×4 celle, cioè 256
+  tasselli, poco più di dieci schermate.
+  - In ognuna c'è un solo luogo unico, sempre in una cella rimasta natura:
+    le case, i luoghi e le modifiche delle partite già in corso restano
+    dov'erano.
+  - Il tipo va a rotazione: due regioni vicine non hanno mai lo stesso
+    luogo, e in un blocco di 2×2 regioni ci sono tutti e quattro.
+  - La regione della fattoria ha sempre la torre, a poche schermate da
+    casa.
+  - I luoghi sono quattro: torre, cava, mulino e chiesa. Mulino e chiesa
+    arrivano con M7.18.57; fino ad allora le loro regioni restano senza.
+- **La torre di avvistamento.** Una torre di legno con la scala, in un
+  recinto di pietra rotto.
+  - «Sali sulla torre» costa un'ora e il 10% di stamina.
+  - Da lassù la mappa si riempie per 160 tasselli attorno, e si segnano i
+    luoghi unici fino a due regioni di distanza, anche quelli che non si
+    sono mai visti.
+  - Di notte non si vede niente, e il tasto lo dice. Si può risalire
+    quando si vuole: la seconda volta non mostra niente di nuovo, ma costa
+    lo stesso.
+  - Nella cassa ci sono torce, bacche secche e fibra: era un posto di
+    guardia.
+- **La cava di pietra.** Un avvallamento di roccia chiuso da pareti di
+  pietra, con un carrello rovesciato e una cassa.
+  - Nella cassa c'è sempre **il piccone**, già usato come ogni attrezzo
+    trovato, e da 3 a 5 pietre. Non si fabbrica: si trova solo qui, e al
+    banco si ripara come l'ascia (1 pietra e 2 fibre).
+  - Il piccone è l'ascia della pietra: un muro in 2 colpi invece di 5, un
+    sasso in 1 invece di 2, una parete di cava in 2 invece di 4. Come arma
+    fa 2 di danno, meno dell'ascia. Regge 50 usi.
+  - Le pareti rendono 3 pietre e **tornano all'inizio di ogni stagione**,
+    anche d'inverno. È la prima pietra che non finisce, e sta lontano da
+    casa. Il sasso sotto casa resta finito.
+- **Le iscrizioni.** Arrivando a un luogo unico se ne legge il nome in oro
+  e, sotto, una frase di chi c'era prima. Il messaggio resta di più, perché
+  si legge.
+- **Sulla mappa (TAB)** i luoghi unici hanno un segno in oro, uno per tipo,
+  e il loro nome. Quelli avvistati dalla torre compaiono anche nel buio, e
+  la carta si lascia spostare fino a loro.
+- I luoghi avvistati si salvano con la partita; un salvataggio di prima si
+  apre senza.
+
 ## M7.18.55 — il meteo che si vede
 
 Il meteo non cambia regole: cambia com'è la valle quando piove, nevica o
@@ -2394,7 +2442,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.55**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.56**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -3196,6 +3244,43 @@ promesse: sono appunti, perché non si perdano.
   restano solo i ritocchi che emergono giocando.
 
 Il primo livello, la luce e l'aria, è fatto: M7.18.44, M7.18.45 e M7.18.46.
+
+## Promemoria per le meccaniche
+
+Le idee del brainstorming sulle meccaniche, messe da parte con i luoghi
+unici (M7.18.56). Come sopra: appunti, non promesse.
+
+- **I prossimi luoghi unici (M7.18.57).**
+  - *Il mulino*, con la macina: 3 grano diventano 1 farina, solo lì. La
+    farina si cuoce al fuoco in pane (fame 0,5, dura 8 giorni). Nella cassa
+    farina e grano. Iscrizione: «Farina per chi resta.»
+  - *La chiesa*, con la campana: si suona solo di notte, una volta per
+    notte. Gli infetti entro 600 pixel vanno alla chiesa, e fino all'alba
+    ci vanno anche quelli che nascono. Serve a tenerli lontani da casa, ma
+    chi suona sta lì e deve scappare. Iscrizione: «Suonatela solo se potete
+    correre.»
+- **Altri luoghi unici possibili.** La farmacia, la serra, il posto di
+  blocco, l'apiario.
+- **Le leve dell'avventura.**
+  - *La distanza conta*: più lontano da casa, più ricco il bottino e più
+    duri gli infetti.
+  - *Cantine e tane*: posti sotto terra, bui, con un'entrata sola.
+  - *Serrature*: porte e casse chiuse che vogliono un attrezzo o una
+    chiave trovata altrove.
+  - *Un obiettivo*: il grano antico, una varietà da ritrovare e far
+    ripartire.
+  - *Eventi lontani*: fumo all'orizzonte, una campana, un fuoco da andare a
+    vedere.
+  - *Altri superstiti*: per ora no, deciso insieme.
+- **Difesa notturna.** Allarmi e trappole attorno alla fattoria; un cane
+  che avvisa.
+- **Il mondo si riprende.** Incendi d'estate; grandine e gelata tardiva
+  sull'orto; il tetto che cede se la casa non si cura.
+- **Cibo e cura.** Cucina combinata (più ingredienti, più resa); la cantina
+  o la ghiacciaia, dove il cibo dura di più; le erbe medicinali.
+- **Esplorare.** Diari e mappe trovati nelle case; rottami e ferro per
+  attrezzi migliori; la cronaca e le tombe dei superstiti che ti hanno
+  preceduto.
 
 ## Comandi
 

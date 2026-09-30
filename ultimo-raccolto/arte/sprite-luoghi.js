@@ -63,3 +63,77 @@ export const TRONCO = [
   ".....rr.rr......",
   "................",
 ];
+
+// I luoghi unici (M7.18.56).
+//
+// La torre di avvistamento: una garitta di legno su quattro gambe, con la
+// scala in mezzo. Alta quasi tre tasselli — si deve vedere da lontano, è il
+// posto da cui si guarda — e ancorata ai piedi come tutto il resto.
+export const TORRE = [
+  "......gggg......",
+  ".....ghhhhg.....",
+  "....ghwwwwhg....",
+  "...ghwwwwwwhg...",
+  "..ghwwwwwwwwhg..",
+  ".gggggggggggggg.",
+  "..ghhhhhhhhhhg..",
+  "..ghgrrrrrrghg..",
+  "..ghgrrrrrrghg..",
+  "..ghhhhhhhhhhg..",
+  ".gggggggggggggg.",
+  ".ghhhhhhhhhhhhg.",
+  "..gh..gwwg..hg..",
+  "..gh..g..g..hg..",
+  "..gh..gwwg..hg..",
+  "..gh..g..g..hg..",
+  "..gh..gwwg..hg..",
+  "..gh..g..g..hg..",
+  "..gh..gwwg..hg..",
+  "..gh..g..g..hg..",
+  "..ghhhhhhhhhhg..",
+  "..gh..g..g..hg..",
+  "..gh..gwwg..hg..",
+  "..gh..g..g..hg..",
+  "..gh..gwwg..hg..",
+  "..gh..g..g..hg..",
+  "..gh..gwwg..hg..",
+  "..gh..g..g..hg..",
+  "..gh..gwwg..hg..",
+  "..ghhhhhhhhhhg..",
+  "..gh..gwwg..hg..",
+  "..gh..g..g..hg..",
+  "..gh..gwwg..hg..",
+  "..gh..g..g..hg..",
+  "..gh..gwwg..hg..",
+  "..gh..g..g..hg..",
+  "..gh..gwwg..hg..",
+  "..gh..g..g..hg..",
+  ".ggg..g..g..ggg.",
+  "gggg..gggg..gggg",
+];
+
+// La parete della cava: roccia a blocchi irregolari, luce in alto a
+// sinistra. Non è un muro — non ci sono file — ed è la cosa che si spacca col
+// piccone e torna a ogni stagione.
+export const PARETE_CAVA = [
+  "....YX....YY....",
+  "..YYeXY..YeeYX..",
+  ".YeeeXfYYeeeXYY.",
+  "YeeeeXfeeeeXYeeY",
+  "eeeedXXeeedXfeee",
+  "eeeXXYXXXXXYeeee",
+  "eXXYYeeYYXXXeeee",
+  "XYYeeeeeXYYXXXed",
+  "XeeeeeeeXfeeYXXX",
+  "XXXeeeedXfeeeeXY",
+  "eYXXeedXYeeeeXYe",
+  "eeeXXXXXXeeeeXfe",
+  "eeeeXYYeXXXeXYee",
+  "eeeeXfeeeYXXXXXe",
+  "eeeXYeeeeeXYYYXX",
+  "eXXXXeeeeXXfeeeY",
+  "XYYYXXXXXYXXeeee",
+  "YeeeeYXYYeeXXeed",
+  "eeeeeeXfeeeeXXdd",
+  "XXXXXXXXXXXXXXXX",
+];
