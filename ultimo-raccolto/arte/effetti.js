@@ -313,10 +313,11 @@ export function disegnaBagliori(p, camera, lumi, luce, secondi) {
 // Quanto tira adesso, da zero a poco più di uno e mezzo. Soffia sempre da
 // ovest — una valle ha il suo vento — a raffiche lente: due onde di passo
 // diverso, così una raffica non arriva a tempo come un metronomo. Con la
-// pioggia tira più forte, con la neve un po' di più.
+// pioggia tira più forte; con la neve meno (M7.18.56.2): nevica nel calmo,
+// e una neve col vento forte si leggeva come una bufera continua.
 export function vento(secondi, evento) {
   const raffica = 0.5 + 0.3 * Math.sin(secondi * 0.23) + 0.2 * Math.sin(secondi * 0.61 + 1.7);
-  const forza = evento === "pioggia" ? 1.6 : evento === "neve" ? 1.2 : 1;
+  const forza = evento === "pioggia" ? 1.6 : evento === "neve" ? 0.8 : 1;
   return raffica * forza;
 }
 
