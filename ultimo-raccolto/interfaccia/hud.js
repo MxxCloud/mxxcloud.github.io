@@ -14,7 +14,7 @@ import * as bisogni from "../regole/bisogni.js";
 import { CATALOGO } from "../regole/oggetti.js";
 import * as inventario from "../regole/inventario.js";
 import * as addosso from "../regole/addosso.js";
-import { RICETTE, bastano, disponibili } from "../regole/ricette.js";
+import { visibili, bastano, disponibili } from "../regole/ricette.js";
 import * as contenitori from "../regole/contenitori.js";
 import * as decadimento from "../regole/decadimento.js";
 import { nomeDi } from "../regole/oggetti.js";
@@ -486,7 +486,9 @@ const GRIGIO_ISCRIZIONE = "#b8b2a2";
 const RICETTE_VISIBILI = 7;
 
 export function disegnaRicette(p, { scelta, alBanco, alFuoco = false }) {
-  const righe = Math.min(RICETTE_VISIBILI, RICETTE.length);
+  // Solo quelle che si sanno fare (M7.18.56.1).
+  const elenco = visibili();
+  const righe = Math.min(RICETTE_VISIBILI, elenco.length);
   const altezzaRiga = 16;
   // Largo quanto la riga dei costi più lunga, misurata: la zuppa di patate
   // ha tre ingredienti, e a 164 il secchio pieno usciva dal riquadro.
@@ -498,7 +500,7 @@ export function disegnaRicette(p, { scelta, alBanco, alFuoco = false }) {
   // La finestra tiene il cursore in mezzo finché può, e si incolla agli
   // estremi quando ci arriva: scorrere di continuo anche in cima a un elenco
   // corto fa perdere il senso di dove si è.
-  const primo = Math.max(0, Math.min(scelta - (righe >> 1), RICETTE.length - righe));
+  const primo = Math.max(0, Math.min(scelta - (righe >> 1), elenco.length - righe));
 
   riquadro(p, x, y, larghezza, altezza, FONDO_PIENO, BORDO);
   testo.disegna(p, "COSTRUIRE", x + 7, y + 6, CHIARO);
@@ -512,8 +514,8 @@ export function disegnaRicette(p, { scelta, alBanco, alFuoco = false }) {
   // la prima stesura le metteva tutte e due a destra, una esclusa dall'altra,
   // e arrivando al banco spariva il conto proprio quando si comincia a
   // scorrere davvero.
-  if (RICETTE.length > righe) {
-    const conto = `${scelta + 1}/${RICETTE.length}`;
+  if (elenco.length > righe) {
+    const conto = `${scelta + 1}/${elenco.length}`;
     testo.disegna(p, conto, x + 14 + testo.larghezza("COSTRUIRE"), y + 6, GRIGIO);
   }
   if (alBanco) {
@@ -523,7 +525,7 @@ export function disegnaRicette(p, { scelta, alBanco, alFuoco = false }) {
 
   for (let i = 0; i < righe; i += 1) {
     const indice = primo + i;
-    const ricetta = RICETTE[indice];
+    const ricetta = elenco[indice];
     const ry = y + 17 + i * altezzaRiga;
     // Due modi diversi di non poter costruire, e vanno detti diversi: manca la
     // roba, o manca il posto. Il primo si risolve raccogliendo, il secondo
@@ -573,7 +575,7 @@ export function disegnaRicette(p, { scelta, alBanco, alFuoco = false }) {
     }
   }
 
-  const piede = RICETTE[scelta]?.ripara ? "SPAZIO RIPARA IL PIU USURATO   C CHIUDI" : "FRECCE SCEGLI   SPAZIO COSTRUISCI   C CHIUDI";
+  const piede = elenco[scelta]?.ripara ? "SPAZIO RIPARA IL PIU USURATO   C CHIUDI" : "FRECCE SCEGLI   SPAZIO COSTRUISCI   C CHIUDI";
   testo.disegna(p, piede, x + Math.round((larghezza - testo.larghezza(piede)) / 2), y + altezza - 9, GRIGIO);
 }
 

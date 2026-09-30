@@ -17,6 +17,7 @@ import { impronta, generatore } from "../motore/casuale.js";
 import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
 import { CATALOGO } from "./oggetti.js";
+import * as ricette from "./ricette.js";
 import * as inventario from "./inventario.js";
 
 // Dodici caselle contro le otto dello zaino. Una cassa deve valere il viaggio
@@ -341,5 +342,7 @@ export function sposta(tx, ty, versoLaCassa, indice) {
   if (resto === 0) fila[indice] = null;
   else casella.quantita = resto;
   scrivi(tx, ty, fila);
-  return { tipo: "spostato", verso: "zaino", cosa: casella.cosa };
+  // Il piccone della cava (M7.18.56.1): visto fatto, si sa rifare.
+  const imparato = ricette.impara(casella.cosa) ? casella.cosa : null;
+  return { tipo: "spostato", verso: "zaino", cosa: casella.cosa, imparato };
 }

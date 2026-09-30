@@ -103,9 +103,9 @@ export const CATALOGO = {
     // all'orecchio.
     impugnato: { nome: "ascia", righe: impugnati.ASCIA, scartoY: 5 },
   },
-  // Il piccone (M7.18.56) non si fabbrica: si trova solo nella cassa della
-  // cava, già usato come ogni attrezzo trovato, e si ripara al banco come
-  // l'ascia. Meno durevole di lei, perché la pietra smussa più del legno.
+  // Il piccone (M7.18.56) si trova la prima volta nella cassa della cava,
+  // già usato come ogni attrezzo trovato; da lì in poi si sa rifare al banco
+  // (M7.18.56.1) e si ripara come l'ascia. Meno durevole di lei, perché la pietra smussa più del legno.
   piccone: {
     durata: 50,
     serve: ["raccolta", "combatti"],
