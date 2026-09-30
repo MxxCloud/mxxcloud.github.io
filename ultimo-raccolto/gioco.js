@@ -63,7 +63,7 @@ import {
 } from "./arte/voci.js";
 import * as inventario from "./regole/inventario.js";
 import * as azioni from "./regole/azioni.js";
-import { RICETTE, fai } from "./regole/ricette.js";
+import { fai, visibili as ricetteVisibili } from "./regole/ricette.js";
 import { nomeDi, CATALOGO } from "./regole/oggetti.js";
 import * as hud from "./interfaccia/hud.js";
 import * as minimappa from "./interfaccia/minimappa.js";
@@ -77,7 +77,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.56";
+const VERSIONE = "M7.18.56.1";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -800,12 +800,14 @@ function fuocoQui() {
 function leggiLeRicette() {
   const prima = ricettaScelta;
   if (comandi.appenaPremuto("su")) ricettaScelta = Math.max(0, ricettaScelta - 1);
-  if (comandi.appenaPremuto("giu")) ricettaScelta = Math.min(RICETTE.length - 1, ricettaScelta + 1);
+  const elenco = ricetteVisibili();
+  if (comandi.appenaPremuto("giu")) ricettaScelta = Math.min(elenco.length - 1, ricettaScelta + 1);
+  ricettaScelta = Math.min(ricettaScelta, elenco.length - 1);
   if (ricettaScelta !== prima) suono.suona(SCELTA);
 
   if (!comandi.appenaPremuto("usa")) return;
 
-  const ricetta = RICETTE[ricettaScelta];
+  const ricetta = elenco[ricettaScelta];
   const esito = fai(ricetta, alBanco, alFuoco);
   suono.suona(esito.fatto ? FATTO : NEGATO);
   if (esito.fatto) {
@@ -911,6 +913,7 @@ function leggiLaCassa() {
     return;
   }
   suono.suona(versoLaCassa ? POSA : PRESO);
+  if (esito.imparato) annuncia(`hai imparato a fare: ${nomeDi(esito.imparato)}`, "#f0c95a", "si costruisce al banco");
 }
 
 // --- la schermata iniziale -------------------------------------------------

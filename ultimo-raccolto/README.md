@@ -12,6 +12,21 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.56.1 — il piccone si impara alla cava
+
+Il piccone non è più solo un attrezzo da trovare: trovato una volta, si sa
+rifare.
+- **Prima di trovarlo** il pannello di costruzione non lo mostra, e non
+  mostra neanche «Ripara piccone».
+- **Quando lo si prende dalla cassa della cava** compare «Hai imparato a
+  fare: piccone — si costruisce al banco». Da lì in poi è nel pannello, dopo
+  l'ascia.
+- **Costa 4 pietra, 2 rami e 3 fibre**, al banco: il doppio dell'ascia, e
+  quello rifatto è nuovo (50 usi).
+- **Resta saputo.** Si salva con la partita, e il superstite che viene dopo
+  una morte lo sa ancora, come la mappa. Una partita di prima con il piccone
+  già nello zaino lo sa all'apertura.
+
 ## M7.18.56 — i luoghi unici: la torre e la cava
 
 Il primo passo per dare alla valle un'avventura, oltre alla sopravvivenza.
@@ -43,8 +58,9 @@ regione, ognuno con una cosa che si trova solo lì.
 - **La cava di pietra.** Un avvallamento di roccia chiuso da pareti di
   pietra, con un carrello rovesciato e una cassa.
   - Nella cassa c'è sempre **il piccone**, già usato come ogni attrezzo
-    trovato, e da 3 a 5 pietre. Non si fabbrica: si trova solo qui, e al
-    banco si ripara come l'ascia (1 pietra e 2 fibre).
+    trovato, e da 3 a 5 pietre. La prima volta si trova solo qui (da
+    M7.18.56.1 poi si sa rifare al banco), e si ripara come l'ascia
+    (1 pietra e 2 fibre).
   - Il piccone è l'ascia della pietra: un muro in 2 colpi invece di 5, un
     sasso in 1 invece di 2, una parete di cava in 2 invece di 4. Come arma
     fa 2 di danno, meno dell'ascia. Regge 50 usi.
@@ -2442,7 +2458,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.56**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.56.1**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

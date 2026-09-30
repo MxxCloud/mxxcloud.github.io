@@ -26,6 +26,46 @@ import * as bisogni from "./bisogni.js";
 
 import * as inventario from "./inventario.js";
 
+// Le ricette che si imparano trovando la cosa fatta (M7.18.56.1). È della
+// partita e non del superstite: come la mappa, passa a chi viene dopo, e si
+// salva.
+const IMPARABILI = new Set(["piccone"]);
+const imparate = new Set();
+
+// Restituisce se è una cosa nuova: il gioco lo annuncia una volta sola.
+export function impara(cosa) {
+  if (!IMPARABILI.has(cosa) || imparate.has(cosa)) return false;
+  imparate.add(cosa);
+  return true;
+}
+
+export function sa(cosa) {
+  return imparate.has(cosa);
+}
+
+export function tutteLeImparate() {
+  return [...imparate];
+}
+
+export function imparataValida(cosa) {
+  return IMPARABILI.has(cosa);
+}
+
+export function ripristinaImparate(elenco) {
+  imparate.clear();
+  if (!Array.isArray(elenco)) return;
+  for (const cosa of elenco) if (IMPARABILI.has(cosa)) imparate.add(cosa);
+}
+
+export function reimposta() {
+  imparate.clear();
+}
+
+// Quelle che il pannello mostra: tutte, meno quelle ancora da imparare.
+export function visibili() {
+  return RICETTE.filter((r) => !r.richiede || imparate.has(r.richiede));
+}
+
 // L'ordine è quello in cui si incontrano: prima quello che si fa con le mani,
 // poi quello che vuole un banco. Non si mescolano, perché la prima cosa da
 // imparare guardando l'elenco è che sono due elenchi.
@@ -175,6 +215,7 @@ export const RICETTE = [
   // quello che si consuma è la lenza, e una lenza si rifà di filo.
   ...["ascia", "zappa", "lancia", "canna", "piccone"].map(cosa => ({
     id: "ripara_" + cosa, ripara: cosa, banco: true,
+    ...(IMPARABILI.has(cosa) ? { richiede: cosa } : {}),
     produce: { cosa, quante: 1 },
     costo: [{ cosa: "pietra", quante: 1 }, { cosa: cosa === "canna" ? "filo" : "fibra", quante: 2 }],
   })),
@@ -189,6 +230,21 @@ export const RICETTE = [
       { cosa: "pietra", quante: 2 },
       { cosa: "ramo", quante: 1 },
       { cosa: "fibra", quante: 2 },
+    ],
+  },
+  // Il piccone (M7.18.56.1) non si inventa: lo si vede fatto, nella cassa
+  // della cava, e da lì in poi si sa rifare. Prima di allora non compare
+  // nemmeno nel pannello. Costa il doppio dell'ascia: il ferro della punta
+  // si fa con la pietra buona, e ce ne vuole.
+  {
+    id: "piccone",
+    banco: true,
+    richiede: "piccone",
+    produce: { cosa: "piccone", quante: 1 },
+    costo: [
+      { cosa: "pietra", quante: 4 },
+      { cosa: "ramo", quante: 2 },
+      { cosa: "fibra", quante: 3 },
     ],
   },
   {

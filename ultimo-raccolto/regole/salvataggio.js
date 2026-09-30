@@ -20,6 +20,7 @@ import * as riposo from "./riposo.js";
 import * as bisogni from "./bisogni.js";
 import * as salute from "./salute.js";
 import * as inventario from "./inventario.js";
+import * as ricette from "./ricette.js";
 import * as stagioni from "./stagioni.js";
 import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
@@ -130,6 +131,8 @@ export function istantanea(eroe, casellaScelta) {
     segnaposti: esplorato.segni(),
     // I luoghi unici avvistati dalla torre (M7.18.56). Come sopra.
     avvistati: esplorato.tuttiGliAvvistati(),
+    // Le ricette imparate trovando la cosa (M7.18.56.1). Come sopra.
+    imparate: ricette.tutteLeImparate(),
   };
 }
 
@@ -329,6 +332,7 @@ export function valido(stato) {
     v.every(esplorato.segnoValidoPerIlSalvataggio))) return false;
   if (!presente(stato, "ortiVisti", v => Array.isArray(v) && v.length <= 100000 &&
     v.every(k => typeof k === "string" && /^-?\d+,-?\d+$/.test(k)))) return false;
+  if (!presente(stato, "imparate", v => Array.isArray(v) && v.length <= 32 && v.every(ricette.imparataValida))) return false;
   if (!presente(stato, "avvistati", v => Array.isArray(v) && v.length <= 100000 &&
     v.every(k => typeof k === "string" && /^-?\d+,-?\d+$/.test(k)))) return false;
   return true;
@@ -392,6 +396,9 @@ export function applica(stato) {
   esplorato.ripristinaOrti(stato.ortiVisti);
   esplorato.ripristinaSegni(stato.segnaposti);
   esplorato.ripristinaAvvistati(stato.avvistati);
+  // Un salvataggio di prima con il piccone nello zaino l'ha già trovato.
+  ricette.ripristinaImparate(stato.imparate);
+  if (inventario.quante("piccone") > 0) ricette.impara("piccone");
 
   return {
     eroe: stato.eroe,

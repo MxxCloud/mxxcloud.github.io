@@ -63,7 +63,7 @@ function reset() {
   meteo.reimposta();
   pesca.interrompi(); mappa.impostaGelo(false); orto.impostaBestie(false); orto.impostaParassiti(false);
   riparo.reimposta(); tempo.reimposta(); bisogni.reimposta(); salute.reimposta();
-  inventario.svuota(); modifiche.svuota(); entita.svuota(); simulazione.resoconto(); esplorato.svuota();
+  inventario.svuota(); modifiche.svuota(); entita.svuota(); simulazione.resoconto(); esplorato.svuota(); ricette.reimposta();
   mappa.inizializza('review');
   const f=mappa.laFattoria();
   tx=f.tx;ty=f.ty;
@@ -6172,8 +6172,8 @@ test('la cassa della cava ha sempre il piccone, già usato, e la pietra; quella 
     assert.deepEqual(contenitori.contenutoDi(c.tx,c.ty).filter(Boolean).map(v=>v.cosa).sort(),['bacche_secche','fibra','torcia']);
   }
   assert.ok(cave>=8,'cave: '+cave);
-  // Non si fabbrica: si trova solo lì, e al banco si ripara.
-  assert.equal(ricette.RICETTE.some(r=>r.produce?.cosa==='piccone'&&!r.ripara),false);
+  // Si fabbrica solo dopo averlo trovato (M7.18.56.1), e al banco si ripara.
+  assert.ok(ricette.RICETTE.filter(r=>r.produce?.cosa==='piccone').every(r=>r.richiede==='piccone'));
   const ripara=ricette.RICETTE.find(r=>r.id==='ripara_piccone');
   assert.ok(ripara?.banco);assert.deepEqual(ripara.costo,[{cosa:'pietra',quante:1},{cosa:'fibra',quante:2}]);
 });
@@ -6228,4 +6228,53 @@ test('arrivando a un luogo unico si legge l’iscrizione, e il carattere ha tutt
   const carta=readFileSync(new URL('../interfaccia/mappa.js',import.meta.url),'utf8');
   assert.match(carta,/\["torre", "TORRE"\], \["cava", "CAVA"\]/);
   assert.match(carta.slice(carta.indexOf('function confini'),carta.indexOf('function confini')+900),/tuttiGliAvvistati/);
+});
+
+// M7.18.56.1 — il piccone si impara alla cava.
+const visibile=id=>ricette.visibili().some(r=>r.id===id);
+function prendiDallaCava(){
+  const cava=uniciDi('cava')[0],c=segnoNelLuogo(cava,'c');
+  const i=contenitori.contenutoDi(c.tx,c.ty).findIndex(v=>v?.cosa==='piccone');
+  return contenitori.sposta(c.tx,c.ty,false,i);
+}
+test('il piccone non compare fra le ricette finché non lo si trova nella cava; poi si fa al banco',()=>{
+  assert.equal(visibile('piccone'),false);assert.equal(visibile('ripara_piccone'),false);
+  assert.ok(visibile('ascia')&&visibile('ripara_ascia'),'le altre sì');
+  // La cassa della torre non insegna niente.
+  const torre=uniciDi('torre',0)[0],ct=segnoNelLuogo(torre,'c');
+  assert.equal(contenitori.sposta(ct.tx,ct.ty,false,0).imparato,null);
+  assert.equal(visibile('piccone'),false);
+  const esito=prendiDallaCava();
+  assert.equal(esito.cosa,'piccone');assert.equal(esito.imparato,'piccone');
+  assert.ok(visibile('piccone')&&visibile('ripara_piccone'));
+  assert.equal(ricette.impara('piccone'),false,'si impara una volta sola');
+  const r=ricette.RICETTE.find(r=>r.id==='piccone');
+  assert.deepEqual(r.costo,[{cosa:'pietra',quante:4},{cosa:'ramo',quante:2},{cosa:'fibra',quante:3}]);
+  inventario.svuota();
+  inventario.aggiungi('pietra',4);inventario.aggiungi('ramo',2);inventario.aggiungi('fibra',3);
+  assert.equal(ricette.fai(r,false).perche,'banco');
+  assert.equal(ricette.fai(r,true).fatto,true);
+  assert.equal(inventario.quante('piccone'),1);assert.equal(inventario.usiRimasti(inventario.attrezzo('piccone')),50);
+  assert.equal(inventario.quante('pietra'),0);
+});
+test('il piccone imparato si salva e resta al superstite dopo; un salvataggio di prima col piccone lo sa',()=>{
+  prendiDallaCava();
+  const stato=salvataggio.istantanea(eroe,0);
+  assert.deepEqual(stato.imparate,['piccone']);
+  ricette.reimposta();inventario.svuota();assert.ok(salvataggio.applica(stato));
+  assert.ok(ricette.sa('piccone'));
+  // Senza il campo e senza piccone: non lo sa.
+  const vecchio={...stato};delete vecchio.imparate;vecchio.inventario=stato.inventario.map(c=>c?.cosa==='piccone'?null:c);
+  assert.ok(salvataggio.valido(vecchio));assert.ok(salvataggio.applica(vecchio));assert.equal(ricette.sa('piccone'),false);
+  // Senza il campo ma col piccone nello zaino: l'aveva già trovato.
+  const colPiccone={...stato};delete colPiccone.imparate;
+  assert.ok(salvataggio.applica(colPiccone));assert.ok(ricette.sa('piccone'));
+  assert.equal(salvataggio.valido({...stato,imparate:['ascia']}),false);
+  assert.equal(salvataggio.valido({...stato,imparate:'piccone'}),false);
+  // Il superstite nuovo non tocca quello che si sa: nuovoSuperstite non lo azzera.
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  const nuovo=gioco.slice(gioco.indexOf('function nuovoSuperstite'),gioco.indexOf('function nuovoSuperstite')+3000);
+  assert.doesNotMatch(nuovo,/ricette\.reimposta|ripristinaImparate/);
+  assert.match(gioco,/ricetteVisibili\(\)/);
+  assert.match(readFileSync(new URL('../interfaccia/hud.js',import.meta.url),'utf8'),/const elenco = visibili\(\);/);
 });
