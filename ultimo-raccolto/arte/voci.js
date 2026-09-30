@@ -369,3 +369,14 @@ export const MORTE = {
   filtro: { tipo: "passabasso", taglio: 620, a: 110, risonanza: 2.5 },
   volume: 0.5,
 };
+
+// Il tuono (M7.18.55). Rumore grave con una coda lunga: più lunga della morte,
+// e va bene, perché il tuono non chiede niente — rotola via mentre il gioco
+// continua. Arriva dopo il lampo, tanto più tardi quanto più era lontano.
+export const TUONO = {
+  onda: "rumore",
+  attacco: 0.03,
+  coda: 2.6,
+  filtro: { tipo: "passabasso", taglio: 360, a: 55, risonanza: 0.9 },
+  volume: 0.62,
+};

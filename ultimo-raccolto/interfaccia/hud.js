@@ -399,17 +399,19 @@ export function rigaDellaLuna(luna) {
 
 // --- suggerimento dell'azione --------------------------------------------
 
-export function disegnaMeteo(p, { evento, domani, bagnato, freddo = 0, luna = null }) {
+export function disegnaMeteo(p, { evento, domani, bagnato, freddo = 0, luna = null, temporale = false, temporaleDomani = false }) {
   if (freddo > 0) testo.disegnaConOmbra(p, `FREDDO X${freddo}`, 7, 72, "#91b9cc");
   // La canicola (M7.18.42) in rosso caldo, oggi e il giorno prima: è l'unica
   // previsione che chiede di fare qualcosa, e va vista.
   const nomi = { arido: "ARIDO: SETE X3", canicola: "CANICOLA: INNAFFIA TUTTO", pioggia: "PIOGGIA", neve: "NEVE: PASSO -28%", sereno: "SERENO" };
-  const scritta = nomi[evento];
+  // Da M7.18.55 un giorno di pioggia può essere un temporale: per le regole
+  // è pioggia, ma si vede e si sente, e va detto.
+  const scritta = temporale && evento === "pioggia" ? "TEMPORALE" : nomi[evento];
   const x = schermo.LARGHEZZA - testo.larghezza(scritta) - 7;
   testo.disegnaConOmbra(p, scritta, x, 33, evento === "canicola" ? "#e0704a" : evento === "arido" ? "#e0b46a" : "#abcdd7");
   let y = 42;
   if (domani !== evento && domani !== "sereno") {
-    const previsione = `DOMANI ${domani === "arido" ? "ARIDO" : domani.toUpperCase()}`;
+    const previsione = `DOMANI ${domani === "arido" ? "ARIDO" : temporaleDomani && domani === "pioggia" ? "TEMPORALE" : domani.toUpperCase()}`;
     testo.disegnaConOmbra(p, previsione, schermo.LARGHEZZA-testo.larghezza(previsione)-7, y, domani === "canicola" ? "#e0704a" : TENUE);
     y += 9;
   }
