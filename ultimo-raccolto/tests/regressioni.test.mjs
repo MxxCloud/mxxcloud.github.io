@@ -6278,3 +6278,31 @@ test('il piccone imparato si salva e resta al superstite dopo; un salvataggio di
   assert.match(gioco,/ricetteVisibili\(\)/);
   assert.match(readFileSync(new URL('../interfaccia/hud.js',import.meta.url),'utf8'),/const elenco = visibili\(\);/);
 });
+
+// M7.18.56.2 — la neve cade come la pioggia, piano e sempre dalla stessa parte.
+test('la neve scende come la pioggia: il vento non la sposta, e i fiocchi non cambiano strada',()=>{
+  const fiocchi=(secondi,aria)=>{const r=[];const p={save(){},restore(){},fillRect(x,y,w,h){r.push([x,y,w,h]);}};
+    atmosfera.disegna(p,'neve',secondi,null,{aria});return r;};
+  const t=4000.37;
+  assert.deepEqual(fiocchi(t,0),fiocchi(t,1.8),'la raffica non tocca i fiocchi');
+  // Fotogramma per fotogramma, per quattro secondi: ogni fiocco scende e va
+  // verso est, al più di un pixel di lato, mai indietro.
+  let prima=fiocchi(t,0.5);
+  for(let k=1;k<=240;k++){
+    const dopo=fiocchi(t+k/60,0.5+0.5*Math.sin(k));
+    assert.equal(dopo.length,prima.length);
+    dopo.forEach(([x,y],i)=>{
+      const dx=x-prima[i][0],dy=y-prima[i][1];
+      if(Math.abs(dy)>100||Math.abs(dx)>100)return; // rientra dall'altro bordo
+      assert.ok(dx>=0&&dx<=1,`fiocco ${i}: dx ${dx}`);assert.ok(dy>=0&&dy<=1,`fiocco ${i}: dy ${dy}`);
+    });
+    prima=dopo;
+  }
+  // Due piani: grandi e piccoli, più lenti della pioggia.
+  const lati=new Set(fiocchi(t,0).map(f=>f[2]));assert.deepEqual([...lati].sort(),[1,2]);
+  assert.ok(atmosfera.PENDENZA_NEVE>0&&atmosfera.PENDENZA_NEVE<=0.3);
+});
+test('con la neve il vento è più calmo che in un giorno sereno',async()=>{
+  const effetti=await import('../arte/effetti.js');
+  for(let s=0;s<200;s+=7.3){assert.ok(effetti.vento(s,'neve')<effetti.vento(s,'sereno'));assert.ok(effetti.vento(s,'neve')<effetti.vento(s,'pioggia'));}
+});

@@ -20,6 +20,11 @@ export function tasselliCoperti(stanza) {
   return coperti;
 }
 
+// La neve scende inclinata di un pixel ogni quattro, sempre verso est: il
+// vento non la sposta, perché un fiocco che cambia strada a ogni raffica si
+// legge come tempesta.
+export const PENDENZA_NEVE = 0.25;
+
 // "aria" è il vento (effetti.vento): la pioggia si piega con lui. "eAcqua" e
 // "effetti" servono agli schizzi e ai cerchi, che ci sono solo a effetti
 // accesi.
@@ -31,12 +36,20 @@ export function disegna(p, evento, secondi, stanza = null, { aria = 0, eAcqua = 
   p.save();
   p.fillStyle = neve ? "#e6eef1" : "#91b9cc";
   if (neve) {
-    p.globalAlpha = 0.8;
-    for (let i = 0; i < 90; i++) {
-      const x = Math.floor(modulo(i*79 + secondi*(4 + aria*3) + Math.sin(secondi+i)*4 - q.sinistra, LARGHEZZA));
-      const y = Math.floor(modulo(i*47 + secondi*15 - q.sopra, ALTEZZA));
-      if (coperto(x, y)) continue;
-      p.fillRect(x, y, i%3===0 ? 2 : 1, 1);
+    // Come la pioggia (M7.18.56.2), ma lenta: due piani, i fiocchi lontani
+    // piccoli e tenui, i vicini più grandi e più svelti, e tutti scendono in
+    // diagonale sempre dalla stessa parte. Prima il vento, che cambia a ogni
+    // raffica, moltiplicava il tempo di gioco: i fiocchi scattavano a destra e
+    // a sinistra e sembrava sempre bufera.
+    for (const [n, alfa, velocita, sale, grande] of [[50, 0.55, 11, 31, 0], [40, 0.85, 19, 79, 3]]) {
+      p.globalAlpha = alfa;
+      for (let i = 0; i < n; i++) {
+        const y = Math.floor(modulo(i*47 + sale + secondi*velocita - q.sopra, ALTEZZA));
+        const x = Math.floor(modulo(i*sale + secondi*velocita*PENDENZA_NEVE - q.sinistra, LARGHEZZA));
+        if (coperto(x, y)) continue;
+        const lato = grande && i % grande === 0 ? 2 : 1;
+        p.fillRect(x, y, lato, lato);
+      }
     }
   } else {
     // Due piani: le gocce lontane corte e tenui, le vicine lunghe. Il vento

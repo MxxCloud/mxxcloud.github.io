@@ -12,6 +12,21 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.56.2 — la neve cade come la pioggia
+
+Una correzione a M7.18.55, chiesta dopo averla vista in partita: quando
+nevicava sembrava sempre bufera, e i fiocchi scattavano a destra e a
+sinistra cambiando direzione di continuo.
+- **Il difetto.** Lo spostamento di lato dei fiocchi era il vento del
+  momento moltiplicato per il tempo di gioco: a ogni raffica il prodotto
+  cambiava di molto, e i fiocchi saltavano avanti e indietro.
+- **Adesso la neve cade come la pioggia, ma piano.** Due piani: i fiocchi
+  lontani piccoli e tenui, i vicini più grandi e più svelti. Scendono tutti
+  in diagonale, un pixel di lato ogni quattro, sempre verso est, e il vento
+  non li sposta.
+- **Nevica nel calmo.** Nei giorni di neve il vento che piega alberi ed erba
+  è più debole di quello di un giorno sereno, invece che più forte.
+
 ## M7.18.56.1 — il piccone si impara alla cava
 
 Il piccone non è più solo un attrezzo da trovare: trovato una volta, si sa
@@ -2458,7 +2473,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.56.1**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.56.2**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
