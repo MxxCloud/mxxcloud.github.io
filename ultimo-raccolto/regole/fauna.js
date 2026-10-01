@@ -452,10 +452,17 @@ export function statoValido(dati) {
   });
 }
 // Da M7.18.52 il disegno sceglie fra quattro passi e il pascolo. Se si sta
-// muovendo lo dice il passo, che cresce solo camminando: lo si confronta con
-// quello del fotogramma prima, tenuto qui e non nella bestia, perché è
-// aspetto e non va nel salvataggio.
+// muovendo lo dice il passo, che cresce solo camminando, tenuto qui e non
+// nella bestia, perché è aspetto e non va nel salvataggio.
+//
+// Da M7.18.60.5 conta come "si muove" un passo fatto nell'ultimo quarto di
+// secondo, non solo nel fotogramma prima. La simulazione va a sessanta passi
+// al secondo e il disegno al ritmo dello schermo: a centoventi hertz, o
+// quando il browser salta un passo, metà dei fotogrammi trovavano il passo
+// fermo, e una bestia che camminava veniva disegnata un fotogramma a testa
+// bassa e uno in cammino — il collo su e giù decine di volte al secondo.
 const passoPrima = new WeakMap();
+const ANCORA_IN_CAMMINO = 0.25;
 let orologio = 0;
 // Chi è calmo e fermo bruca a testa bassa, e ogni tanto la rialza a guardarsi
 // intorno: tre secondi giù, un secondo e mezzo su, sfasati per bestia. Da
@@ -465,9 +472,13 @@ let orologio = 0;
 const BRUCA = 3, GUARDA = 1.5, CHINA = 0.2, MASTICA = 0.5;
 export function posaDi(e, secondi = orologio) {
   if(e.vita===0) return 'carcassa';
-  const prima=passoPrima.get(e);
-  passoPrima.set(e,e.passo);
-  if(prima!==undefined && prima!==e.passo) return `passo${Math.floor(e.passo)%4}`;
+  let ricordo=passoPrima.get(e);
+  if(!ricordo) { ricordo={passo:e.passo,quando:-Infinity}; passoPrima.set(e,ricordo); }
+  else if(ricordo.passo!==e.passo) { ricordo.passo=e.passo; ricordo.quando=secondi; }
+  // Un orologio che torna indietro (un'altra partita, un collaudo) non tiene
+  // la bestia in cammino per sempre.
+  if(secondi<ricordo.quando) ricordo.quando=-Infinity;
+  if(secondi-ricordo.quando<ANCORA_IN_CAMMINO) return `passo${Math.floor(e.passo)%4}`;
   if(e.stato==='calmo') {
     const t=(secondi+(e.seme%997)/97)%(BRUCA+GUARDA);
     if(t<CHINA || (t>=BRUCA-CHINA && t<BRUCA)) return 'china';

@@ -6556,3 +6556,26 @@ test('chi bruca si china e si rialza passando a metà, e mastica',()=>{
     assert.ok(!(a==='passo0'&&basse.includes(b))&&!(basse.includes(a)&&b==='passo0'),`${a} → ${b}`);
   }
 });
+
+// M7.18.60.5 — chi cammina non sfarfalla.
+test('una bestia che cammina disegnata a 120 hertz resta in cammino: niente collo su e giù a ogni fotogramma',()=>{
+  const e={specie:'cavallo',vita:6,stato:'calmo',seme:3,passo:0};
+  const pose=[];
+  // Due secondi di cammino: lo schermo disegna ogni 1/120 di secondo, la
+  // simulazione fa un passo ogni due fotogrammi.
+  for(let k=0;k<240;k++){
+    if(k%2===0)e.passo+=0.04;
+    pose.push(fauna.posaDi(e,10+k/120));
+  }
+  const ferme=pose.slice(2).filter(p=>!p.startsWith('passo'));
+  assert.deepEqual(ferme,[],'mai testa bassa mentre cammina');
+  // Si ferma: per un quarto di secondo resta in cammino, poi bruca, e ci
+  // arriva passando a metà.
+  const dopo=[];for(let k=0;k<240;k++)dopo.push(fauna.posaDi(e,12+k/120));
+  const primaBassa=dopo.findIndex(p=>p!=='passo0'&&!p.startsWith('passo'));
+  assert.ok(primaBassa>=29,'un quarto di secondo prima di chinarsi: '+primaBassa);
+  assert.ok(dopo.some(p=>p==='pascolo'||p==='mastica'));
+  // Cambi di posa da fermo: pochi, non decine al secondo.
+  let cambi=0;for(let i=1;i<dopo.length;i++)if(dopo[i]!==dopo[i-1])cambi++;
+  assert.ok(cambi<=8,'cambi in due secondi: '+cambi);
+});
