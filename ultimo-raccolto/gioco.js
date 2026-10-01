@@ -77,7 +77,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.58";
+const VERSIONE = "M7.18.59";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -243,6 +243,9 @@ function provaIlGiorno(giorno) {
 // la stessa partita. Con crypto e non con Math.random, che in questo gioco
 // non esiste; "?orti=" nell'indirizzo lo fissa, per rifare una partita uguale.
 function avviaNuovaPartita(giorno) {
+  // Il tempo di una partita nuova non è ancora successo (M7.18.59): quello
+  // tirato mentre il titolo era aperto non conta.
+  meteo.dimenticaIlTempo();
   mappa.impostaOrti(parametri.has("orti") ? Number(parametri.get("orti")) : estraiOrti());
   provaIlGiorno(giorno);
   chiudiLIniziale();

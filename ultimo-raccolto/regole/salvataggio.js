@@ -136,6 +136,9 @@ export function istantanea(eroe, casellaScelta) {
     imparate: ricette.tutteLeImparate(),
     // La campana suonata stanotte (M7.18.57). Come sopra.
     campana: campana.stato(),
+    // Il tempo che ha fatto e che farà domani (M7.18.59): si tira a caso
+    // giorno per giorno, quindi va scritto. Senza, si tira di nuovo.
+    calendario: meteo.registroDelTempo(),
   };
 }
 
@@ -336,6 +339,7 @@ export function valido(stato) {
   if (!presente(stato, "ortiVisti", v => Array.isArray(v) && v.length <= 100000 &&
     v.every(k => typeof k === "string" && /^-?\d+,-?\d+$/.test(k)))) return false;
   if (!presente(stato, "campana", campana.statoValido)) return false;
+  if (!presente(stato, "calendario", meteo.registroValido)) return false;
   if (!presente(stato, "imparate", v => Array.isArray(v) && v.length <= 32 && v.every(ricette.imparataValida))) return false;
   if (!presente(stato, "avvistati", v => Array.isArray(v) && v.length <= 100000 &&
     v.every(k => typeof k === "string" && /^-?\d+,-?\d+$/.test(k)))) return false;
@@ -391,6 +395,7 @@ export function applica(stato) {
   bisogni.ripristina(stato.bisogni);
   riposo.ripristina(stato.riposo);
   meteo.ripristina(stato.bagnato);
+  meteo.ripristinaRegistro(stato.calendario);
   salute.ripristina(stato.salute, stato.infezione === true, stato.esposizioneFreddo);
   inventario.ripristina(stato.inventario);
   fauna.ripristina(stato.fauna);
