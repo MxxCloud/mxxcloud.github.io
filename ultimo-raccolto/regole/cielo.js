@@ -29,13 +29,11 @@ export function coperto(giorno) {
   return e === "pioggia" || e === "neve";
 }
 
-// Un giorno di pioggia su due, d'autunno e di primavera, è un temporale. Per
-// le regole resta pioggia: bagna, spegne i fuochi e innaffia come sempre.
-const STAGIONI_DEI_TEMPORALI = new Set(["autunno", "primavera"]);
+// Un giorno di pioggia su due è un temporale. Per le regole resta pioggia:
+// bagna, spegne i fuochi e innaffia come sempre. Da M7.18.59 si tira insieme
+// al giorno di pioggia (vedi meteo.js).
 export function temporale(giorno) {
-  if (meteo.evento(giorno) !== "pioggia") return false;
-  if (!STAGIONI_DEI_TEMPORALI.has(stagioni.stagioneDi(giorno))) return false;
-  return impronta(giorno, 5, mappa.semeCorrente().valore ^ 0x7e3a) < 0.5;
+  return meteo.temporale(giorno);
 }
 
 // Il temporale tuona dal pomeriggio a sera.

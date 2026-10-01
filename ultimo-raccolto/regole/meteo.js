@@ -1,36 +1,104 @@
-// Da M7.18.58 ogni giorno d'autunno e di primavera ha una possibilità su
-// quattro di essere di pioggia, e ogni giorno d'inverno una su quattro di
-// essere di neve. In media resta un giorno di maltempo per stagione, come
-// prima, ma non più a calendario: ci sono stagioni asciutte (una su tre,
-// circa) e giorni di maltempo di fila. Il tiro è un'impronta del giorno e del
-// seme: stabile per valle, quindi ricaricare non cambia le previsioni e
-// l'annuncio del giorno prima resta vero.
+// Ogni giorno d'autunno e di primavera ha una possibilità su quattro di
+// essere di pioggia, e ogni giorno d'inverno una su quattro di essere di neve
+// (M7.18.58). In media resta un giorno di maltempo per stagione, ma con
+// stagioni asciutte (una su tre, circa) e giorni di maltempo di fila.
+//
+// DA M7.18.59 IL TEMPO SI TIRA DAVVERO, giorno per giorno. Prima era
+// un'impronta del giorno e del seme: il meteo di tutta la partita era scritto
+// nella valle dal primo momento. Adesso un giorno si estrae a caso la prima
+// volta che qualcuno lo chiede — in pratica la vigilia, quando l'HUD chiede
+// "domani" per l'annuncio — e da lì resta quello: si annota nel registro, e
+// il registro va nel salvataggio. Così l'annuncio del giorno prima resta vero,
+// ricaricare non cambia il tempo, e quello che guarda indietro (la neve
+// posata ieri, i giorni asciutti dell'essiccatoio) trova quello che è
+// successo davvero.
 //
 // L'estate è invece arida per tutti e quattro i giorni, e da M7.18.42 uno di
 // questi, dal secondo al quarto, è la canicola: vale come arido, e in più le
 // piante non innaffiate quel giorno seccano la notte stessa (vedi orto.js).
-// Si annuncia il giorno prima, come la pioggia.
+// Anche lei si tira, una volta per estate. Si annuncia il giorno prima, come
+// la pioggia. E metà dei giorni di pioggia sono temporali, tirati insieme a
+// loro.
 import * as tempo from "./tempo.js";
 import * as stagioni from "./stagioni.js";
 import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
 import { OGGETTO } from "../mondo/generazione.js";
-import { impronta } from "../motore/casuale.js";
 import { TASSELLO } from "../motore/schermo.js";
 import * as riparo from "./riparo.js";
 import * as addosso from "./addosso.js";
 import * as orto from "./orto.js";
 
-export function evento(giorno = tempo.giornoCorrente()) {
+// Il caso vero, come per gli orti di una partita nuova: crypto e non
+// Math.random, che in questo gioco non esiste. I collaudi ne mettono uno
+// seminato, per essere ripetibili.
+function casoVero() {
+  const numero = new Uint32Array(1);
+  globalThis.crypto.getRandomValues(numero);
+  return numero[0] / 4294967296;
+}
+let caso = casoVero;
+export function impostaCaso(funzione = null) { caso = funzione ?? casoVero; }
+
+// giorno -> { e: evento, t: temporale }
+const registro = new Map();
+export const EVENTI = ["sereno", "pioggia", "neve", "arido", "canicola"];
+export const PROBABILITA_TEMPORALE = 0.5;
+
+function tira(giorno) {
   const stagione = stagioni.stagioneDi(giorno);
   const durata = stagioni.GIORNI_PER_STAGIONE;
-  const periodo = Math.floor((giorno-1)/durata);
   if (stagione === "estate") {
-    const canicola = 2 + Math.floor(impronta(periodo, 1, mappa.semeCorrente().valore ^ 0x5ca1d0) * (durata-1));
-    return stagioni.giornoNellaStagione(giorno) === Math.min(canicola, durata) ? "canicola" : "arido";
+    // Tutta l'estate in una volta: la canicola è una sola, fra il secondo e
+    // l'ultimo giorno.
+    const primo = giorno - stagioni.giornoNellaStagione(giorno) + 1;
+    const canicola = primo + 1 + Math.floor(caso() * (durata - 1));
+    for (let d = primo; d < primo + durata; d += 1) {
+      if (!registro.has(d)) registro.set(d, { e: d === canicola ? "canicola" : "arido", t: false });
+    }
+    return;
   }
-  if (impronta(giorno, 0, mappa.semeCorrente().valore ^ 0x3a17e) >= PROBABILITA_MALTEMPO) return "sereno";
-  return stagione === "inverno" ? "neve" : "pioggia";
+  if (caso() >= PROBABILITA_MALTEMPO) { registro.set(giorno, { e: "sereno", t: false }); return; }
+  if (stagione === "inverno") { registro.set(giorno, { e: "neve", t: false }); return; }
+  registro.set(giorno, { e: "pioggia", t: caso() < PROBABILITA_TEMPORALE });
+}
+
+export function evento(giorno = tempo.giornoCorrente()) {
+  if (!registro.has(giorno)) tira(giorno);
+  return registro.get(giorno).e;
+}
+
+// Un giorno di pioggia che è un temporale: lo disegna il cielo, coi lampi.
+export function temporale(giorno = tempo.giornoCorrente()) {
+  return evento(giorno) === "pioggia" && registro.get(giorno).t;
+}
+
+// Il registro per il salvataggio: [giorno, evento, temporale].
+export function registroDelTempo() {
+  return [...registro].map(([g, v]) => [g, v.e, v.t ? 1 : 0]);
+}
+
+export function registroValido(elenco) {
+  return Array.isArray(elenco) && elenco.length <= 100000 && elenco.every((r) =>
+    Array.isArray(r) && r.length === 3 && Number.isInteger(r[0]) && r[0] >= 1 && EVENTI.includes(r[1]) && (r[2] === 0 || r[2] === 1));
+}
+
+// Un salvataggio di prima non ce l'ha: i giorni si tirano quando servono.
+export function ripristinaRegistro(elenco) {
+  registro.clear();
+  if (!registroValido(elenco)) return;
+  for (const [g, e, t] of elenco) registro.set(g, { e, t: t === 1 });
+}
+
+// Il tempo di un giorno deciso a mano: per i collaudi e la diagnostica.
+export function fissa(giorno, e, temporale = false) {
+  if (!EVENTI.includes(e)) throw new Error("evento sconosciuto: " + e);
+  registro.set(giorno, { e, t: e === "pioggia" && temporale });
+}
+
+// Una partita nuova: niente è ancora successo.
+export function dimenticaIlTempo() {
+  registro.clear();
 }
 
 // Una possibilità su quattro, per giorno, d'autunno, d'inverno e di primavera.

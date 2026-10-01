@@ -12,6 +12,23 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.59 — il tempo si tira davvero
+
+In M7.18.58 le probabilità erano giuste, ma il tiro era un'impronta del giorno
+e del seme: il meteo di tutta la partita era già scritto nella valle quando
+la valle nasceva. Adesso no.
+- **Ogni giorno si tira a caso**, col caso vero del browser, con le stesse
+  probabilità: 25% di pioggia per ogni giorno d'autunno e di primavera, 25%
+  di neve per ogni giorno d'inverno, metà dei giorni di pioggia temporali. La
+  canicola si tira una volta per estate.
+- **Si tira la prima volta che serve**, in pratica la vigilia, quando si
+  annuncia «DOMANI ...». Da lì quel giorno resta quello: si annota in un
+  registro che va nel salvataggio, quindi l'annuncio resta vero e ricaricare
+  non cambia il tempo.
+- **Due partite nella stessa valle** hanno tempo diverso.
+- Un salvataggio di prima non ha il registro: si apre, e i giorni si tirano
+  da lì in poi.
+
 ## M7.18.58 — il meteo a probabilità
 
 Il maltempo non è più a calendario.
@@ -24,9 +41,10 @@ Il maltempo non è più a calendario.
   circa una stagione su tre non ha maltempo, e capitano due, tre o quattro
   giorni di pioggia o di neve di fila. Un inverno senza neve si attraversa
   più facile, uno con tre giorni di neve molto meno.
-- **Resta stabile e annunciato.** Il tiro dipende dal giorno e dal seme:
-  ricaricare non cambia niente, e il giorno prima si legge «DOMANI PIOGGIA»
-  o «DOMANI NEVE». Il temporale è ancora metà dei giorni di pioggia.
+- **Resta stabile e annunciato.** Il giorno prima si legge «DOMANI PIOGGIA»
+  o «DOMANI NEVE», e ricaricare non cambia niente. Il temporale è ancora
+  metà dei giorni di pioggia. (Da M7.18.59 il tiro è davvero a caso, vedi
+  sopra.)
 - **La neve di più giorni resta posata** e si scioglie il giorno dopo
   l'ultima nevicata.
 
@@ -2394,8 +2412,9 @@ risveglio si applicano soltanto a chi sopravvive alla notte.
 Ogni stagione dura quattro giorni. Da M7.18.58 in autunno e primavera **ogni
 giorno piove con una possibilità su quattro**, e in inverno **ogni giorno
 nevica con una possibilità su quattro** (prima era un giorno solo per
-stagione, il secondo o il terzo). Il tiro è stabile per seme della valle e
-giorno: ricaricare non cambia il meteo. Il riquadro sotto l'orologio indica il
+stagione, il secondo o il terzo). Da M7.18.59 ogni giorno si tira a caso la
+prima volta che serve e poi si annota nel salvataggio: ricaricare non cambia
+il meteo, ma due partite nella stessa valle hanno tempo diverso. Il riquadro sotto l'orologio indica il
 tempo attuale e anticipa il maltempo del giorno dopo.
 
 **L'estate è sempre arida:** non piove e la sete si consuma a velocità **3x**
@@ -2529,7 +2548,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.58**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.59**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

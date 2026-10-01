@@ -28,6 +28,7 @@ import * as azioni from '../regole/azioni.js';
 import * as ricette from '../regole/ricette.js';
 import * as campana from '../regole/campana.js';
 import * as chiasso from '../regole/chiasso.js';
+import { generatore as generatoreDelTempo } from '../motore/casuale.js';
 import * as infettoEntita from '../entita/infetto.js';
 import * as mappa from '../mondo/mappa.js';
 import * as modifiche from '../mondo/modifiche.js';
@@ -67,6 +68,8 @@ function reset() {
   pesca.interrompi(); mappa.impostaGelo(false); orto.impostaBestie(false); orto.impostaParassiti(false);
   riparo.reimposta(); tempo.reimposta(); bisogni.reimposta(); salute.reimposta();
   inventario.svuota(); modifiche.svuota(); entita.svuota(); simulazione.resoconto(); esplorato.svuota(); ricette.reimposta(); campana.reimposta(); chiasso.reimposta();
+  // Il tempo si tira a caso (M7.18.59): nei collaudi con un caso seminato.
+  meteo.dimenticaIlTempo(); meteo.impostaCaso(generatoreDelTempo(0x7e3a));
   mappa.inizializza('review');
   const f=mappa.laFattoria();
   tx=f.tx;ty=f.ty;
@@ -794,43 +797,70 @@ test('minimappa già in cache distingue gelo e disgelo senza spostamenti',async(
   } finally { globalThis.document=prima; }
 });
 
+// Da M7.18.59 il tempo si tira a caso: il giorno di maltempo si fissa, il
+// secondo d'autunno per la pioggia e il secondo d'inverno per la neve.
 function maltempo(tipo) {
-  for(let d=1;d<=16;d++)if(meteo.evento(d)===tipo){tempo.impostaGiorno(d);tempo.impostaOra(12);return d;}
-  assert.fail('evento mancante');
+  const d=tipo==='neve'?10:6;meteo.fissa(d,tipo);tempo.impostaGiorno(d);tempo.impostaOra(12);return d;
 }
-test('il maltempo è un tiro al 25% per giorno; mai pioggia estiva; previsioni stabili per seme',()=>{
-  // Da M7.18.58 non c'è più un giorno di maltempo per stagione: ogni giorno
-  // d'autunno e di primavera piove una volta su quattro, ogni giorno
-  // d'inverno nevica una volta su quattro. Misurato su tre semi e cinquanta
-  // anni.
+test('il maltempo è un tiro al 25% per giorno; mai pioggia estiva; e una volta tirato resta quello',()=>{
+  // Da M7.18.58 ogni giorno d'autunno e di primavera piove una volta su
+  // quattro, ogni giorno d'inverno nevica una volta su quattro; da M7.18.59
+  // il tiro è vero, giorno per giorno. Misurato su seicento anni.
   assert.equal(meteo.PROBABILITA_MALTEMPO,0.25);
-  const conto={pioggia:[0,0],neve:[0,0]};let asciutte=0,stagioni_=0,difila=0;
-  for(const seme of ['review','altra valle','neve']) {
-    mappa.inizializza(seme);
-    for(let anno=0;anno<50;anno++)for(let stagione=0;stagione<4;stagione++) {
-      const giorni=Array.from({length:4},(_,i)=>meteo.evento(anno*16+stagione*4+i+1));
-      // Da M7.18.42 un giorno d'estate, dal secondo al quarto, è la canicola.
-      if(stagione===0){
-        assert.equal(giorni[0],'arido');assert.equal(giorni.filter(e=>e==='canicola').length,1);
-        assert.ok(giorni.every(e=>e==='arido'||e==='canicola'));
-        continue;
-      }
-      const tipo=stagione===2?'neve':'pioggia';
-      assert.ok(giorni.every(e=>e===tipo||e==='sereno'),'d’inverno solo neve, fuori solo pioggia');
-      conto[tipo][0]+=giorni.filter(e=>e===tipo).length;conto[tipo][1]+=4;
-      stagioni_++;if(!giorni.includes(tipo))asciutte++;
-      for(let i=1;i<4;i++)if(giorni[i]===tipo&&giorni[i-1]===tipo)difila++;
+  const conto={pioggia:[0,0],neve:[0,0]};let asciutte=0,stagioni_=0,difila=0,temporali=0;
+  for(let anno=0;anno<600;anno++)for(let stagione=0;stagione<4;stagione++) {
+    const giorni=Array.from({length:4},(_,i)=>meteo.evento(anno*16+stagione*4+i+1));
+    // Da M7.18.42 un giorno d'estate, dal secondo al quarto, è la canicola.
+    if(stagione===0){
+      assert.equal(giorni[0],'arido');assert.equal(giorni.filter(e=>e==='canicola').length,1);
+      assert.ok(giorni.every(e=>e==='arido'||e==='canicola'));
+      continue;
     }
+    const tipo=stagione===2?'neve':'pioggia';
+    assert.ok(giorni.every(e=>e===tipo||e==='sereno'),'d’inverno solo neve, fuori solo pioggia');
+    conto[tipo][0]+=giorni.filter(e=>e===tipo).length;conto[tipo][1]+=4;
+    stagioni_++;if(!giorni.includes(tipo))asciutte++;
+    for(let i=1;i<4;i++)if(giorni[i]===tipo&&giorni[i-1]===tipo)difila++;
+    for(let i=0;i<4;i++)if(meteo.temporale(anno*16+stagione*4+i+1))temporali++;
   }
-  for(const [tipo,[n,tot]] of Object.entries(conto))assert.ok(n/tot>0.21&&n/tot<0.29,`${tipo} ${(100*n/tot).toFixed(1)}%`);
-  // Stagioni senza maltempo (attese il 32%) e giorni di maltempo di fila.
-  assert.ok(asciutte/stagioni_>0.24&&asciutte/stagioni_<0.4,`asciutte ${asciutte}/${stagioni_}`);
-  assert.ok(difila>20,'di fila: '+difila);
-  for(const seme of ['review','altra valle','neve']) {
-    mappa.inizializza(seme);
-    const prima=Array.from({length:32},(_,i)=>meteo.evento(i+1));
-    mappa.inizializza(seme);assert.deepEqual(Array.from({length:32},(_,i)=>meteo.evento(i+1)),prima);
-  }
+  for(const [tipo,[n,tot]] of Object.entries(conto))assert.ok(n/tot>0.23&&n/tot<0.27,`${tipo} ${(100*n/tot).toFixed(1)}%`);
+  // Stagioni senza maltempo (attese il 32%), giorni di fila, temporali a metà.
+  assert.ok(asciutte/stagioni_>0.28&&asciutte/stagioni_<0.36,`asciutte ${asciutte}/${stagioni_}`);
+  assert.ok(difila>100,'di fila: '+difila);
+  assert.ok(Math.abs(temporali/conto.pioggia[0]-0.5)<0.05,`temporali ${temporali}/${conto.pioggia[0]}`);
+  // Una volta tirato resta quello, anche cambiando valle: non sta nella mappa.
+  const prima=Array.from({length:64},(_,i)=>meteo.evento(i+1));
+  mappa.inizializza('altra valle');
+  assert.deepEqual(Array.from({length:64},(_,i)=>meteo.evento(i+1)),prima);
+});
+test('il tempo non è scritto nella valle: due partite nella stessa valle hanno tempo diverso, tirato col caso vero',()=>{
+  // Solo pioggia e neve, fuori dall'estate: la canicola e i temporali sono
+  // altri tiri, e da soli basterebbero a far differire due calendari.
+  const anni=()=>Array.from({length:160},(_,i)=>i+1).filter(g=>stagioni.stagioneDi(g)!=='estate').map(g=>meteo.evento(g)).join(',');
+  mappa.inizializza('valle-1');
+  meteo.impostaCaso(null);meteo.dimenticaIlTempo();const prima=anni();
+  meteo.dimenticaIlTempo();const seconda=anni();
+  assert.notEqual(prima,seconda,'stessa valle, tempo diverso');
+  // E non tira niente in anticipo: il registro si riempie solo dei giorni
+  // chiesti (l'estate tutta insieme, per la canicola).
+  meteo.dimenticaIlTempo();meteo.evento(6);meteo.evento(7);
+  assert.deepEqual(meteo.registroDelTempo().map(r=>r[0]).sort((a,b)=>a-b),[6,7]);
+  meteo.evento(2);assert.equal(meteo.registroDelTempo().length,6,'l’estate in un colpo');
+});
+test('il tempo tirato si salva: l’annuncio di domani resta vero dopo il caricamento',()=>{
+  tempo.impostaGiorno(5);
+  const oggi=meteo.evento(5),domani=meteo.evento(6);
+  const stato=salvataggio.istantanea(eroe,0);
+  assert.ok(stato.calendario.some(r=>r[0]===6&&r[1]===domani));
+  meteo.dimenticaIlTempo();meteo.impostaCaso(()=>0);// un caso che darebbe sempre maltempo
+  assert.ok(salvataggio.applica(stato));
+  assert.equal(meteo.evento(5),oggi);assert.equal(meteo.evento(6),domani);
+  // Un salvataggio di prima non ha il calendario: si apre, e i giorni si tirano.
+  const vecchio={...stato};delete vecchio.calendario;
+  assert.ok(salvataggio.valido(vecchio));assert.ok(salvataggio.applica(vecchio));
+  assert.equal(meteo.registroDelTempo().length,0);assert.equal(meteo.evento(6),'pioggia');
+  for(const storto of [[[6,'grandine',0]],[[0,'sereno',0]],[[6,'pioggia',2]],'6,pioggia'])
+    assert.equal(salvataggio.valido({...stato,calendario:storto}),false,JSON.stringify(storto));
 });
 test('aridità triplica la sete per tutta l’estate, anche dormendo',()=>{
   for(const dorme of [false,true])for(let giorno=1;giorno<=4;giorno++) {
@@ -2368,12 +2398,11 @@ test('la pioggia ferma il conto senza rovinare la carne',()=>{
   // Un acquazzone che non abbia l'inverno nei tre giorni dopo: l'inverno ferma
   // il conto per conto suo (vedi M7.15.6), e mescolare le due regole in una
   // prova sola vorrebbe dire non provarne bene nessuna delle due.
-  let pioggia=0;
-  for(let d=1;d<=32 && !pioggia;d++) {
-    if(meteo.evento(d)!=='pioggia') continue;
-    if([1,2,3].every(i=>stagioni.stagioneDi(d+i)!=='inverno')) pioggia=d;
-  }
-  assert.ok(pioggia,'un acquazzone fuori dall inverno');
+  // Da M7.18.59 il tempo si tira a caso: lo si fissa, un acquazzone il
+  // secondo giorno di primavera fra giorni sereni.
+  const pioggia=14;
+  for(const [d,e] of [[13,'sereno'],[14,'pioggia'],[15,'sereno'],[16,'sereno']])meteo.fissa(d,e);
+  assert.ok([1,2,3].every(i=>stagioni.stagioneDi(pioggia+i)!=='inverno'));
   tempo.impostaGiorno(pioggia);
   // Si stende il giorno prima dell'acquazzone: quel giorno non conta, quindi
   // ce ne vogliono quattro invece di tre.
