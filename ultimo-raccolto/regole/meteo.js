@@ -1,8 +1,15 @@
-// Un giorno di maltempo per stagione, stabile per valle e anno: ricaricare
-// non cambia le previsioni. L'estate è invece arida per tutti e quattro i giorni,
-// e da M7.18.42 uno di questi, dal secondo al quarto, è la canicola: vale come
-// arido, e in più le piante non innaffiate quel giorno seccano la notte
-// stessa (vedi orto.js). Si annuncia il giorno prima, come la pioggia.
+// Da M7.18.58 ogni giorno d'autunno e di primavera ha una possibilità su
+// quattro di essere di pioggia, e ogni giorno d'inverno una su quattro di
+// essere di neve. In media resta un giorno di maltempo per stagione, come
+// prima, ma non più a calendario: ci sono stagioni asciutte (una su tre,
+// circa) e giorni di maltempo di fila. Il tiro è un'impronta del giorno e del
+// seme: stabile per valle, quindi ricaricare non cambia le previsioni e
+// l'annuncio del giorno prima resta vero.
+//
+// L'estate è invece arida per tutti e quattro i giorni, e da M7.18.42 uno di
+// questi, dal secondo al quarto, è la canicola: vale come arido, e in più le
+// piante non innaffiate quel giorno seccano la notte stessa (vedi orto.js).
+// Si annuncia il giorno prima, come la pioggia.
 import * as tempo from "./tempo.js";
 import * as stagioni from "./stagioni.js";
 import * as mappa from "../mondo/mappa.js";
@@ -22,10 +29,12 @@ export function evento(giorno = tempo.giornoCorrente()) {
     const canicola = 2 + Math.floor(impronta(periodo, 1, mappa.semeCorrente().valore ^ 0x5ca1d0) * (durata-1));
     return stagioni.giornoNellaStagione(giorno) === Math.min(canicola, durata) ? "canicola" : "arido";
   }
-  const scelto = 2 + Math.floor(impronta(periodo, 0, mappa.semeCorrente().valore ^ 0x71ae0) * (durata-2));
-  if (stagioni.giornoNellaStagione(giorno) !== scelto) return "sereno";
+  if (impronta(giorno, 0, mappa.semeCorrente().valore ^ 0x3a17e) >= PROBABILITA_MALTEMPO) return "sereno";
   return stagione === "inverno" ? "neve" : "pioggia";
 }
+
+// Una possibilità su quattro, per giorno, d'autunno, d'inverno e di primavera.
+export const PROBABILITA_MALTEMPO = 0.25;
 
 // Arido o canicola: la canicola è un giorno arido più cattivo, e tutto quello
 // che guarda l'arido deve guardare anche lei.

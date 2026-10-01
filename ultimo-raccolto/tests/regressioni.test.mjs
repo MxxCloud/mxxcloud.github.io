@@ -798,18 +798,36 @@ function maltempo(tipo) {
   for(let d=1;d<=16;d++)if(meteo.evento(d)===tipo){tempo.impostaGiorno(d);tempo.impostaOra(12);return d;}
   assert.fail('evento mancante');
 }
-test('un evento per stagione e anno; mai pioggia estiva; previsioni stabili per seme',()=>{
+test('il maltempo è un tiro al 25% per giorno; mai pioggia estiva; previsioni stabili per seme',()=>{
+  // Da M7.18.58 non c'è più un giorno di maltempo per stagione: ogni giorno
+  // d'autunno e di primavera piove una volta su quattro, ogni giorno
+  // d'inverno nevica una volta su quattro. Misurato su tre semi e cinquanta
+  // anni.
+  assert.equal(meteo.PROBABILITA_MALTEMPO,0.25);
+  const conto={pioggia:[0,0],neve:[0,0]};let asciutte=0,stagioni_=0,difila=0;
   for(const seme of ['review','altra valle','neve']) {
     mappa.inizializza(seme);
-    for(let anno=0;anno<8;anno++)for(let stagione=0;stagione<4;stagione++) {
+    for(let anno=0;anno<50;anno++)for(let stagione=0;stagione<4;stagione++) {
       const giorni=Array.from({length:4},(_,i)=>meteo.evento(anno*16+stagione*4+i+1));
       // Da M7.18.42 un giorno d'estate, dal secondo al quarto, è la canicola.
       if(stagione===0){
         assert.equal(giorni[0],'arido');assert.equal(giorni.filter(e=>e==='canicola').length,1);
         assert.ok(giorni.every(e=>e==='arido'||e==='canicola'));
+        continue;
       }
-      else assert.equal(giorni.filter(e=>e===(stagione===2?'neve':'pioggia')).length,1);
+      const tipo=stagione===2?'neve':'pioggia';
+      assert.ok(giorni.every(e=>e===tipo||e==='sereno'),'d’inverno solo neve, fuori solo pioggia');
+      conto[tipo][0]+=giorni.filter(e=>e===tipo).length;conto[tipo][1]+=4;
+      stagioni_++;if(!giorni.includes(tipo))asciutte++;
+      for(let i=1;i<4;i++)if(giorni[i]===tipo&&giorni[i-1]===tipo)difila++;
     }
+  }
+  for(const [tipo,[n,tot]] of Object.entries(conto))assert.ok(n/tot>0.21&&n/tot<0.29,`${tipo} ${(100*n/tot).toFixed(1)}%`);
+  // Stagioni senza maltempo (attese il 32%) e giorni di maltempo di fila.
+  assert.ok(asciutte/stagioni_>0.24&&asciutte/stagioni_<0.4,`asciutte ${asciutte}/${stagioni_}`);
+  assert.ok(difila>20,'di fila: '+difila);
+  for(const seme of ['review','altra valle','neve']) {
+    mappa.inizializza(seme);
     const prima=Array.from({length:32},(_,i)=>meteo.evento(i+1));
     mappa.inizializza(seme);assert.deepEqual(Array.from({length:32},(_,i)=>meteo.evento(i+1)),prima);
   }
@@ -3827,7 +3845,10 @@ test('l’orto dentro un recinto cresce, si bagna di pioggia, e le bestie non lo
 test('dentro un recinto fa freddo come fuori: non è un riparo',()=>{
   const cx=tx,cy=ty;assert.equal(riparo.allaga(cx,cy).chiusa,false,'campo aperto');recinto(cx,cy);
   const dentro={...pos(cx,cy),guarda:'giu'};
-  tempo.impostaGiorno(10);tempo.impostaOra(12);riparo.reimposta();riparo.aggiorna(1,cx,cy);
+  // A mezzogiorno d'inverno fa freddo solo se nevica: un giorno di neve, dal
+  // calendario (da M7.18.58 non è più un giorno fisso).
+  let g=9;while(g<16*30&&meteo.evento(g)!=='neve')g++;
+  tempo.impostaGiorno(g);tempo.impostaOra(12);riparo.reimposta();riparo.aggiorna(1,cx,cy);
   assert.equal(riparo.alChiuso(),false);
   assert.equal(freddo.alFreddo(dentro),true);
 });
@@ -5970,7 +5991,8 @@ const cieloDi=()=>import('../regole/cielo.js');
 
 test('la neve si posa nel giorno di neve e si scioglie il giorno dopo',async()=>{
   const c=await cieloDi();mappa.inizializza('valle-1');
-  const neve=[...Array(48).keys()].map(i=>i+1).find(g=>meteo.evento(g)==='neve'&&meteo.evento(g+1)!=='neve');
+  // Una nevicata di un giorno solo: né il giorno prima né quello dopo.
+  const neve=[...Array(160).keys()].map(i=>i+1).find(g=>meteo.evento(g)==='neve'&&meteo.evento(g+1)!=='neve'&&meteo.evento(g-1)!=='neve');
   assert.ok(neve);
   assert.equal(c.neveAPosa(neve,0),0);assert.ok(c.neveAPosa(neve,4)>0&&c.neveAPosa(neve,4)<1);assert.equal(c.neveAPosa(neve,9),1);
   assert.equal(c.neveAPosa(neve+1,6),1);assert.ok(c.neveAPosa(neve+1,13)>0&&c.neveAPosa(neve+1,13)<1);assert.equal(c.neveAPosa(neve+1,20),0);
@@ -6420,4 +6442,15 @@ test('la campana suonata si salva; un salvataggio di prima si apre senza, uno st
   assert.equal(salvataggio.valido({...stato,campana:{notte:3,x:NaN,y:2}}),false);
   assert.ok(readFileSync(new URL('../sw.js',import.meta.url),'utf8').includes('"./regole/campana.js"'));
   assert.match(readFileSync(new URL('../index.html',import.meta.url),'utf8'),/"\.\/regole\/campana\.js": "\.\/regole\/campana\.js\?v=/);
+});
+
+// M7.18.58 — il meteo a probabilità: la neve di più giorni resta posata.
+test('quando nevica più giorni di fila la neve resta, e si scioglie il giorno dopo l’ultimo',async()=>{
+  const c=await cieloDi();mappa.inizializza('valle-1');
+  let g=2;while(g<16*30&&!(meteo.evento(g)==='neve'&&meteo.evento(g+1)==='neve'&&meteo.evento(g-1)!=='neve'))g++;
+  assert.ok(g<16*30);
+  let ultimo=g+1;while(meteo.evento(ultimo+1)==='neve')ultimo++;
+  assert.equal(c.neveAPosa(g,0),0);assert.equal(c.neveAPosa(g,9),1);
+  for(let d=g+1;d<=ultimo;d++)for(const o of [0,6,12,23])assert.equal(c.neveAPosa(d,o),1,`giorno ${d} ore ${o}`);
+  assert.equal(c.neveAPosa(ultimo+1,6),1);assert.equal(c.neveAPosa(ultimo+1,20),0);
 });
