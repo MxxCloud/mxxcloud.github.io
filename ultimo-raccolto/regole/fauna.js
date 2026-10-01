@@ -12,7 +12,7 @@ import * as salute from './salute.js';
 import * as inventario from './inventario.js';
 import * as meteo from './meteo.js';
 import { cuoci, riflesso } from '../arte/sprite.js';
-import { ANIMALI, CARCASSE, PASCOLO } from '../arte/sprite-fauna.js';
+import { ANIMALI, CARCASSE, PASCOLO, CHINA as TESTA_A_META, MASTICA as TESTA_CHE_MASTICA } from '../arte/sprite-fauna.js';
 
 // Il cavallo è quello che non si fa avvicinare, e il resto dei suoi numeri
 // viene da lì. Prima era il pasto migliore e il più sicuro insieme — quattro
@@ -458,8 +458,11 @@ export function statoValido(dati) {
 const passoPrima = new WeakMap();
 let orologio = 0;
 // Chi è calmo e fermo bruca a testa bassa, e ogni tanto la rialza a guardarsi
-// intorno: tre secondi giù, un secondo e mezzo su, sfasati per bestia.
-const BRUCA = 3, GUARDA = 1.5;
+// intorno: tre secondi giù, un secondo e mezzo su, sfasati per bestia. Da
+// M7.18.60.4 non scatta: per un quinto di secondo la testa passa a metà, sia
+// scendendo che risalendo, e mentre bruca mastica, alzandola di un pixel ogni
+// mezzo secondo.
+const BRUCA = 3, GUARDA = 1.5, CHINA = 0.2, MASTICA = 0.5;
 export function posaDi(e, secondi = orologio) {
   if(e.vita===0) return 'carcassa';
   const prima=passoPrima.get(e);
@@ -467,7 +470,8 @@ export function posaDi(e, secondi = orologio) {
   if(prima!==undefined && prima!==e.passo) return `passo${Math.floor(e.passo)%4}`;
   if(e.stato==='calmo') {
     const t=(secondi+(e.seme%997)/97)%(BRUCA+GUARDA);
-    if(t<BRUCA) return 'pascolo';
+    if(t<CHINA || (t>=BRUCA-CHINA && t<BRUCA)) return 'china';
+    if(t<BRUCA) return Math.floor((t-CHINA)/MASTICA)%2===1 ? 'mastica' : 'pascolo';
   }
   return 'passo0';
 }
@@ -477,7 +481,8 @@ export function daDisegnare(secondi = 0) {
   return animali.map(e=>{
     const posa=posaDi(e);
     e.posa=posa;
-    const righe=posa==='carcassa'?CARCASSE[e.specie]:posa==='pascolo'?PASCOLO[e.specie]:ANIMALI[e.specie][Number(posa[5])];
+    const righe=posa==='carcassa'?CARCASSE[e.specie]:posa==='pascolo'?PASCOLO[e.specie]
+      :posa==='china'?TESTA_A_META[e.specie]:posa==='mastica'?TESTA_CHE_MASTICA[e.specie]:ANIMALI[e.specie][Number(posa[5])];
     const cotto=cuoci(righe);
     e.sprite=e.destra?cotto:riflesso(cotto);e.x=e.px-e.sprite.width/2;e.y=e.py-e.sprite.height;e.base=e.py;
     return e;

@@ -12,6 +12,21 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.60.4 — chi bruca china il collo
+
+Una correzione chiesta giocando: quando gli animali chinavano la testa per
+brucare il collo sembrava strano, quasi una gobba, e non si riconoscevano.
+- **Il collo del cervo e del cavallo** adesso parte dalla spalla, sotto la
+  linea del dorso, e scende in avanti staccato dal petto, fino al muso
+  sull'erba davanti agli zoccoli; il cavallo con la criniera lungo il collo,
+  il cervo col palco all'indietro. Prima il collo nasceva dalla cima del
+  dorso e la testa restava a ridosso del petto.
+- **Non scatta più.** Per un quinto di secondo la testa passa a metà, sia
+  quando si china sia quando si rialza a guardarsi intorno.
+- **Mastica.** Mentre bruca alza la testa di un pixel ogni mezzo secondo.
+- Il bufalo e l'orso hanno le stesse pose a metà e la masticazione; la
+  sagoma del bufalo, gobba compresa, resta quella: la gobba ce l'ha davvero.
+
 ## M7.18.60.3 — dalla mappa ai pannelli
 
 Con la mappa aperta, C chiude la mappa e apre il pannello per costruire,
@@ -2597,7 +2612,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.60.3**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.60.4**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
