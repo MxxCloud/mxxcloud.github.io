@@ -21,6 +21,7 @@ import * as bisogni from "./bisogni.js";
 import * as salute from "./salute.js";
 import * as inventario from "./inventario.js";
 import * as ricette from "./ricette.js";
+import * as campana from "./campana.js";
 import * as stagioni from "./stagioni.js";
 import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
@@ -133,6 +134,8 @@ export function istantanea(eroe, casellaScelta) {
     avvistati: esplorato.tuttiGliAvvistati(),
     // Le ricette imparate trovando la cosa (M7.18.56.1). Come sopra.
     imparate: ricette.tutteLeImparate(),
+    // La campana suonata stanotte (M7.18.57). Come sopra.
+    campana: campana.stato(),
   };
 }
 
@@ -332,6 +335,7 @@ export function valido(stato) {
     v.every(esplorato.segnoValidoPerIlSalvataggio))) return false;
   if (!presente(stato, "ortiVisti", v => Array.isArray(v) && v.length <= 100000 &&
     v.every(k => typeof k === "string" && /^-?\d+,-?\d+$/.test(k)))) return false;
+  if (!presente(stato, "campana", campana.statoValido)) return false;
   if (!presente(stato, "imparate", v => Array.isArray(v) && v.length <= 32 && v.every(ricette.imparataValida))) return false;
   if (!presente(stato, "avvistati", v => Array.isArray(v) && v.length <= 100000 &&
     v.every(k => typeof k === "string" && /^-?\d+,-?\d+$/.test(k)))) return false;
@@ -398,6 +402,7 @@ export function applica(stato) {
   esplorato.ripristinaAvvistati(stato.avvistati);
   // Un salvataggio di prima con il piccone nello zaino l'ha già trovato.
   ricette.ripristinaImparate(stato.imparate);
+  campana.ripristina(stato.campana ?? null);
   if (inventario.quante("piccone") > 0) ricette.impara("piccone");
 
   return {

@@ -12,6 +12,32 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.57 — il mulino e la chiesa
+
+Gli ultimi due luoghi unici. Adesso ogni regione ha il suo, a rotazione:
+torre, cava, mulino, chiesa.
+- **Il mulino.** Un edificio di pietra con la macina e una cassa.
+  - «Macina il grano»: 3 grano diventano 1 farina, con il 3% di stamina e
+    un colpo che si sente come un'ascia. Si macina solo qui.
+  - La farina cruda non si mangia: si cuoce al fuoco come la carne, e
+    diventa **pane** (fame 0,5, dura 8 giorni). Il grano adesso serve anche
+    a chi lo coltiva, non solo ai polli.
+  - Nella cassa c'è sempre un po' di farina e di grano.
+  - Iscrizione: «Farina per chi resta.»
+- **La chiesa.** Una navata con il campanile, la campana e una cassa con
+  bende, torce e conserve.
+  - «Suona la campana» si può solo di notte, e una volta per notte; il
+    tasto dice perché quando non si può.
+  - Il rintocco si sente da quaranta tasselli: chi è vicino arriva subito,
+    e chi ha suonato sta proprio lì. Bisogna correre.
+  - Fino all'alba piena (le sette) ogni infetto che non ti vede e non ti
+    sente va verso la chiesa invece di vagare, anche quelli che nascono
+    dopo. È il modo di tenerli lontani da casa per una notte.
+  - La campana suonata si salva con la partita.
+  - Iscrizione: «Suonatela solo se potete correre.»
+- **Sulla mappa (TAB)** il mulino ha una ruota e la chiesa una croce, in oro
+  come gli altri luoghi unici.
+
 ## M7.18.56.3 — la foschia sta ferma
 
 Un'altra correzione a M7.18.55, chiesta giocando: la foschia del mattino
@@ -69,7 +95,7 @@ regione, ognuno con una cosa che si trova solo lì.
   - La regione della fattoria ha sempre la torre, a poche schermate da
     casa.
   - I luoghi sono quattro: torre, cava, mulino e chiesa. Mulino e chiesa
-    arrivano con M7.18.57; fino ad allora le loro regioni restano senza.
+    sono arrivati con M7.18.57.
 - **La torre di avvistamento.** Una torre di legno con la scala, in un
   recinto di pietra rotto.
   - «Sali sulla torre» costa un'ora e il 10% di stamina.
@@ -2484,7 +2510,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.56.3**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.57**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -3292,15 +3318,6 @@ Il primo livello, la luce e l'aria, è fatto: M7.18.44, M7.18.45 e M7.18.46.
 Le idee del brainstorming sulle meccaniche, messe da parte con i luoghi
 unici (M7.18.56). Come sopra: appunti, non promesse.
 
-- **I prossimi luoghi unici (M7.18.57).**
-  - *Il mulino*, con la macina: 3 grano diventano 1 farina, solo lì. La
-    farina si cuoce al fuoco in pane (fame 0,5, dura 8 giorni). Nella cassa
-    farina e grano. Iscrizione: «Farina per chi resta.»
-  - *La chiesa*, con la campana: si suona solo di notte, una volta per
-    notte. Gli infetti entro 600 pixel vanno alla chiesa, e fino all'alba
-    ci vanno anche quelli che nascono. Serve a tenerli lontani da casa, ma
-    chi suona sta lì e deve scappare. Iscrizione: «Suonatela solo se potete
-    correre.»
 - **Altri luoghi unici possibili.** La farmacia, la serra, il posto di
   blocco, l'apiario.
 - **Le leve dell'avventura.**

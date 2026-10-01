@@ -59,7 +59,7 @@ import { FIORI } from "./arte/sprite-fiori.js";
 // nello stesso file sono l'errore che si scopre tardi.
 import {
   colpoDi, MORSO, COLPO_A_SEGNO, CADUTO, ZAPPA, SEMINA, ACQUA, SORSO, MANGIA,
-  BENDA, POSA, SCELTA, FATTO, NEGATO, PRESO, GELO, MORTE, COPERCHIO, ROTTURA, TUONO,
+  BENDA, POSA, SCELTA, FATTO, NEGATO, PRESO, GELO, MORTE, COPERCHIO, ROTTURA, TUONO, CAMPANA,
 } from "./arte/voci.js";
 import * as inventario from "./regole/inventario.js";
 import * as azioni from "./regole/azioni.js";
@@ -77,7 +77,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.56.3";
+const VERSIONE = "M7.18.57";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1265,6 +1265,16 @@ function leggiComandi(passo) {
   // Dalla torre (M7.18.56): la carta si riempie in un colpo, e si dice quanti
   // luoghi unici si sono visti. I nomi stanno sulla carta, non qui: in una
   // riga sola non ci starebbero.
+  // Il mulino e la chiesa (M7.18.57).
+  if (esito.tipo === "macinato") {
+    suono.suona(ZAPPA);
+    annuncia(`+1 farina (${esito.farina}): cuocila al fuoco`, "#c9b189");
+  }
+  if (esito.tipo === "suonata") {
+    suono.suona(CAMPANA);
+    annuncia("la campana suona: fino all'alba vanno alla chiesa", "#f0c95a", "e adesso corri");
+  }
+
   if (esito.tipo === "salito") {
     if (esito.scoperti.length > 0) mappaGrande.aggiungi(esito.scoperti);
     suono.suona(SCELTA);

@@ -24,6 +24,7 @@ import { generatore } from "../motore/casuale.js";
 import * as tempo from "./tempo.js";
 import * as chiasso from "./chiasso.js";
 import * as salute from "./salute.js";
+import * as campana from "./campana.js";
 
 // Quanti al massimo, nel cuore della notte. Cinque è tarato su una cosa sola:
 // devono bastare a rendere una traversata notturna una decisione, e non a
@@ -159,6 +160,8 @@ export function percepisci(e, passo, eroe, raggioChiasso, conLuce) {
   }
   e.memoria = Math.max(0, (e.memoria ?? 0) - passo);
   if (e.memoria === 0) e.richiamo = null;
+  // La campana (M7.18.57): chi non ha niente da inseguire va alla chiesa.
+  if (!e.richiamo) e.richiamo = campana.richiamo();
 }
 
 // --- il giro --------------------------------------------------------------

@@ -865,6 +865,37 @@ export const RAPA_ARROSTITA = [
 // Stessa ragione della rapa: quello che cambia è dove stanno, non di che
 // colore sono. Il rosso è spento — sono passate dal fuoco — e sono più
 // piccole, perché seccando si raggrinziscono.
+// La farina e il pane (M7.18.57): un sacchetto legato e una pagnotta.
+export const FARINA = [
+  "............",
+  "....4444....",
+  ".....44.....",
+  "....4zz4....",
+  "...4zzzz4...",
+  "..4zzOzzz4..",
+  "..4zzzzzz4..",
+  "..4zzzzOz4..",
+  "..4zzzzzz4..",
+  "...444444...",
+  "............",
+  "............",
+];
+
+export const PANE = [
+  "............",
+  "............",
+  "............",
+  "....KKKK....",
+  "..KKMMMMKK..",
+  ".KMMWMMWMMK.",
+  ".KNNNNNNNNK.",
+  ".KNNNNNNNNK.",
+  "..KKKKKKKK..",
+  "............",
+  "............",
+  "............",
+];
+
 export const BACCHE_SECCHE = [
   "............",
   "............",

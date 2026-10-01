@@ -26,6 +26,9 @@ import * as inventario from '../regole/inventario.js';
 import * as contenitori from '../regole/contenitori.js';
 import * as azioni from '../regole/azioni.js';
 import * as ricette from '../regole/ricette.js';
+import * as campana from '../regole/campana.js';
+import * as chiasso from '../regole/chiasso.js';
+import * as infettoEntita from '../entita/infetto.js';
 import * as mappa from '../mondo/mappa.js';
 import * as modifiche from '../mondo/modifiche.js';
 import * as salvataggio from '../regole/salvataggio.js';
@@ -63,7 +66,7 @@ function reset() {
   meteo.reimposta();
   pesca.interrompi(); mappa.impostaGelo(false); orto.impostaBestie(false); orto.impostaParassiti(false);
   riparo.reimposta(); tempo.reimposta(); bisogni.reimposta(); salute.reimposta();
-  inventario.svuota(); modifiche.svuota(); entita.svuota(); simulazione.resoconto(); esplorato.svuota(); ricette.reimposta();
+  inventario.svuota(); modifiche.svuota(); entita.svuota(); simulazione.resoconto(); esplorato.svuota(); ricette.reimposta(); campana.reimposta(); chiasso.reimposta();
   mappa.inizializza('review');
   const f=mappa.laFattoria();
   tx=f.tx;ty=f.ty;
@@ -1654,10 +1657,13 @@ test('la valle resta più natura che costruito, e il conto è misurato non dichi
   // Le rovine non si toccano: è la riga che protegge i mondi già in gioco.
   assert.ok(pc(case_)>22 && pc(case_)<27,`rovine ${pc(case_).toFixed(1)}%`);
   assert.ok(pc(luoghi)>28 && pc(luoghi)<34,`luoghi ${pc(luoghi).toFixed(1)}%`);
-  // I luoghi unici (M7.18.56) si contano a parte: uno ogni sedici celle, e
-  // per ora solo torre e cava, quindi circa una cella su trentadue.
-  assert.ok(pc(unici)>1.5 && pc(unici)<4.5,`unici ${pc(unici).toFixed(1)}%`);
-  assert.ok(natura>40,`natura ${natura.toFixed(1)}%: la valle si sta riempiendo`);
+  // I luoghi unici (M7.18.56) si contano a parte: uno ogni sedici celle. Da
+  // M7.18.57 ci sono tutti e quattro, quindi poco più di una cella su
+  // diciassette.
+  assert.ok(pc(unici)>4.5 && pc(unici)<7,`unici ${pc(unici).toFixed(1)}%`);
+  // Le rovine e i piccoli luoghi non cambiano; la natura cala solo delle
+  // celle dei luoghi unici, uno per regione: 38,5% misurato a M7.18.57.
+  assert.ok(natura>37,`natura ${natura.toFixed(1)}%: la valle si sta riempiendo`);
 });
 
 test('il cadavere regge una voce più dello zaino: è un mucchio, non uno zaino',()=>{
@@ -6074,10 +6080,6 @@ test('i luoghi unici: uno per regione, a rotazione, e la regione della fattoria 
       assert.ok(r.nome&&r.iscrizione);assert.equal(r.luogo,r.unico);
     }
     for(let ry=-2;ry<=2;ry++)for(let rx=-2;rx<=2;rx++){
-      const t=rovine.tipoDellaRegione(rx,ry);
-      // Il mulino e la chiesa arrivano con M7.18.57: fino ad allora i loro
-      // posti restano natura.
-      if(t==='mulino'||t==='chiesa'){assert.equal(perRegione.has(rx+','+ry),false);continue;}
       regioni++;if(perRegione.has(rx+','+ry))conIlLuogo++;
     }
     // Stabili: ricalcolati da capo sono gli stessi.
@@ -6322,4 +6324,100 @@ test('i banchi di foschia stanno fermi: oscillano piano attorno alla loro casa, 
   for(let s=0;s<200;s+=0.7)for(const f of atmosfera.fasceDiFoschia(q,t+s,1))assert.ok(Math.abs(f.x-f.casa)<=A+1e-9);
   const scarti=atmosfera.fasceDiFoschia(q,t,0).map(f=>Math.round((f.x-f.casa)*100));
   assert.ok(new Set(scarti).size>scarti.length/2,'non tutti all’unisono');
+});
+
+// M7.18.57 — il mulino e la chiesa.
+function davantiA(luogo,segno){const t=segnoNelLuogo(luogo,segno);return {t,eroe:{...pos(t.tx,t.ty+1),guarda:'su'}};}
+test('le piante del mulino e della chiesa: macina e campana raggiungibili, una cassa, e le iscrizioni scritte',async()=>{
+  const {UNICI}=await import('../arte/luoghi.js');
+  const {GLIFI}=await import('../arte/sprite-testo.js');
+  assert.deepEqual(UNICI.map(u=>u.id).sort(),['cava','chiesa','mulino','torre']);
+  for(const id of ['mulino','chiesa']){
+    const u=UNICI.find(x=>x.id===id),w=u.pianta[0].length;
+    assert.ok(u.pianta.every(r=>r.length===w));
+    assert.equal(u.pianta.join('').split('c').length-1,1,'una cassa');
+    for(const ch of (u.nome+u.iscrizione).toUpperCase())assert.ok(GLIFI[ch],ch);
+    // Dal bordo si arriva sotto la macina o la campana camminando sul vuoto.
+    const h=u.pianta.length,dentro=(x,y)=>x>=0&&y>=0&&x<w&&y<h,cammina=(x,y)=>!dentro(x,y)||'. '.includes(u.pianta[y][x]);
+    const visti=new Set(),coda=[[-1,-1]];
+    for(let i=0;i<coda.length;i++){const [x,y]=coda[i],k=x+','+y;if(x<-1||y<-1||x>w||y>h||visti.has(k)||!cammina(x,y))continue;visti.add(k);coda.push([x-1,y],[x+1,y],[x,y-1],[x,y+1]);}
+    const segno=id==='mulino'?'m':'B';
+    const y=u.pianta.findIndex(r=>r.includes(segno)),x=u.pianta[y].indexOf(segno);
+    assert.ok(visti.has(`${x},${y+1}`),'si arriva sotto: '+id);
+    const yc=u.pianta.findIndex(r=>r.includes('c')),xc=u.pianta[yc].indexOf('c');
+    assert.ok([[xc-1,yc],[xc+1,yc],[xc,yc-1],[xc,yc+1]].some(p=>visti.has(p.join(','))),'cassa raggiungibile: '+id);
+  }
+  const mulino=uniciDi('mulino')[0],chiesa=uniciDi('chiesa')[0];
+  assert.ok(mulino&&chiesa,'tutti e due entro due regioni');
+  const m=segnoNelLuogo(mulino,'m'),b=segnoNelLuogo(chiesa,'B');
+  assert.equal(mappa.oggettoGenerato(m.tx,m.ty),OGGETTO.MACINA);assert.equal(mappa.oggettoGenerato(b.tx,b.ty),OGGETTO.CAMPANA);
+});
+test('al mulino tre grano fanno una farina, solo alla macina; la farina al fuoco diventa pane',()=>{
+  const {t,eroe:e}=davantiA(uniciDi('mulino')[0],'m');
+  inventario.aggiungi('grano',2);
+  const a=azioni.azionePossibile(e,null);
+  assert.equal(a.verbo,'Macina il grano');assert.match(a.impedito,/servono 3 grano/);
+  assert.equal(azioni.agisci(e,null),null);
+  inventario.aggiungi('grano',5);
+  const fiato=bisogni.livello('stanchezza');
+  assert.equal(azioni.agisci(e,null).tipo,'macinato');
+  assert.equal(inventario.quante('grano'),4);assert.equal(inventario.quante('farina'),1);
+  assert.ok(bisogni.livello('stanchezza')<=fiato-0.03+1e-9);
+  // Altrove il grano resta grano.
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.NESSUNO});
+  assert.notEqual(azioni.azionePossibile(eroe,null)?.tipo,'macina');
+  // La farina non si mangia; al fuoco diventa pane.
+  assert.equal(CATALOGO.farina.commestibile,undefined);assert.equal(CATALOGO.farina.cuoce,'pane');
+  assert.deepEqual([CATALOGO.pane.commestibile.fame,CATALOGO.pane.dura],[0.5,8]);
+  modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.FALO_ACCESO,legna:2});
+  const cucina=azioni.azionePossibile(eroe,'farina');
+  assert.equal(cucina.tipo,'cucina');assert.equal(cucina.diventa,'pane');
+  assert.equal(azioni.agisci(eroe,'farina').tipo,'cotto');assert.equal(inventario.quante('pane'),1);
+  // La cassa ha sempre farina e grano.
+  const c=segnoNelLuogo(uniciDi('mulino')[0],'c');
+  assert.deepEqual(contenitori.contenutoDi(c.tx,c.ty).filter(Boolean).map(v=>v.cosa).sort(),['farina','grano']);
+});
+test('la campana: di giorno no, di notte una volta sola, e fino all’alba gli infetti vanno alla chiesa',()=>{
+  const chiesa=uniciDi('chiesa')[0],{t,eroe:e}=davantiA(chiesa,'B');
+  tempo.impostaGiorno(3);tempo.impostaOra(12);
+  const giorno=azioni.azionePossibile(e,null);
+  assert.equal(giorno.verbo,'Suona la campana');assert.match(giorno.impedito,/giorno/);
+  assert.equal(azioni.agisci(e,null),null);assert.equal(campana.richiamo(),null);
+  // Un infetto lontano, che non vede e non sente niente: vaga.
+  const lontano=entita.aggiungi(infettoEntita.crea(e.px+900,e.py+900));
+  infetti.percepisci(lontano,0.1,e,0,false);assert.equal(lontano.richiamo,null);
+  tempo.impostaOra(22);
+  assert.equal(azioni.agisci(e,null).tipo,'suonata');
+  assert.ok(chiasso.raggio()>=40*16,'si sente da quaranta tasselli');
+  infetti.percepisci(lontano,0.1,e,0,false);
+  vicino(lontano.richiamo.x,(t.tx+0.5)*16);vicino(lontano.richiamo.y,(t.ty+0.5)*16);
+  // Anche uno nato dopo.
+  const nuovo=entita.aggiungi(infettoEntita.crea(e.px-900,e.py+900));
+  infetti.percepisci(nuovo,0.1,e,0,false);assert.ok(nuovo.richiamo);
+  // Chi ti vede ti insegue lo stesso.
+  const vicinissimo=entita.aggiungi(infettoEntita.crea(e.px+20,e.py));
+  infetti.percepisci(vicinissimo,0.1,e,0,false);assert.equal(vicinissimo.preda,e);
+  // Una volta per notte: anche dopo mezzanotte è la stessa notte.
+  assert.match(azioni.azionePossibile(e,null).impedito,/stanotte/);
+  tempo.impostaGiorno(4);tempo.impostaOra(3);
+  assert.match(azioni.azionePossibile(e,null).impedito,/stanotte/);assert.ok(campana.richiamo());
+  // All'alba piena finisce.
+  tempo.impostaOra(7.5);assert.equal(campana.richiamo(),null);
+  const altro=entita.aggiungi(infettoEntita.crea(e.px+900,e.py-900));
+  infetti.percepisci(altro,0.1,e,0,false);assert.equal(altro.richiamo,null);
+  // La notte dopo si può di nuovo.
+  tempo.impostaOra(22);assert.equal(azioni.azionePossibile(e,null).impedito,null);
+});
+test('la campana suonata si salva; un salvataggio di prima si apre senza, uno storto si rifiuta',()=>{
+  tempo.impostaGiorno(3);tempo.impostaOra(22);
+  campana.suona(100,200);
+  const stato=salvataggio.istantanea(eroe,0);
+  assert.equal(stato.campana.notte,3);
+  campana.reimposta();assert.ok(salvataggio.applica(stato));assert.deepEqual(campana.richiamo(),{x:100,y:200});
+  const vecchio={...stato};delete vecchio.campana;
+  assert.ok(salvataggio.valido(vecchio));assert.ok(salvataggio.applica(vecchio));assert.equal(campana.richiamo(),null);
+  assert.equal(salvataggio.valido({...stato,campana:{notte:'3',x:1,y:2}}),false);
+  assert.equal(salvataggio.valido({...stato,campana:{notte:3,x:NaN,y:2}}),false);
+  assert.ok(readFileSync(new URL('../sw.js',import.meta.url),'utf8').includes('"./regole/campana.js"'));
+  assert.match(readFileSync(new URL('../index.html',import.meta.url),'utf8'),/"\.\/regole\/campana\.js": "\.\/regole\/campana\.js\?v=/);
 });

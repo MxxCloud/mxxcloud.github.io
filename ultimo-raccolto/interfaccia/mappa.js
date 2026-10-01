@@ -105,7 +105,7 @@ const FATTORIA = "#9db8ec";
 // I luoghi unici (M7.18.56): oro, il colore più acceso della carta, perché
 // sono le destinazioni. Ognuno ha la sua sagoma.
 const UNICO = "#f0c95a";
-const TIPI_UNICI = new Set(["torre", "cava"]);
+const TIPI_UNICI = new Set(["torre", "cava", "mulino", "chiesa"]);
 
 // --- l'atlante dei settori ------------------------------------------------
 
@@ -170,7 +170,8 @@ function disegnaSettore(sx, sy) {
     for (let x = 0; x < SETTORE; x += 1) {
       const o = oggetti[(y + 1) * B + x + 1];
       let classe;
-      if (o === OGGETTO.MURO || o === OGGETTO.MURO_ROTTO || o === OGGETTO.PARETE_CAVA || o === OGGETTO.TORRE) classe = MURO;
+      if (o === OGGETTO.MURO || o === OGGETTO.MURO_ROTTO || o === OGGETTO.PARETE_CAVA || o === OGGETTO.TORRE
+        || o === OGGETTO.MACINA || o === OGGETTO.CAMPANA) classe = MURO;
       else {
         let vicini = 0;
         for (let dy = 0; dy < 3; dy += 1) for (let dx = 0; dx < 3; dx += 1) vicini += alberi[(y + dy) * B + x + dx];
@@ -786,6 +787,38 @@ function segno(c, tipo, x, y, u) {
     c.stroke();
     return;
   }
+  // Il mulino è una ruota a raggi, la chiesa una croce (M7.18.57).
+  if (tipo === "mulino") {
+    cerchio(c, x, y, 2.4 * u, UNICO);
+    c.beginPath();
+    for (let i = 0; i < 4; i += 1) {
+      const a = (i * Math.PI) / 4;
+      c.moveTo(x - Math.cos(a) * 2.4 * u, y - Math.sin(a) * 2.4 * u);
+      c.lineTo(x + Math.cos(a) * 2.4 * u, y + Math.sin(a) * 2.4 * u);
+    }
+    c.stroke();
+    return;
+  }
+  if (tipo === "chiesa") {
+    c.beginPath();
+    c.moveTo(x - 0.8 * u, y - 2.8 * u);
+    c.lineTo(x + 0.8 * u, y - 2.8 * u);
+    c.lineTo(x + 0.8 * u, y - 1.4 * u);
+    c.lineTo(x + 2.2 * u, y - 1.4 * u);
+    c.lineTo(x + 2.2 * u, y);
+    c.lineTo(x + 0.8 * u, y);
+    c.lineTo(x + 0.8 * u, y + 2.8 * u);
+    c.lineTo(x - 0.8 * u, y + 2.8 * u);
+    c.lineTo(x - 0.8 * u, y);
+    c.lineTo(x - 2.2 * u, y);
+    c.lineTo(x - 2.2 * u, y - 1.4 * u);
+    c.lineTo(x - 0.8 * u, y - 1.4 * u);
+    c.closePath();
+    c.fillStyle = UNICO;
+    c.fill();
+    c.stroke();
+    return;
+  }
   if (tipo === "rovina") return casetta(c, x, y, 1.8 * u, ROVINA);
   if (tipo === "fattoria") return casetta(c, x, y, 2.8 * u, FATTORIA);
   if (tipo === "fuoco") return cerchio(c, x, y, 1.5 * u, "#f2c14e");
@@ -1041,7 +1074,7 @@ function titolo(c, u, W) {
 // il segno accanto a ogni nome.
 const VOCI_LEGENDA = [
   ["tu", "TU"], ["fattoria", "FATTORIA"], ["orto", "ORTO ABBANDONATO"], ["pozzo", "POZZO"],
-  ["torre", "TORRE"], ["cava", "CAVA"],
+  ["torre", "TORRE"], ["cava", "CAVA"], ["mulino", "MULINO"], ["chiesa", "CHIESA"],
   ["luogo", "ALTRI LUOGHI"], ["rovina", "CASA"], ["cassa", "CASSA"], ["letto", "LETTO"],
   ["fuoco", "FUOCO"], ["corpo", "IL TUO CORPO"],
 ];

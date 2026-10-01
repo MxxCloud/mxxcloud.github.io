@@ -147,6 +147,17 @@ const BOTTINO_UNICI = {
     { cosa: "piccone", da: 1, a: 1 },
     { cosa: "pietra", da: 3, a: 5 },
   ],
+  // Il mulino ha la farina e il grano da macinare; la chiesa quello che
+  // serviva a chi ci si era rifugiato.
+  mulino: [
+    { cosa: "farina", da: 2, a: 3 },
+    { cosa: "grano", da: 3, a: 5 },
+  ],
+  chiesa: [
+    { cosa: "benda", da: 1, a: 2 },
+    { cosa: "torcia", da: 1, a: 2 },
+    { cosa: "conserva", da: 1, a: 2 },
+  ],
   torre: [
     { cosa: "torcia", da: 1, a: 2 },
     { cosa: "bacche_secche", da: 2, a: 3 },

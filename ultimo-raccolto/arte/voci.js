@@ -380,3 +380,15 @@ export const TUONO = {
   filtro: { tipo: "passabasso", taglio: 360, a: 55, risonanza: 0.9 },
   volume: 0.62,
 };
+
+// La campana della chiesa (M7.18.57): un rintocco lungo e basso, che si
+// spegne piano.
+export const CAMPANA = {
+  onda: "triangolo",
+  da: 330,
+  a: 318,
+  attacco: 0.004,
+  coda: 2.2,
+  filtro: { tipo: "passabasso", taglio: 1800, risonanza: 1.2 },
+  volume: 0.4,
+};
