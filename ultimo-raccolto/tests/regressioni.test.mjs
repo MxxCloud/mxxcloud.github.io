@@ -6028,7 +6028,7 @@ test('la foschia dell’alba: d’autunno e dopo la pioggia, mai d’estate né 
   const a=await import('../arte/atmosfera.js');
   const q={sinistra:0,destra:384,sopra:0,sotto:216};
   const f1=a.fasceDiFoschia(q,0,0.5),f2=a.fasceDiFoschia(q,10,0.5);
-  assert.ok(f1.length>=6);assert.ok(f2[0].x!==f1[0].x||f2.length!==f1.length,'scivola col vento');
+  assert.ok(f1.length>=6);assert.ok(f2[0].x!==f1[0].x,'oscilla piano');
 });
 
 test('la pioggia migliore: schizzi fuori dall’acqua, cerchi solo sull’acqua, e le regole del meteo non cambiano',async()=>{
@@ -6305,4 +6305,21 @@ test('la neve scende come la pioggia: il vento non la sposta, e i fiocchi non ca
 test('con la neve il vento è più calmo che in un giorno sereno',async()=>{
   const effetti=await import('../arte/effetti.js');
   for(let s=0;s<200;s+=7.3){assert.ok(effetti.vento(s,'neve')<effetti.vento(s,'sereno'));assert.ok(effetti.vento(s,'neve')<effetti.vento(s,'pioggia'));}
+});
+
+// M7.18.56.3 — la foschia ferma: oscilla appena, e il vento non la porta.
+test('i banchi di foschia stanno fermi: oscillano piano attorno alla loro casa, e il vento non li sposta',()=>{
+  const q={sinistra:5000,destra:5384,sopra:-300,sotto:-84},t=4100.2;
+  assert.deepEqual(atmosfera.fasceDiFoschia(q,t,0),atmosfera.fasceDiFoschia(q,t,1.8),'la raffica non conta');
+  let prima=atmosfera.fasceDiFoschia(q,t,0.5);
+  for(let k=1;k<=600;k++){
+    const dopo=atmosfera.fasceDiFoschia(q,t+k/60,0.5+0.5*Math.sin(k));
+    assert.equal(dopo.length,prima.length);
+    dopo.forEach((f,i)=>{assert.ok(Math.abs(f.x-prima[i].x)<=0.05,`${f.x-prima[i].x}`);assert.equal(f.y,prima[i].y);});
+    prima=dopo;
+  }
+  const A=atmosfera.OSCILLA_FOSCHIA.ampiezza;
+  for(let s=0;s<200;s+=0.7)for(const f of atmosfera.fasceDiFoschia(q,t+s,1))assert.ok(Math.abs(f.x-f.casa)<=A+1e-9);
+  const scarti=atmosfera.fasceDiFoschia(q,t,0).map(f=>Math.round((f.x-f.casa)*100));
+  assert.ok(new Set(scarti).size>scarti.length/2,'non tutti all’unisono');
 });
