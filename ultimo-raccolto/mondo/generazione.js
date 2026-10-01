@@ -135,6 +135,10 @@ export const OGGETTO = {
   // parete della cava, che si spacca col piccone e torna ogni stagione.
   TORRE: 44,
   PARETE_CAVA: 45,
+  // Il mulino e la chiesa (M7.18.57): la macina, dove il grano diventa
+  // farina, e la campana, che di notte chiama gli infetti.
+  MACINA: 46,
+  CAMPANA: 47,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati
@@ -243,6 +247,9 @@ const COSTRUITO = {
   // I luoghi unici (M7.18.56). "," è il fondo della cava: niente sopra.
   T: OGGETTO.TORRE,
   k: OGGETTO.PARETE_CAVA,
+  // "b" è già dei fagioli dell'orto della fattoria: la campana è "B".
+  m: OGGETTO.MACINA,
+  B: OGGETTO.CAMPANA,
   ",": OGGETTO.NESSUNO,
 };
 

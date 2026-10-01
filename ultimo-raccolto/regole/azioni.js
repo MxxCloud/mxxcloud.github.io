@@ -29,6 +29,7 @@ import * as riparo from "./riparo.js";
 import * as decadimento from "./decadimento.js";
 import * as polli from "./polli.js";
 import * as esplorato from "./esplorato.js";
+import * as campana from "./campana.js";
 
 const { TASSELLO } = schermo;
 
@@ -306,6 +307,18 @@ function sulTassello(eroe, cosaInMano, indice) {
     return { tipo: "sali", verbo: "Sali sulla torre", bersaglio: b,
       impedito: tempo.eNotte() ? "di notte non si vede niente"
         : bisogni.livello("stanchezza") < SALITA.fatica ? "troppo stanco per salire" : null };
+  }
+
+  // La macina del mulino (M7.18.57): tre grano per una farina, solo qui.
+  if (b.oggetto === OGGETTO.MACINA) {
+    return { tipo: "macina", verbo: "Macina il grano", bersaglio: b,
+      impedito: inventario.quante("grano") < MACINA.grano ? `servono ${MACINA.grano} grano` : null };
+  }
+  // La campana della chiesa (M7.18.57): di notte, una volta per notte.
+  if (b.oggetto === OGGETTO.CAMPANA) {
+    return { tipo: "suona", verbo: "Suona la campana", bersaglio: b,
+      impedito: !tempo.eNotte() ? "di giorno non c'è nessuno da chiamare"
+        : campana.suonataStanotte() ? "l'hai già suonata stanotte" : null };
   }
 
   const sottoUnArredo = gestoDelPavimento(b, cosaInMano);
@@ -1263,6 +1276,8 @@ export function agisci(eroe, cosaInMano, indice) {
 // sedici dopo. Si può risalire quando si vuole: la seconda volta non mostra
 // niente di nuovo, ma costa lo stesso.
 export const SALITA = { fatica: 0.1, raggio: 160, regioni: 2 };
+// Macinare è lavoro: fiato e un colpo che si sente come un'ascia.
+export const MACINA = { grano: 3, fatica: 0.03 };
 
 function esegui(eroe, cosaInMano, indice, azione) {
   if (pesca.stato()) { pesca.interrompi(); return { tipo: "pescaInterrotta" }; }
@@ -1289,6 +1304,20 @@ function esegui(eroe, cosaInMano, indice, azione) {
   }
 
   const { tx, ty } = azione.bersaglio;
+
+  if (azione.tipo === "macina") {
+    if (!inventario.trasforma([{ cosa: "grano", quante: MACINA.grano }], { cosa: "farina", quante: 1 })) {
+      return { tipo: "zainoPieno" };
+    }
+    bisogni.consuma("stanchezza", MACINA.fatica);
+    chiasso.colpo();
+    return { tipo: "macinato", farina: inventario.quante("farina") };
+  }
+  if (azione.tipo === "suona") {
+    campana.suona((tx + 0.5) * TASSELLO, (ty + 0.5) * TASSELLO);
+    chiasso.fai(campana.CHIASSO);
+    return { tipo: "suonata" };
+  }
 
   if (azione.tipo === "sali") {
     bisogni.consuma("stanchezza", SALITA.fatica);

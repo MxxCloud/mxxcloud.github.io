@@ -282,6 +282,12 @@ export const CATALOGO = {
   // bacche da cui viene: non è il cibo con cui si mangia bene, è il cibo con
   // cui si arriva a marzo. Il falò guadagna qui il suo quarto mestiere, e non
   // è stato aggiunto nessun oggetto per dirlo.
+  // La farina e il pane (M7.18.57). La farina si fa solo alla macina del
+  // mulino, tre grano per una, e cruda non si mangia: si cuoce al fuoco come
+  // la carne, e diventa il cibo più nutriente che duri più di una settimana.
+  // Dà al grano un uso per chi lo coltiva, oltre ai polli.
+  farina: { nome: "Farina", icona: arte.FARINA, pila: 20, cuoce: "pane" },
+  pane: { nome: "Pane", icona: arte.PANE, pila: 10, commestibile: { fame: 0.5 }, dura: 8 },
   bacche_secche: {
     nome: "Bacche secche",
     icona: arte.BACCHE_SECCHE,

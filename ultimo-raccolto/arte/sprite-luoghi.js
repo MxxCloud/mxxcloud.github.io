@@ -137,3 +137,57 @@ export const PARETE_CAVA = [
   "eeeeeeXfeeeeXXdd",
   "XXXXXXXXXXXXXXXX",
 ];
+
+// La macina del mulino (M7.18.57): due mole di pietra su un telaio di legno,
+// con il manico in cima.
+export const MACINA = [
+  "................",
+  "................",
+  "................",
+  "................",
+  "......gwwg......",
+  "......ghhg......",
+  "...XXXXXXXXXX...",
+  "..XYYYYYYYYYYX..",
+  "..XfffffffffeX..",
+  "..XeeeeeeeeedX..",
+  "...XXXXXXXXXX...",
+  "..XXXXXXXXXXXX..",
+  ".XYYYYYYYYYYYYX.",
+  ".XffffffffffffX.",
+  ".XeeeeeeeeeeedX.",
+  ".XddddddddddddX.",
+  "..XXXXXXXXXXXX..",
+  "..gwwwwwwwwwwg..",
+  "..ghhhhhhhhhhg..",
+  "..gg........gg..",
+];
+
+// La campana della chiesa (M7.18.57): bronzo sotto un'incastellatura di
+// legno, con il battaglio.
+export const CAMPANA = [
+  ".gggggggggggggg.",
+  ".gwwwwwwwwwwwwg.",
+  ".ghhhhhhhhhhhhg.",
+  ".gg....KK....gg.",
+  ".gh...KMMK...hg.",
+  ".gh..KMNNNK..hg.",
+  ".gh..KMNNNK..hg.",
+  ".gh.KMNNNNNK.hg.",
+  ".gh.KMNNNNNK.hg.",
+  ".gh.KMNNNNNK.hg.",
+  ".ghKMNNNNNNNKhg.",
+  ".ghKKKKKKKKKKhg.",
+  ".gh....KK....hg.",
+  ".gh....KK....hg.",
+  ".gh..........hg.",
+  ".gh..........hg.",
+  ".gh..........hg.",
+  ".gh..........hg.",
+  ".gh..........hg.",
+  ".gh..........hg.",
+  ".gh..........hg.",
+  ".gh..........hg.",
+  ".ggg........ggg.",
+  "gggg........gggg",
+];

@@ -53,6 +53,9 @@ const CATALOGO_OGGETTI = {
   // cava. Fermano tutte e due; la parete ferma anche lo sguardo.
   [OGGETTO.TORRE]: { sprite: luoghiArte.TORRE, solido: true },
   [OGGETTO.PARETE_CAVA]: { sprite: luoghiArte.PARETE_CAVA, solido: true },
+  // Il mulino e la chiesa (M7.18.57).
+  [OGGETTO.MACINA]: { sprite: luoghiArte.MACINA, solido: true },
+  [OGGETTO.CAMPANA]: { sprite: luoghiArte.CAMPANA, solido: true },
   [OGGETTO.ALBERO]: { sprite: oggettiArte.ALBERO, solido: true },
   [OGGETTO.SASSO]: { sprite: oggettiArte.SASSO, solido: true },
   [OGGETTO.CESPUGLIO]: { sprite: oggettiArte.CESPUGLIO, solido: false },
