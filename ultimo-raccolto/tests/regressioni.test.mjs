@@ -6497,7 +6497,7 @@ test('il mulino ha la ruota sul fianco, al posto di un tratto di muro: la pianta
 });
 
 // M7.18.60.2 — la mappa non resta più incollata.
-test('con la mappa aperta i tasti vanno solo a lei: C non apre le ricette sotto la carta, e TAB o Esc la chiudono sempre',()=>{
+test('con la mappa aperta C, H e P la chiudono e aprono il loro pannello; TAB o Esc la chiudono; il resto è suo',()=>{
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
   const leggi=gioco.slice(gioco.indexOf('function leggiComandi'));
   const mappa=leggi.indexOf('if (mappaAperta) {');
@@ -6507,6 +6507,9 @@ test('con la mappa aperta i tasti vanno solo a lei: C non apre le ricette sotto 
   for(const altro of ['appenaPremuto("aiuto")','appenaPremuto("ricette")','appenaPremuto("partita")','if (ricetteAperte)'])
     assert.ok(mappa<leggi.indexOf(altro),altro);
   const blocco=leggi.slice(mappa,leggi.indexOf('return;',mappa));
+  // M7.18.60.3: C, H e P chiudono la mappa e passano il tasto al loro
+  // pannello, che lo legge subito dopo.
+  assert.match(blocco,/const pannello = comandi\.appenaPremuto\("ricette"\) \|\| comandi\.appenaPremuto\("aiuto"\)\s*\|\| comandi\.appenaPremuto\("partita"\);\s*if \(pannello\) \{\s*mappaAperta = false;\s*\}/);
   assert.match(blocco,/appenaPremuto\("mappa"\)/);assert.match(blocco,/appenaPremuto\("indietro"\) && mappaGrande\.modalita\(\)\.modo === "sfoglia"/);
   assert.match(blocco,/mappaAperta = false/);
   // E la carta si nasconde in cima al disegno, prima di tutto il resto.
