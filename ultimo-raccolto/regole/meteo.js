@@ -13,11 +13,11 @@
 // posata ieri, i giorni asciutti dell'essiccatoio) trova quello che è
 // successo davvero.
 //
-// L'estate è invece arida per tutti e quattro i giorni, e da M7.18.42 uno di
-// questi, dal secondo al quarto, è la canicola: vale come arido, e in più le
-// piante non innaffiate quel giorno seccano la notte stessa (vedi orto.js).
-// Anche lei si tira, una volta per estate. Si annuncia il giorno prima, come
-// la pioggia. E metà dei giorni di pioggia sono temporali, tirati insieme a
+// L'estate è invece arida per tutti e quattro i giorni, e da M7.18.60 ogni
+// giorno d'estate ha una possibilità su quattro di essere di canicola (prima
+// era uno solo, dal secondo al quarto): vale come arido, e in più le piante
+// non innaffiate quel giorno seccano la notte stessa (vedi orto.js). Si
+// annuncia il giorno prima, come la pioggia. E metà dei giorni di pioggia sono temporali, tirati insieme a
 // loro.
 import * as tempo from "./tempo.js";
 import * as stagioni from "./stagioni.js";
@@ -47,15 +47,10 @@ export const PROBABILITA_TEMPORALE = 0.5;
 
 function tira(giorno) {
   const stagione = stagioni.stagioneDi(giorno);
-  const durata = stagioni.GIORNI_PER_STAGIONE;
+  // D'estate non piove mai: il giorno è arido, e una volta su quattro è
+  // canicola (M7.18.60), con la stessa probabilità della pioggia e della neve.
   if (stagione === "estate") {
-    // Tutta l'estate in una volta: la canicola è una sola, fra il secondo e
-    // l'ultimo giorno.
-    const primo = giorno - stagioni.giornoNellaStagione(giorno) + 1;
-    const canicola = primo + 1 + Math.floor(caso() * (durata - 1));
-    for (let d = primo; d < primo + durata; d += 1) {
-      if (!registro.has(d)) registro.set(d, { e: d === canicola ? "canicola" : "arido", t: false });
-    }
+    registro.set(giorno, { e: caso() < PROBABILITA_MALTEMPO ? "canicola" : "arido", t: false });
     return;
   }
   if (caso() >= PROBABILITA_MALTEMPO) { registro.set(giorno, { e: "sereno", t: false }); return; }
