@@ -6516,3 +6516,43 @@ test('con la mappa aperta C, H e P la chiudono e aprono il loro pannello; TAB o 
   const disegna=gioco.slice(gioco.indexOf('function disegna() {'));
   assert.ok(disegna.indexOf('mappaGrande.nascondi()')<disegna.indexOf('schermo.pulisci'));
 });
+
+// M7.18.60.4 — il collo di chi bruca.
+test('chi bruca non ha la gobba: il collo scende dalla spalla e il muso arriva all’erba davanti agli zoccoli',()=>{
+  const {ANIMALI,PASCOLO,CHINA,MASTICA}=arteFauna;
+  const pieno=c=>c!=='.';
+  const cimaFra=(f,x0,x1)=>{for(let y=0;y<f.length;y++)for(let x=x0;x<=x1;x++)if(pieno(f[y][x]))return y;return f.length;};
+  for(const specie of ['cervo','cavallo','bufalo','orso']){
+    const passo=ANIMALI[specie][0];
+    for(const f of [PASCOLO[specie],CHINA[specie],MASTICA[specie]]){
+      assert.equal(f.length,passo.length,specie);assert.ok(f.every(r=>r.length===26),specie);
+    }
+    // La testa a metà sta fra quella alta e quella bassa; masticando sale di
+    // un pixel.
+    const testa=f=>cimaFra(f,20,25);
+    assert.ok(testa(passo)<testa(CHINA[specie])&&testa(CHINA[specie])<=testa(PASCOLO[specie]),specie);
+    assert.notDeepEqual(MASTICA[specie],PASCOLO[specie],specie);
+  }
+  for(const specie of ['cervo','cavallo']){
+    const f=PASCOLO[specie];
+    // La spalla non sale sopra la linea del dorso: era la gobba. Si guarda la
+    // sagoma senza i palchi del cervo (h e z: il suo pelo è N, w e c).
+    const senzaPalchi=specie==='cervo'?f.map(r=>r.replace(/[hz]/g,'.')):f;
+    const dorso=cimaFra(senzaPalchi,6,12),spalla=cimaFra(senzaPalchi,14,18);
+    assert.ok(spalla>=dorso,`${specie}: spalla ${spalla}, dorso ${dorso}`);
+    // Il muso sta in basso, davanti alle zampe anteriori (colonne 16-18).
+    const fondo=f.length-1;
+    const muso=[...f[fondo-2]].findLastIndex(pieno);
+    assert.ok(muso>=23,`${specie}: muso a ${muso}`);
+  }
+});
+test('chi bruca si china e si rialza passando a metà, e mastica',()=>{
+  const e={specie:'cervo',vita:6,stato:'calmo',seme:0,passo:0};
+  const pose=[];for(let t=0;t<4.5;t+=0.05)pose.push(fauna.posaDi(e,t));
+  for(const p of ['china','pascolo','mastica','passo0'])assert.ok(pose.includes(p),p);
+  // Mai da testa alta a testa bassa senza passare a metà.
+  for(let i=1;i<pose.length;i++){
+    const a=pose[i-1],b=pose[i],basse=['pascolo','mastica'];
+    assert.ok(!(a==='passo0'&&basse.includes(b))&&!(basse.includes(a)&&b==='passo0'),`${a} → ${b}`);
+  }
+});
