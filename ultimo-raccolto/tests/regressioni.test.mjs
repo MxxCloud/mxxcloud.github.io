@@ -6477,3 +6477,21 @@ test('quando nevica più giorni di fila la neve resta, e si scioglie il giorno d
   for(let d=g+1;d<=ultimo;d++)for(const o of [0,6,12,23])assert.equal(c.neveAPosa(d,o),1,`giorno ${d} ore ${o}`);
   assert.equal(c.neveAPosa(ultimo+1,6),1);assert.equal(c.neveAPosa(ultimo+1,20),0);
 });
+
+// M7.18.60.1 — la ruota del mulino.
+test('il mulino ha la ruota sul fianco, al posto di un tratto di muro: la pianta non cambia misura e i mulini non si spostano',async()=>{
+  const {UNICI}=await import('../arte/luoghi.js');
+  const m=UNICI.find(u=>u.id==='mulino');
+  // Nove per sei come a M7.18.57: con la stessa misura il posto scelto nella
+  // cella è lo stesso, e le modifiche salvate restano dove erano.
+  assert.deepEqual([m.pianta[0].length,m.pianta.length],[9,6]);
+  const y=m.pianta.findIndex(r=>r.includes('R')),x=m.pianta[y].indexOf('R');
+  assert.equal(x,m.pianta[0].length-1,'sul muro di destra');
+  assert.equal(m.pianta.join('').split('R').length-1,1);
+  const mulino=uniciDi('mulino')[0],r=segnoNelLuogo(mulino,'R');
+  assert.equal(mappa.oggettoGenerato(r.tx,r.ty),OGGETTO.RUOTA);
+  // Ferma il passo e lo sguardo come il muro di cui prende il posto.
+  assert.equal(mappa.vedeDa(r.tx-1,r.ty,r.tx+1,r.ty),false);
+  const {RUOTA}=await import('../arte/sprite-luoghi.js');
+  assert.ok(RUOTA.every(l=>l.length===16));assert.notEqual(RUOTA.at(-1).replace(/\./g,''),'','tocca terra');
+});

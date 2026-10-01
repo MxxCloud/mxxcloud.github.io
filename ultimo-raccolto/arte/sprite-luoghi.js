@@ -191,3 +191,28 @@ export const CAMPANA = [
   ".ggg........ggg.",
   "gggg........gggg",
 ];
+
+// La ruota del mulino (M7.18.60.1): di legno, a raggi, incastrata nel muro
+// di fianco. Solo decorativa.
+export const RUOTA = [
+  "................",
+  "................",
+  "................",
+  "................",
+  ".....gggggg.....",
+  "...gggNNNNggg...",
+  "..ggNNNwwNNNgg..",
+  ".ggNNKKwwKKNNgg.",
+  ".gNNwKKKKKKwNNg.",
+  "ggNKKwKKKKwKKNgg",
+  "gNNKKKwggwKKKNNg",
+  "gNwwKKghhgKKwwNg",
+  "gNwwKKghhgKKwwNg",
+  "gNNKKKwggwKKKNNg",
+  "ggNKKwKKKKwKKNgg",
+  ".gNNwKKKKKKwNNg.",
+  ".ggNNKKwwKKNNgg.",
+  "..ggNNNwwNNNgg..",
+  "...gggNNNNggg...",
+  ".....gggggg.....",
+];

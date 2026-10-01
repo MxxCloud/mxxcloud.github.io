@@ -12,6 +12,13 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.60.1 — la ruota del mulino
+
+Il mulino ha la sua ruota di legno, a raggi, incastrata nel muro di destra.
+È solo decorativa: ferma il passo e lo sguardo come il tratto di muro di cui
+prende il posto. La pianta resta di nove per sei, quindi i mulini delle
+partite già in corso non si spostano.
+
 ## M7.18.60 — anche la canicola a probabilità
 
 - **Prima** ogni estate aveva esattamente un giorno di canicola, dal secondo
@@ -67,7 +74,8 @@ Il maltempo non è più a calendario.
 
 Gli ultimi due luoghi unici. Adesso ogni regione ha il suo, a rotazione:
 torre, cava, mulino, chiesa.
-- **Il mulino.** Un edificio di pietra con la macina e una cassa.
+- **Il mulino.** Un edificio di pietra con la macina e una cassa (e da
+  M7.18.60.1 la ruota sul fianco).
   - «Macina il grano»: 3 grano diventano 1 farina, con il 3% di stamina e
     un colpo che si sente come un'ascia. Si macina solo qui.
   - La farina cruda non si mangia: si cuoce al fuoco come la carne, e
@@ -2564,7 +2572,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.60**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.60.1**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

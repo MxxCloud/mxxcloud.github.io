@@ -56,6 +56,7 @@ const CATALOGO_OGGETTI = {
   // Il mulino e la chiesa (M7.18.57).
   [OGGETTO.MACINA]: { sprite: luoghiArte.MACINA, solido: true },
   [OGGETTO.CAMPANA]: { sprite: luoghiArte.CAMPANA, solido: true },
+  [OGGETTO.RUOTA]: { sprite: luoghiArte.RUOTA, solido: true },
   [OGGETTO.ALBERO]: { sprite: oggettiArte.ALBERO, solido: true },
   [OGGETTO.SASSO]: { sprite: oggettiArte.SASSO, solido: true },
   [OGGETTO.CESPUGLIO]: { sprite: oggettiArte.CESPUGLIO, solido: false },
@@ -534,7 +535,7 @@ export function recintaIn(tx, ty) {
 // e quello va misurato per conto suo, non di sbieco mentre si aggiungono i
 // muri. Qui ci sono le due cose che si costruiscono apposta perché non ti
 // vedano.
-const CIECHI = new Set([OGGETTO.MURO, OGGETTO.PORTA, OGGETTO.PARETE_CAVA]);
+const CIECHI = new Set([OGGETTO.MURO, OGGETTO.PORTA, OGGETTO.PARETE_CAVA, OGGETTO.RUOTA]);
 
 // Da questo tassello si vede quell'altro? Una camminata alla Bresenham lungo
 // la linea, saltando i due capi: il tassello su cui si sta e quello su cui sta
