@@ -807,13 +807,14 @@ test('il maltempo è un tiro al 25% per giorno; mai pioggia estiva; e una volta 
   // quattro, ogni giorno d'inverno nevica una volta su quattro; da M7.18.59
   // il tiro è vero, giorno per giorno. Misurato su seicento anni.
   assert.equal(meteo.PROBABILITA_MALTEMPO,0.25);
-  const conto={pioggia:[0,0],neve:[0,0]};let asciutte=0,stagioni_=0,difila=0,temporali=0;
+  const conto={pioggia:[0,0],neve:[0,0],canicola:[0,0]};let asciutte=0,stagioni_=0,difila=0,temporali=0;
   for(let anno=0;anno<600;anno++)for(let stagione=0;stagione<4;stagione++) {
     const giorni=Array.from({length:4},(_,i)=>meteo.evento(anno*16+stagione*4+i+1));
-    // Da M7.18.42 un giorno d'estate, dal secondo al quarto, è la canicola.
+    // D'estate niente pioggia: arido, e da M7.18.60 canicola un giorno su
+    // quattro.
     if(stagione===0){
-      assert.equal(giorni[0],'arido');assert.equal(giorni.filter(e=>e==='canicola').length,1);
       assert.ok(giorni.every(e=>e==='arido'||e==='canicola'));
+      conto.canicola[0]+=giorni.filter(e=>e==='canicola').length;conto.canicola[1]+=4;
       continue;
     }
     const tipo=stagione===2?'neve':'pioggia';
@@ -834,18 +835,17 @@ test('il maltempo è un tiro al 25% per giorno; mai pioggia estiva; e una volta 
   assert.deepEqual(Array.from({length:64},(_,i)=>meteo.evento(i+1)),prima);
 });
 test('il tempo non è scritto nella valle: due partite nella stessa valle hanno tempo diverso, tirato col caso vero',()=>{
-  // Solo pioggia e neve, fuori dall'estate: la canicola e i temporali sono
-  // altri tiri, e da soli basterebbero a far differire due calendari.
-  const anni=()=>Array.from({length:160},(_,i)=>i+1).filter(g=>stagioni.stagioneDi(g)!=='estate').map(g=>meteo.evento(g)).join(',');
+  // Pioggia, neve e canicola; non i temporali, che sono un altro tiro.
+  const anni=()=>Array.from({length:160},(_,i)=>meteo.evento(i+1)).join(',');
   mappa.inizializza('valle-1');
   meteo.impostaCaso(null);meteo.dimenticaIlTempo();const prima=anni();
   meteo.dimenticaIlTempo();const seconda=anni();
   assert.notEqual(prima,seconda,'stessa valle, tempo diverso');
   // E non tira niente in anticipo: il registro si riempie solo dei giorni
-  // chiesti (l'estate tutta insieme, per la canicola).
+  // chiesti.
   meteo.dimenticaIlTempo();meteo.evento(6);meteo.evento(7);
   assert.deepEqual(meteo.registroDelTempo().map(r=>r[0]).sort((a,b)=>a-b),[6,7]);
-  meteo.evento(2);assert.equal(meteo.registroDelTempo().length,6,'l’estate in un colpo');
+  meteo.evento(2);assert.equal(meteo.registroDelTempo().length,3,'anche d’estate un giorno alla volta');
 });
 test('il tempo tirato si salva: l’annuncio di domani resta vero dopo il caricamento',()=>{
   tempo.impostaGiorno(5);
@@ -4828,34 +4828,28 @@ test("sulla mappa si mettono e si tolgono segni propri, con un simbolo e un test
 
 // --- M7.18.42: imprevisti del raccolto — canicola e parassiti ----------------
 
-// Il primo giorno di canicola dell'anno, per il seme dei collaudi.
+// Un giorno di canicola dopo un giorno arido. Da M7.18.59 il tempo si tira a
+// caso: lo si fissa.
 function primaCanicola() {
-  let c=1;while(c<=16&&meteo.evento(c)!=='canicola')c++;
-  assert.ok(c<=4,'la prima estate ha la sua canicola');
-  return c;
+  meteo.fissa(2,'arido');meteo.fissa(3,'canicola');meteo.fissa(4,'arido');
+  return 3;
 }
 
-test('ogni estate ha un giorno di canicola, fra il secondo e il quarto, e vale arido',()=>{
-  const cadute=new Set();
-  for(const seme of ['review','canicola','altro seme']) {
-    mappa.inizializza(seme);
-    for(let anno=0;anno<12;anno++) {
-      const base=anno*16;
-      const estate=[1,2,3,4].map(g=>meteo.evento(base+g));
-      assert.equal(estate[0],'arido','il primo giorno d’estate non è mai canicola');
-      assert.equal(estate.filter(e=>e==='canicola').length,1,`${seme}, anno ${anno}`);
-      cadute.add(estate.indexOf('canicola')+1);
-      for(let g=1;g<=4;g++)assert.ok(meteo.arido(base+g),'canicola o arido, d’estate si ha sete doppia');
-      for(let g=5;g<=16;g++)assert.equal(meteo.arido(base+g),false);
-    }
-    // Stabile: la stessa valle ha le stesse canicole.
-    const prima=[...Array(48)].map((_,i)=>meteo.evento(i+1));
-    mappa.inizializza(seme);
-    assert.deepEqual([...Array(48)].map((_,i)=>meteo.evento(i+1)),prima);
+test('ogni giorno d’estate è canicola una volta su quattro, e vale arido; mai fuori dall’estate',()=>{
+  // Da M7.18.60: prima era un giorno solo per estate, dal secondo al quarto.
+  let canicole=0,giorni=0,senza=0,conDue=0;
+  for(let anno=0;anno<600;anno++) {
+    const base=anno*16;
+    const estate=[1,2,3,4].map(g=>meteo.evento(base+g));
+    const n=estate.filter(e=>e==='canicola').length;
+    canicole+=n;giorni+=4;if(n===0)senza++;if(n>=2)conDue++;
+    for(let g=1;g<=4;g++)assert.ok(meteo.arido(base+g),'canicola o arido, d’estate si ha sete doppia');
+    for(let g=5;g<=16;g++){assert.equal(meteo.arido(base+g),false);assert.notEqual(meteo.evento(base+g),'canicola');}
   }
-  assert.deepEqual([...cadute].sort(),[2,3,4],'cade su tutti e tre i giorni possibili');
+  assert.ok(canicole/giorni>0.23&&canicole/giorni<0.27,`canicola ${(100*canicole/giorni).toFixed(1)}%`);
+  // Estati senza canicola (attese il 32%) ed estati con due o più.
+  assert.ok(senza/600>0.27&&senza/600<0.37,`senza ${senza}`);assert.ok(conDue>60,`con due ${conDue}`);
 });
-
 test('la notte di canicola secca subito chi non ha bevuto, e risparmia chi sì',()=>{
   const c=primaCanicola();tempo.impostaGiorno(c);
   modifiche.imposta(tx+1,ty,{oggetto:OGGETTO.CRESCIUTA});

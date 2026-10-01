@@ -12,6 +12,20 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.60 — anche la canicola a probabilità
+
+- **Prima** ogni estate aveva esattamente un giorno di canicola, dal secondo
+  al quarto.
+- **Adesso** ogni giorno d'estate ha il 25% di essere di canicola, come la
+  pioggia e la neve nelle altre stagioni. Gli altri giorni d'estate restano
+  aridi.
+- In media resta un giorno per estate, ma circa un'estate su tre non ne ha,
+  e capitano estati con due o più giorni di canicola, anche di fila, e anche
+  il primo giorno d'estate.
+- Si tira a caso giorno per giorno e si annuncia il giorno prima, come il
+  resto del tempo (M7.18.59). Le regole della canicola non cambiano: la
+  notte che la chiude secca le piante spuntate non innaffiate.
+
 ## M7.18.59 — il tempo si tira davvero
 
 In M7.18.58 le probabilità erano giuste, ma il tiro era un'impronta del giorno
@@ -20,7 +34,8 @@ la valle nasceva. Adesso no.
 - **Ogni giorno si tira a caso**, col caso vero del browser, con le stesse
   probabilità: 25% di pioggia per ogni giorno d'autunno e di primavera, 25%
   di neve per ogni giorno d'inverno, metà dei giorni di pioggia temporali. La
-  canicola si tira una volta per estate.
+  canicola si tirava una volta per estate; da M7.18.60 anche lei al 25% per
+  giorno.
 - **Si tira la prima volta che serve**, in pratica la vigilia, quando si
   annuncia «DOMANI ...». Da lì quel giorno resta quello: si annota in un
   registro che va nel salvataggio, quindi l'annuncio resta vero e ricaricare
@@ -466,7 +481,8 @@ L'orto ha due nemici nuovi. Tutti e due si annunciano prima e si battono con
 gesti che esistono già: chiedono una scelta, non un lavoro in più.
 
 **La canicola.** Ogni estate uno dei giorni dal secondo al quarto è di
-canicola. Il giorno è sempre lo stesso per la stessa valle e lo stesso anno.
+canicola (da M7.18.60 ogni giorno d'estate lo è con il 25% di probabilità,
+tirato a caso).
 - Si sa il giorno prima: nell'angolo del meteo c'è «DOMANI CANICOLA» in
   rosso. Il giorno stesso c'è «CANICOLA: INNAFFIA TUTTO», e al mattino il
   messaggio «oggi canicola: chi non beve, secca».
@@ -2548,7 +2564,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.59**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.60**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
