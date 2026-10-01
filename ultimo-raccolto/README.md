@@ -12,6 +12,20 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.60.5 — chi cammina non sfarfalla
+
+Una correzione chiesta giocando: a volte un animale sembrava abbassare e
+alzare il collo decine di volte al secondo.
+- **La causa.** Il disegno decideva che una bestia si muoveva se il suo passo
+  era cambiato dal fotogramma prima. La simulazione però va a sessanta passi
+  al secondo e il disegno al ritmo dello schermo: a centoventi hertz, o
+  quando il browser salta un passo, metà dei fotogrammi trovavano il passo
+  fermo, e una bestia che camminava veniva disegnata alternando testa bassa
+  e cammino.
+- **Adesso** conta come in cammino una bestia che ha fatto un passo
+  nell'ultimo quarto di secondo. Quando si ferma, aspetta quel quarto di
+  secondo e poi si china, passando a metà.
+
 ## M7.18.60.4 — chi bruca china il collo
 
 Una correzione chiesta giocando: quando gli animali chinavano la testa per
@@ -2612,7 +2626,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.60.4**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.60.5**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
