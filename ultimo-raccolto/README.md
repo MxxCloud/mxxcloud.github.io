@@ -12,6 +12,17 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.56.3 — la foschia sta ferma
+
+Un'altra correzione a M7.18.55, chiesta giocando: la foschia del mattino
+spesso correva velocissima a destra e a sinistra.
+- **Il difetto** era lo stesso della neve: lo spostamento dei banchi era il
+  tempo di gioco moltiplicato per il vento del momento, e a ogni raffica i
+  banchi saltavano avanti e indietro.
+- **Adesso i banchi stanno fermi nel mondo.** Ognuno oscilla appena attorno
+  al suo posto, di sei pixel al più, con un'andata e ritorno di circa un
+  minuto, ognuno col suo passo. Il vento non li sposta.
+
 ## M7.18.56.2 — la neve cade come la pioggia
 
 Una correzione a M7.18.55, chiesta dopo averla vista in partita: quando
@@ -114,7 +125,7 @@ tuona. Tutto il nuovo si spegne col tasto L, come gli altri effetti.
 - **La foschia dell'alba.** D'autunno ogni mattina, e in primavera e
   d'inverno la mattina dopo una pioggia, c'è una nebbia bassa. È piena fra
   le cinque e le otto e sparisce entro le nove e mezza. Sono grandi fasce
-  che il vento porta piano e che stanno ferme rispetto al mondo, così
+  ferme rispetto al mondo (da M7.18.56.3 oscillano appena), così
   camminando ci si passa dentro.
 
 ## M7.18.54 — la luna
@@ -2473,7 +2484,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.56.2**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.56.3**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

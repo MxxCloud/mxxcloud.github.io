@@ -204,16 +204,26 @@ export function disegnaNevePosata(p, quanta, copribile, coperti = new Set()) {
 
 // --- la foschia ---------------------------------------------------------------
 
-// Grandi fasce morbide, ferme rispetto al mondo e portate piano dal vento:
-// camminando ci si passa dentro. Una per cella di 160×72 pixel del mondo.
+// Grandi fasce morbide, ferme rispetto al mondo: camminando ci si passa
+// dentro. Una per cella di 160×72 pixel del mondo.
+//
+// Da M7.18.56.3 non le porta più il vento. Lo spostamento era il tempo di
+// gioco moltiplicato per il vento del momento, e a ogni raffica i banchi
+// correvano avanti e indietro. Un banco di nebbia sta fermo: ognuno oscilla
+// appena attorno alla sua casa, di qualche pixel in quasi un minuto, ognuno
+// col suo passo. "aria" resta nella firma e non conta.
 const CELLA_X = 160, CELLA_Y = 72;
+export const OSCILLA_FOSCHIA = { ampiezza: 6, periodo: 50 };
 export function fasceDiFoschia(q, secondi, aria = 0.5) {
-  const deriva = secondi * (2 + aria * 4);
   const fasce = [];
   for (let cy = Math.floor(q.sopra / CELLA_Y) - 1; cy <= Math.floor(q.sotto / CELLA_Y) + 1; cy++) {
-    for (let cx = Math.floor((q.sinistra - deriva) / CELLA_X) - 1; cx <= Math.floor((q.destra - deriva) / CELLA_X) + 1; cx++) {
+    for (let cx = Math.floor((q.sinistra - OSCILLA_FOSCHIA.ampiezza) / CELLA_X) - 1; cx <= Math.floor((q.destra + OSCILLA_FOSCHIA.ampiezza) / CELLA_X) + 1; cx++) {
+      const casa = (cx + impronta(cx, cy, 0xf05)) * CELLA_X;
+      const periodo = OSCILLA_FOSCHIA.periodo * (0.8 + 0.4 * impronta(cx, cy, 0xf0a));
+      const fase = impronta(cx, cy, 0xf0b) * Math.PI * 2;
       fasce.push({
-        x: (cx + impronta(cx, cy, 0xf05)) * CELLA_X + deriva,
+        casa,
+        x: casa + OSCILLA_FOSCHIA.ampiezza * Math.sin((secondi * 2 * Math.PI) / periodo + fase),
         y: (cy + impronta(cy, cx, 0xf06)) * CELLA_Y,
         rx: 90 + impronta(cx, cy, 0xf07) * 70,
         ry: 18 + impronta(cx, cy, 0xf08) * 14,
