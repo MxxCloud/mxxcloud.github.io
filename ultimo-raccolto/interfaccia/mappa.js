@@ -171,7 +171,7 @@ function disegnaSettore(sx, sy) {
       const o = oggetti[(y + 1) * B + x + 1];
       let classe;
       if (o === OGGETTO.MURO || o === OGGETTO.MURO_ROTTO || o === OGGETTO.PARETE_CAVA || o === OGGETTO.TORRE
-        || o === OGGETTO.MACINA || o === OGGETTO.CAMPANA) classe = MURO;
+        || o === OGGETTO.MACINA || o === OGGETTO.CAMPANA || o === OGGETTO.RUOTA) classe = MURO;
       else {
         let vicini = 0;
         for (let dy = 0; dy < 3; dy += 1) for (let dx = 0; dx < 3; dx += 1) vicini += alberi[(y + dy) * B + x + dx];

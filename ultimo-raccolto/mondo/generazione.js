@@ -139,6 +139,8 @@ export const OGGETTO = {
   // farina, e la campana, che di notte chiama gli infetti.
   MACINA: 46,
   CAMPANA: 47,
+  // La ruota del mulino (M7.18.60.1): decorativa, tiene il posto del muro.
+  RUOTA: 48,
 };
 
 // Le soglie non sono state scelte a occhio: vengono dai percentili misurati
@@ -250,6 +252,7 @@ const COSTRUITO = {
   // "b" è già dei fagioli dell'orto della fattoria: la campana è "B".
   m: OGGETTO.MACINA,
   B: OGGETTO.CAMPANA,
+  R: OGGETTO.RUOTA,
   ",": OGGETTO.NESSUNO,
 };
 
