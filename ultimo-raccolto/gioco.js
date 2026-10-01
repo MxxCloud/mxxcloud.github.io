@@ -77,7 +77,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.60.2";
+const VERSIONE = "M7.18.60.3";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1042,17 +1042,26 @@ function leggiComandi(passo) {
     return;
   }
 
-  // La mappa aperta si prende tutti i tasti, e li legge prima di ogni altro
-  // pannello (M7.18.60.2). Prima stava in fondo: con la mappa aperta C apriva
-  // le ricette sotto la carta, invisibili, e le ricette si prendevano tutti i
-  // tasti — TAB compreso — quindi la mappa non si chiudeva più. Si chiude con
-  // TAB, e con Esc quando non si sta mettendo un segno.
+  // La mappa aperta legge i tasti prima di ogni altro pannello (M7.18.60.2).
+  // Prima stava in fondo: con la mappa aperta C apriva le ricette sotto la
+  // carta, invisibili, e le ricette si prendevano tutti i tasti — TAB
+  // compreso — quindi la mappa non si chiudeva più.
+  //
+  // Adesso C, H e P chiudono la mappa e aprono il loro pannello (M7.18.60.3):
+  // il tasto passa avanti, a chi lo legge qui sotto. TAB la chiude, e anche
+  // Esc quando non si sta mettendo un segno. Tutto il resto è suo.
   if (mappaAperta) {
-    const chiudi = comandi.appenaPremuto("mappa")
-      || (comandi.appenaPremuto("indietro") && mappaGrande.modalita().modo === "sfoglia");
-    if (chiudi) mappaAperta = false;
-    else mappaGrande.naviga(passo, eroe);
-    return;
+    const pannello = comandi.appenaPremuto("ricette") || comandi.appenaPremuto("aiuto")
+      || comandi.appenaPremuto("partita");
+    if (pannello) {
+      mappaAperta = false;
+    } else {
+      const chiudi = comandi.appenaPremuto("mappa")
+        || (comandi.appenaPremuto("indietro") && mappaGrande.modalita().modo === "sfoglia");
+      if (chiudi) mappaAperta = false;
+      else mappaGrande.naviga(passo, eroe);
+      return;
+    }
   }
 
   // La lista dei comandi, come le ricette, prende tutti i tasti finché è

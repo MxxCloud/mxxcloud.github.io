@@ -12,6 +12,13 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.60.3 — dalla mappa ai pannelli
+
+Con la mappa aperta, C chiude la mappa e apre il pannello per costruire,
+come H apre i comandi e P la partita. Prima, da M7.18.60.2, C con la mappa
+aperta non faceva niente. TAB ed Esc chiudono la mappa come prima; tutti
+gli altri tasti restano della mappa.
+
 ## M7.18.60.2 — la mappa non resta più incollata
 
 Una correzione chiesta giocando: a volte, chiusa la mappa con TAB, la carta
@@ -21,8 +28,9 @@ facevano ancora rumore.
   invisibili. Le ricette si prendono tutti i tasti finché sono aperte, TAB
   compreso, quindi la mappa non si chiudeva più. Ripremendo C si sarebbe
   sbloccato, ma niente lo diceva.
-- **Adesso la mappa aperta si prende tutti i tasti**, prima di ogni altro
-  pannello: C, H e gli altri non fanno niente finché la mappa è aperta.
+- **Adesso la mappa aperta legge i tasti prima di ogni altro pannello.** Da
+  M7.18.60.3 C, H e P la chiudono e aprono il loro pannello; gli altri tasti
+  restano della mappa.
 - **Si chiude con TAB, e anche con Esc**, quando non si sta mettendo un
   segno (lì Esc annulla il segno, come prima).
 - **La carta si nasconde all'inizio di ogni fotogramma** in cui la mappa è
@@ -2589,7 +2597,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.60.2**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.60.3**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
