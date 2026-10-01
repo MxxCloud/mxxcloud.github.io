@@ -181,8 +181,8 @@ export const GIORNI_DI_SECCA = 3;
 // DUE COSE FERMANO IL CONTO, e nessuna delle due rovina quello che pende: la
 // roba non si perde, ci mette solo di più.
 //
-// La pioggia, un giorno per stagione: si bagna quello che è steso, e quel
-// giorno non conta.
+// La pioggia, una possibilità su quattro ogni giorno d'autunno e di
+// primavera (M7.18.58): si bagna quello che è steso, e quel giorno non conta.
 //
 // E L'INVERNO INTERO, a prescindere dalla neve. Non è il maltempo, è la
 // stagione: al freddo l'aria non tira via niente, e un telaio caricato in

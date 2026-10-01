@@ -15,9 +15,10 @@ const fra = (v, a, b) => Math.min(1, Math.max(0, (v - a) / (b - a)));
 
 // La neve posata, da 0 a 1. Nel giorno di neve si posa nelle prime otto ore;
 // il giorno dopo, se non nevica ancora, si scioglie fra le sette e le
-// diciannove.
+// diciannove. Da M7.18.58 può nevicare più giorni di fila: allora quella
+// posata resta, e si scioglie il giorno dopo l'ultima nevicata.
 export function neveAPosa(giorno, ore) {
-  if (meteo.evento(giorno) === "neve") return fra(ore, 0, 8);
+  if (meteo.evento(giorno) === "neve") return meteo.evento(giorno - 1) === "neve" ? 1 : fra(ore, 0, 8);
   if (meteo.evento(giorno - 1) === "neve") return 1 - fra(ore, 7, 19);
   return 0;
 }

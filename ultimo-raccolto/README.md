@@ -12,6 +12,24 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.58 — il meteo a probabilità
+
+Il maltempo non è più a calendario.
+- **Prima** c'era esattamente un giorno di maltempo per stagione, il secondo
+  o il terzo: si poteva contare.
+- **Adesso** ogni giorno d'autunno e di primavera ha il 25% di essere di
+  pioggia, e ogni giorno d'inverno il 25% di essere di neve. L'estate resta
+  arida, con la sua canicola.
+- **In media è lo stesso**, un giorno per stagione, ma con la varianza vera:
+  circa una stagione su tre non ha maltempo, e capitano due, tre o quattro
+  giorni di pioggia o di neve di fila. Un inverno senza neve si attraversa
+  più facile, uno con tre giorni di neve molto meno.
+- **Resta stabile e annunciato.** Il tiro dipende dal giorno e dal seme:
+  ricaricare non cambia niente, e il giorno prima si legge «DOMANI PIOGGIA»
+  o «DOMANI NEVE». Il temporale è ancora metà dei giorni di pioggia.
+- **La neve di più giorni resta posata** e si scioglie il giorno dopo
+  l'ultima nevicata.
+
 ## M7.18.57 — il mulino e la chiesa
 
 Gli ultimi due luoghi unici. Adesso ogni regione ha il suo, a rotazione:
@@ -2373,11 +2391,12 @@ risveglio si applicano soltanto a chi sopravvive alla notte.
 
 ## M7.7 — pioggia, neve e aridità
 
-Ogni stagione dura quattro giorni. In autunno e primavera **piove un giorno
-solo**; in inverno **nevica un giorno solo**. L'evento occupa il secondo o
-terzo giorno, scelto in modo stabile dal seme della valle e dall'anno:
-ricaricare non cambia il meteo. Il resto della stagione è sereno. Il riquadro
-sotto l'orologio indica il tempo attuale e anticipa il maltempo del giorno dopo.
+Ogni stagione dura quattro giorni. Da M7.18.58 in autunno e primavera **ogni
+giorno piove con una possibilità su quattro**, e in inverno **ogni giorno
+nevica con una possibilità su quattro** (prima era un giorno solo per
+stagione, il secondo o il terzo). Il tiro è stabile per seme della valle e
+giorno: ricaricare non cambia il meteo. Il riquadro sotto l'orologio indica il
+tempo attuale e anticipa il maltempo del giorno dopo.
 
 **L'estate è sempre arida:** non piove e la sete si consuma a velocità **3x**
 per tutta la stagione, anche dormendo o lasciando la scheda. Da piena a vuota
@@ -2510,7 +2529,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.57**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.58**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
