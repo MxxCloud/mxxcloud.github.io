@@ -12,6 +12,23 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.60.2 — la mappa non resta più incollata
+
+Una correzione chiesta giocando: a volte, chiusa la mappa con TAB, la carta
+restava sullo schermo e non si poteva più giocare, mentre i tasti dei menu
+facevano ancora rumore.
+- **La causa.** Con la mappa aperta, C apriva le ricette sotto la carta,
+  invisibili. Le ricette si prendono tutti i tasti finché sono aperte, TAB
+  compreso, quindi la mappa non si chiudeva più. Ripremendo C si sarebbe
+  sbloccato, ma niente lo diceva.
+- **Adesso la mappa aperta si prende tutti i tasti**, prima di ogni altro
+  pannello: C, H e gli altri non fanno niente finché la mappa è aperta.
+- **Si chiude con TAB, e anche con Esc**, quando non si sta mettendo un
+  segno (lì Esc annulla il segno, come prima).
+- **La carta si nasconde all'inizio di ogni fotogramma** in cui la mappa è
+  chiusa: anche un errore nel disegno del mondo non la può più lasciare sullo
+  schermo.
+
 ## M7.18.60.1 — la ruota del mulino
 
 Il mulino ha la sua ruota di legno, a raggi, incastrata nel muro di destra.
@@ -2572,7 +2589,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.60.1**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.60.2**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

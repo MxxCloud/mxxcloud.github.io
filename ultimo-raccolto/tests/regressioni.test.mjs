@@ -4748,7 +4748,7 @@ test("la mappa grande ha una misura fissa, si apre su di te e si naviga con WASD
   const comandiSrc=readFileSync(new URL('../motore/comandi.js',import.meta.url),'utf8');
   assert.match(comandiSrc,/KeyQ: "allontana"/);assert.match(comandiSrc,/Equal: "avvicina"/);
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
-  assert.match(gioco,/if \(mappaAperta\) mappaGrande\.apri\(eroe\);/);
+  assert.match(gioco,/mappaAperta = true;\s*ricetteAperte = false;[\s\S]{0,80}mappaGrande\.apri\(eroe\);/);
   assert.match(gioco,/mappaGrande\.naviga\(passo, eroe\);/);
   assert.match(gioco,/mappaGrande\.nascondi\(\);/);
   assert.match(gioco,/if \(!haDormito\) leggiComandi\(passo\);/);
@@ -6494,4 +6494,22 @@ test('il mulino ha la ruota sul fianco, al posto di un tratto di muro: la pianta
   assert.equal(mappa.vedeDa(r.tx-1,r.ty,r.tx+1,r.ty),false);
   const {RUOTA}=await import('../arte/sprite-luoghi.js');
   assert.ok(RUOTA.every(l=>l.length===16));assert.notEqual(RUOTA.at(-1).replace(/\./g,''),'','tocca terra');
+});
+
+// M7.18.60.2 — la mappa non resta più incollata.
+test('con la mappa aperta i tasti vanno solo a lei: C non apre le ricette sotto la carta, e TAB o Esc la chiudono sempre',()=>{
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  const leggi=gioco.slice(gioco.indexOf('function leggiComandi'));
+  const mappa=leggi.indexOf('if (mappaAperta) {');
+  assert.ok(mappa>0);
+  // Prima di ogni altro pannello che si prende i tasti: era il difetto, C
+  // apriva le ricette e le ricette tenevano anche TAB.
+  for(const altro of ['appenaPremuto("aiuto")','appenaPremuto("ricette")','appenaPremuto("partita")','if (ricetteAperte)'])
+    assert.ok(mappa<leggi.indexOf(altro),altro);
+  const blocco=leggi.slice(mappa,leggi.indexOf('return;',mappa));
+  assert.match(blocco,/appenaPremuto\("mappa"\)/);assert.match(blocco,/appenaPremuto\("indietro"\) && mappaGrande\.modalita\(\)\.modo === "sfoglia"/);
+  assert.match(blocco,/mappaAperta = false/);
+  // E la carta si nasconde in cima al disegno, prima di tutto il resto.
+  const disegna=gioco.slice(gioco.indexOf('function disegna() {'));
+  assert.ok(disegna.indexOf('mappaGrande.nascondi()')<disegna.indexOf('schermo.pulisci'));
 });

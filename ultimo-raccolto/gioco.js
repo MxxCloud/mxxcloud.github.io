@@ -77,7 +77,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.60.1";
+const VERSIONE = "M7.18.60.2";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1042,6 +1042,19 @@ function leggiComandi(passo) {
     return;
   }
 
+  // La mappa aperta si prende tutti i tasti, e li legge prima di ogni altro
+  // pannello (M7.18.60.2). Prima stava in fondo: con la mappa aperta C apriva
+  // le ricette sotto la carta, invisibili, e le ricette si prendevano tutti i
+  // tasti — TAB compreso — quindi la mappa non si chiudeva più. Si chiude con
+  // TAB, e con Esc quando non si sta mettendo un segno.
+  if (mappaAperta) {
+    const chiudi = comandi.appenaPremuto("mappa")
+      || (comandi.appenaPremuto("indietro") && mappaGrande.modalita().modo === "sfoglia");
+    if (chiudi) mappaAperta = false;
+    else mappaGrande.naviga(passo, eroe);
+    return;
+  }
+
   // La lista dei comandi, come le ricette, prende tutti i tasti finché è
   // aperta: si chiude con H, con Esc o con la barra, e il mondo intanto sta
   // fermo — si apre per leggere, non mentre qualcuno ti insegue.
@@ -1120,18 +1133,15 @@ function leggiComandi(passo) {
     annuncia(`effetti di luce: ${accesi ? "accesi" : "spenti"}`, "#e0b46a");
   }
 
+  // Aperta, si prende tutti i tasti (vedi sopra): non c'è niente da fare
+  // guardando una mappa, e lasciar passare la barra vorrebbe dire dare una
+  // zappata al buio. I tasti servono a lei: WASD e le frecce la spostano, Q
+  // ed E lo zoom.
   if (comandi.appenaPremuto("mappa")) {
-    mappaAperta = !mappaAperta;
+    mappaAperta = true;
     ricetteAperte = false;
     // Si apre sempre su di te (M7.18.39).
-    if (mappaAperta) mappaGrande.apri(eroe);
-    return;
-  }
-  // Aperta, si prende tutti i tasti: non c'è niente da fare guardando una
-  // mappa, e lasciar passare la barra vorrebbe dire dare una zappata al buio.
-  // I tasti servono a lei: WASD e le frecce la spostano, Q ed E lo zoom.
-  if (mappaAperta) {
-    mappaGrande.naviga(passo, eroe);
+    mappaGrande.apri(eroe);
     return;
   }
 
@@ -1736,6 +1746,10 @@ function aggiorna(passo) {
 const inPiedi = [];
 
 function disegna() {
+  // La carta sta su un canvas suo, sopra il gioco: chiusa la mappa la si
+  // nasconde per prima cosa, così niente di quello che segue la può lasciare
+  // incollata allo schermo (M7.18.60.2).
+  if (!mappaAperta) mappaGrande.nascondi();
   schermo.pulisci("#0d0f12");
 
   // Due fotogrammi al secondo per le fiamme: di più le farebbe sfarfallare,
