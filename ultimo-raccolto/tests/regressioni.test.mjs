@@ -5422,7 +5422,7 @@ test('i ciuffi d’erba: uno ogni quattro tasselli di prato libero, e si chiede 
   assert.ok(e.ciuffi(q,3,0,()=>true).every(c=>c.piega===0));
   assert.ok(e.ciuffi(q,3,1.5,()=>true).some(c=>c.piega>0));
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
-  assert.match(gioco,/mappa\.terrenoDi\(tx, ty\) === TERRENO\.ERBA && mappa\.oggettoDi\(tx, ty\) === OGGETTO\.NESSUNO/);
+  assert.match(gioco,/effetti\.disegnaCiuffi\(p, camera, secondi, aria, stagione, mappa\.pratoLibero\);/);
   const i=(s)=>{const k=gioco.indexOf(s);assert.ok(k>0,s);return k;};
   assert.ok(i('effetti.disegnaCiuffi(')<i('effetti.disegnaOmbre(')&&i('effetti.disegnaOmbre(')<i('for (const cosa of inPiedi) {'));
 });
@@ -6578,4 +6578,27 @@ test('una bestia che cammina disegnata a 120 hertz resta in cammino: niente coll
   // Cambi di posa da fermo: pochi, non decine al secondo.
   let cambi=0;for(let i=1;i<dopo.length;i++)if(dopo[i]!==dopo[i-1])cambi++;
   assert.ok(cambi<=8,'cambi in due secondi: '+cambi);
+});
+
+// M7.18.60.6 — i ciuffi d'erba sotto il pavimento.
+test('sul pavimento di legno non crescono i ciuffi d’erba: il prato libero guarda anche le assi',()=>{
+  // Un tassello d'erba vuoto qui attorno.
+  let t=null;
+  for(let y=ty-30;y<ty+30&&!t;y++)for(let x=tx-30;x<tx+30&&!t;x++)
+    if(mappa.terrenoDi(x,y)===TERRENO.ERBA&&mappa.oggettoDi(x,y)===OGGETTO.NESSUNO&&!modifiche.di(x,y))t={x,y};
+  assert.ok(t,'un prato');
+  assert.equal(mappa.pratoLibero(t.x,t.y),true);
+  // Il pavimento si scrive come lo scrive la posa: accanto all'oggetto, che
+  // resta NESSUNO.
+  modifiche.imposta(t.x,t.y,{oggetto:OGGETTO.NESSUNO,pavimento:CATALOGO.pavimento.pavimento});
+  assert.equal(mappa.oggettoDi(t.x,t.y),OGGETTO.NESSUNO);
+  assert.equal(mappa.pratoLibero(t.x,t.y),false,'fra le assi niente ciuffi');
+  // Il pavimento resta finché non lo si toglie apposta, come fa il
+  // sollevarlo: pavimento undefined.
+  modifiche.imposta(t.x,t.y,{oggetto:OGGETTO.NESSUNO,pavimento:undefined});
+  assert.equal(mappa.pavimentoIn(t.x,t.y),null);
+  assert.equal(mappa.pratoLibero(t.x,t.y),true,'sollevate le assi, il prato torna');
+  // E i ciuffi chiedono proprio questa.
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/disegnaCiuffi\([^)]*mappa\.pratoLibero\)/);
 });
