@@ -402,6 +402,14 @@ export function pavimentoIn(tx, ty) {
   return modifiche.di(tx, ty)?.pavimento ?? null;
 }
 
+// Il prato libero, dove crescono i ciuffi che piegano col vento: erba, e
+// sopra niente — né un albero, né un muro, né quello che hai posato, né il
+// pavimento. Il pavimento non è un oggetto ma un campo del tassello, e da
+// M7.18.60.6 lo si guarda: prima i ciuffi spuntavano fra le assi.
+export function pratoLibero(tx, ty) {
+  return terrenoDi(tx, ty) === TERRENO.ERBA && oggettoDi(tx, ty) === OGGETTO.NESSUNO && !pavimentoIn(tx, ty);
+}
+
 // Cambia un tassello e butta via il settore che lo conteneva, così alla
 // prossima inquadratura viene ricotto con il mondo nuovo. Solo quel settore:
 // un oggetto sta tutto dentro il suo tassello e non sfrangia i vicini.
