@@ -12,6 +12,19 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.60.6 — niente ciuffi fra le assi
+
+Una correzione chiesta giocando: i ciuffi d'erba che piegano col vento
+spuntavano sopra il pavimento di legno.
+- **La causa.** I ciuffi crescono sul prato libero, cioè erba senza niente
+  sopra, e per saperlo si chiedeva se sul tassello c'era un oggetto. Il
+  pavimento però non è un oggetto: è un campo del tassello, che sotto un
+  arredo o da solo lascia l'oggetto vuoto. I fiori sotto le assi erano già
+  coperti, i ciuffi no.
+- **Adesso** il prato libero sta in `mondo/mappa.js` e guarda anche il
+  pavimento: fra le assi niente ciuffi, e sollevate le assi il prato torna
+  com'era.
+
 ## M7.18.60.5 — chi cammina non sfarfalla
 
 Una correzione chiesta giocando: a volte un animale sembrava abbassare e
@@ -2626,7 +2639,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.60.5**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.60.6**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

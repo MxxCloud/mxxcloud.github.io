@@ -77,7 +77,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.60.5";
+const VERSIONE = "M7.18.60.6";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1795,7 +1795,8 @@ function disegna() {
   // in piedi sopra: l'ombra cade anche sull'erba.
   // La riva (M7.18.49): schiuma e terra bagnata, sotto tutto quello che sta in piedi.
   effetti.disegnaRiva(p, camera, secondi, mappa.rivaDi, mappa.gelato());
-  effetti.disegnaCiuffi(p, camera, secondi, aria, stagione, pratoLibero);
+  // Il prato libero lo decide mappa.js: niente sopra, nemmeno il pavimento.
+  effetti.disegnaCiuffi(p, camera, secondi, aria, stagione, mappa.pratoLibero);
   // La neve posata (M7.18.55): sopra l'erba, sotto tutto quello che sta in piedi.
   if (effetti.attivi()) {
     atmosfera.disegnaNevePosata(p, cielo.neveAPosa(tempo.giornoCorrente(), tempo.oraCorrente()),
@@ -1930,12 +1931,6 @@ function disegnaBuio(secondi, chiaroDiLuna = 0, lampo = 0) {
   const luce = tempo.luceAmbiente();
   oscurita.disegna(schermo.pennello(), luce + (1 - luce) * 0.85 * lampo, tempo.tintaOscurita(chiaroDiLuna), lumi,
     (luce) => effetti.tremolio(luce, secondi), chiaroDiLuna);
-}
-
-// Il prato libero, dove crescono i ciuffi che piegano col vento: erba, e
-// sopra niente — né un albero, né un muro, né quello che hai posato.
-function pratoLibero(tx, ty) {
-  return mappa.terrenoDi(tx, ty) === TERRENO.ERBA && mappa.oggettoDi(tx, ty) === OGGETTO.NESSUNO;
 }
 
 // L'acqua che può luccicare: non quella gelata.
