@@ -19,6 +19,7 @@ import * as modifiche from "../mondo/modifiche.js";
 import { CATALOGO } from "./oggetti.js";
 import * as ricette from "./ricette.js";
 import * as inventario from "./inventario.js";
+import * as fasce from "./fasce.js";
 
 // Dodici caselle contro le otto dello zaino. Una cassa deve valere il viaggio
 // — otto e otto avrebbe voluto dire svuotare lo zaino e non poterci mettere
@@ -66,12 +67,22 @@ const BOTTINO = [
   { cosa: "semi_lino", da: 2, a: 3, peso: 2 },
   // E da M7.18.25 il grano, che chi teneva le galline teneva da parte.
   { cosa: "grano", da: 2, a: 4, peso: 2 },
-  { cosa: "benda", da: 1, a: 2, peso: 2 },
+  { cosa: "benda", da: 1, a: 2, peso: 2, raro: true },
   { cosa: "bacche_secche", da: 2, a: 5, peso: 2 },
-  { cosa: "torcia", da: 1, a: 2, peso: 2 },
-  { cosa: "secchio", da: 1, a: 1, peso: 1 },
-  { cosa: "ascia", da: 1, a: 1, peso: 1 },
-  { cosa: "zappa", da: 1, a: 1, peso: 1 },
+  { cosa: "torcia", da: 1, a: 2, peso: 2, raro: true },
+  { cosa: "secchio", da: 1, a: 1, peso: 1, raro: true },
+  { cosa: "ascia", da: 1, a: 1, peso: 1, raro: true },
+  { cosa: "zappa", da: 1, a: 1, peso: 1, raro: true },
+  // Da M7.18.61 la roba che si trova solo lontano ("oltre" è la fascia da cui
+  // comincia, vedi fasce.js). Le case vicine alla fattoria le hanno già
+  // vuotate gli altri, e quello che resta è la roba che non valeva il
+  // viaggio; quelle lontane le ha lasciate chi è scappato di corsa. Stanno in
+  // fondo alla tavola, e una voce che non c'è non pesa: nei dintorni la
+  // tavola è quella di prima, tiro per tiro.
+  { cosa: "filo", da: 2, a: 3, peso: 2, oltre: 1 },
+  { cosa: "conserva", da: 1, a: 2, peso: 2, raro: true, oltre: 2 },
+  { cosa: "pelliccia", da: 1, a: 1, peso: 1, oltre: 2 },
+  { cosa: "lancia", da: 1, a: 1, peso: 1, raro: true, oltre: 3 },
 ];
 
 // Quello che resta nelle casse della fattoria da cui si comincia.
@@ -108,23 +119,23 @@ const BOTTINO_LUOGHI = {
     { cosa: "fibra", da: 2, a: 4, peso: 3 },
     { cosa: "legna", da: 1, a: 3, peso: 3 },
     { cosa: "fagioli", da: 2, a: 3, peso: 2 },
-    { cosa: "benda", da: 1, a: 1, peso: 1 },
+    { cosa: "benda", da: 1, a: 1, peso: 1, raro: true },
   ],
   pozzo: [
-    { cosa: "secchio", da: 1, a: 1, peso: 2 },
+    { cosa: "secchio", da: 1, a: 1, peso: 2, raro: true },
     { cosa: "fibra", da: 2, a: 3, peso: 3 },
     { cosa: "pietra", da: 1, a: 2, peso: 1 },
   ],
   bruciato: [
     { cosa: "fibra", da: 1, a: 3, peso: 3 },
-    { cosa: "benda", da: 1, a: 1, peso: 2 },
+    { cosa: "benda", da: 1, a: 1, peso: 2, raro: true },
     { cosa: "fagioli", da: 1, a: 2, peso: 2 },
-    { cosa: "conserva", da: 1, a: 1, peso: 1 },
+    { cosa: "conserva", da: 1, a: 1, peso: 1, raro: true },
   ],
   boscaioli: [
     { cosa: "legna", da: 2, a: 4, peso: 4 },
     { cosa: "ramo", da: 2, a: 3, peso: 3 },
-    { cosa: "ascia", da: 1, a: 1, peso: 1 },
+    { cosa: "ascia", da: 1, a: 1, peso: 1, raro: true },
   ],
   // L'orto abbandonato ha i semi di chi lo coltivava: la rapa, e ogni tanto
   // un cavolo o qualche patata.
@@ -134,7 +145,7 @@ const BOTTINO_LUOGHI = {
     { cosa: "patata", da: 1, a: 2, peso: 2 },
     { cosa: "grano", da: 2, a: 3, peso: 2 },
     { cosa: "fibra", da: 2, a: 3, peso: 2 },
-    { cosa: "zappa", da: 1, a: 1, peso: 1 },
+    { cosa: "zappa", da: 1, a: 1, peso: 1, raro: true },
   ],
 };
 
@@ -167,15 +178,40 @@ const BOTTINO_UNICI = {
 
 // Quanto ne resta a un attrezzo lasciato lì da qualcun altro. Dal generatore
 // della cassa e non da un tiro nuovo, come tutto il resto del bottino: la
-// stessa cassa dà sempre la stessa ascia, con la stessa lena dentro.
-function usiTrovati(cosa, caso) {
+// stessa cassa dà sempre la stessa ascia, con la stessa lena dentro. "lena"
+// è quanto in più regge chi lo si trova lontano (PER_FASCIA, qui sotto).
+function usiTrovati(cosa, caso, lena = 0) {
   const durata = CATALOGO[cosa]?.durata;
   if (durata === undefined) return undefined;
-  return Math.max(1, Math.round(durata * (0.3 + caso() * 0.35)));
+  return Math.max(1, Math.round(durata * Math.min(1, 0.3 + lena + caso() * 0.35)));
 }
 
+// Quanto rende una cassa secondo la fascia in cui sta (M7.18.61, vedi
+// fasce.js). Tre leve, e nessuna tocca i dintorni:
+//   - pile: quante pile in più, oltre a quelle di sempre;
+//   - rari: per quanto si moltiplica il peso della roba che non si ha voglia
+//     di costruire — bende, torce, attrezzi, conserve;
+//   - lena: quanto in più dura un attrezzo trovato. Nel selvatico fra il 60
+//     e il 95 per cento: non nuovo, ma un'ascia che regge una stagione.
+// Non c'è una fascia in cui frugare renda più che riparare per sempre: anche
+// nel selvatico un attrezzo si trova usato, e arrivarci costa notti fuori.
+const PER_FASCIA = [
+  { pile: 0, rari: 1, lena: 0 },
+  { pile: 1, rari: 1.5, lena: 0.1 },
+  { pile: 1, rari: 2, lena: 0.2 },
+  { pile: 2, rari: 3, lena: 0.3 },
+];
+
 const pesoDi = (tavola) => tavola.reduce((somma, v) => somma + v.peso, 0);
-const PESO_TOTALE = pesoDi(BOTTINO);
+
+// La tavola come la vede una cassa di questa fascia: senza la roba che lì
+// non c'è, e con i pesi dei rari moltiplicati. Nei dintorni è la tavola di
+// sempre, la stessa voce per voce, ed è quello che tiene fermo il bottino
+// delle case già in gioco.
+function tavolaPer(tavola, fascia) {
+  const { rari } = PER_FASCIA[fascia];
+  return tavola.filter((v) => (v.oltre ?? 0) <= fascia).map((v) => (v.raro ? { ...v, peso: v.peso * rari } : v));
+}
 
 function pesca(caso, tavola, totale) {
   let tiro = caso() * totale;
@@ -211,7 +247,7 @@ function ripiegoDelLino(tx, ty) {
 // qualcosa — poco, ma qualcosa.
 const PILE = [1, 3];
 
-function bottinoDi(tx, ty) {
+export function bottinoDi(tx, ty) {
   const fila = vuote();
   // Un generatore seminato sulle coordinate: la stessa cassa dà sempre lo
   // stesso bottino, e due casse vicine no. In questo gioco Math.random non
@@ -228,10 +264,12 @@ function bottinoDi(tx, ty) {
     return fila;
   }
   const tavolaLuogo = BOTTINO_LUOGHI[luogo?.luogo];
-  const tavola = dellaFattoria(tx, ty) ? BOTTINO_FATTORIA : tavolaLuogo ?? BOTTINO;
+  const fascia = dellaFattoria(tx, ty) ? 0 : fasce.diTassello(tx, ty);
+  const { pile, lena } = PER_FASCIA[fascia];
+  const tavola = tavolaPer(dellaFattoria(tx, ty) ? BOTTINO_FATTORIA : tavolaLuogo ?? BOTTINO, fascia);
   const totale = pesoDi(tavola);
-  const quante = tavolaLuogo ? 1 + Math.floor(caso() * 2)
-    : PILE[0] + Math.floor(caso() * (PILE[1] - PILE[0] + 1));
+  const quante = pile + (tavolaLuogo ? 1 + Math.floor(caso() * 2)
+    : PILE[0] + Math.floor(caso() * (PILE[1] - PILE[0] + 1)));
   // Mai due volte la stessa cosa. Non è pulizia: gli attrezzi si impilano a
   // uno, quindi due zappe sono due caselle occupate da due zappe — visto in
   // una prova, e una casa che contiene due zappe e nient'altro racconta un
@@ -252,7 +290,7 @@ function bottinoDi(tx, ty) {
     // tappa dell'usura — frugare renderebbe sempre più che riparare, e il
     // banco tornerebbe a servire una volta sola. Fra un terzo e due terzi di
     // quello che regge da nuova: serve ancora, e non ti risolve la stagione.
-    inventario.mettiIn(fila, voce.cosa, n, undefined, usiTrovati(voce.cosa, caso));
+    inventario.mettiIn(fila, voce.cosa, n, undefined, usiTrovati(voce.cosa, caso, lena));
   }
   // Dopo il resto e fuori dal generatore: il bottino di prima non cambia, si
   // aggiunge una pila.

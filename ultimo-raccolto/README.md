@@ -12,6 +12,50 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.61 — le fasce di distanza
+
+Fino a qui il mondo era uguale ovunque: una casa a trenta schermate dalla
+fattoria valeva quella accanto, e la notte era la stessa. Adesso **la distanza
+conta**. Attorno alla fattoria ci sono quattro fasce, e più ci si allontana più
+rendono le casse e più è affollato il buio.
+
+| Fascia | Da casa | Casse | Di notte |
+|---|---|---|---|
+| **I dintorni** | fino a 200 tasselli, un minuto a piedi | come prima, tiro per tiro | fino a 5 infetti |
+| **La valle** | fino a 450 | una pila in più, roba rara più spesso, il filo | fino a 6 |
+| **Le terre lontane** | fino a 750, una giornata fra andata e ritorno | ancora più roba rara, attrezzi meno consumati, conserve e pellicce | fino a 8, con un colpo in più da prendere e un po' più svelti; più orsi |
+| **Il selvatico** | oltre: ci si dorme fuori | due pile in più, attrezzi fra il 60 e il 95%, anche la lancia | fino a 10, e **escono già al tramonto**; ancora più orsi |
+
+- **Le regole si dicono prima.** Passando un confine compare il nome della
+  fascia, e sotto, su una o due righe, cosa cambia. Chi cammina lungo il
+  confine non riceve un cartello a ogni passo: la fascia annunciata cambia
+  solo quando si è entrati di otto tasselli. Ripartendo, caricando o da
+  superstite nuovo la fascia si prende in silenzio.
+- **Sulla mappa (`TAB`)** i confini sono cerchi tratteggiati attorno alla
+  fattoria, col nome della fascia che comincia scritto dalla parte di fuori.
+- **In diagnostica (`F3`)** una riga dice la fascia e quanti tasselli mancano a
+  casa.
+- **Il bottino.** Una pila in più nella valle e nelle terre lontane, due nel
+  selvatico. I pesi delle cose che non si ha voglia di costruire — bende,
+  torce, attrezzi, conserve — si moltiplicano per 1,5, 2 e 3. Gli attrezzi
+  trovati lontano reggono di più, ma mai nuovi: frugare non deve rendere più
+  che riparare. Filo, conserve, pellicce e lance nelle case ci sono solo da
+  una certa fascia in poi.
+- **Nei dintorni non cambia niente**, nemmeno un tiro: le casse danno
+  esattamente il bottino di prima. Lo stesso per la fattoria, che è sempre nei
+  dintorni, e per le casse dei luoghi unici, che hanno sempre tutto.
+- **Gli infetti.** Quanti ce ne sono lo decide la fascia in cui sei; quanto
+  sono duri e svelti, quella in cui nascono. Anche nel selvatico inseguono a
+  71 pixel al secondo contro i 92 di chi corre: si scappa ancora. Di giorno
+  pieno non ce n'è nessuno, nemmeno lì: nel selvatico il giorno dura meno,
+  dalle sette alle sette.
+- **Gli orsi.** Il loro peso fra le bestie si moltiplica per 1,5 nelle terre
+  lontane e per 2 nel selvatico: d'estate nelle terre lontane un animale su
+  cinque è un orso, d'inverno nel selvatico più di uno su due.
+- **Niente nel salvataggio.** La fascia è una funzione delle coordinate,
+  misurata dal centro della fattoria: le partite già salvate si aprono come
+  prima.
+
 ## M7.18.60.6 — niente ciuffi fra le assi
 
 Una correzione chiesta giocando: i ciuffi d'erba che piegano col vento
@@ -2639,7 +2683,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.60.6**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.61**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

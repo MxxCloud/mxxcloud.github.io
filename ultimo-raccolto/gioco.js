@@ -70,6 +70,7 @@ import * as minimappa from "./interfaccia/minimappa.js";
 import * as mappaGrande from "./interfaccia/mappa.js";
 import * as tinte from "./interfaccia/tinte.js";
 import * as esplorato from "./regole/esplorato.js";
+import * as fasce from "./regole/fasce.js";
 
 const { TASSELLO } = schermo;
 
@@ -77,7 +78,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.60.6";
+const VERSIONE = "M7.18.61";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -127,6 +128,10 @@ let messaggio = null;
 let canicolaDetta = null;
 let avvisoRisveglio = null;
 let luogoAttuale = null;
+// La fascia di distanza già annunciata (M7.18.61). null dove l'eroe viene
+// messo al mondo — partita nuova, caricamento, superstite nuovo — e lì la si
+// prende in silenzio: l'annuncio è per chi passa un confine camminando.
+let fasciaAttuale = null;
 // La schermata iniziale, o null quando si gioca. Sono tre passi di uno stesso
 // ingresso: "titolo" sceglie fra partita nuova e partita salvata, "stagione" e
 // "giorno" scelgono da che punto dell'anno comincia quella nuova.
@@ -327,6 +332,7 @@ function nuovoSuperstite() {
   // mezzo a un prato.
   riparo.reimposta();
   luogoAttuale = null;
+  fasciaAttuale = null;
   entita.svuota();
   const partenza = doveSiComincia();
   eroe = entita.aggiungi(giocatore.crea(partenza.px, partenza.py));
@@ -614,6 +620,7 @@ function riprendi(ripreso) {
   // che per mezzo secondo non gela in mezzo alla neve.
   riparo.reimposta();
   luogoAttuale = null;
+  fasciaAttuale = null;
   entita.svuota();
   eroe = entita.aggiungi(giocatore.crea(ripreso.eroe.px, ripreso.eroe.py));
   eroe.guarda = ripreso.eroe.guarda ?? "giu";
@@ -1600,6 +1607,17 @@ function aggiorna(passo) {
     if (luogo?.luogo === "orto") esplorato.segnaOrto(luogo);
     luogoAttuale = chiaveLuogo;
 
+    // Il confine di una fascia di distanza (M7.18.61): il nome e le sue
+    // regole, dette nel momento in cui cominciano a valere. Dopo il luogo,
+    // così passando un confine proprio sulla soglia di una casa vince la
+    // regola, che è quella che serve sapere.
+    const txEroe = Math.floor(eroe.px / TASSELLO), tyEroe = Math.floor(eroe.py / TASSELLO);
+    const fascia = fasciaAttuale === null ? fasce.diTassello(txEroe, tyEroe) : fasce.dopoIlPasso(txEroe, tyEroe, fasciaAttuale);
+    if (fasciaAttuale !== null && fascia !== fasciaAttuale) {
+      annuncia(fasce.FASCE[fascia].nome, fasce.FASCE[fascia].colore, fasce.FASCE[fascia].avviso);
+    }
+    fasciaAttuale = fascia;
+
     if (colpito) {
       colpito.resta -= passo;
       if (colpito.resta <= 0) colpito = null;
@@ -2076,6 +2094,7 @@ function aggiornaDiagnostica() {
     `versione ${VERSIONE_MOSTRATA}`,
     `seme     ${SEME}`,
     `tassello ${tx}, ${ty}`,
+    `fascia   ${fasce.diTassello(tx, ty)} ${fasce.FASCE[fasce.diTassello(tx, ty)].nome}  (${Math.round(fasce.distanzaDi(tx, ty))} tasselli da casa)`,
     `terreno  ${NOMI_TERRENO[mappa.terrenoDi(tx, ty)]}`,
     `bisogni  ${bisogni.ELENCO.map((n) => n[0] + " " + bisogni.livello(n).toFixed(2)).join("  ")}  velocità ${bisogni.fattoreVelocita().toFixed(2)}`,
     `salute   ${salute.livelloCorrente().toFixed(3)}  freddo ${gelando ?? "no"}  ${salute.eInfetto() ? "infetto" : "sano"}  ${mortoDi ? `morto ${mortoDi}` : "vivo"}`,
@@ -2278,6 +2297,8 @@ if (parametri.has("diagnostica")) {
     suono,
     udito,
     contenitori,
+    // Le fasce di distanza (M7.18.61), per mettersi su un confine.
+    fasce,
     riparo,
     cassaAperta: () => (cassaAperta ? { ...cassaAperta } : null),
     ricetteAperte: () => ricetteAperte,

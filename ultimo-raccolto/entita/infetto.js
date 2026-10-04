@@ -32,6 +32,10 @@ export const TIPO = "infetto";
 const VELOCITA_VAGA = 22;
 const VELOCITA_INSEGUE = 62;
 
+// Il tempo che fa (fattoreMeteo, lo scrive il giro ogni fotogramma) e la
+// lena con cui è nato, che dipende da quanto lontano da casa (M7.18.61).
+const fattoreDi = (e) => (e.fattoreMeteo ?? 1) * (e.lena ?? 1);
+
 // A che distanza arriva il braccio, e ogni quanto. Poco più del riquadro
 // d'urto: deve colpire chi è addosso, non chi passa a un tassello.
 const PORTATA = 13;
@@ -144,7 +148,7 @@ function vagabonda(e, passo) {
     return;
   }
   guardaVerso(e, x, y);
-  const percorso = urti.muovi(e, x * VELOCITA_VAGA * (e.fattoreMeteo ?? 1) * passo, y * VELOCITA_VAGA * (e.fattoreMeteo ?? 1) * passo);
+  const percorso = urti.muovi(e, x * VELOCITA_VAGA * fattoreDi(e) * passo, y * VELOCITA_VAGA * fattoreDi(e) * passo);
   e.passo += percorso / 7;
   // Incastrato contro un albero: invece di spingere per secondi, si cambia
   // idea subito. È il rimedio più corto al difetto più visibile di chi vaga.
@@ -171,8 +175,8 @@ function insegue(e, passo, bx, by, fermatiA = 0) {
   }
   const percorso = urti.muovi(
     e,
-    (dx / distanza) * VELOCITA_INSEGUE * (e.fattoreMeteo ?? 1) * passo,
-    (dy / distanza) * VELOCITA_INSEGUE * (e.fattoreMeteo ?? 1) * passo
+    (dx / distanza) * VELOCITA_INSEGUE * fattoreDi(e) * passo,
+    (dy / distanza) * VELOCITA_INSEGUE * fattoreDi(e) * passo
   );
   e.passo += percorso / 7;
   // Ha spinto e non si è mosso: davanti c'è qualcosa. Chi vaga, in questo
@@ -221,7 +225,9 @@ export function aggiorna(e, passo) {
 
 // --- creazione ------------------------------------------------------------
 
-export function crea(px, py) {
+// "vita" e "lena" li decide la regola (infetti.js): lontano da casa nascono
+// più duri e più svelti (M7.18.61).
+export function crea(px, py, { vita = VITA, lena = 1 } = {}) {
   const e = {
     tipo: TIPO,
     px,
@@ -232,7 +238,8 @@ export function crea(px, py) {
     x: 0,
     y: 0,
     base: py,
-    vita: VITA,
+    vita,
+    lena,
     // Riempiti dall'alto, come impugnato per il superstite: chi inseguire e
     // dove andare a guardare sono decisioni che richiedono di sapere cos'è la
     // vista e cos'è il rumore, e quelle sono regole.
