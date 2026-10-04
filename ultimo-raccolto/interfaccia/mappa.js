@@ -29,6 +29,7 @@ import * as comandi from "../motore/comandi.js";
 import * as mappa from "../mondo/mappa.js";
 import * as modifiche from "../mondo/modifiche.js";
 import * as esplorato from "../regole/esplorato.js";
+import * as fasce from "../regole/fasce.js";
 import { OGGETTO, TERRENO } from "../mondo/generazione.js";
 
 const { SETTORE } = mappa;
@@ -580,6 +581,8 @@ export function disegna(p, eroe) {
   const inVista = ({ x, y }) =>
     x > area.x - 40 * u && y > area.y - 20 * u && x < area.x + area.w + 40 * u && y < area.y + area.h + 20 * u;
 
+  confiniDelleFasce(c, u, suCarta, inVista, perTassello, area);
+
   const nomi = [];
   luoghi(c, u, suCarta, inVista, nomi);
 
@@ -640,6 +643,49 @@ export function disegna(p, eroe) {
   }
 
   legenda(c, u, W, H);
+}
+
+// I confini delle fasce di distanza (M7.18.61): cerchi tratteggiati e tenui
+// attorno alla fattoria, sotto ogni segno — sono un'indicazione, non una
+// cosa del mondo. Il nome della fascia che comincia sta appena fuori dal
+// cerchio, nel punto più vicino al centro della carta: è quello che si
+// guarda, e lungo un cerchio così grande un nome solo basta.
+function confiniDelleFasce(c, u, suCarta, inVista, perTassello, area) {
+  const centro = fasce.centro();
+  const o = suCarta(centro.tx + 0.5, centro.ty + 0.5);
+  const meta = { x: area.x + area.w / 2, y: area.y + area.h / 2 };
+  const lontano = Math.hypot(meta.x - o.x, meta.y - o.y);
+  const verso = lontano > 0 ? { x: (meta.x - o.x) / lontano, y: (meta.y - o.y) / lontano } : { x: 0, y: -1 };
+  const mezzaDiagonale = Math.hypot(area.w, area.h) / 2;
+  c.save();
+  for (let i = 0; i < fasce.FASCE.length - 1; i += 1) {
+    const r = fasce.FASCE[i].fino * perTassello;
+    // Un cerchio che non passa per la carta non si traccia.
+    if (Math.abs(lontano - r) > mezzaDiagonale) continue;
+    const fuori = fasce.FASCE[i + 1];
+    // Un filo scuro sotto e il tratteggio sopra, come l'ombra delle scritte:
+    // senza, sul prato e sulla sabbia il cerchio non si vedeva.
+    c.beginPath();
+    c.arc(o.x, o.y, r, 0, Math.PI * 2);
+    c.setLineDash([]);
+    c.lineWidth = Math.max(2, u * 1.6);
+    c.strokeStyle = "rgb(12 13 16 / 0.45)";
+    c.stroke();
+    c.setLineDash([3 * u, 3 * u]);
+    c.lineWidth = Math.max(1, u * 0.7);
+    c.strokeStyle = fuori.colore;
+    c.stroke();
+    // Tutto il nome dalla parte di fuori: a sinistra o a destra del cerchio
+    // allineato al suo bordo, sopra o sotto centrato.
+    const bordo = { x: o.x + verso.x * (r + 3 * u), y: o.y + verso.y * (r + 3 * u) };
+    const misura = 3.3 * u;
+    const diLato = Math.abs(verso.x) > Math.abs(verso.y);
+    const punto = diLato ? { x: bordo.x, y: bordo.y - misura / 2 }
+      : { x: bordo.x, y: verso.y > 0 ? bordo.y : bordo.y - misura };
+    const allineamento = diLato ? (verso.x > 0 ? "left" : "right") : "center";
+    if (inVista(punto)) scrivi(c, fuori.nome.toUpperCase(), punto.x, punto.y, misura, fuori.colore, allineamento, true);
+  }
+  c.restore();
 }
 
 // La vista non esce da quello che hai visto: se l'esplorato è più largo della

@@ -465,9 +465,13 @@ export function disegnaMessaggio(p, messaggio) {
   // errore di disegno, uno che si muove sembra una notifica.
   const y = 26 - Math.round((1 - messaggio.vita) * 5);
   testo.disegnaConOmbra(p, messaggio.testo, x, y, messaggio.colore ?? CHIARO);
+  // La seconda riga può andare a capo (M7.18.61): l'avviso di una fascia di
+  // distanza dice due cose, e su una riga sola non ci stanno.
   if (messaggio.sotto) {
-    const xs = Math.round((schermo.LARGHEZZA - testo.larghezza(messaggio.sotto)) / 2);
-    testo.disegnaConOmbra(p, messaggio.sotto, xs, y + testo.ALTEZZA + 4, GRIGIO_ISCRIZIONE);
+    messaggio.sotto.split("\n").forEach((riga, i) => {
+      const xs = Math.round((schermo.LARGHEZZA - testo.larghezza(riga)) / 2);
+      testo.disegnaConOmbra(p, riga, xs, y + (testo.ALTEZZA + 4) * (i + 1), GRIGIO_ISCRIZIONE);
+    });
   }
 }
 const GRIGIO_ISCRIZIONE = "#b8b2a2";

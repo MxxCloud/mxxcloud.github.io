@@ -27,6 +27,8 @@ import * as contenitori from '../regole/contenitori.js';
 import * as azioni from '../regole/azioni.js';
 import * as ricette from '../regole/ricette.js';
 import * as campana from '../regole/campana.js';
+import * as fasce from '../regole/fasce.js';
+import * as testo from '../arte/testo.js';
 import * as chiasso from '../regole/chiasso.js';
 import { generatore as generatoreDelTempo } from '../motore/casuale.js';
 import * as infettoEntita from '../entita/infetto.js';
@@ -171,7 +173,9 @@ test('bottino dei piccoli luoghi tematico, modesto e stabile alla riapertura',()
   for(const l of LUOGHI) {
     const r=trovaLuogo(l.id),p=segnoNelLuogo(r,'c');
     const prima=contenitori.contenutoDi(p.tx,p.ty),pile=prima.filter(Boolean);
-    assert.ok(pile.length>=1&&pile.length<=2);
+    // Da M7.18.61 lontano da casa c'è qualche pila in più (vedi fasce.js).
+    const inPiu=[0,1,1,2][fasce.diTassello(p.tx,p.ty)];
+    assert.ok(pile.length>=1&&pile.length<=2+inPiu);
     for(const c of pile){assert.ok(ammessi[l.id].includes(c.cosa));assert.ok(c.quantita<=4);}
     assert.deepEqual(contenitori.contenutoDi(p.tx,p.ty),prima);
     assert.equal(modifiche.di(p.tx,p.ty),undefined);
@@ -6601,4 +6605,143 @@ test('sul pavimento di legno non crescono i ciuffi d’erba: il prato libero gua
   // E i ciuffi chiedono proprio questa.
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
   assert.match(gioco,/disegnaCiuffi\([^)]*mappa\.pratoLibero\)/);
+});
+
+// M7.18.61 — le fasce di distanza.
+// Un punto a "d" tasselli dal centro della fattoria, verso est.
+const IMPRONTA_DEI_DINTORNI='1461709de619abb8';
+const aDistanza=(d)=>({tx:fasce.centro().tx+d,ty:fasce.centro().ty});
+test('le fasce di distanza: quattro, misurate dalla fattoria, con i confini a 200, 450 e 750 tasselli',()=>{
+  assert.deepEqual(fasce.FASCE.map(f=>f.nome),['I dintorni','La valle','Le terre lontane','Il selvatico']);
+  const c=fasce.centro(),f=mappa.laFattoria();
+  assert.deepEqual([c.tx,c.ty],[f.tx,f.ty],'il centro è la fattoria');
+  assert.ok(f.tx!==0||f.ty!==0,'e non l’origine, in questa valle');
+  for(const [d,attesa] of [[0,0],[199,0],[201,1],[449,1],[451,2],[749,2],[751,3],[5000,3]]){
+    const p=aDistanza(d);
+    assert.equal(fasce.diTassello(p.tx,p.ty),attesa,`a ${d} tasselli`);
+    assert.equal(fasce.diPixel(p.tx*16+8,p.ty*16+8),attesa);
+  }
+  // In ogni direzione: è un cerchio, non un quadrato.
+  assert.equal(fasce.diTassello(c.tx+150,c.ty+150),1,'in diagonale 212 tasselli sono già la valle');
+  assert.ok(Math.abs(fasce.distanzaDi(c.tx+300,c.ty+400)-500)<1e-9);
+  // Ogni fascia ha il suo avviso, e l'avviso dice le regole.
+  for(const fa of fasce.FASCE)assert.ok(fa.avviso.length>10&&/^#[0-9a-f]{6}$/.test(fa.colore));
+  assert.match(fasce.FASCE[3].avviso,/tramonto/);
+  // Ogni riga dell'avviso sta fra il bordo sinistro e le scritte del tempo,
+  // che a destra cominciano verso il pixel 285: centrata, al più 186 pixel.
+  for(const fa of fasce.FASCE)for(const riga of fa.avviso.toUpperCase().split('\n'))
+    assert.ok(testo.larghezza(riga)<=186,`${riga}: ${testo.larghezza(riga)}`);
+  // E la seconda riga dell'annuncio sa andare a capo.
+  const hud=readFileSync(new URL('../interfaccia/hud.js',import.meta.url),'utf8');
+  assert.match(hud,/messaggio\.sotto\.split\("\\n"\)/);
+});
+test('l’annuncio della fascia ha un margine: camminare sul confine non lo ripete a ogni passo',()=>{
+  const p=(d)=>[aDistanza(d).tx,aDistanza(d).ty];
+  assert.equal(fasce.dopoIlPasso(...p(203),0),0,'tre tasselli oltre il confine: ancora i dintorni');
+  assert.equal(fasce.dopoIlPasso(...p(210),0),1,'dieci oltre: la valle');
+  assert.equal(fasce.dopoIlPasso(...p(197),1),1,'tornando, tre tasselli dentro: ancora la valle');
+  assert.equal(fasce.dopoIlPasso(...p(190),1),0);
+  assert.equal(fasce.dopoIlPasso(...p(800),0),3,'un salto lungo arriva dritto alla fascia');
+  assert.equal(fasce.dopoIlPasso(...p(300),null),1,'senza una fascia di prima si prende quella vera');
+});
+test('lontano da casa le casse rendono di più: più pile, più roba rara, attrezzi meno consumati',()=>{
+  const RARI=new Set(['benda','torcia','secchio','ascia','zappa','conserva','lancia']);
+  const SOLO_LONTANO=['filo','pelliccia','lancia'];
+  const misura=(d)=>{
+    const c=fasce.centro(),N=300;let pile=0,rare=0,usi=0,attrezzi=0;const trovati=new Set();
+    for(let i=0;i<N;i++){
+      const a=i/N*Math.PI*2,x=Math.round(c.tx+Math.cos(a)*d),y=Math.round(c.ty+Math.sin(a)*d);
+      const fila=contenitori.bottinoDi(x,y).filter(Boolean);
+      pile+=fila.length;if(fila.some(v=>RARI.has(v.cosa)))rare++;
+      for(const v of fila){trovati.add(v.cosa);if(v.usi!==undefined){usi+=v.usi/CATALOGO[v.cosa].durata;attrezzi++;}}
+    }
+    return {pile:pile/N,rare:rare/N,usi:usi/attrezzi,trovati};
+  };
+  const vicino=misura(100),lontano=misura(900);
+  assert.ok(lontano.pile>=vicino.pile+1.5,`pile ${vicino.pile} → ${lontano.pile}`);
+  assert.ok(lontano.rare>=vicino.rare+0.3,`rare ${vicino.rare} → ${lontano.rare}`);
+  assert.ok(lontano.usi>=vicino.usi+0.2,`usi ${vicino.usi} → ${lontano.usi}`);
+  for(const cosa of SOLO_LONTANO){
+    assert.ok(!vicino.trovati.has(cosa),cosa+' non c’è nei dintorni');
+    assert.ok(lontano.trovati.has(cosa),cosa+' c’è nel selvatico');
+  }
+  // E lontano resta frugare, non un magazzino: niente attrezzo nuovo di zecca.
+  for(let i=0;i<300;i++)for(const v of contenitori.bottinoDi(fasce.centro().tx+900,fasce.centro().ty+i).filter(Boolean))
+    if(v.usi!==undefined)assert.ok(v.usi<CATALOGO[v.cosa].durata,v.cosa+' trovato usato');
+});
+test('nei dintorni le casse danno esattamente il bottino di prima, e i luoghi unici restano fissi',()=>{
+  // L'impronta delle ventiquattro casse attorno alla fattoria, presa sul
+  // codice di M7.18.60.6: le case già in gioco non cambiano di un tiro.
+  const casse=[];
+  for(let y=ty-140;y<=ty+140;y++)for(let x=tx-140;x<=tx+140;x++)
+    if(mappa.oggettoGenerato(x,y)===OGGETTO.CASSA&&!modifiche.di(x,y))casse.push([x,y,contenitori.contenutoDi(x,y)]);
+  assert.equal(casse.length,23);
+  assert.ok(casse.every(([x,y])=>fasce.diTassello(x,y)===0));
+  assert.equal(createHash('sha256').update(JSON.stringify(casse)).digest('hex').slice(0,16),IMPRONTA_DEI_DINTORNI);
+  // Le casse dei luoghi unici non guardano la fascia: tutto e sempre.
+  for(const u of uniciDi('chiesa',3)){
+    const p=segnoNelLuogo(u,'c'),cose=contenitori.bottinoDi(p.tx,p.ty).filter(Boolean).map(v=>v.cosa).sort();
+    assert.deepEqual(cose,['benda','conserva','torcia']);
+  }
+});
+test('lontano da casa la notte è più affollata: 5, 6, 8 e 10 infetti, e nel selvatico escono al tramonto',()=>{
+  const quantiA=(d,ora)=>{
+    reset();tempo.impostaGiorno(5);tempo.impostaOra(ora);
+    const p=aDistanza(d),io={px:p.tx*16+8,py:p.ty*16+8,guarda:'giu'};
+    for(let i=0;i<80;i++)infetti.decidi(0.1,io);
+    return infetti.quanti();
+  };
+  assert.equal(quantiA(0,1),5,'i dintorni');
+  assert.equal(quantiA(300,1),6,'la valle');
+  assert.equal(quantiA(600,1),8,'le terre lontane');
+  assert.equal(quantiA(900,1),10,'il selvatico');
+  // Il crepuscolo: alle 19:30 a casa nessuno, nel selvatico già qualcuno.
+  assert.equal(quantiA(0,19.5),0);
+  assert.ok(quantiA(900,19.5)>=1,'nel selvatico escono già al tramonto');
+  assert.ok(quantiA(900,6.5)>=1,'e restano fino all’alba piena');
+  // In pieno giorno nessuno, nemmeno lì.
+  assert.equal(quantiA(900,12),0);
+});
+test('gli infetti nati lontano sono più duri e più svelti, ma più lenti di chi corre',async()=>{
+  const nati=(d)=>{
+    reset();tempo.impostaGiorno(5);tempo.impostaOra(1);
+    const p=aDistanza(d),io={px:p.tx*16+8,py:p.ty*16+8,guarda:'giu'};
+    for(let i=0;i<40;i++)infetti.decidi(0.1,io);
+    return entita.tutte().filter(e=>e.tipo===infettoEntita.TIPO);
+  };
+  for(const e of nati(0)){assert.equal(e.vita,infettoEntita.VITA);assert.equal(e.lena,1);}
+  for(const e of nati(600)){assert.equal(e.vita,infettoEntita.VITA+1);assert.equal(e.lena,1.08);}
+  for(const e of nati(900)){assert.equal(e.vita,infettoEntita.VITA+1);assert.equal(e.lena,1.15);}
+  // La lena si vede nel passo: stesso richiamo, stesso tempo, più strada.
+  reset();
+  const strada=(lena)=>{
+    const e=infettoEntita.crea((tx-3)*16+8,ty*16+8,{lena});e.richiamo={x:e.px+80,y:e.py};
+    const x0=e.px;infettoEntita.aggiorna(e,0.1);return e.px-x0;
+  };
+  const [piano,svelto]=await conTelaFinta(()=>[strada(1),strada(1.15)]);
+  assert.ok(Math.abs(svelto/piano-1.15)<0.01,`${piano} → ${svelto}`);
+  assert.ok(svelto/0.1<92,'chi corre li semina ancora');
+});
+test('lontano da casa gli orsi sono più comuni, e vicino niente cambia',()=>{
+  const conta=(stagione,fascia)=>{let n=0;for(let i=0;i<1000;i++)if(fauna.specieDi((i+0.5)/1000,stagione,fascia)==='orso')n++;return n;};
+  for(const s of ['estate','autunno','inverno','primavera']){
+    assert.equal(conta(s,0),conta(s,1),'la valle come i dintorni');
+    assert.ok(conta(s,2)>conta(s,0),s+': più orsi nelle terre lontane');
+    assert.ok(conta(s,3)>conta(s,2),s+': e ancora di più nel selvatico');
+    for(let i=0;i<200;i++)assert.equal(fauna.specieDi(i/200,s,0),fauna.specieDi(i/200,s));
+  }
+  assert.ok(Math.abs(conta('estate',2)/1000-0.21)<0.01,'d’estate nelle terre lontane uno su cinque');
+  assert.ok(conta('inverno',3)/1000>0.5,'d’inverno nel selvatico più di uno su due');
+});
+test('il confine si annuncia camminando, la fascia sta in diagnostica e i cerchi sulla mappa',()=>{
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/fasce\.dopoIlPasso\(txEroe, tyEroe, fasciaAttuale\)/);
+  assert.match(gioco,/annuncia\(fasce\.FASCE\[fascia\]\.nome, fasce\.FASCE\[fascia\]\.colore, fasce\.FASCE\[fascia\]\.avviso\)/);
+  // Messo al mondo, in silenzio: azzerata dove si azzera il luogo.
+  assert.equal((gioco.match(/luogoAttuale = null;\n\s*fasciaAttuale = null;/g)??[]).length,2);
+  assert.match(gioco,/`fascia   \$\{fasce\.diTassello\(tx, ty\)\}/);
+  const carta=readFileSync(new URL('../interfaccia/mappa.js',import.meta.url),'utf8');
+  assert.match(carta,/function confiniDelleFasce/);
+  assert.match(carta,/confiniDelleFasce\(c, u, suCarta, inVista, perTassello, area\);\n\n\s*const nomi = \[\];/);
+  assert.match(carta,/fasce\.FASCE\[i\]\.fino \* perTassello/);
 });

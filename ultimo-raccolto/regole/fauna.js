@@ -11,6 +11,7 @@ import * as stagioni from './stagioni.js';
 import * as salute from './salute.js';
 import * as inventario from './inventario.js';
 import * as meteo from './meteo.js';
+import * as fasce from './fasce.js';
 import { cuoci, riflesso } from '../arte/sprite.js';
 import { ANIMALI, CARCASSE, PASCOLO, CHINA as TESTA_A_META, MASTICA as TESTA_CHE_MASTICA } from '../arte/sprite-fauna.js';
 
@@ -136,14 +137,21 @@ export function rischioDi(specie, stagione = stagioni.stagioneCorrente()) {
   return Math.min(1, base * temperamento);
 }
 
-export function specieDi(tiro, stagione = stagioni.stagioneCorrente()) {
-  const pesi = (PER_STAGIONE[stagione] ?? PER_STAGIONE.estate).frequenze;
+// Lontano da casa l'orso è più comune (M7.18.61, vedi fasce.js): il suo peso
+// si moltiplica per la fascia, gli altri restano quelli della stagione. Nei
+// dintorni e nella valle niente cambia; nelle terre lontane d'estate un
+// animale su cinque è un orso, nel selvatico d'inverno più di uno su due.
+export const ORSI = [1, 1, 1.5, 2];
+
+export function specieDi(tiro, stagione = stagioni.stagioneCorrente(), fascia = 0) {
+  const frequenze = (PER_STAGIONE[stagione] ?? PER_STAGIONE.estate).frequenze;
+  const pesoDi = (id) => (frequenze[id] ?? 0) * (id === 'orso' ? ORSI[fascia] ?? 1 : 1);
   const specie = Object.keys(SPECIE);
-  const totale = specie.reduce((n, id) => n + (pesi[id] ?? 0), 0);
+  const totale = specie.reduce((n, id) => n + pesoDi(id), 0);
   if (totale <= 0) return null;
   let soglia = tiro * totale;
   for (const id of specie) {
-    soglia -= pesi[id] ?? 0;
+    soglia -= pesoDi(id);
     if (soglia < 0) return id;
   }
   return specie.at(-1);
@@ -208,7 +216,7 @@ function nasce(eroe) {
     const distanza = 260 + impronta(i,giro,seme ^ 0x431ab)*120;
     const px = eroe.px+Math.cos(angolo)*distanza, py = eroe.py+Math.sin(angolo)*distanza;
     if (!prateria(px,py) || animali.some(e=>Math.hypot(e.px-px,e.py-py)<80)) continue;
-    const specie = specieDi(impronta(giro,i,seme ^ 0x167ba));
+    const specie = specieDi(impronta(giro,i,seme ^ 0x167ba), stagioni.stagioneCorrente(), fasce.diPixel(px,py));
     if (!specie) return;
     animali.push(crea(specie,px,py,Math.floor(impronta(i,giro,seme)*4294967296)));
     break;

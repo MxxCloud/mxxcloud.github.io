@@ -25,6 +25,7 @@ import * as tempo from "./tempo.js";
 import * as chiasso from "./chiasso.js";
 import * as salute from "./salute.js";
 import * as campana from "./campana.js";
+import * as fasce from "./fasce.js";
 
 // Quanti al massimo, nel cuore della notte. Cinque è tarato su una cosa sola:
 // devono bastare a rendere una traversata notturna una decisione, e non a
@@ -38,6 +39,26 @@ const MASSIMI = 5;
 // pericoloso. La luce ambientale va da 0,1 (notte piena) a 1 (giorno pieno),
 // e questa la ribalta: sopra questa soglia non ne esce nessuno.
 const LUCE_SICURA = 0.62;
+
+// Lontano da casa il buio è più affollato (M7.18.61, vedi fasce.js). I
+// numeri di sopra sono quelli dei dintorni; ogni fascia dice quanti al
+// massimo, sotto che luce escono, quanta vita in più e quanto più svelti.
+//
+// Nel selvatico la soglia è la luce piena: escono appena comincia a calare,
+// dalle sette di sera alle sette del mattino, e la quota lineare ne dà uno al
+// primo crepuscolo e quattro dove prima non ne usciva ancora nessuno. In
+// pieno giorno restano zero anche lì: la frase "di giorno si è al sicuro" non
+// cambia, cambia quanto dura il giorno.
+//
+// La lena resta sotto la corsa: chi insegue fa 62 pixel al secondo nei
+// dintorni e 71 nel selvatico, contro i 92 di chi corre. Si scappa ancora,
+// ma il fiato finisce prima.
+const PER_FASCIA = [
+  { massimi: MASSIMI, soglia: LUCE_SICURA, vita: 0, lena: 1 },
+  { massimi: 6, soglia: LUCE_SICURA, vita: 0, lena: 1 },
+  { massimi: 8, soglia: LUCE_SICURA, vita: 1, lena: 1.08 },
+  { massimi: 10, soglia: 1, vita: 1, lena: 1.15 },
+];
 
 // Appaiono fuori dall'inquadratura e spariscono molto più in là. Mezza
 // diagonale dello schermo è circa 220 pixel: sotto quella soglia uno
@@ -76,14 +97,15 @@ let appenaVisto = false;
 
 // --- popolazione ----------------------------------------------------------
 
-function quantiVolerne() {
+function quantiVolerne(eroe) {
+  const { massimi, soglia } = PER_FASCIA[fasce.diPixel(eroe.px, eroe.py)];
   const luce = tempo.luceAmbiente();
-  if (luce >= LUCE_SICURA) return 0;
+  if (luce >= soglia) return 0;
   // Da zero al massimo scendendo dalla soglia alla notte piena. Lineare come
   // la curva della luce, per lo stesso motivo: a questa scala una curva
   // morbida non si distingue e una lineare si impara.
-  const quota = (LUCE_SICURA - luce) / (LUCE_SICURA - 0.1);
-  return Math.round(MASSIMI * Math.min(1, Math.max(0, quota)));
+  const quota = (soglia - luce) / (soglia - 0.1);
+  return Math.round(massimi * Math.min(1, Math.max(0, quota)));
 }
 
 export function quanti() {
@@ -101,7 +123,10 @@ function faiNascere(eroe) {
     const px = eroe.px + Math.cos(angolo) * distanza;
     const py = eroe.py + Math.sin(angolo) * distanza;
     if (!urti.liberoIn(px, py)) continue;
-    entita.aggiungi(infetto.crea(px, py));
+    // Com'è fatto lo dice la fascia in cui nasce, non quella in cui ti
+    // trova: uno nato lontano resta duro anche se ti segue verso casa.
+    const { vita, lena } = PER_FASCIA[fasce.diPixel(px, py)];
+    entita.aggiungi(infetto.crea(px, py, { vita: infetto.VITA + vita, lena }));
     return true;
   }
   return false;
@@ -171,7 +196,7 @@ export function percepisci(e, passo, eroe, raggioChiasso, conLuce) {
 export function decidi(passo, eroe, { luceInMano = false } = {}) {
   appenaVisto = false;
 
-  const voluti = quantiVolerne();
+  const voluti = quantiVolerne(eroe);
   const adesso = quanti();
   if (adesso < voluti) faiNascere(eroe);
   else if (adesso > voluti) faiSparire(eroe, adesso - voluti);
