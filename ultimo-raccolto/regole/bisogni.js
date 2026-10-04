@@ -56,6 +56,24 @@ const PESO_VUOTO = 0.25;
 export const ELENCO = ["fame", "sete", "stanchezza"];
 
 const livelli = { fame: 1, sete: 1, stanchezza: 1 };
+
+// La modalità esplora (`?esplora`, M7.18.62): le tre barre restano piene.
+// Non è una regola del gioco, è un attrezzo per girare la mappa senza
+// fermarsi a mangiare e a dormire, come ?ora e ?giorno lo sono per vedere la
+// notte e l'inverno. Sta qui e non in chi consuma perché chi consuma è
+// dappertutto — il passo, la corsa, ogni azione che stanca — e la barra è una
+// sola. reimposta() e ripristina() non la spengono: un superstite nuovo o una
+// partita caricata restano in esplora finché resta il parametro.
+let pieni = false;
+
+export function impostaSemprePieni(attivo) {
+  pieni = Boolean(attivo);
+  if (pieni) for (const quale of ELENCO) livelli[quale] = 1;
+}
+
+export function semprePieni() {
+  return pieni;
+}
 // Riusato invece di essere riallocato: avanza() gira sessanta volte al secondo.
 const appenaVuoti = [];
 
@@ -76,6 +94,12 @@ function limita(valore) {
 // fotogramma finché la barra resta a zero.
 export function avanza(passo, { corre = false, siMuove = false } = {}) {
   appenaVuoti.length = 0;
+  // Si riempie anche qui e non soltanto all'accensione: una partita caricata
+  // in esplora arriva con le barre che aveva.
+  if (pieni) {
+    for (const quale of ELENCO) livelli[quale] = 1;
+    return appenaVuoti;
+  }
 
   for (const quale of ELENCO) {
     const prima = livelli[quale];
@@ -98,7 +122,7 @@ export function avanza(passo, { corre = false, siMuove = false } = {}) {
 export function ristora(quale, quanto) {
   if (!(quale in livelli)) return 0;
   const prima = livelli[quale];
-  livelli[quale] = limita(prima + quanto);
+  livelli[quale] = pieni ? 1 : limita(prima + quanto);
   if (quale === "stanchezza" && livelli[quale] > 0 && riposo.secondiDiSonno() === 0) riposo.reimposta();
   return livelli[quale] - prima;
 }
@@ -116,6 +140,7 @@ export function consuma(quale, quanto) {
 // c'è un parametro: chi dorme si riposa e quella barra la ristora dopo, chi
 // era altrove no — stava in piedi, e il tempo passato in piedi stanca.
 export function passanoSecondi(secondi, { stanca = false } = {}) {
+  if (pieni) return;
   livelli.fame = limita(livelli.fame - CALO.fame * secondi * stagioni.fattoreFame());
   livelli.sete = limita(livelli.sete - CALO.sete * secondi * stagioni.fattoreSete());
   if (stanca) livelli.stanchezza = limita(livelli.stanchezza - CALO.stanchezza * secondi);

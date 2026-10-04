@@ -12,6 +12,22 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.62 — la modalità esplora
+
+Per girare la mappa senza fermarsi: aprendo il gioco con **`?esplora`** in
+fondo all'indirizzo (`/ultimo-raccolto/?esplora`) stanchezza, fame, sete e
+salute restano piene.
+- **Si corre quanto si vuole** e non si sviene; le azioni non stancano.
+- **Non si muore.** Gli infetti e gli orsi colpiscono ma non feriscono,
+  l'infezione non si prende, il freddo si vede ma non fa male.
+- **L'alba non salva.** La casella automatica e la copia in rete della
+  partita vera restano come sono, anche caricandola per esplorarla. Salvare a
+  mano resta possibile, ed è una scelta.
+- **Si vede.** In alto a sinistra, sotto le barre, la scritta ESPLORA ricorda
+  che è accesa.
+- Senza il parametro il gioco è quello di sempre: è un attrezzo per provarlo,
+  come `?ora=` e `?giorno=`, non una regola.
+
 ## M7.18.61 — le fasce di distanza
 
 Fino a qui il mondo era uguale ovunque: una casa a trenta schermate dalla
@@ -2683,7 +2699,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.61**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.62**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -3578,7 +3594,7 @@ identico e del tutto vergine.
 Per arrivare dove la matematica a 32 bit comincia a sfilacciarsi servono
 **ventitré anni veri di corsa senza fermarsi**.
 
-## L'indirizzo accetta quattro parametri
+## L'indirizzo accetta cinque parametri
 
 `?seme=ombra` apre una valle diversa. Il seme è un testo qualsiasi e la stessa
 parola dà sempre la stessa valle, quindi una valle che piace si condivide
@@ -3588,7 +3604,10 @@ per non guardarla mai. `?giorno=9` comincia d'inverno, ed è lo stesso motivo
 applicato all'anno: le stagioni cadono sui giorni 1, 5, 9 e 13, e aspettare
 di arrivarci è il modo migliore per non vederci mai una stagione fuori dalla
 prima.
-`?diagnostica` accende il pannello dei numeri.
+`?diagnostica` accende il pannello dei numeri. `?esplora` tiene piene
+stanchezza, fame, sete e salute, per girare la mappa senza fermarsi: l'alba
+non salva, e sotto le barre la scritta ESPLORA ricorda che è accesa. I
+parametri si combinano con `&`: `?esplora&giorno=9` esplora d'inverno.
 
 ## Com'è fatto
 

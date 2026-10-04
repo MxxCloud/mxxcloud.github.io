@@ -249,7 +249,7 @@ function barra(p, y, icona, livello, colore) {
 // lette come quattro cose dello stesso peso.
 export function disegnaBisogni(
   p,
-  { salute = 1, alFreddo = false, infetto = false, inseguito = false } = {}
+  { salute = 1, alFreddo = false, infetto = false, inseguito = false, esplora = false } = {}
 ) {
   barra(p, 5, indicatori.SALUTE, salute, coloreBisogno(salute));
 
@@ -278,7 +278,12 @@ export function disegnaBisogni(
     barra(p, y, ICONE_BISOGNI[quale], livelli[quale], coloreBisogno(livelli[quale]));
     y += PASSO_BARRA;
   }
+
+  // La modalità esplora (M7.18.62) si dice sotto le barre che tiene piene:
+  // una partita in cui non si muore deve saperlo chi la guarda.
+  if (esplora) testo.disegnaConOmbra(p, "ESPLORA", 5, y + 1, ESPLORA);
 }
+const ESPLORA = "#8fd1c9";
 
 // --- il colpo preso -------------------------------------------------------
 

@@ -68,6 +68,8 @@ function reset() {
   polli.reimposta();
   meteo.reimposta();
   pesca.interrompi(); mappa.impostaGelo(false); orto.impostaBestie(false); orto.impostaParassiti(false);
+  // La modalità esplora (M7.18.62) non si spegne con reimposta(): qui sì.
+  bisogni.impostaSemprePieni?.(false); salute.impostaIntoccabile?.(false);
   riparo.reimposta(); tempo.reimposta(); bisogni.reimposta(); salute.reimposta();
   inventario.svuota(); modifiche.svuota(); entita.svuota(); simulazione.resoconto(); esplorato.svuota(); ricette.reimposta(); campana.reimposta(); chiasso.reimposta();
   // Il tempo si tira a caso (M7.18.59): nei collaudi con un caso seminato.
@@ -6744,4 +6746,73 @@ test('il confine si annuncia camminando, la fascia sta in diagnostica e i cerchi
   assert.match(carta,/function confiniDelleFasce/);
   assert.match(carta,/confiniDelleFasce\(c, u, suCarta, inVista, perTassello, area\);\n\n\s*const nomi = \[\];/);
   assert.match(carta,/fasce\.FASCE\[i\]\.fino \* perTassello/);
+});
+
+// M7.18.62 — la modalità esplora.
+test('in esplora stanchezza, fame e sete restano piene: si corre e si fatica senza svuotarle',()=>{
+  bisogni.impostaSemprePieni(true);
+  assert.equal(bisogni.semprePieni(),true);
+  for(let t=0;t<tempo.SECONDI_PER_GIORNO;t+=0.5){
+    const vuoti=bisogni.avanza(0.5,{corre:true,siMuove:true});
+    assert.equal(vuoti.length,0);
+  }
+  for(const q of bisogni.ELENCO)assert.equal(bisogni.livello(q),1,q+' dopo un giorno di corsa');
+  bisogni.consuma('stanchezza',0.5);
+  assert.equal(bisogni.livello('stanchezza'),1,'le azioni non stancano');
+  bisogni.passanoSecondi(1000,{stanca:true});
+  for(const q of bisogni.ELENCO)assert.equal(bisogni.livello(q),1,q+' dopo un’assenza');
+  assert.equal(bisogni.puoCorrere(),true);
+  // Un superstite nuovo o una partita caricata restano in esplora.
+  bisogni.reimposta();assert.equal(bisogni.semprePieni(),true);
+  bisogni.ripristina({fame:0.1,sete:0.2,stanchezza:0});
+  assert.deepEqual(bisogni.avanza(0.1,{corre:true}),[]);
+  for(const q of bisogni.ELENCO)assert.equal(bisogni.livello(q),1,q+' dopo un caricamento');
+  // Spenta, la corsa torna a stancare.
+  bisogni.impostaSemprePieni(false);
+  bisogni.avanza(10,{corre:true});
+  assert.ok(bisogni.livello('stanchezza')<1);
+});
+test('in esplora la salute non cala: niente ferite, niente freddo che fa male, niente infezione',()=>{
+  salute.impostaIntoccabile(true);
+  assert.equal(salute.intoccabile(),true);
+  assert.equal(salute.ferita(1,'infetti'),false);
+  assert.equal(salute.livelloCorrente(),1);assert.equal(salute.eMorto(),false);
+  for(let i=0;i<600;i++)salute.avanza(0.5,{vuoti:['fame','sete','stanchezza'],alFreddo:true});
+  assert.equal(salute.livelloCorrente(),1,'barre vuote e gelo non fanno male');
+  assert.equal(salute.eMorto(),false);
+  assert.equal(salute.infettati(),false);assert.equal(salute.eInfetto(),false);
+  // Una partita caricata ferita torna piena al primo passo.
+  salute.ripristina(0.3,false,0);salute.avanza(0.1);
+  assert.equal(salute.livelloCorrente(),1);
+  salute.impostaIntoccabile(false);
+  salute.ferita(0.4,'infetti');
+  assert.ok(Math.abs(salute.livelloCorrente()-0.6)<1e-9,'spenta, il morso torna a ferire');
+});
+test('in esplora i morsi arrivano ma non feriscono e non infettano, e non si annuncia un’infezione',()=>{
+  salute.impostaIntoccabile(true);
+  const morso=entita.aggiungi(infettoEntita.crea(eroe.px+8,eroe.py));
+  let morsi=0;
+  for(let i=0;i<60;i++){
+    morso.colpo=true;
+    const esito=infetti.raccogliIMorsi(eroe);
+    morsi+=esito.morsi;
+    assert.equal(esito.infettato,false);
+  }
+  assert.equal(morsi,60);
+  assert.equal(salute.livelloCorrente(),1);assert.equal(salute.eInfetto(),false);
+  // Senza esplora gli stessi morsi feriscono, e prima o poi infettano.
+  salute.impostaIntoccabile(false);salute.reimposta();
+  morso.colpo=true;infetti.raccogliIMorsi(eroe);
+  assert.ok(salute.livelloCorrente()<1,'il morso ferisce');
+  let infettato=false;
+  for(let i=0;i<40&&!infettato;i++){salute.ristora(1);morso.colpo=true;infettato=infetti.raccogliIMorsi(eroe).infettato;}
+  assert.ok(infettato&&salute.eInfetto(),'e prima o poi infetta');
+});
+test('?esplora si accende dall’indirizzo, si vede nell’HUD e non salva all’alba',()=>{
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/const ESPLORA = parametri\.has\("esplora"\);\nif \(ESPLORA\) \{\n  bisogni\.impostaSemprePieni\(true\);\n  salute\.impostaIntoccabile\(true\);\n\}/);
+  assert.match(gioco,/if \(!ESPLORA && iniziale === null && !salute\.eMorto\(\) && tempo\.giornoCorrente\(\) > albaScritta/);
+  assert.match(gioco,/esplora: ESPLORA,\n  \}\);/);
+  const hud=readFileSync(new URL('../interfaccia/hud.js',import.meta.url),'utf8');
+  assert.match(hud,/if \(esplora\) testo\.disegnaConOmbra\(p, "ESPLORA"/);
 });

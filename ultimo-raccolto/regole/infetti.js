@@ -273,8 +273,9 @@ export function raccogliIMorsi(eroe) {
     salute.ferita(MORSO, "infetti");
     // Il tiro si fa a morso avvenuto e non a incontro avvenuto: è il morso a
     // infettare, non la paura.
-    if (!salute.eInfetto() && caso() < RISCHIO_INFEZIONE) {
-      salute.infettati();
+    // E solo se l'infezione si è presa davvero: in esplora (M7.18.62) non si
+    // prende, e l'annuncio direbbe una cosa che non è successa.
+    if (!salute.eInfetto() && caso() < RISCHIO_INFEZIONE && salute.infettati()) {
       infettato = true;
     }
   }
