@@ -78,7 +78,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.61";
+const VERSIONE = "M7.18.62";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -104,6 +104,14 @@ const parametri = new URLSearchParams(location.search);
 // Il seme sta nell'indirizzo: una valle che piace si condivide copiando l'URL,
 // e la stessa valle si riapre identica domani.
 const SEME = parametri.get("seme") || "valle-1";
+// La modalità esplora (M7.18.62): stanchezza, fame, sete e salute restano
+// piene, per girare la mappa senza fermarsi. È un attrezzo per provare il
+// gioco come ?ora e ?giorno, non una regola: senza il parametro non esiste.
+const ESPLORA = parametri.has("esplora");
+if (ESPLORA) {
+  bisogni.impostaSemprePieni(true);
+  salute.impostaIntoccabile(true);
+}
 
 let eroe = null;
 let casellaScelta = 0;
@@ -1741,7 +1749,11 @@ function aggiorna(passo) {
   // scriverla vorrebbe dire mettere una valle vuota nella casella dell'alba —
   // e in rete — al posto di quella che si stava per caricare. Il collaudo di
   // M7.18.5 l'ha visto succedere scorrendo le stagioni.
-  if (iniziale === null && !salute.eMorto() && tempo.giornoCorrente() > albaScritta && tempo.oraCorrente() >= tempo.ALBA_PIENA) {
+  //
+  // E mai in esplora (M7.18.62): girare la mappa da immortali non deve
+  // sovrascrivere la casella dell'alba, né la copia in rete, della partita
+  // vera — nemmeno quando la si è caricata per esplorarla.
+  if (!ESPLORA && iniziale === null && !salute.eMorto() && tempo.giornoCorrente() > albaScritta && tempo.oraCorrente() >= tempo.ALBA_PIENA) {
     albaScritta = tempo.giornoCorrente();
     const istantanea = salvataggio.istantanea(eroe, casellaScelta);
     const esito = salvataggio.scrivi(salvataggio.ALBA, istantanea);
@@ -2018,6 +2030,7 @@ function disegnaInterfaccia() {
     alFreddo: Boolean(gelando),
     infetto: salute.eInfetto(),
     inseguito: infetti.inseguono() > 0 || fauna.tutte().some(e => e.stato === "aggressivo"),
+    esplora: ESPLORA,
   });
   hud.disegnaOrologio(p, {
     giorno: tempo.giornoCorrente(),

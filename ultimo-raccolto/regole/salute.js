@@ -90,6 +90,21 @@ let esposizioneFreddo = 0;
 // da sbagliare.
 const danni = { fame: 0, sete: 0, stanchezza: 0, freddo: 0, infetti: 0, animali: 0, infezione: 0 };
 
+// La modalità esplora (`?esplora`, M7.18.62, vedi bisogni.js): niente toglie
+// salute e l'infezione non si prende. Il freddo continua a salire di gradino
+// e a farsi vedere, ma non fa male. Si spegne solo spegnendola: reimposta()
+// è il superstite nuovo, e un superstite nuovo in esplora resta in esplora.
+let intoccabileAttivo = false;
+
+export function impostaIntoccabile(attivo) {
+  intoccabileAttivo = Boolean(attivo);
+  if (intoccabileAttivo && !morto) livello = 1;
+}
+
+export function intoccabile() {
+  return intoccabileAttivo;
+}
+
 export function livelloCorrente() {
   return livello;
 }
@@ -127,7 +142,7 @@ function peggiore() {
 // qui, perché il conto delle cause è la cosa che si dimentica di aggiornare
 // aggiungendo una fonte nuova.
 function ferisci(quale, quanto) {
-  if (quanto <= 0) return;
+  if (quanto <= 0 || intoccabileAttivo) return;
   danni[quale] += quanto;
   livello = limita(livello - quanto);
 }
@@ -146,7 +161,7 @@ export function ferita(quanto, causaDelColpo = "infetti") {
 }
 
 export function infettati() {
-  if (morto) return false;
+  if (morto || intoccabileAttivo) return false;
   infezione = true;
   return true;
 }
@@ -192,6 +207,8 @@ export function moltiplicatoreFreddo(protetto = false) {
 
 export function avanza(passo, { vuoti = [], alFreddo = false, protetto = false, mite = false, nelLetto = false } = {}) {
   if (morto || !Number.isFinite(passo) || passo <= 0) return null;
+  // In esplora la salute torna piena anche se la partita caricata non lo era.
+  if (intoccabileAttivo) livello = 1;
 
   for (const quale of vuoti) ferisci(quale, DANNO_VUOTO * passo);
   if (alFreddo && mite) {
