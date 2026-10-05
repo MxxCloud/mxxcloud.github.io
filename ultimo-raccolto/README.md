@@ -12,6 +12,41 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.63 — il sonno non salta la notte
+
+Fino a qui dormire era il modo più sicuro di passare il buio: le ore
+passavano tutte insieme, gli infetti stavano fermi, e al risveglio era
+giorno. Bastava un giaciglio in mezzo al prato, anche nel selvatico. Adesso
+due regole.
+- **Non ci si addormenta con qualcuno addosso.** Il letto resta lì, ma il
+  gesto è impedito e dice perché se:
+  - un infetto ti insegue;
+  - uno è a meno di otto tasselli e ti vede (i muri schermano);
+  - una bestia infuriata è a meno di dodici.
+- **Fuori da una stanza chiusa il sonno è leggero.**
+  - **Il momento della notte.** Ogni notte ha un momento, fra le 23 e le 4,
+    in cui qualcosa si avvicina.
+  - **Chi dorme all'aperto** in quel momento si sveglia di soprassalto, più
+    spesso più è lontano da casa:
+
+    | Fascia | Probabilità |
+    |---|---|
+    | i dintorni | una notte su dieci |
+    | la valle | una su quattro |
+    | le terre lontane | una su due |
+    | il selvatico | tre su quattro |
+
+  - **Nessuno ti morde mentre dormi.** Ti svegli al buio con uno che sta
+    arrivando, appena fuori vista, e da lì decidi tu.
+  - **Dopo quel momento**, quella notte all'aperto non si dorme più.
+- **La stanza chiusa** è una stanza murata, cioè chiusa e con almeno un muro
+  o una porta: la stessa dell'orto al chiuso. La porta va chiusa. Lì dentro
+  non ti sveglia niente, ed è la ragione per costruirne una.
+- **Si dice prima.** Di notte, fuori da una stanza chiusa, il gesto dice
+  «Dormi all'aperto fino alle 7».
+- **Niente da salvare.** Il momento è una funzione del seme e della notte,
+  come la fase della luna: ricaricando la partita si ritrova la stessa notte.
+
 ## M7.18.62 — la modalità esplora
 
 Per girare la mappa senza fermarsi: aprendo il gioco con **`?esplora`** in
@@ -2373,6 +2408,8 @@ tempo effettivamente trascorso. La pesca si interrompe allo svenimento.
 Fame, sete, gelo, meteo e scadenze continuano durante ogni sonno; la torcia in
 mano non riscalda chi dorme. Il sonno mantiene la simulazione già usata dal
 giaciglio: non fa avanzare gli spostamenti e gli attacchi di infetti e animali.
+Da M7.18.63 però non ci si addormenta con una minaccia vicina, e fuori da una
+stanza chiusa la notte può svegliarti (vedi la sezione di M7.18.63).
 Morire durante il sonno interrompe il tempo, senza recupero o annuncio di risveglio.
 I vecchi salvataggi restano compatibili e il nuovo modulo è disponibile offline.
 
@@ -2699,7 +2736,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.62**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.63**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

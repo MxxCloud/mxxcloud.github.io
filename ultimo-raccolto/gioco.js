@@ -78,7 +78,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.62";
+const VERSIONE = "M7.18.63";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -1296,7 +1296,11 @@ function leggiComandi(passo) {
   // risveglio passano ore di gioco, e un suono attaccato a quel momento
   // racconterebbe il tasto invece della notte.
   if (esito.tipo === "dormi" && esito.sveglio) {
-    avvisoRisveglio = esito.messaggio ?? `dormito ${(esito.secondi / riposo.ORA).toFixed(1)} ore: +${Math.round(esito.recuperata * 100)}% stamina`;
+    // Svegliati di soprassalto (M7.18.63): in rosso e con la seconda riga,
+    // perché non è un resoconto, è un pericolo.
+    avvisoRisveglio = esito.svegliato
+      ? { testo: "ti svegli di soprassalto", colore: "#c0705f", sotto: "qualcosa si muove là fuori" }
+      : { testo: esito.messaggio ?? `dormito ${(esito.secondi / riposo.ORA).toFixed(1)} ore: +${Math.round(esito.recuperata * 100)}% stamina`, colore: "#c9b189" };
   }
 
   // Dalla torre (M7.18.56): la carta si riempie in un colpo, e si dice quanti
@@ -1738,8 +1742,8 @@ function aggiorna(passo) {
   if (staminaIniziale > 0 && bisogni.livello("stanchezza") === 0 && !salute.eMorto()) {
     annuncia(AVVISI_BISOGNI.stanchezza, "#c0705f");
   }
-  if (risvegliForzati > 0 && !salute.eMorto()) avvisoRisveglio = "Sei svenuto: hai dormito 2 ore sul posto (+25% stamina)";
-  if (avvisoRisveglio) { annuncia(avvisoRisveglio, "#c9b189"); avvisoRisveglio = null; }
+  if (risvegliForzati > 0 && !salute.eMorto()) avvisoRisveglio = { testo: "Sei svenuto: hai dormito 2 ore sul posto (+25% stamina)", colore: "#c9b189" };
+  if (avvisoRisveglio) { annuncia(avvisoRisveglio.testo, avvisoRisveglio.colore, avvisoRisveglio.sotto); avvisoRisveglio = null; }
 
   // Il salvataggio dell'alba, e proprio qui: dopo che il giorno ha fatto i
   // suoi conti — l'orto cresciuto, i fuochi spenti, la stagione girata — così
