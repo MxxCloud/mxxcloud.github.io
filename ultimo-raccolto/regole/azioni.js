@@ -30,6 +30,7 @@ import * as decadimento from "./decadimento.js";
 import * as polli from "./polli.js";
 import * as esplorato from "./esplorato.js";
 import * as campana from "./campana.js";
+import * as sonno from "./sonno.js";
 
 const { TASSELLO } = schermo;
 
@@ -325,8 +326,14 @@ function sulTassello(eroe, cosaInMano, indice) {
   if (sottoUnArredo) return sottoUnArredo;
 
   // Di giorno due ore; la notte fino alle sette. X smonta il letto.
+  //
+  // Da M7.18.63 il sonno ha le sue regole (vedi sonno.js): non con qualcuno
+  // addosso, e fuori da una stanza chiusa ti possono svegliare. Il verbo lo
+  // dice prima: "all'aperto" è l'avviso.
   if (LETTI.has(b.oggetto)) {
-    return { tipo: "dormi", verbo: tempo.eNotte() ? "Dormi fino alle 7" : "Riposa 2 ore", bersaglio: b };
+    const notte = tempo.eNotte();
+    const verbo = !notte ? "Riposa 2 ore" : riparo.murato(b.tx, b.ty) ? "Dormi fino alle 7" : "Dormi all'aperto fino alle 7";
+    return { tipo: "dormi", verbo, bersaglio: b, impedito: sonno.impedimento(eroe, b.tx, b.ty) };
   }
 
   // Prima di tutto il resto: un mucchio sta per terra e non copre niente, e
@@ -1562,7 +1569,14 @@ function esegui(eroe, cosaInMano, indice, azione) {
     riposo.reimposta();
     const letto = { px:(tx+0.5)*TASSELLO, py:(ty+0.75)*TASSELLO };
     let riscaldato = freddo.fuocoPerRiposo(letto);
-    const secondi = simulazione.avanza(diurno ? 2 * riposo.ORA : tempo.secondiFinoAlle(tempo.ALBA_PIENA), {
+    // Fin dove si dorme: le sette, o due ore di giorno — a meno che il
+    // momento di stanotte (sonno.js) non cada prima, e allora ci si sveglia
+    // lì.
+    const fine = diurno ? 2 * riposo.ORA : tempo.secondiFinoAlle(tempo.ALBA_PIENA);
+    const sveglia = sonno.svegliaAlle(tx, ty);
+    const fraQuanto = sveglia === null ? Infinity : (sveglia - sonno.oreAssolute()) * riposo.ORA;
+    const svegliato = fraQuanto > sonno.MARGINE * riposo.ORA && fraQuanto < fine;
+    const secondi = simulazione.avanza(svegliato ? fraQuanto : fine, {
       dorme: true, eroe: letto, nelLetto: azione.bersaglio.oggetto === OGGETTO.LETTO,
       alFreddo: () => {
         riscaldato = freddo.fuocoPerRiposo(letto) && riscaldato;
@@ -1572,7 +1586,10 @@ function esegui(eroe, cosaInMano, indice, azione) {
     const pocoRiposato = inverno && !riscaldato;
     const limite = inverno ? RIPOSO[azione.bersaglio.oggetto][riscaldato ? "conFuoco" : "senza"] : 1;
     const recuperata = salute.eMorto() ? 0 : bisogni.ristora("stanchezza", riposo.recupero(prima, secondi, limite));
-    return { tipo: "dormi", secondi, diurno, recuperata, pocoRiposato, stamina: bisogni.livello("stanchezza"), sveglio: !salute.eMorto(),
+    // Quello che ti ha svegliato arriva: nasce fuori vista e viene verso di
+    // te. Non ti è addosso — hai il tempo di alzarti e decidere.
+    if (svegliato && !salute.eMorto()) infetti.chiTiSveglia(eroe);
+    return { tipo: "dormi", secondi, diurno, recuperata, pocoRiposato, svegliato, stamina: bisogni.livello("stanchezza"), sveglio: !salute.eMorto(),
       messaggio: pocoRiposato && !salute.eMorto() ? "Non ti senti molto riposato..." : null };
   }
 

@@ -114,22 +114,40 @@ export function quanti() {
   return n;
 }
 
-function faiNascere(eroe) {
+// Uno nuovo fra "da" e "a" pixel dal superstite, in un posto libero, o null.
+function nasceFra(eroe, da, a) {
   // Trenta tentativi e poi si lascia perdere fino al prossimo giro: cercare
   // un posto libero all'infinito dentro un lago bloccherebbe la pagina.
   for (let prova = 0; prova < 30; prova += 1) {
     const angolo = caso() * Math.PI * 2;
-    const distanza = VICINO_MINIMO + caso() * (LONTANO_MASSIMO - VICINO_MINIMO);
+    const distanza = da + caso() * (a - da);
     const px = eroe.px + Math.cos(angolo) * distanza;
     const py = eroe.py + Math.sin(angolo) * distanza;
     if (!urti.liberoIn(px, py)) continue;
     // Com'è fatto lo dice la fascia in cui nasce, non quella in cui ti
     // trova: uno nato lontano resta duro anche se ti segue verso casa.
     const { vita, lena } = PER_FASCIA[fasce.diPixel(px, py)];
-    entita.aggiungi(infetto.crea(px, py, { vita: infetto.VITA + vita, lena }));
-    return true;
+    return entita.aggiungi(infetto.crea(px, py, { vita: infetto.VITA + vita, lena }));
   }
-  return false;
+  return null;
+}
+
+function faiNascere(eroe) {
+  return nasceFra(eroe, VICINO_MINIMO, LONTANO_MASSIMO) !== null;
+}
+
+// Quello che ti sveglia quando dormi all'aperto (M7.18.63, vedi sonno.js).
+// Nasce appena fuori vista e viene dove sei: il richiamo è il posto in cui
+// dormivi, e la memoria è lunga abbastanza da arrivarci — senza, al primo
+// passo avrebbe dimenticato perché era venuto e si sarebbe messo a vagare.
+const MEMORIA_DEL_RISVEGLIO = 6;
+
+export function chiTiSveglia(eroe) {
+  const e = nasceFra(eroe, VICINO_MINIMO, VICINO_MINIMO + 40);
+  if (!e) return null;
+  e.richiamo = { x: eroe.px, y: eroe.py };
+  e.memoria = MEMORIA_DEL_RISVEGLIO;
+  return e;
 }
 
 // Spariscono lontano dagli occhi, e col giorno. Mai in vista: uno che si

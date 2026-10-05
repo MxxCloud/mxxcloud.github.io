@@ -28,6 +28,8 @@ import * as azioni from '../regole/azioni.js';
 import * as ricette from '../regole/ricette.js';
 import * as campana from '../regole/campana.js';
 import * as fasce from '../regole/fasce.js';
+import * as sonno from '../regole/sonno.js';
+import * as luna from '../regole/luna.js';
 import * as testo from '../arte/testo.js';
 import * as chiasso from '../regole/chiasso.js';
 import { generatore as generatoreDelTempo } from '../motore/casuale.js';
@@ -6815,4 +6817,109 @@ test('?esplora si accende dall’indirizzo, si vede nell’HUD e non salva all�
   assert.match(gioco,/esplora: ESPLORA,\n  \}\);/);
   const hud=readFileSync(new URL('../interfaccia/hud.js',import.meta.url),'utf8');
   assert.match(hud,/if \(esplora\) testo\.disegnaConOmbra\(p, "ESPLORA"/);
+});
+
+// M7.18.63 — il sonno non salta la notte.
+// Una notte del seme dei collaudi che soddisfa una condizione sul suo tiro.
+const notteCon=(vale)=>{for(let n=2;n<400;n++)if(vale(sonno.risveglioDellaNotte(n)))return n;assert.fail('nessuna notte così');};
+// Il superstite a "d" tasselli a est della fattoria, girato verso un giaciglio
+// posato accanto, con lo spazio attorno sgombro.
+function accampati(d){
+  const c=fasce.centro(),x=c.tx+d,y=c.ty;
+  for(let yy=y-3;yy<=y+3;yy++)for(let xx=x-3;xx<=x+3;xx++)modifiche.imposta(xx,yy,{oggetto:OGGETTO.NESSUNO});
+  modifiche.imposta(x+1,y,{oggetto:OGGETTO.GIACIGLIO});
+  eroe={...pos(x,y),guarda:'destra'};
+  return {x,y};
+}
+// Quattro muri attorno al superstite, porta chiusa compresa.
+function muraAttorno({x,y}){
+  for(let yy=y-2;yy<=y+2;yy++)for(let xx=x-2;xx<=x+3;xx++)
+    if(Math.abs(yy-y)===2||xx===x-2||xx===x+3)modifiche.imposta(xx,yy,{oggetto:OGGETTO.MURO});
+  modifiche.imposta(x+3,y,{oggetto:OGGETTO.PORTA});
+}
+test('non ci si addormenta con una minaccia addosso: chi ti insegue, chi ti vede da vicino, una bestia infuriata',()=>{
+  const p=accampati(100);tempo.impostaGiorno(notteCon(r=>r.tiro>0.8));tempo.impostaOra(21);
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,null,'nessuno in giro: si dorme');
+  const lontano=entita.aggiungi(infettoEntita.crea(eroe.px+300,eroe.py));
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,null,'uno lontano che non ti cerca non conta');
+  lontano.preda=eroe;
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,'non si dorme con un infetto addosso','uno che ti insegue sì, anche lontano');
+  entita.svuota();
+  entita.aggiungi(infettoEntita.crea(eroe.px-6*16,eroe.py));
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,'non si dorme con un infetto addosso','a sei tasselli, a vista');
+  modifiche.imposta(p.x-3,p.y,{oggetto:OGGETTO.MURO});
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,null,'dietro un muro non ti vede');
+  entita.svuota();
+  const orso=animale('orso',10*16);orso.stato='aggressivo';
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,'non si dorme con una bestia infuriata vicino');
+  orso.stato='calmo';
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,null);
+  // Impedito vuol dire che il gesto non succede.
+  orso.stato='aggressivo';const ora=tempo.oraCorrente();
+  assert.equal(azioni.agisci(eroe,null),null);assert.equal(tempo.oraCorrente(),ora);
+});
+test('ogni notte ha un suo momento, fra le 23 e le 4, che sveglia chi dorme all’aperto più spesso lontano da casa',()=>{
+  const N=400,quote=[0,0,0,0];
+  const posti=[100,300,600,900].map(d=>accampati(d));
+  for(let n=1;n<=N;n++){
+    const r=sonno.risveglioDellaNotte(n);
+    assert.ok(r.ora>=23&&r.ora<28,'fra le 23 e le 4: '+r.ora);
+    assert.deepEqual(sonno.risveglioDellaNotte(n),r,'la stessa notte dà lo stesso momento');
+    posti.forEach((p,i)=>{
+      const s=sonno.svegliaAlle(p.x+1,p.y,n);
+      if(s!==null){quote[i]++;assert.ok(Math.abs(s-((n-1)*24+r.ora))<1e-9);}
+    });
+  }
+  assert.deepEqual(posti.map(p=>fasce.diTassello(p.x+1,p.y)),[0,1,2,3]);
+  sonno.PROBABILITA_RISVEGLIO.forEach((pr,i)=>assert.ok(Math.abs(quote[i]/N-pr)<0.06,`fascia ${i}: ${quote[i]/N} invece di ${pr}`));
+  assert.deepEqual(sonno.PROBABILITA_RISVEGLIO,[0.1,0.25,0.5,0.75]);
+  // In una stanza chiusa mai.
+  const chiusa=accampati(900);muraAttorno(chiusa);
+  assert.equal(riparo.murato(chiusa.x+1,chiusa.y),true,'il letto è dentro');
+  for(let n=1;n<=N;n++)assert.equal(sonno.svegliaAlle(chiusa.x+1,chiusa.y,n),null);
+});
+test('dormendo all’aperto nella notte sbagliata ci si sveglia di soprassalto, e uno sta arrivando',async()=>{
+  const n=notteCon(r=>r.tiro<0.05);const {ora:W}=sonno.risveglioDellaNotte(n);
+  accampati(900);tempo.impostaGiorno(n);tempo.impostaOra(21);bisogni.consuma('stanchezza',0.6);
+  assert.equal(azioni.azionePossibile(eroe,null).verbo,'Dormi all’aperto fino alle 7'.replace('’',"'"));
+  const esito=await conTelaFinta(()=>azioni.agisci(eroe,null));
+  assert.equal(esito.tipo,'dormi');assert.equal(esito.svegliato,true);assert.equal(esito.sveglio,true);
+  assert.equal(tempo.giornoCorrente(),W>=24?n+1:n);
+  vicino(tempo.oraCorrente(),W%24,1e-6);
+  // Si è dormito fino al momento e non fino alle sette.
+  vicino(esito.secondi,(W-21)*riposo.ORA,1e-6);assert.ok(esito.recuperata>0);
+  const arrivano=entita.tutte().filter(e=>e.tipo===infettoEntita.TIPO);
+  assert.equal(arrivano.length,1);
+  const e=arrivano[0],d=Math.hypot(e.px-eroe.px,e.py-eroe.py);
+  assert.ok(d>=260&&d<=300,'appena fuori vista: '+d);
+  assert.deepEqual(e.richiamo,{x:eroe.px,y:eroe.py});assert.equal(e.memoria,6);
+  assert.equal(e.vita,infettoEntita.VITA+1,'del selvatico');
+  // Per ricominciare a dormire bisogna prima occuparsene: e anche dopo,
+  // stanotte qui fuori non si dorme più.
+  entita.svuota();
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,'stanotte qui fuori non si dorme');
+});
+test('in una stanza chiusa la stessa notte si dorme fino alle 7, e dopo il momento si può ancora dormire',()=>{
+  const n=notteCon(r=>r.tiro<0.05);const {ora:W}=sonno.risveglioDellaNotte(n);
+  const p=accampati(900);muraAttorno(p);tempo.impostaGiorno(n);tempo.impostaOra(21);
+  assert.equal(azioni.azionePossibile(eroe,null).verbo,'Dormi fino alle 7');
+  const esito=azioni.agisci(eroe,null);
+  assert.equal(esito.svegliato,false);assert.equal(tempo.giornoCorrente(),n+1);vicino(tempo.oraCorrente(),7,1e-6);
+  assert.equal(entita.tutte().filter(e=>e.tipo===infettoEntita.TIPO).length,0);
+  // Passato il momento, dentro si dorme e fuori no.
+  tempo.impostaGiorno(W>=24?n+1:n);tempo.impostaOra((W+0.5)%24);
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,null,'dentro sì');
+  const fuori=accampati(902);
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,'stanotte qui fuori non si dorme','fuori no');
+  // In una notte tranquilla fuori si dorme anche dopo le quattro.
+  const quieta=notteCon(r=>r.tiro>0.8);tempo.impostaGiorno(quieta+1);tempo.impostaOra(4.5);
+  assert.equal(azioni.azionePossibile(eroe,null).impedito,null);
+  // E di giorno ci si riposa, senza "all'aperto".
+  tempo.impostaOra(13);assert.equal(azioni.azionePossibile(eroe,null).verbo,'Riposa 2 ore');
+  assert.ok(fuori);
+});
+test('il risveglio si annuncia in rosso con la seconda riga, e vince sulla cronaca della notte',()=>{
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/esito\.svegliato\n\s*\? \{ testo: "ti svegli di soprassalto", colore: "#c0705f", sotto: "qualcosa si muove là fuori" \}/);
+  assert.match(gioco,/if \(avvisoRisveglio\) \{ annuncia\(avvisoRisveglio\.testo, avvisoRisveglio\.colore, avvisoRisveglio\.sotto\); avvisoRisveglio = null; \}/);
 });
