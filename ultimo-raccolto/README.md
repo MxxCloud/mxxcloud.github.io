@@ -12,6 +12,37 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.64 — il diario
+
+Fino a qui le notizie del mattino erano una sola: la più grave. Se nella
+stessa notte morivano dei polli e seccava l'orto, dell'orto non si sapeva
+niente, e il «dormito 8 ore» che arrivava per ultimo copriva anche i polli.
+Con tante regole, perdere un'informazione vuol dire non capire le
+conseguenze delle proprie scelte.
+- **N apre il diario.** I fatti stanno raggruppati per giorno, dal più
+  recente, con l'ora e il loro colore. W/S scorrono; N, Esc o Spazio
+  chiudono. Mentre si legge il mondo sta fermo. Dalla mappa TAB, N chiude la
+  carta e apre il diario, come C, H e P.
+- **Il mattino.** Si annuncia la notizia più grave, come prima; se ce ne sono
+  altre, la seconda riga dice quante, «e altre 2 notizie: N per il diario».
+  Nel diario ci sono tutte.
+- **Il sonno in fondo.** Il risveglio di soprassalto resta in cima, perché è
+  un pericolo adesso. «Dormito N ore» e «sei svenuto» vanno dopo le notizie:
+  se nella notte è successo qualcosa, si vede quello.
+- **Cosa ci finisce.** Le notizie del mattino, il risveglio, la morte con la
+  causa, la ferita sporca, «hanno sfondato», fame e sete esaurite, lo
+  stremo. Non le scritte di un istante come «+1 legna».
+- **Si salva con la partita**, ultime 40 voci, e resta da un superstite
+  all'altro. Una partita nuova comincia vuota; i salvataggi di prima si
+  aprono con il diario vuoto.
+- **Corretto.** Da M7.18.59 il tempo di «ieri» chiesto il primo giorno
+  finiva nel registro del meteo come «giorno 0», e la validazione lo
+  rifiutava: le partite cominciate dal primo giorno, una volta salvate, non
+  si ricaricavano più. Adesso il giorno 0 non si scrive, e i salvataggi che
+  lo contengono si caricano lo stesso.
+- Le notizie del mattino si compongono in `regole/diario.js` e non più in
+  `gioco.js`: stessi testi e stesso ordine, ma adesso con i loro collaudi.
+
 ## M7.18.63 — il sonno non salta la notte
 
 Fino a qui dormire era il modo più sicuro di passare il buio: le ore
@@ -2736,7 +2767,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.63**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.64**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,
@@ -3581,6 +3612,7 @@ unici (M7.18.56). Come sopra: appunti, non promesse.
 | `C` | aprire e chiudere le costruzioni, e chiudere la cassa |
 | `X` | smontare quello che hai davanti e che hai costruito tu: porta, giaciglio, banco, cassa, focolare. Anche la cassa aperta, dal suo pannello. Con l'ascia in mano, sollevare il pavimento da sotto un arredo |
 | `H` | la lista dei comandi, in partita; nella schermata iniziale è la voce «Comandi» |
+| `N` | il diario: cosa è successo, giorno per giorno (W/S scorrono) |
 | `frecce` | dentro le costruzioni e la cassa: scegliere |
 | `M` | accendere e spegnere la minimappa |
 | `TAB` | la mappa di quello che hai visto |

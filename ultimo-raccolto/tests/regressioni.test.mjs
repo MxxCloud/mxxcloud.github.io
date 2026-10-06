@@ -29,6 +29,7 @@ import * as ricette from '../regole/ricette.js';
 import * as campana from '../regole/campana.js';
 import * as fasce from '../regole/fasce.js';
 import * as sonno from '../regole/sonno.js';
+import * as diario from '../regole/diario.js';
 import * as luna from '../regole/luna.js';
 import * as testo from '../arte/testo.js';
 import * as chiasso from '../regole/chiasso.js';
@@ -867,7 +868,9 @@ test('il tempo tirato si salva: l’annuncio di domani resta vero dopo il carica
   const vecchio={...stato};delete vecchio.calendario;
   assert.ok(salvataggio.valido(vecchio));assert.ok(salvataggio.applica(vecchio));
   assert.equal(meteo.registroDelTempo().length,0);assert.equal(meteo.evento(6),'pioggia');
-  for(const storto of [[[6,'grandine',0]],[[0,'sereno',0]],[[6,'pioggia',2]],'6,pioggia'])
+  // Il giorno 0 invece sì, da M7.18.64: lo scrivevano le partite fra
+  // M7.18.59 e M7.18.63, e si lascia cadere caricando.
+  for(const storto of [[[6,'grandine',0]],[[-1,'sereno',0]],[[6,'pioggia',2]],'6,pioggia'])
     assert.equal(salvataggio.valido({...stato,calendario:storto}),false,JSON.stringify(storto));
 });
 test('aridità triplica la sete per tutta l’estate, anche dormendo',()=>{
@@ -4219,11 +4222,11 @@ test('la lista dei comandi nomina ogni tasto del gioco, e H la apre',()=>{
   const hud=readFileSync(new URL('../interfaccia/hud.js',import.meta.url),'utf8');
   const lista=hud.slice(hud.indexOf('export const COMANDI'),hud.indexOf('export function disegnaComandi'));
   const tasti=[...lista.matchAll(/\["([^"]+)", "/g)].map(m=>m[1]);
-  for(const t of ['WASD  FRECCE','MAIUSC','SPAZIO','1-8','C','E','G','X','M','TAB','V','P','H','ESC','F3'])assert.ok(tasti.includes(t),t);
+  for(const t of ['WASD  FRECCE','MAIUSC','SPAZIO','1-8','C','E','G','X','M','TAB','V','P','N','H','ESC','F3'])assert.ok(tasti.includes(t),t);
   assert.match(hud,/titolo: \(\) => \["AVVIA NUOVA PARTITA", "CARICA PARTITA", "COMANDI"\]/);
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
   assert.match(gioco,/const VOCI_TITOLO = \["nuova", "carica", "comandi"\]/);
-  assert.match(gioco,/comandiAperti \|\| iniziale !== null/,'il mondo si ferma mentre si leggono');
+  assert.match(gioco,/comandiAperti \|\| diarioAperto \|\| iniziale !== null/,'il mondo si ferma mentre si leggono');
 });
 
 // M7.18.24 — lo steccato si collega ai vicini.
@@ -4891,7 +4894,9 @@ test('la canicola si annuncia il giorno prima, il giorno stesso e all’alba',()
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
   // Una volta al giorno e a schermo libero: la canicola è uno stato, e detta
   // a ogni fotogramma copriva per tutto il giorno ogni altra notizia.
-  assert.match(gioco,/meteo\.evento\(\) === "canicola" && canicolaDetta !== tempo\.giornoCorrente\(\) && !messaggio && orto\.quante\(\) > 0\) \{\s*annuncia\("oggi canicola: chi non beve, secca", "#e0704a"\);\s*canicolaDetta = tempo\.giornoCorrente\(\);/);
+  // Da M7.18.64 la frase sta nel diario, che compone le notizie del mattino.
+  assert.match(gioco,/const canicola = meteo\.evento\(\) === "canicola" && canicolaDetta !== tempo\.giornoCorrente\(\) && !messaggio && orto\.quante\(\) > 0;\s*if \(canicola\) canicolaDetta = tempo\.giornoCorrente\(\);/);
+  assert.deepEqual(diario.notizie({},{canicola:true}),[{testo:'oggi canicola: chi non beve, secca',colore:'#e0704a'}]);
   // La previsione del giorno prima dice proprio canicola.
   const c=primaCanicola();
   assert.equal(meteo.evento(c),'canicola');assert.notEqual(meteo.evento(c-1),'canicola');
@@ -5064,8 +5069,10 @@ test('i parassiti si vedono sulla pianta, e l’alba li racconta',()=>{
   assert.ok(d.pixel.some(v=>v>0));
   const mappaSorgente=readFileSync(new URL('../mondo/mappa.js',import.meta.url),'utf8');
   assert.match(mappaSorgente,/if \(voce\.stadio && \(modifiche\.di\(tx, ty\)\?\.parassiti \?\? 0\) > 0\) \{\s*const puntini = cuoci\(ortoArte\.PARASSITI/);
-  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
-  for(const frase of ['i parassiti hanno ucciso delle piante: ${parassitiUccise}','i parassiti si allargano: ${parassitiContagiate}',
+  // Le frasi del mattino stanno nel diario da M7.18.64; quella della cenere
+  // resta in gioco.js.
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8')+readFileSync(new URL('../regole/diario.js',import.meta.url),'utf8');
+  for(const frase of ['i parassiti hanno ucciso delle piante: ${r.parassitiUccise}','i parassiti si allargano: ${r.parassitiContagiate}',
     "i parassiti sono nell'orto: estirpa o spargi cenere",'cenere sparsa: via i parassiti'])
     assert.ok(gioco.includes(frase),frase);
   // Il resoconto della notte li porta fino all'alba.
@@ -6517,7 +6524,7 @@ test('con la mappa aperta C, H e P la chiudono e aprono il loro pannello; TAB o 
   const blocco=leggi.slice(mappa,leggi.indexOf('return;',mappa));
   // M7.18.60.3: C, H e P chiudono la mappa e passano il tasto al loro
   // pannello, che lo legge subito dopo.
-  assert.match(blocco,/const pannello = comandi\.appenaPremuto\("ricette"\) \|\| comandi\.appenaPremuto\("aiuto"\)\s*\|\| comandi\.appenaPremuto\("partita"\);\s*if \(pannello\) \{\s*mappaAperta = false;\s*\}/);
+  assert.match(blocco,/const pannello = comandi\.appenaPremuto\("ricette"\) \|\| comandi\.appenaPremuto\("aiuto"\)\s*\|\| comandi\.appenaPremuto\("partita"\) \|\| comandi\.appenaPremuto\("diario"\);\s*if \(pannello\) \{\s*mappaAperta = false;\s*\}/);
   assert.match(blocco,/appenaPremuto\("mappa"\)/);assert.match(blocco,/appenaPremuto\("indietro"\) && mappaGrande\.modalita\(\)\.modo === "sfoglia"/);
   assert.match(blocco,/mappaAperta = false/);
   // E la carta si nasconde in cima al disegno, prima di tutto il resto.
@@ -6920,6 +6927,115 @@ test('in una stanza chiusa la stessa notte si dorme fino alle 7, e dopo il momen
 });
 test('il risveglio si annuncia in rosso con la seconda riga, e vince sulla cronaca della notte',()=>{
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
-  assert.match(gioco,/esito\.svegliato\n\s*\? \{ testo: "ti svegli di soprassalto", colore: "#c0705f", sotto: "qualcosa si muove là fuori" \}/);
-  assert.match(gioco,/if \(avvisoRisveglio\) \{ annuncia\(avvisoRisveglio\.testo, avvisoRisveglio\.colore, avvisoRisveglio\.sotto\); avvisoRisveglio = null; \}/);
+  assert.match(gioco,/esito\.svegliato\n\s*\? \{ testo: "ti svegli di soprassalto", colore: "#c0705f", sotto: "qualcosa si muove là fuori", urgente: true \}/);
+  // Da M7.18.64 il risveglio di soprassalto è la prima delle notizie.
+  assert.match(gioco,/\.\.\.\(avvisoRisveglio\?\.urgente \? \[avvisoRisveglio\] : \[\]\),\n\s*\.\.\.diario\.notizie\(/);
+});
+
+// M7.18.64 — il diario.
+test('le notizie del mattino sono quelle della catena di prima, tutte e nello stesso ordine',()=>{
+  // Testo e colore che la catena di gioco.js annunciava per ogni contatore da
+  // solo, fino a M7.18.63.
+  const R='#c0705f',G='#c9b189',V='#9ec97e';
+  const attese=[
+    [{polliDiFreddo:2},"il freddo si è portato via dei polli: 2",R],
+    [{polliDiFame:1},"dei polli sono morti di fame: 1",R],
+    [{polliNelloZaino:1},"il pollo nello zaino è morto",R],
+    [{pulciniPersi:1},"un pulcino fuori dal recinto non ha passato la notte",R],
+    [{pulciniPersi:3},"dei pulcini fuori dal recinto non hanno passato la notte: 3",R],
+    [{polliScappati:2},"dei polli sono scappati: 2",R],
+    [{seccate:2},"l'orto è seccato: 2",R],
+    [{alBuio:1},"al chiuso l'orto è morto: 1",R],
+    [{alChiuso:4},"al chiuso l'orto non cresce: 4",G],
+    [{mangiate:2},"le bestie hanno mangiato l'orto: 2",R],
+    [{parassitiUccise:1},"i parassiti hanno ucciso delle piante: 1",R],
+    [{parassitiContagiate:2},"i parassiti si allargano: 2",R],
+    [{parassitiNuovi:1},"i parassiti sono nell'orto: estirpa o spargi cenere",R],
+    [{appassite:3},"l'orto è marcito: 3",R],
+    [{guaste:2},"si è guastato del cibo: 2",R],
+    [{spentiLegna:1},"il fuoco ha finito la legna",R],
+    [{spentiPioggia:1},"la pioggia ha spento il fuoco",R],
+    [{torceFinite:1},"la torcia si è consumata",R],
+    [{polliAffamati:2},"i polli hanno fame: 2",G],
+    [{polloDomani:1},"il pollo nello zaino non passa un'altra notte",G],
+    [{assetate:5},"l'orto ha sete: 5",G],
+    [{inScadenza:1},"del cibo sta per guastarsi",G],
+    [{aSeme:2},"l'orto è andato a seme: 2",G],
+    [{cresciute:3},"l'orto è cresciuto",V],
+    [{pulciniNati:1},"è nato un pulcino",V],
+    [{pulciniNati:2},"sono nati dei pulcini: 2",V],
+    [{pulciniCresciuti:['gallo']},"un pulcino è cresciuto: gallo",V],
+    [{uovaDeposte:3},"nel pollaio ci sono uova: +3",V],
+    [{tornati:7},"la valle è ricresciuta: 7",'#7fae63'],
+  ];
+  for(const [r,testo,colore] of attese)assert.deepEqual(diario.notizie(r),[{testo,colore}],testo);
+  assert.deepEqual(diario.notizie({},{arrivata:'inverno',arrivo:"è arrivato l'inverno"}),[{testo:"è arrivato l'inverno",colore:G}]);
+  // La stagione che si porta via il campo: una frase sola, al posto di due.
+  assert.deepEqual(diario.notizie({appassite:4},{arrivata:'inverno',arrivo:"è arrivato l'inverno"}),[{testo:"inverno: l'orto è morto",colore:R}]);
+  // Tutte, nell'ordine di gravità: prima ciò che è perso, poi gli avvisi, poi le buone notizie.
+  const tutte=diario.notizie({cresciute:1,seccate:2,polliDiFreddo:1,spentiLegna:1,assetate:3,uovaDeposte:2});
+  assert.deepEqual(tutte.map(n=>n.testo),["il freddo si è portato via dei polli: 1","l'orto è seccato: 2","il fuoco ha finito la legna","l'orto ha sete: 3","l'orto è cresciuto","nel pollaio ci sono uova: +2"]);
+  assert.deepEqual(diario.notizie({}),[]);
+});
+test('il diario tiene le ultime 40 voci con giorno e ora, e si salva',()=>{
+  diario.reimposta();
+  tempo.impostaGiorno(5);tempo.impostaOra(7.5);
+  diario.scrivi("l'orto è seccato: 2",'#c0705f');
+  tempo.impostaOra(13.25);diario.scrivi('hanno sfondato','#c0705f');
+  assert.equal(diario.quante(),2);
+  assert.deepEqual(diario.voci().map(v=>[v.giorno,v.ora,v.testo]),[[5,13.25,'hanno sfondato'],[5,7.5,"l'orto è seccato: 2"]],'dalla più recente');
+  for(let i=0;i<50;i++)diario.scrivi('voce '+i);
+  assert.equal(diario.quante(),diario.MASSIMO);assert.equal(diario.MASSIMO,40);
+  assert.equal(diario.voci()[0].testo,'voce 49');assert.equal(diario.voci().at(-1).testo,'voce 10');
+  // Va e torna dal salvataggio.
+  const stato=diario.stato();assert.equal(diario.statoValido(stato),true);
+  diario.reimposta();assert.equal(diario.quante(),0);
+  diario.ripristina(stato);assert.deepEqual(diario.stato(),stato);
+  for(const storto of [{},[{giorno:1.5,ora:3,testo:'x',colore:'#c0705f'}],[{giorno:1,ora:3,testo:7,colore:'#c0705f'}],
+    [{giorno:1,ora:3,testo:'x'.repeat(200),colore:'#c0705f'}],[{giorno:1,ora:25,testo:'x',colore:'#c0705f'}],
+    [{giorno:1,ora:3,testo:'x',colore:'rosso'}],new Array(41).fill({giorno:1,ora:3,testo:'x',colore:'#c0705f'})])
+    assert.equal(diario.statoValido(storto),false,JSON.stringify(storto).slice(0,60));
+  // Nella partita salvata: c'è, si ripristina, e un salvataggio di prima
+  // del diario si carica con il diario vuoto.
+  diario.reimposta();diario.scrivi('la torcia si è consumata','#c0705f');
+  const partita=salvataggio.istantanea(eroe,0);
+  assert.equal(partita.diario.length,1);
+  diario.reimposta();assert.ok(salvataggio.applica(partita));
+  assert.equal(diario.voci()[0].testo,'la torcia si è consumata');
+  const vecchia={...partita};delete vecchia.diario;
+  diario.scrivi('qualcosa');assert.ok(salvataggio.applica(vecchia));assert.equal(diario.quante(),0);
+  assert.equal(salvataggio.applica({...partita,diario:[{giorno:'uno'}]}),null,'un diario storto fa rifiutare la partita');
+});
+test('N apre il diario dal gioco e dalla mappa, il mattino dice quante altre notizie ci sono, e i fatti importanti ci finiscono',()=>{
+  const comandiSorgente=readFileSync(new URL('../motore/comandi.js',import.meta.url),'utf8');
+  assert.match(comandiSorgente,/KeyN: "diario"/);assert.match(comandiSorgente,/"avvicina", "diario",\n\];/);
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/if \(comandi\.appenaPremuto\("diario"\) && !partitaAperta\) \{\s*diarioAperto = !diarioAperto;/);
+  assert.match(gioco,/if \(diarioAperto\) hud\.disegnaDiario\(p, \{ voci: diario\.voci\(\), inizio: diarioInizio \}\);/);
+  assert.match(gioco,/for \(const n of notizie\) diario\.scrivi\(n\.testo, n\.colore\);/);
+  assert.match(gioco,/altre \$\{altre\} notizie`\}: N per il diario`/);
+  assert.match(gioco,/function muori\(causa\) \{\n  mortoDi = causa;\n  diario\.scrivi\(/);
+  assert.match(gioco,/annuncia\("la ferita è sporca", "#9d7fb0"\); diario\.scrivi\(/);
+  assert.match(gioco,/annuncia\("hanno sfondato", "#c0705f"\); diario\.scrivi\("hanno sfondato"/);
+  assert.match(gioco,/diario\.reimposta\(\);\n  mappa\.impostaOrti\(/,'una partita nuova comincia con il diario vuoto');
+  // Il sonno normale in fondo, quello di soprassalto in cima.
+  assert.match(gioco,/\.\.\.\(avvisoRisveglio && !avvisoRisveglio\.urgente \? \[avvisoRisveglio\] : \[\]\),\n  \];/);
+  const hud=readFileSync(new URL('../interfaccia/hud.js',import.meta.url),'utf8');
+  assert.match(hud,/\["N", "IL DIARIO: COSA È SUCCESSO"\]/);
+  assert.match(hud,/export function disegnaDiario\(p, \{ voci, inizio = 0 \}\)/);
+});
+test('le partite si ricaricano anche dopo che il cielo ha chiesto il tempo di ieri al primo giorno',()=>{
+  // Il primo giorno la neve e la pioggia chiedono il giorno 0. Fino a
+  // M7.18.63 lo si tirava e lo si scriveva nel registro, che poi la
+  // validazione rifiutava: nessuna partita salvata si ricaricava più.
+  tempo.impostaGiorno(1);tempo.impostaOra(9);
+  meteo.evento(0);meteo.temporale(0);meteo.evento(1);
+  assert.ok(meteo.registroDelTempo().every(([g])=>g>=1),'il giorno 0 non si scrive');
+  const stato=salvataggio.istantanea(eroe,0);
+  assert.equal(salvataggio.valido(stato),true);
+  assert.ok(salvataggio.applica(stato),'la partita si ricarica');
+  // E i salvataggi già scritti con il giorno 0 si caricano, lasciandolo cadere.
+  const vecchio={...stato,calendario:[[1,'sereno',0],[0,'pioggia',1]]};
+  assert.equal(salvataggio.valido(vecchio),true);assert.ok(salvataggio.applica(vecchio));
+  assert.deepEqual(meteo.registroDelTempo(),[[1,'sereno',0]]);
 });

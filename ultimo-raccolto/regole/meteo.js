@@ -58,14 +58,20 @@ function tira(giorno) {
   registro.set(giorno, { e: "pioggia", t: caso() < PROBABILITA_TEMPORALE });
 }
 
+// Prima del primo giorno non c'è stato tempo: sereno, e non si scrive. La
+// neve sul terreno e l'orto guardano "ieri", e il primo giorno
+// ieri è il giorno 0: tirarlo e scriverlo metteva nel registro un giorno che
+// registroValido rifiutava, e da M7.18.59 ogni partita salvata dal primo
+// giorno in poi non si ricaricava più (corretto in M7.18.64).
 export function evento(giorno = tempo.giornoCorrente()) {
+  if (giorno < 1) return "sereno";
   if (!registro.has(giorno)) tira(giorno);
   return registro.get(giorno).e;
 }
 
 // Un giorno di pioggia che è un temporale: lo disegna il cielo, coi lampi.
 export function temporale(giorno = tempo.giornoCorrente()) {
-  return evento(giorno) === "pioggia" && registro.get(giorno).t;
+  return evento(giorno) === "pioggia" && Boolean(registro.get(giorno)?.t);
 }
 
 // Il registro per il salvataggio: [giorno, evento, temporale].
@@ -75,14 +81,16 @@ export function registroDelTempo() {
 
 export function registroValido(elenco) {
   return Array.isArray(elenco) && elenco.length <= 100000 && elenco.every((r) =>
-    Array.isArray(r) && r.length === 3 && Number.isInteger(r[0]) && r[0] >= 1 && EVENTI.includes(r[1]) && (r[2] === 0 || r[2] === 1));
+    Array.isArray(r) && r.length === 3 && Number.isInteger(r[0]) && r[0] >= 0 && EVENTI.includes(r[1]) && (r[2] === 0 || r[2] === 1));
 }
 
 // Un salvataggio di prima non ce l'ha: i giorni si tirano quando servono.
 export function ripristinaRegistro(elenco) {
   registro.clear();
   if (!registroValido(elenco)) return;
-  for (const [g, e, t] of elenco) registro.set(g, { e, t: t === 1 });
+  // Il giorno 0 dei salvataggi scritti fra M7.18.59 e M7.18.63 si accetta
+  // e si lascia cadere: non è mai esistito.
+  for (const [g, e, t] of elenco) if (g >= 1) registro.set(g, { e, t: t === 1 });
 }
 
 // Il tempo di un giorno deciso a mano: per i collaudi e la diagnostica.

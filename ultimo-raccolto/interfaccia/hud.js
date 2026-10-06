@@ -739,6 +739,7 @@ export const COMANDI = [
   ["V", "IL VOLUME: MUTO, PIANO, FORTE"],
   ["L", "EFFETTI DI LUCE: ACCESI O SPENTI"],
   ["P", "SALVARE E CARICARE"],
+  ["N", "IL DIARIO: COSA È SUCCESSO"],
   ["H", "QUESTI COMANDI"],
   ["ESC", "INDIETRO NEI MENU"],
   ["F3", "DIAGNOSTICA"],
@@ -761,6 +762,61 @@ export function disegnaComandi(p, chiudi) {
     testo.disegna(p, cosa, x + 86, ry, TENUE);
   });
   testo.disegna(p, chiudi, Math.round((schermo.LARGHEZZA - testo.larghezza(chiudi)) / 2), y + altezza - 11, GRIGIO);
+}
+
+// --- il diario -------------------------------------------------------------
+
+// Il diario (M7.18.64): le voci dalla più recente, raggruppate per giorno,
+// ognuna con l'ora e il suo colore. "inizio" è la prima voce mostrata: su e
+// giù scorrono. Le righe troppo lunghe si accorciano con i puntini invece di
+// uscire dal riquadro.
+const RIGHE_DIARIO = 15;
+
+function accorcia(scritta, massimo) {
+  if (testo.larghezza(scritta) <= massimo) return scritta;
+  let s = scritta;
+  while (s.length > 1 && testo.larghezza(s + "...") > massimo) s = s.slice(0, -1);
+  return s + "...";
+}
+
+export function disegnaDiario(p, { voci, inizio = 0 }) {
+  const larghezza = 300;
+  const altezza = 22 + RIGHE_DIARIO * 9 + 20;
+  const x = Math.round((schermo.LARGHEZZA - larghezza) / 2);
+  const y = Math.round((schermo.ALTEZZA - altezza) / 2);
+
+  p.fillStyle = "rgb(8 9 12 / 0.72)";
+  p.fillRect(0, 0, schermo.LARGHEZZA, schermo.ALTEZZA);
+  riquadro(p, x, y, larghezza, altezza, FONDO_PIENO, BORDO);
+  testo.disegna(p, "DIARIO", x + 10, y + 8, CHIARO);
+
+  if (voci.length === 0) {
+    testo.disegna(p, "NIENTE DA RACCONTARE, PER ORA", x + 10, y + 22, TENUE);
+  }
+  // Le righe: un'intestazione ogni volta che cambia il giorno, poi le voci.
+  const righe = [];
+  let giorno = null;
+  for (const v of voci.slice(inizio)) {
+    if (v.giorno !== giorno) { righe.push({ giorno: v.giorno }); giorno = v.giorno; }
+    righe.push(v);
+    if (righe.length >= RIGHE_DIARIO) break;
+  }
+  righe.slice(0, RIGHE_DIARIO).forEach((r, i) => {
+    const ry = y + 22 + i * 9;
+    if (r.testo === undefined) {
+      testo.disegna(p, `GIORNO ${r.giorno}`, x + 10, ry, BORDO_SCELTO);
+      return;
+    }
+    // Al minuto più vicino: il risveglio arriva alle sette meno un soffio, e
+    // "06:59" direbbe un'ora che nessuno ha visto.
+    const minuti = Math.round(r.ora * 60) % (24 * 60);
+    const ora = `${String(Math.floor(minuti / 60)).padStart(2, "0")}:${String(minuti % 60).padStart(2, "0")}`;
+    testo.disegna(p, ora, x + 14, ry, TENUE);
+    testo.disegna(p, accorcia(r.testo.toUpperCase(), larghezza - 52), x + 42, ry, r.colore ?? CHIARO);
+  });
+
+  const piede = voci.length > 1 ? "N, ESC O SPAZIO PER CHIUDERE  W/S SCORRE" : "N, ESC O SPAZIO PER CHIUDERE";
+  testo.disegna(p, piede, Math.round((schermo.LARGHEZZA - testo.larghezza(piede)) / 2), y + altezza - 11, GRIGIO);
 }
 
 // --- la partita: salvare e caricare ---------------------------------------
