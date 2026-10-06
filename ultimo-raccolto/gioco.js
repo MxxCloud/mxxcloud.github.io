@@ -71,6 +71,7 @@ import * as mappaGrande from "./interfaccia/mappa.js";
 import * as tinte from "./interfaccia/tinte.js";
 import * as esplorato from "./regole/esplorato.js";
 import * as fasce from "./regole/fasce.js";
+import * as diario from "./regole/diario.js";
 
 const { TASSELLO } = schermo;
 
@@ -78,7 +79,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.63";
+const VERSIONE = "M7.18.64";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -118,6 +119,9 @@ let casellaScelta = 0;
 let ricetteAperte = false;
 // La lista dei comandi aperta con H in partita (M7.18.24).
 let comandiAperti = false;
+// Il diario (M7.18.64): aperto, e da quale voce comincia la pagina.
+let diarioAperto = false;
+let diarioInizio = 0;
 let ricettaScelta = 0;
 // Se c'è un banco a portata, chiesto una volta all'apertura del pannello e non
 // a ogni fotogramma. Si può: con il pannello aperto il mondo è fermo e il
@@ -259,6 +263,8 @@ function avviaNuovaPartita(giorno) {
   // Il tempo di una partita nuova non è ancora successo (M7.18.59): quello
   // tirato mentre il titolo era aperto non conta.
   meteo.dimenticaIlTempo();
+  // E il diario è di un'altra valle (M7.18.64).
+  diario.reimposta();
   mappa.impostaOrti(parametri.has("orti") ? Number(parametri.get("orti")) : estraiOrti());
   provaIlGiorno(giorno);
   chiudiLIniziale();
@@ -277,7 +283,7 @@ function estraiOrti() {
 // invece di restare tre condizioni ricopiate in tre punti: la quarta sarebbe
 // stata la prima a essere dimenticata da qualche parte.
 function mondoFermo() {
-  return ricetteAperte || comandiAperti || iniziale !== null || partitaAperta || mappaAperta
+  return ricetteAperte || comandiAperti || diarioAperto || iniziale !== null || partitaAperta || mappaAperta
     || cassaAperta !== null || mortoDi !== null;
 }
 
@@ -287,6 +293,7 @@ function mondoFermo() {
 // partita invece della fine di un superstite.
 function muori(causa) {
   mortoDi = causa;
+  diario.scrivi(`sei morto ${salute.CAUSE[causa] ?? ""}`.trim(), "#c0705f");
   suono.suona(MORTE);
   corpo = azioni.lasciaIlCadavere(eroe, tempo.giornoCorrente());
   // Niente messaggio di passaggio: ce n'è una schermata intera che lo dice, e
@@ -294,6 +301,7 @@ function muori(causa) {
   messaggio = null;
   ricetteAperte = false;
   comandiAperti = false;
+  diarioAperto = false;
   partitaAperta = false;
   // La cassa si chiude senza far rumore: il coperchio è un gesto, e morire non
   // è un gesto.
@@ -1067,7 +1075,7 @@ function leggiComandi(passo) {
   // Esc quando non si sta mettendo un segno. Tutto il resto è suo.
   if (mappaAperta) {
     const pannello = comandi.appenaPremuto("ricette") || comandi.appenaPremuto("aiuto")
-      || comandi.appenaPremuto("partita");
+      || comandi.appenaPremuto("partita") || comandi.appenaPremuto("diario");
     if (pannello) {
       mappaAperta = false;
     } else {
@@ -1086,10 +1094,29 @@ function leggiComandi(passo) {
     comandiAperti = !comandiAperti;
     ricetteAperte = false;
     mappaAperta = false;
+    diarioAperto = false;
     return;
   }
   if (comandiAperti) {
     if (comandi.appenaPremuto("indietro") || comandi.appenaPremuto("usa")) comandiAperti = false;
+    return;
+  }
+
+  // Il diario (M7.18.64), come i comandi: prende tutti i tasti finché è
+  // aperto, il mondo sta fermo, e si chiude con N, Esc o la barra. Su e giù
+  // scorrono, di una voce alla volta.
+  if (comandi.appenaPremuto("diario") && !partitaAperta) {
+    diarioAperto = !diarioAperto;
+    diarioInizio = 0;
+    ricetteAperte = false;
+    comandiAperti = false;
+    mappaAperta = false;
+    return;
+  }
+  if (diarioAperto) {
+    if (comandi.appenaPremuto("indietro") || comandi.appenaPremuto("usa")) diarioAperto = false;
+    else if (comandi.appenaPremuto("giu")) diarioInizio = Math.min(Math.max(0, diario.quante() - 1), diarioInizio + 1);
+    else if (comandi.appenaPremuto("su")) diarioInizio = Math.max(0, diarioInizio - 1);
     return;
   }
 
@@ -1299,7 +1326,7 @@ function leggiComandi(passo) {
     // Svegliati di soprassalto (M7.18.63): in rosso e con la seconda riga,
     // perché non è un resoconto, è un pericolo.
     avvisoRisveglio = esito.svegliato
-      ? { testo: "ti svegli di soprassalto", colore: "#c0705f", sotto: "qualcosa si muove là fuori" }
+      ? { testo: "ti svegli di soprassalto", colore: "#c0705f", sotto: "qualcosa si muove là fuori", urgente: true }
       : { testo: esito.messaggio ?? `dormito ${(esito.secondi / riposo.ORA).toFixed(1)} ore: +${Math.round(esito.recuperata * 100)}% stamina`, colore: "#c9b189" };
   }
 
@@ -1529,7 +1556,10 @@ function aggiorna(passo) {
     });
     haDormito = completaSvenimento() || haDormito;
     for (const vuoto of bisogni.vuoti()) {
-      if (vuoto !== "stanchezza" && !primaVuoti.has(vuoto)) annuncia(AVVISI_BISOGNI[vuoto], "#c0705f");
+      if (vuoto !== "stanchezza" && !primaVuoti.has(vuoto)) {
+        annuncia(AVVISI_BISOGNI[vuoto], "#c0705f");
+        diario.scrivi(AVVISI_BISOGNI[vuoto], "#c0705f");
+      }
     }
     gelando = freddo.tipo(eroe);
     if (gelando && gelando !== primaGelava) {
@@ -1583,10 +1613,10 @@ function aggiorna(passo) {
         colpo.scheggie,
         colpo.ceduto ? 1.5 : 1
       );
-      if (colpo.ceduto) annuncia("hanno sfondato", "#c0705f");
+      if (colpo.ceduto) { annuncia("hanno sfondato", "#c0705f"); diario.scrivi("hanno sfondato", "#c0705f"); }
     }
 
-    if (morsi.infettato) annuncia("la ferita è sporca", "#9d7fb0");
+    if (morsi.infettato) { annuncia("la ferita è sporca", "#9d7fb0"); diario.scrivi("la ferita è sporca: sei infetto", "#9d7fb0"); }
     else if (visto.appenaVisto && morsi.morsi === 0) annuncia("qualcosa ti ha visto", "#c0705f");
 
     // L'udito dopo che tutti si sono mossi, perché quello che si sente dipende
@@ -1656,94 +1686,43 @@ function aggiorna(passo) {
     if (messaggio.vita <= 0) messaggio = null;
   }
 
-  const { uovaDeposte, pulciniNati, pulciniCresciuti, polliNelloZaino, polloDomani, polliScappati, pulciniPersi, polliAffamati, polliDiFame, polliDiFreddo,
-    cresciute, appassite, seccate, alBuio, alChiuso, assetate, aSeme, mangiate, parassitiNuovi, parassitiContagiate, parassitiUccise, spentiLegna, spentiPioggia, torceFinite, guaste, inScadenza, tornati, risvegliForzati } = simulazione.resoconto();
-
+  const resoconto = simulazione.resoconto();
   const arrivata = vestiLaValle();
 
-  // Un messaggio solo: durano un paio di secondi, e tre in fila vorrebbero
-  // dire vederne uno — l'ultimo, che non è detto sia il più importante.
-  // L'ordine è quello di gravità, e la stagione che si porta via il campo si
-  // dice in una frase sola invece che in due che si coprono.
-  // I polli per primi: un animale morto è la notizia più grave del mattino, e
-  // ognuna ha il suo rimedio — il pollaio, il mangime, il recinto.
-  if (polliDiFreddo > 0) annuncia(`il freddo si è portato via dei polli: ${polliDiFreddo}`, "#c0705f");
-  else if (polliDiFame > 0) annuncia(`dei polli sono morti di fame: ${polliDiFame}`, "#c0705f");
-  else if (polliNelloZaino > 0) annuncia("il pollo nello zaino è morto", "#c0705f");
-  else if (pulciniPersi > 0) annuncia(pulciniPersi === 1 ? "un pulcino fuori dal recinto non ha passato la notte"
-    : `dei pulcini fuori dal recinto non hanno passato la notte: ${pulciniPersi}`, "#c0705f");
-  else if (polliScappati > 0) annuncia(`dei polli sono scappati: ${polliScappati}`, "#c0705f");
-  else if (appassite > 0 && arrivata) annuncia(`${arrivata}: l'orto è morto`, "#c0705f");
-  // La sete prima del marcire: è l'unica delle due che si poteva evitare
-  // stamattina con un secchio, e sapere quale delle due è stata insegna cosa
-  // fare domani.
-  else if (seccate > 0) annuncia(`l'orto è seccato: ${seccate}`, "#c0705f");
-  // Il buio accanto alla sete: si poteva evitare anche questo, e il rimedio —
-  // un muro smontato — è la notizia. Prima quello morto, poi l'avviso a chi
-  // ha ancora un giorno.
-  else if (alBuio > 0) annuncia(`al chiuso l'orto è morto: ${alBuio}`, "#c0705f");
-  else if (alChiuso > 0) annuncia(`al chiuso l'orto non cresce: ${alChiuso}`, "#c9b189");
-  // Le bestie dopo la sete e prima del marcire, per la stessa ragione: si
-  // poteva evitare, e sapere come — uno spaventapasseri — è la notizia.
-  else if (mangiate > 0) annuncia(`le bestie hanno mangiato l'orto: ${mangiate}`, "#c0705f");
-  // I parassiti (M7.18.42): prima i morti, poi il contagio, poi lo scoppio —
-  // tutte e tre notizie su cui si può ancora fare qualcosa oggi.
-  else if (parassitiUccise > 0) annuncia(`i parassiti hanno ucciso delle piante: ${parassitiUccise}`, "#c0705f");
-  else if (parassitiContagiate > 0) annuncia(`i parassiti si allargano: ${parassitiContagiate}`, "#c0705f");
-  else if (parassitiNuovi > 0) annuncia("i parassiti sono nell'orto: estirpa o spargi cenere", "#c0705f");
-  else if (appassite > 0) annuncia(`l'orto è marcito: ${appassite}`, "#c0705f");
-  else if (arrivata) annuncia(ARRIVO[arrivata], "#c9b189");
-  // Il cibo guasto viene prima del fuoco spento, e non è un ordine a caso: un
-  // fuoco che si spegne si riaccende, del cibo andato non torna niente. Fra
-  // due notizie che si coprono a vicenda vince quella su cui non si può più
-  // fare nulla.
-  else if (guaste > 0) annuncia(`si è guastato del cibo: ${guaste}`, "#c0705f");
-  // Il fuoco spento si dice con la sua causa, perché ognuna ha il suo rimedio:
-  // la legna si porta, dalla pioggia ci si ripara, la torcia si rifà. Detto
-  // con la stessa frase, un focolare rimasto senza legna la mezzanotte in cui
-  // comincia a piovere sembrava spento dall'acqua anche fra quattro mura.
+  // Le notizie (M7.18.64): tutte, e non più una sola. La più grave si
+  // annuncia, come prima; le altre si contano nella seconda riga, e vanno
+  // tutte nel diario (vedi diario.js, dove sta la catena con il suo ordine).
   //
-  // La legna prima della pioggia: è il fuoco di casa, quello a cui si torna,
-  // e se succedono tutte e due nella stessa notte è la notizia che serve.
-  else if (spentiLegna > 0) annuncia("il fuoco ha finito la legna", "#c0705f");
-  else if (spentiPioggia > 0) annuncia("la pioggia ha spento il fuoco", "#c0705f");
-  else if (torceFinite > 0) annuncia("la torcia si è consumata", "#c0705f");
-  // L'avviso prima del fatto, e dopo tutte le notizie di cose già successe:
-  // è l'unico messaggio del giorno che parla di domani, e chi ha appena perso
-  // un campo non ha bisogno di sapere anche che le bacche sono vecchie.
+  // Il risveglio di soprassalto in cima, perché è un pericolo adesso. Il
+  // resoconto del sonno in fondo: se nella notte è successo qualcosa, si
+  // vede quello, e "dormito otto ore" aspetta nel diario.
   //
-  // Le piante assetate vengono prima del cibo in scadenza: tutte e due
-  // parlano di domani, ma il cibo si mangia oggi e la pianta no — senza un
-  // secchio stanotte è morta.
-  // Gli avvisi dei polli: parlano di stanotte, come la sete.
-  else if (polliAffamati > 0) annuncia(`i polli hanno fame: ${polliAffamati}`, "#c9b189");
-  else if (polloDomani > 0) annuncia("il pollo nello zaino non passa un'altra notte", "#c9b189");
-  // La canicola (M7.18.42) prima della sete: dice la stessa cosa più forte, e
-  // vale anche per le piante che stamattina non hanno ancora sete. Una volta
-  // al giorno, e solo a schermo libero: se all'alba c'era una notizia più
-  // grave, la canicola aspetta che sia letta invece di cancellarla.
-  else if (meteo.evento() === "canicola" && canicolaDetta !== tempo.giornoCorrente() && !messaggio && orto.quante() > 0) {
-    annuncia("oggi canicola: chi non beve, secca", "#e0704a");
-    canicolaDetta = tempo.giornoCorrente();
+  // La canicola (M7.18.42) una volta al giorno, e solo a schermo libero: se
+  // c'è già un messaggio, aspetta che sia letto invece di cancellarlo.
+  const canicola = meteo.evento() === "canicola" && canicolaDetta !== tempo.giornoCorrente() && !messaggio && orto.quante() > 0;
+  if (canicola) canicolaDetta = tempo.giornoCorrente();
+  const notizie = [
+    ...(avvisoRisveglio?.urgente ? [avvisoRisveglio] : []),
+    ...diario.notizie(resoconto, { arrivata, arrivo: ARRIVO[arrivata] ?? null, canicola }),
+    ...(resoconto.risvegliForzati > 0 && !salute.eMorto()
+      ? [{ testo: "sei svenuto: hai dormito 2 ore sul posto (+25% stamina)", colore: "#c9b189" }] : []),
+    ...(avvisoRisveglio && !avvisoRisveglio.urgente ? [avvisoRisveglio] : []),
+  ];
+  avvisoRisveglio = null;
+  for (const n of notizie) diario.scrivi(n.testo, n.colore);
+  if (notizie.length > 0) {
+    const [prima] = notizie;
+    const altre = notizie.length - 1;
+    annuncia(prima.testo, prima.colore,
+      prima.sotto ?? (altre > 0 ? `e ${altre === 1 ? "un'altra notizia" : `altre ${altre} notizie`}: N per il diario` : null));
   }
-  else if (assetate > 0) annuncia(`l'orto ha sete: ${assetate}`, "#c9b189");
-  else if (inScadenza > 0) annuncia("del cibo sta per guastarsi", "#c9b189");
-  else if (aSeme > 0) annuncia(`l'orto è andato a seme: ${aSeme}`, "#c9b189");
-  else if (cresciute > 0) annuncia("l'orto è cresciuto", "#9ec97e");
-  // Le buone notizie del pollaio, dopo quelle dell'orto.
-  else if (pulciniNati > 0) annuncia(pulciniNati === 1 ? "è nato un pulcino" : `sono nati dei pulcini: ${pulciniNati}`, "#9ec97e");
-  else if (pulciniCresciuti.length > 0) annuncia(`un pulcino è cresciuto: ${pulciniCresciuti[0]}`, "#9ec97e");
-  else if (uovaDeposte > 0) annuncia(`nel pollaio ci sono uova: +${uovaDeposte}`, "#9ec97e");
-  // Ultima di tutte, perché è l'unica buona notizia che non riguarda una cosa
-  // che il giocatore ha fatto: la valle si è rimessa a posto da sola.
-  else if (tornati > 0) annuncia(`la valle è ricresciuta: ${tornati}`, "#7fae63");
 
-  // Il messaggio del riposo freddo non deve essere coperto dalla cronaca della notte.
+  // Lo stremo dopo le notizie, perché non deve essere coperto: fra un'ora
+  // si sviene, ed è la cosa da sapere adesso.
   if (staminaIniziale > 0 && bisogni.livello("stanchezza") === 0 && !salute.eMorto()) {
     annuncia(AVVISI_BISOGNI.stanchezza, "#c0705f");
+    diario.scrivi(AVVISI_BISOGNI.stanchezza, "#c0705f");
   }
-  if (risvegliForzati > 0 && !salute.eMorto()) avvisoRisveglio = { testo: "Sei svenuto: hai dormito 2 ore sul posto (+25% stamina)", colore: "#c9b189" };
-  if (avvisoRisveglio) { annuncia(avvisoRisveglio.testo, avvisoRisveglio.colore, avvisoRisveglio.sotto); avvisoRisveglio = null; }
 
   // Il salvataggio dell'alba, e proprio qui: dopo che il giorno ha fatto i
   // suoi conti — l'orto cresciuto, i fuochi spenti, la stagione girata — così
@@ -2071,6 +2050,7 @@ function disegnaInterfaccia() {
   if (minimappaVisibile) minimappa.disegna(p);
   if (ricetteAperte) hud.disegnaRicette(p, { scelta: ricettaScelta, alBanco, alFuoco });
   if (comandiAperti) hud.disegnaComandi(p, "H, ESC O SPAZIO PER CHIUDERE");
+  if (diarioAperto) hud.disegnaDiario(p, { voci: diario.voci(), inizio: diarioInizio });
   if (cassaAperta) {
     hud.disegnaCassa(p, {
       contenuto: contenitori.contenutoDi(cassaAperta.tx, cassaAperta.ty),
