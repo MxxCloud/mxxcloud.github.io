@@ -30,6 +30,7 @@ import * as campana from '../regole/campana.js';
 import * as fasce from '../regole/fasce.js';
 import * as sonno from '../regole/sonno.js';
 import * as diario from '../regole/diario.js';
+import { GLIFI as GLIFI_TESTO } from '../arte/sprite-testo.js';
 import * as luna from '../regole/luna.js';
 import * as testo from '../arte/testo.js';
 import * as chiasso from '../regole/chiasso.js';
@@ -7038,4 +7039,14 @@ test('le partite si ricaricano anche dopo che il cielo ha chiesto il tempo di ie
   const vecchio={...stato,calendario:[[1,'sereno',0],[0,'pioggia',1]]};
   assert.equal(salvataggio.valido(vecchio),true);assert.ok(salvataggio.applica(vecchio));
   assert.deepEqual(meteo.registroDelTempo(),[[1,'sereno',0]]);
+});
+test('il font ha la percentuale: "+25% stamina" non esce più con il punto interrogativo',()=>{
+  const glifo=GLIFI_TESTO['%'];
+  assert.ok(glifo,'il glifo c’è');
+  assert.equal(glifo.length,5);assert.ok(glifo.every(r=>r.length===3));
+  assert.notDeepEqual(glifo,GLIFI_TESTO['?']);
+  // Le due scritte del sonno che lo usano.
+  const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
+  assert.match(gioco,/% stamina/);
+  for(const c of "+25% STAMINA")assert.ok(c===' '||GLIFI_TESTO[c],c);
 });
