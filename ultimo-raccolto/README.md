@@ -12,6 +12,13 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.64.1 — il simbolo della percentuale
+
+Il carattere del gioco non aveva il «%»: «+25% stamina», dopo una dormita o
+uno svenimento, usciva «+25? STAMINA», con il punto interrogativo che si
+mette al posto dei caratteri sconosciuti. Ora il glifo c'è, a tre pixel come
+le cifre. Si vedeva soprattutto nel diario, che quelle scritte le tiene.
+
 ## M7.18.64 — il diario
 
 Fino a qui le notizie del mattino erano una sola: la più grave. Se nella
@@ -2767,7 +2774,7 @@ vede arrivare è una trappola.
 
 ## A che punto è
 
-È finita **M7.18.64**. Il ciclo di gioco è quello che il pilastro promette: **di
+È finita **M7.18.64.1**. Il ciclo di gioco è quello che il pilastro promette: **di
 giorno si raccoglie, di notte c'è qualcuno là fuori, l'anno gira che tu sia
 pronto o no — e si muore.** La valle però ti aspetta anche domani, ti aspetta
 anche dopo che sei morto, si rimette a posto da sola se le dai tempo, si sente,

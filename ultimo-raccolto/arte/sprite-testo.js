@@ -73,6 +73,10 @@ export const GLIFI = {
   "-": ["...", "...", "xxx", "...", "..."],
   "/": ["..x", "..x", ".x.", "x..", "x.."],
   "+": ["...", ".x.", "xxx", ".x.", "..."],
+  // Mancava come l'apostrofo: "+25% stamina" dopo una dormita e uno
+  // svenimento usciva "+25? STAMINA", e il diario (M7.18.64) lo teneva lì
+  // da leggere. Due punti e una barra, a tre pixel come le cifre.
+  "%": ["x.x", "..x", ".x.", "x..", "x.x"],
   "!": ["x", "x", "x", ".", "x"],
   // Un pixel solo, in alto. Mancava, e ogni "L'ORTO" o "C'È" finiva disegnato
   // con il punto interrogativo che testo.js mette al posto dei caratteri che
