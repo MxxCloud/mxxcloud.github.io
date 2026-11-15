@@ -896,7 +896,7 @@ export function disegnaPartita(p, { voci, modo, scelta, rete, dalTitolo = false 
   });
 
   const verbo = salva ? "SALVA" : "CARICA";
-  testo.disegna(p, `1-4 SCEGLI   A/D MODO   SPAZIO ${verbo}   P CHIUDI`, x + 7, y + altezza - 17, GRIGIO);
+  testo.disegna(p, `1-4 SCEGLI  A/D MODO  SPAZIO ${verbo}  P CHIUDI`, x + 7, y + altezza - 17, GRIGIO);
   // Il file sta su una riga sua perché non riguarda le caselle: porta via e
   // porta dentro la partita in corso, ed è quello che serve per cambiare
   // computer. Dal titolo si porta solo dentro.

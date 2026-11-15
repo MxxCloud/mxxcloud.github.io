@@ -41,8 +41,8 @@ body {
 
 #quadro {
   display: block;
-  /* Il canvas ha sempre 384x216 pixel veri; la larghezza in CSS la decide
-     schermo.js con un fattore intero. Questa riga è ciò che impedisce al
+  /* Il canvas ha sempre 384x216 pixel suoi; la larghezza in CSS la decide
+     schermo.js, con un fattore intero in pixel dello schermo (M7.18.65). Questa riga è ciò che impedisce al
      browser di sfumare l'ingrandimento e di trasformare la pixel art in
      acquerello. */
   image-rendering: pixelated;

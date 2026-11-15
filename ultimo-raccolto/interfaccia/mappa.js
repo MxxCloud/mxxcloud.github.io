@@ -518,8 +518,11 @@ export function disegna(p, eroe) {
 
   const tela = preparaCarta();
   const riquadro = document.getElementById("quadro").getBoundingClientRect();
-  const W = Math.round(riquadro.width);
-  const H = Math.round(riquadro.height);
+  // Non arrotondate: da M7.18.65 il quadro è intero in pixel veri, e in
+  // pixel CSS può avere mezzo pixel. Arrotondando, la carta sarebbe uscita
+  // di un pixel dal gioco che copre.
+  const W = riquadro.width;
+  const H = riquadro.height;
   const dpr = globalThis.devicePixelRatio || 1;
   if (tela.width !== Math.round(W * dpr) || tela.height !== Math.round(H * dpr)) {
     tela.width = Math.round(W * dpr);

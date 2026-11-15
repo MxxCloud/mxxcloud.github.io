@@ -79,7 +79,7 @@ const { TASSELLO } = schermo;
 // a rispondere alla domanda "sto giocando l'ultima versione?", che senza un
 // numero a schermo non ha risposta: una copia vecchia rimasta nella cache del
 // browser è identica a un aggiornamento mai pubblicato.
-const VERSIONE = "M7.18.64.1";
+const VERSIONE = "M7.18.67";
 
 // Il numero però sta in questo file soltanto, e da solo non bastava: in
 // M7.15.7 lo schermo diceva la versione nuova mentre mondo/mappa.js arrivava
@@ -2087,7 +2087,7 @@ function aggiornaDiagnostica() {
   const ty = Math.floor(eroe.py / TASSELLO);
   diagnostica.textContent = [
     `fps      ${ciclo.fpsCorrenti()}  peggiore ${(ciclo.peggiorFotogramma() * 1000).toFixed(1)} ms`,
-    `scala    ${schermo.scalaCorrente()}x  (${schermo.LARGHEZZA}x${schermo.ALTEZZA})`,
+    `scala    ${+schermo.scalaCorrente().toFixed(3)}x  (${schermo.LARGHEZZA}x${schermo.ALTEZZA}, densità ${globalThis.devicePixelRatio || 1})`,
     `versione ${VERSIONE_MOSTRATA}`,
     `seme     ${SEME}`,
     `tassello ${tx}, ${ty}`,

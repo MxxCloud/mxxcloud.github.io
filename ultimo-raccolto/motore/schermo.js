@@ -35,14 +35,48 @@ export function prepara(elemento) {
 // una scala frazionaria distribuisce l'arrotondamento in modo disuguale e
 // alcune righe di pixel finiscono più spesse delle altre. Si preferisce lo
 // spazio vuoto attorno a un'immagine sporca.
-export function ridimensiona() {
-  const orizzontale = innerWidth / LARGHEZZA;
-  const verticale = innerHeight / ALTEZZA;
-  scala = Math.max(1, Math.floor(Math.min(orizzontale, verticale)));
-  canvas.style.width = `${LARGHEZZA * scala}px`;
-  canvas.style.height = `${ALTEZZA * scala}px`;
+//
+// Intero in pixel dello schermo, non in pixel CSS (M7.18.65). Su uno schermo
+// ad alta densità un pixel CSS sono due o tre pixel veri, e contare in pixel
+// CSS voleva dire fermarsi a un ingrandimento più piccolo del necessario: una
+// finestra di 1440x900 a densità 2 si fermava a 3, cioè a sei pixel veri per
+// pixel di gioco, quando sette ci stavano ed erano altrettanto puliti. La
+// pulizia dipende da quanti pixel veri fa un pixel di gioco, ed è quello il
+// numero che deve restare intero.
+//
+// Restituisce i pixel veri per pixel di gioco. Pura, perché è l'unica parte
+// di questo modulo che si può collaudare senza una finestra.
+export function scalaPer(larghezza, altezza, densita = 1) {
+  const d = Number.isFinite(densita) && densita > 0 ? densita : 1;
+  const orizzontale = larghezza * d / LARGHEZZA;
+  const verticale = altezza * d / ALTEZZA;
+  // Il millesimo regge le densità frazionarie: 1536 pixel CSS a 1,25 sono
+  // 1920 pixel veri, e non devono diventare 4,9999 volte 384.
+  return Math.max(1, Math.floor(Math.min(orizzontale, verticale) + 1e-3));
 }
 
+let densitaSeguita = null;
+
+export function ridimensiona() {
+  const densita = globalThis.devicePixelRatio || 1;
+  const veri = scalaPer(innerWidth, innerHeight, densita);
+  scala = veri / densita;
+  canvas.style.width = `${LARGHEZZA * scala}px`;
+  canvas.style.height = `${ALTEZZA * scala}px`;
+  seguiLaDensita(densita);
+}
+
+// Spostare la finestra su un altro schermo cambia la densità senza cambiare
+// la misura della finestra, quindi "resize" non arriva. La domanda al browser
+// vale per una densità sola: quando cambia, si rifà per quella nuova.
+function seguiLaDensita(densita) {
+  if (densita === densitaSeguita || typeof matchMedia !== "function") return;
+  densitaSeguita = densita;
+  matchMedia(`(resolution: ${densita}dppx)`).addEventListener("change", ridimensiona, { once: true });
+}
+
+// In pixel CSS per pixel di gioco: su uno schermo ad alta densità può non
+// essere intera, ed è giusto così — interi sono i pixel veri.
 export function scalaCorrente() {
   return scala;
 }

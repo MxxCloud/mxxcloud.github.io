@@ -5631,17 +5631,22 @@ test('la riva: la mappa sa dove la terra tocca l’acqua, e la schiuma respira s
 
 // --- M7.18.50: muri e case ---------------------------------------------------------
 
-test('cinque muri in pietra: tre puliti e due in rovina col muschio, tutti 16×20 col coronamento',()=>{
+test('cinque muri in pietra: tre puliti e due in rovina col muschio, tutti 16×22 con cima e faccia',()=>{
   const {MURI,MURI_PULITI,MURO}=arteOggetti;
   assert.equal(MURI.length,5);assert.equal(MURO,MURI[0]);
   assert.equal(new Set(MURI.map(f=>f.join(''))).size,5);
   assert.deepEqual(MURI_PULITI,MURI.slice(0,3));
   for(const f of MURI){
-    assert.equal(f.length,20);assert.ok(f.every(r=>r.length===16));
+    assert.equal(f.length,22);assert.ok(f.every(r=>r.length===16));
     assert.ok(!f.join('').includes('.'),'pieno');
-    // Coronamento: la prima riga è la più chiara, la seconda il corpo, la
-    // terza il giunto scuro che lo separa dalla muratura.
-    assert.ok(/^[fYkj]+$/.test(f[0]),f[0]);assert.ok(/^[ed]+$/.test(f[1]),f[1]);assert.ok(/^[Xkj]+$/.test(f[2]),f[2]);
+    // M7.18.67: sedici righe di cima chiara, sei di faccia scura a sud. La
+    // cima non ha i giunti neri della faccia, la faccia non ha i chiari
+    // della cima, e l'ultima riga è il giunto che poggia a terra.
+    const cima=f.slice(0,16).join(''),faccia=f.slice(16).join('');
+    assert.ok(/^[fYedkj]+$/.test(cima),'la cima');assert.ok(/^[edXkj]+$/.test(faccia),'la faccia');
+    const chiari=t=>[...t].filter(c=>c==='f'||c==='Y').length/t.length;
+    assert.ok(chiari(cima)>0.6,'la cima è chiara');assert.equal(chiari(faccia),0);
+    assert.ok(/^X+$/.test(f[21]),f[21]);
     for(const c of 'XYfed')assert.ok(f.join('').includes(c),c);
     for(const stagione of ['estate','autunno','inverno','primavera'])decodifica(f,tavolozzaDi(stagione));
   }
@@ -5684,15 +5689,19 @@ test('il muro crollato ha tre forme 16×8 in pietra; porta, porta aperta e pavim
   const viste=new Set();for(let y=0;y<30;y++)for(let x=0;x<30;x++)viste.add(mappa.formaDi(OGGETTO.MURO_ROTTO,x,y));
   assert.equal(viste.size,3);
   const {PORTA,PORTA_APERTA,PAVIMENTO_LEGNO}=arteCose;
-  for(const f of [PORTA,PORTA_APERTA]){assert.equal(f.length,20);assert.ok(f.every(r=>r.length===16));
+  for(const f of [PORTA,PORTA_APERTA]){assert.equal(f.length,22);assert.ok(f.every(r=>r.length===16));
     for(const stagione of ['estate','inverno'])decodifica(f,tavolozzaDi(stagione));}
   // Gli stipiti in pietra come il muro, le assi con la venatura, il ferro.
-  assert.deepEqual(PORTA.slice(0,3),PORTA_APERTA.slice(0,3));
+  // Alta come il muro, con la stessa faccia di sei righe: la cima di legno fra gli stipiti.
+  assert.equal(PORTA.length,arteOggetti.MURO.length);
+  for(let y=1;y<15;y++)assert.match(PORTA[y].slice(2,14),/^[hgwsz]+$/,`cima, riga ${y}`);
   for(const c of 'XYhgws')assert.ok(PORTA.join('').includes(c),c);
   assert.ok(!PORTA.join('').includes('.'));
-  // La porta aperta è vuota dove lo era prima (colonne 5–13 dalla riga 4 in giù).
-  for(let y=4;y<20;y++)assert.equal(PORTA_APERTA[y].slice(5,14),'.........',`riga ${y}`);
-  assert.ok(PORTA_APERTA.every((r,y)=>y<3||(r[0]!=='.'&&r[15]!=='.')),'gli stipiti restano');
+  // La porta aperta è vuota nelle colonne 5–13, da M7.18.67 su tutte le righe.
+  for(let y=0;y<22;y++)assert.equal(PORTA_APERTA[y].slice(5,14),'.........',`riga ${y}`);
+  assert.ok(PORTA_APERTA.every(r=>r[0]!=='.'&&r[15]!=='.'),'gli stipiti restano');
+  // Il battente accostato e gli stipiti sono quelli della porta chiusa.
+  for(let y=0;y<22;y++){assert.equal(PORTA_APERTA[y].slice(0,5),PORTA[y].slice(0,5));assert.equal(PORTA_APERTA[y].slice(14),PORTA[y].slice(14));}
   assert.equal(PAVIMENTO_LEGNO.length,16);assert.ok(PAVIMENTO_LEGNO.every(r=>r.length===16&&!r.includes('.')));
   decodifica(PAVIMENTO_LEGNO,tavolozzaDi('estate'));
 });
@@ -7049,4 +7058,70 @@ test('il font ha la percentuale: "+25% stamina" non esce più con il punto inter
   const gioco=readFileSync(new URL('../gioco.js',import.meta.url),'utf8');
   assert.match(gioco,/% stamina/);
   for(const c of "+25% STAMINA")assert.ok(c===' '||GLIFI_TESTO[c],c);
+});
+test('M7.18.65: la scala è intera in pixel veri dello schermo, non in pixel CSS',async()=>{
+  const {scalaPer,LARGHEZZA,ALTEZZA}=await import('../motore/schermo.js');
+  // A densità 1 il conto è quello di sempre.
+  assert.equal(scalaPer(1920,1080,1),5);
+  assert.equal(scalaPer(1440,900,1),3);
+  assert.equal(scalaPer(1366,768,1),3);
+  // A densità 2 la stessa finestra arriva a sette pixel veri, non a sei.
+  assert.equal(scalaPer(1440,900,2),7);
+  // Densità frazionaria: 1536 pixel CSS a 1,25 sono 1920 veri, cioè 5 pieni.
+  assert.equal(scalaPer(1536,864,1.25),5);
+  assert.equal(scalaPer(1280,720,1.5),5);
+  // Un telefono in orizzontale: 800x360 a densità 3 prima restava a 1.
+  assert.equal(scalaPer(800,360,3),5);
+  // Mai meno di uno, e una densità che non è un numero vale uno.
+  assert.equal(scalaPer(100,100,1),1);
+  assert.equal(scalaPer(1920,1080,NaN),5);
+  assert.equal(scalaPer(1920,1080,0),5);
+  // Il quadro sta sempre dentro la finestra, e non si poteva farlo più grande.
+  for(const [w,h,d] of [[1440,900,2],[1093,615,1.25],[2560,1440,1.5],[844,390,3],[1280,800,1.75]]){
+    const k=scalaPer(w,h,d);
+    assert.ok(LARGHEZZA*k<=w*d+0.5&&ALTEZZA*k<=h*d+0.5,`dentro ${w}x${h}@${d}`);
+    assert.ok(LARGHEZZA*(k+1)>w*d||ALTEZZA*(k+1)>h*d,`il più grande ${w}x${h}@${d}`);
+  }
+  // La carta non arrotonda la misura del quadro, che in pixel CSS può non essere intera.
+  const carta=readFileSync(new URL('../interfaccia/mappa.js',import.meta.url),'utf8');
+  assert.doesNotMatch(carta,/Math\.round\(riquadro\./);
+});
+test('M7.18.66: M, W, Q e le accentate si distinguono',async()=>{
+  const {GLIFI,ALTEZZA}=await import('../arte/sprite-testo.js');
+  const testo=await import('../arte/testo.js');
+  // Nessun glifo è il disegno di un altro: la È e la É lo erano.
+  const visti=new Map();
+  for(const [c,g] of Object.entries(GLIFI)){
+    // Fra le lettere: la O e lo zero, la S e il cinque sono lo stesso disegno
+    // da sempre, e lì è il contesto a distinguerli.
+    if(!/\p{L}/u.test(c))continue;
+    const chiave=g.join('/');
+    assert.ok(!visti.has(chiave),`«${c}» è uguale a «${visti.get(chiave)}»`);
+    visti.set(chiave,c);
+  }
+  // La M non è più una H con una riga diversa: ha la sua larghezza.
+  assert.equal(GLIFI.M[0].length,5);
+  assert.equal(GLIFI.W[0].length,5);
+  assert.equal(GLIFI.Q[0].length,4);
+  const diverse=(a,b)=>a.reduce((n,r,i)=>n+(r!==b[i]?1:0),0);
+  // La W è la M capovolta: cambiano le due righe del mezzo.
+  assert.equal(diverse(GLIFI.M,GLIFI.W),2);
+  assert.deepEqual(GLIFI.W,[GLIFI.M[0],GLIFI.M[3],GLIFI.M[2],GLIFI.M[1],GLIFI.M[4]]);
+  // Ogni glifo è rettangolare; solo le accentate sono più alte, di una riga.
+  for(const [c,g] of Object.entries(GLIFI)){
+    assert.ok(g.every(r=>r.length===g[0].length),c);
+    assert.equal(g.length,'ÀÈÉÌÒÙ'.includes(c)?ALTEZZA+1:ALTEZZA,c);
+  }
+  // Sotto l'accento c'è la lettera intera.
+  for(const [acc,base] of [['À','A'],['È','E'],['É','E'],['Ì','I'],['Ò','O'],['Ù','U']])
+    assert.deepEqual(GLIFI[acc].slice(1),GLIFI[base],acc);
+  assert.equal(GLIFI['È'][0],'x..');assert.equal(GLIFI['É'][0],'..x');
+  // Le accentate si appoggiano sulla base delle altre: l'accento sporge sopra.
+  const sorgente=readFileSync(new URL('../arte/testo.js',import.meta.url),'utf8');
+  assert.match(sorgente,/Math\.round\(y\) - \(glifo\.length - ALTEZZA\)/);
+  // La larghezza si misura glifo per glifo.
+  assert.equal(testo.larghezza('MIO'),5+1+3+1+3);
+  // La riga dei tasti della partita sta nel suo pannello anche con CARICA.
+  const hud=readFileSync(new URL('../interfaccia/hud.js',import.meta.url),'utf8');
+  assert.match(hud,/`1-4 SCEGLI  A\/D MODO  SPAZIO \$\{verbo\}  P CHIUDI`/);
 });

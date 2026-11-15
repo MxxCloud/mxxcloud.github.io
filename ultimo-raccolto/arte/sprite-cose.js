@@ -932,58 +932,67 @@ export const MURO_ICONA = [
   "............",
 ];
 
-// La porta chiusa. Alta venti come il muro, perché sta dentro un muro e i due
-// disegni si appoggiano allo stesso pavimento: uno più basso avrebbe fatto un
-// gradino in mezzo alla parete. Gli stipiti sono di pietra e le assi di legno,
-// che è anche quello che costa — pietra il muro, legna la porta.
+// La porta chiusa. Alta ventidue come il muro, perché sta dentro un muro e i
+// due disegni si appoggiano allo stesso pavimento: uno più basso avrebbe fatto
+// un gradino in mezzo alla parete. Gli stipiti sono di pietra e le assi di
+// legno, che è anche quello che costa — pietra il muro, legna la porta.
+//
+// Come il muro (M7.18.67): sedici righe di cima e sei di faccia a sud. La
+// cima è di legno anche lei, fra i due stipiti: una porta in una parete che
+// scende mostra solo la cima, e deve leggersi come porta anche da lì.
 export const PORTA = [
-  "fffYffffffffYfff",
-  "eeeeeeeeeeeeeeee",
+  "Yewwwwwwwwwwwwef",
+  "ffhhhghhhghwhgff",
+  "ffhhhghhhghhhgfY",
+  "ffszsssssssszsff",
+  "ffhhhghhhghhhgff",
+  "eehwhghhhghhhgee",
+  "ffhhhghhhghhwgef",
+  "fehhhghhhgwhhgfY",
+  "ffhhhghhwghhhgff",
+  "ffhhhgwhhghhhgff",
+  "Yfhhwghhhghhhgff",
+  "eewhhghhhghhhgee",
+  "ffszsssssssszseY",
+  "ffhhhghhhghhhgff",
+  "fehhhghwhghhhgff",
+  "Yfggggggggggggff",
+  "eXhhhghhhghhhgXe",
+  "dXgggXggggXgggXd",
+  "XXssssssssssssXX",
+  "eXgggXggggXgggXe",
+  "dXgggXggggXgggXd",
   "XXXXXXXXXXXXXXXX",
-  "YXwwwwwwwwwwwwXf",
-  "YfhhghhghhgwhgXf",
-  "eXhhghhghhghhgXe",
-  "dXhhghhgwhghhgXd",
-  "XXhhghhghhghhgXX",
-  "YfszsssssssszsXf",
-  "eXhhgwhghwghhgXe",
-  "dXhhghhghhghhgXd",
-  "XXhhghwghhgwhgXX",
-  "YfwhghhghhghhgXf",
-  "eXhhghhghhghhgXe",
-  "dXhhghhgwhghhgXd",
-  "XXszsssssssszsXX",
-  "YfhhghhghhghhgXf",
-  "eXhhghhghhghhgXe",
-  "dXhhghhgwhghhgXd",
-  "eXggggggggggggXe",
 ];
 
 // La stessa porta aperta: gli stipiti restano, il battente è accostato contro
 // quello di sinistra e in mezzo si vede il terreno. Il vuoto è trasparente e
 // non nero: un rettangolo scuro in mezzo a un muro si legge come una stanza
-// buia, e questa è un'uscita.
+// buia, e questa è un'uscita. Il vuoto prende tutte le righe: sopra una porta
+// aperta non c'è un architrave, perché dall'alto coprirebbe il passaggio.
 export const PORTA_APERTA = [
-  "fffYffffffffYfff",
-  "eeeeeeeeeeeeeeee",
-  "XXXXXXXXXXXXXXXX",
-  "YXwww.........Xf",
-  "Yfhhg.........Xf",
-  "eXhhg.........Xe",
-  "dXhhg.........Xd",
-  "XXhhg.........XX",
-  "Yfszs.........Xf",
-  "eXhhg.........Xe",
-  "dXhhg.........Xd",
-  "XXhhg.........XX",
-  "Yfwhg.........Xf",
-  "eXhhg.........Xe",
-  "dXhhg.........Xd",
-  "XXszs.........XX",
-  "Yfhhg.........Xf",
-  "eXhhg.........Xe",
-  "dXhhg.........Xd",
+  "Yewww.........ef",
+  "ffhhh.........ff",
+  "ffhhh.........fY",
+  "ffszs.........ff",
+  "ffhhh.........ff",
+  "eehwh.........ee",
+  "ffhhh.........ef",
+  "fehhh.........fY",
+  "ffhhh.........ff",
+  "ffhhh.........ff",
+  "Yfhhw.........ff",
+  "eewhh.........ee",
+  "ffszs.........eY",
+  "ffhhh.........ff",
+  "fehhh.........ff",
+  "Yfggg.........ff",
+  "eXhhh.........Xe",
+  "dXggg.........Xd",
+  "XXsss.........XX",
   "eXggg.........Xe",
+  "dXggg.........Xd",
+  "XXXXX.........XX",
 ];
 
 // L'icona: una porta chiusa nel suo stipite, che è l'unico modo di far capire

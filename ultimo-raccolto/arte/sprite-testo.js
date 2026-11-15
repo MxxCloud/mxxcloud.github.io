@@ -15,6 +15,16 @@ export const TAVOLOZZA_TESTO = {
   x: "#ffffff",
 };
 
+// Tre pixel sono il minimo, non la regola (M7.18.66). La M e la W in tre
+// pixel non ci stanno: la M differiva dalla H per una riga sola, e
+// «CAMMINARE» si leggeva «CAHHINARE». Adesso ne hanno cinque, con il vuoto
+// in mezzo che le fa lettere; la Q ne ha quattro, per la coda. Chi scrive
+// misura già glifo per glifo (vedi larghezza in testo.js).
+//
+// Le accentate sono alte sei righe: la lettera intera, e l'accento in una
+// riga in più sopra. testo.js le appoggia sulla stessa base delle altre,
+// quindi l'accento sporge di un pixel verso l'alto. Prima l'accento rubava
+// una riga alla lettera, e la È schiacciata in quattro righe era una macchia.
 export const ALTEZZA = 5;
 export const SPAZIO = 1;
 
@@ -42,29 +52,35 @@ export const GLIFI = {
   J: ["..x", "..x", "..x", "x.x", "xxx"],
   K: ["x.x", "x.x", "xx.", "x.x", "x.x"],
   L: ["x..", "x..", "x..", "x..", "xxx"],
-  M: ["x.x", "xxx", "xxx", "x.x", "x.x"],
+  M: ["x...x", "xx.xx", "x.x.x", "x...x", "x...x"],
   N: ["xx.", "x.x", "x.x", "x.x", "x.x"],
   O: ["xxx", "x.x", "x.x", "x.x", "xxx"],
   P: ["xxx", "x.x", "xxx", "x..", "x.."],
-  Q: ["xxx", "x.x", "x.x", "xxx", "..x"],
+  // Una O con la coda che esce in basso a destra. In tre pixel la coda stava
+  // dentro la lettera, e «QUESTI» si leggeva «4UESTI».
+  Q: ["xxx.", "x.x.", "x.x.", "x.x.", "xxxx"],
   R: ["xxx", "x.x", "xx.", "x.x", "x.x"],
   S: ["xxx", "x..", "xxx", "..x", "xxx"],
   T: ["xxx", ".x.", ".x.", ".x.", ".x."],
   U: ["x.x", "x.x", "x.x", "x.x", "xxx"],
   V: ["x.x", "x.x", "x.x", "x.x", ".x."],
-  W: ["x.x", "x.x", "xxx", "xxx", "x.x"],
+  W: ["x...x", "x...x", "x.x.x", "xx.xx", "x...x"],
   X: ["x.x", "x.x", ".x.", "x.x", "x.x"],
   Y: ["x.x", "x.x", ".x.", ".x.", ".x."],
   Z: ["xxx", "..x", ".x.", "x..", "xxx"],
 
   // Le lettere accentate esistono perché l'interfaccia è in italiano e
   // "PERCHE" senza accento è un errore, non una scorciatoia.
-  À: ["x..", "xxx", "x.x", "xxx", "x.x"],
-  È: ["..x", "xxx", "xxx", "x..", "xxx"],
-  É: ["..x", "xxx", "xxx", "x..", "xxx"],
-  Ì: ["x..", "xxx", ".x.", ".x.", "xxx"],
-  Ò: [".x.", "xxx", "x.x", "x.x", "xxx"],
-  Ù: ["x..", "x.x", "x.x", "x.x", "xxx"],
+  // Sei righe: l'accento sopra, la lettera intera sotto. La È e la É erano
+  // lo stesso disegno; adesso l'accento pende dalla parte giusta.
+  // Sulla À, la Ò e la Ù l'accento sta al centro: sopra l'asta sinistra
+  // sarebbe un'asta più lunga, e «CIÒ» si leggerebbe «CIB».
+  À: [".x.", "xxx", "x.x", "xxx", "x.x", "x.x"],
+  È: ["x..", "xxx", "x..", "xxx", "x..", "xxx"],
+  É: ["..x", "xxx", "x..", "xxx", "x..", "xxx"],
+  Ì: ["x..", "xxx", ".x.", ".x.", ".x.", "xxx"],
+  Ò: [".x.", "xxx", "x.x", "x.x", "x.x", "xxx"],
+  Ù: [".x.", "x.x", "x.x", "x.x", "x.x", "xxx"],
 
   " ": ["..", "..", "..", "..", ".."],
   ":": [".", "x", ".", "x", "."],
