@@ -7095,7 +7095,9 @@ test('M7.18.66: M, W, Q e le accentate si distinguono',async()=>{
   assert.equal(GLIFI.W[0].length,5);
   assert.equal(GLIFI.Q[0].length,4);
   const diverse=(a,b)=>a.reduce((n,r,i)=>n+(r!==b[i]?1:0),0);
-  assert.ok(diverse(GLIFI.M,GLIFI.W)>=3);
+  // La W è la M capovolta: cambiano le due righe del mezzo.
+  assert.equal(diverse(GLIFI.M,GLIFI.W),2);
+  assert.deepEqual(GLIFI.W,[GLIFI.M[0],GLIFI.M[3],GLIFI.M[2],GLIFI.M[1],GLIFI.M[4]]);
   // Ogni glifo è rettangolare; solo le accentate sono più alte, di una riga.
   for(const [c,g] of Object.entries(GLIFI)){
     assert.ok(g.every(r=>r.length===g[0].length),c);
