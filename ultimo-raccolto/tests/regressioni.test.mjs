@@ -5631,17 +5631,22 @@ test('la riva: la mappa sa dove la terra tocca l’acqua, e la schiuma respira s
 
 // --- M7.18.50: muri e case ---------------------------------------------------------
 
-test('cinque muri in pietra: tre puliti e due in rovina col muschio, tutti 16×20 col coronamento',()=>{
+test('cinque muri in pietra: tre puliti e due in rovina col muschio, tutti 16×22 con cima e faccia',()=>{
   const {MURI,MURI_PULITI,MURO}=arteOggetti;
   assert.equal(MURI.length,5);assert.equal(MURO,MURI[0]);
   assert.equal(new Set(MURI.map(f=>f.join(''))).size,5);
   assert.deepEqual(MURI_PULITI,MURI.slice(0,3));
   for(const f of MURI){
-    assert.equal(f.length,20);assert.ok(f.every(r=>r.length===16));
+    assert.equal(f.length,22);assert.ok(f.every(r=>r.length===16));
     assert.ok(!f.join('').includes('.'),'pieno');
-    // Coronamento: la prima riga è la più chiara, la seconda il corpo, la
-    // terza il giunto scuro che lo separa dalla muratura.
-    assert.ok(/^[fYkj]+$/.test(f[0]),f[0]);assert.ok(/^[ed]+$/.test(f[1]),f[1]);assert.ok(/^[Xkj]+$/.test(f[2]),f[2]);
+    // M7.18.67: sedici righe di cima chiara, sei di faccia scura a sud. La
+    // cima non ha i giunti neri della faccia, la faccia non ha i chiari
+    // della cima, e l'ultima riga è il giunto che poggia a terra.
+    const cima=f.slice(0,16).join(''),faccia=f.slice(16).join('');
+    assert.ok(/^[fYedkj]+$/.test(cima),'la cima');assert.ok(/^[edXkj]+$/.test(faccia),'la faccia');
+    const chiari=t=>[...t].filter(c=>c==='f'||c==='Y').length/t.length;
+    assert.ok(chiari(cima)>0.6,'la cima è chiara');assert.equal(chiari(faccia),0);
+    assert.ok(/^X+$/.test(f[21]),f[21]);
     for(const c of 'XYfed')assert.ok(f.join('').includes(c),c);
     for(const stagione of ['estate','autunno','inverno','primavera'])decodifica(f,tavolozzaDi(stagione));
   }
@@ -5684,15 +5689,19 @@ test('il muro crollato ha tre forme 16×8 in pietra; porta, porta aperta e pavim
   const viste=new Set();for(let y=0;y<30;y++)for(let x=0;x<30;x++)viste.add(mappa.formaDi(OGGETTO.MURO_ROTTO,x,y));
   assert.equal(viste.size,3);
   const {PORTA,PORTA_APERTA,PAVIMENTO_LEGNO}=arteCose;
-  for(const f of [PORTA,PORTA_APERTA]){assert.equal(f.length,20);assert.ok(f.every(r=>r.length===16));
+  for(const f of [PORTA,PORTA_APERTA]){assert.equal(f.length,22);assert.ok(f.every(r=>r.length===16));
     for(const stagione of ['estate','inverno'])decodifica(f,tavolozzaDi(stagione));}
   // Gli stipiti in pietra come il muro, le assi con la venatura, il ferro.
-  assert.deepEqual(PORTA.slice(0,3),PORTA_APERTA.slice(0,3));
+  // Alta come il muro, con la stessa faccia di sei righe: la cima di legno fra gli stipiti.
+  assert.equal(PORTA.length,arteOggetti.MURO.length);
+  for(let y=1;y<15;y++)assert.match(PORTA[y].slice(2,14),/^[hgwsz]+$/,`cima, riga ${y}`);
   for(const c of 'XYhgws')assert.ok(PORTA.join('').includes(c),c);
   assert.ok(!PORTA.join('').includes('.'));
-  // La porta aperta è vuota dove lo era prima (colonne 5–13 dalla riga 4 in giù).
-  for(let y=4;y<20;y++)assert.equal(PORTA_APERTA[y].slice(5,14),'.........',`riga ${y}`);
-  assert.ok(PORTA_APERTA.every((r,y)=>y<3||(r[0]!=='.'&&r[15]!=='.')),'gli stipiti restano');
+  // La porta aperta è vuota nelle colonne 5–13, da M7.18.67 su tutte le righe.
+  for(let y=0;y<22;y++)assert.equal(PORTA_APERTA[y].slice(5,14),'.........',`riga ${y}`);
+  assert.ok(PORTA_APERTA.every(r=>r[0]!=='.'&&r[15]!=='.'),'gli stipiti restano');
+  // Il battente accostato e gli stipiti sono quelli della porta chiusa.
+  for(let y=0;y<22;y++){assert.equal(PORTA_APERTA[y].slice(0,5),PORTA[y].slice(0,5));assert.equal(PORTA_APERTA[y].slice(14),PORTA[y].slice(14));}
   assert.equal(PAVIMENTO_LEGNO.length,16);assert.ok(PAVIMENTO_LEGNO.every(r=>r.length===16&&!r.includes('.')));
   decodifica(PAVIMENTO_LEGNO,tavolozzaDi('estate'));
 });

@@ -12,6 +12,30 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.67 — i muri hanno l'altezza
+
+Alberi, casse e superstite sono disegnati di tre quarti, i muri no: erano
+una facciata di pietra stesa per terra, e una parete che scendeva verso sud
+si leggeva come un pavimento.
+- **Il muro ha una cima e una faccia.** Sopra, la cima vista dall'alto:
+  lastre larghe e chiare. Sotto, la faccia a sud vista di fronte: due corsi
+  di pietra più scuri, alti sei pixel.
+- **Una parete che scende mostra solo le cime**, e la faccia resta
+  all'ultimo muro in fondo: così si vede dove la parete finisce e quanto è
+  alta. Vale per le rovine e per i muri alzati da te, senza guardare chi c'è
+  accanto: ogni muro copre con la sua cima la faccia di quello sopra.
+- **Le rovine** hanno ancora la crepa e il muschio, sulla cima e sulla
+  faccia, vestito per stagione. I muri costruiti restano puliti.
+- **La porta** è fatta allo stesso modo: la cima di legno fra i due stipiti
+  di pietra, con le fasce di ferro, e la faccia di assi a sud. Si riconosce
+  anche in una parete che scende. Aperta, resta il battente accostato a
+  sinistra e il passaggio è libero su tutta l'altezza.
+- **Due pixel in più.** Muri e porte sporgono sopra il loro tassello di sei
+  pixel invece di quattro: chi sta subito a nord di un muro ne resta coperto
+  di due pixel in più.
+- È solo disegno: urti, vista degli infetti, stanze chiuse, colpi e costi non
+  cambiano. Macerie, parete di cava e ruota del mulino restano com'erano.
+
 ## M7.18.66 — il carattere si legge
 
 Il carattere del gioco è largo tre pixel, e in tre pixel alcune lettere non

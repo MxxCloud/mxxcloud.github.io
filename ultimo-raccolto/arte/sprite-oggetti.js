@@ -145,133 +145,149 @@ export const SASSO = SASSO_TONDO;
 
 // Il muro di una casa che non c'è più.
 //
-// Venti righe e non sedici: cresce sopra il tassello come l'albero, perché un
-// muro alto quanto il terreno si legge come un pavimento. I quattro pixel in
-// più sono il coronamento, ed è quello che dice "questo è in piedi".
+// Ventidue righe e non sedici: cresce sopra il tassello come l'albero, perché
+// un muro alto quanto il terreno si legge come un pavimento.
 //
-// I corsi di pietra sono regolari e l'intonaco no: le chiazze di "c" sono
-// l'intonaco caduto, e sono l'unica cosa che distingue un muro in rovina da
-// un muro. Un muro pulito in una valle dopo il collasso è un muro che qualcuno
-// sta ancora tenendo su.
-// Da M7.18.50 il muro è in pietra vera: pietre irregolari su file sfalsate,
-// ognuna con la luce in alto a sinistra (Y, f), l'ombra in basso a destra (d)
-// e i giunti scuri (X), sotto un coronamento chiaro. Cinque varianti: le
-// prime tre pulite, le ultime due da rovina, con una crepa e il muschio
-// (le chiavi delle chiome, quindi vestito per stagione). Un muro costruito
-// dal giocatore pesca solo fra le pulite (vedi formaDi in mondo/mappa.js).
+// Da M7.18.67 ha l'altezza. Le prime sedici righe sono la cima, vista
+// dall'alto: lastre larghe e chiare (f, Y) con i giunti morbidi (e). Le
+// ultime sei sono la faccia a sud, vista di fronte: due corsi più scuri (e,
+// d) con i giunti neri (X). Prima tutte e venti le righe erano faccia, e un
+// muro che scendeva verso sud era una pila di facce: si leggeva come un
+// pavimento di pietra, non come una parete.
+//
+// Non serve sapere chi c'è accanto. La faccia è alta sei pixel, quanto il
+// muro sporge sopra il suo tassello: il muro subito a sud si disegna dopo e
+// la sua cima copre esattamente la faccia di questo. In una parete che
+// scende si vedono solo le cime, e la faccia resta all'ultimo muro in fondo.
+// È la ragione per cui faccia e sporgenza devono restare uguali.
+//
+// Cinque varianti: le prime tre pulite, le ultime due da rovina, con una
+// crepa e il muschio (le chiavi delle chiome, quindi vestito per stagione).
+// Un muro costruito dal giocatore pesca solo fra le pulite (vedi formaDi in
+// mondo/mappa.js).
 export const MURO_1 = [
-  "fffYffffYfffffff",
-  "eeeeeeeeeedeeeed",
+  "YffefffffeYfffff",
+  "fffffffffeffffff",
+  "fffffffffeffffff",
+  "fffffffffefffefe",
+  "eeeeeeeeeeeeeeee",
+  "YffffffffeYYfffe",
+  "fffffffffeffffff",
+  "ffffeffffeffffff",
+  "fffffffffeffffff",
+  "ffffffffeeffffff",
+  "eeeeeeeeeeeeeeee",
+  "YfeYYYfYYYYeYYff",
+  "ffeYYfffYfYefeff",
+  "ffeYffffYYYeffff",
+  "feeYfYeYffYeffff",
+  "ffeYfYfYYffefffe",
+  "eXeeXeeXeeeeeeee",
+  "dXedXedXeeeeeeed",
   "XXXXXXXXXXXXXXXX",
-  "fffXYfXYffXYfffX",
-  "eeeXeeXeeeXeeeeX",
-  "eedXedXeedXeeedX",
+  "eeeXeeeeXeeeeeee",
+  "dddXddddXddddddd",
   "XXXXXXXXXXXXXXXX",
-  "YffffXYeeXYfXYff",
-  "eeeeeXdddXeeXeee",
-  "eeeedXdddXedXeed",
-  "XXXXXXXXXXXXXXXX",
-  "fffXYfXYfXYfffXY",
-  "eeeXeeXeeXeeeeXe",
-  "eedXedXedXeeedXe",
-  "XXXXXXXXXXXXXXXX",
-  "fXYffXYffXYffXYe",
-  "eXeeeXeeeXeeeXdd",
-  "dXeedXeedXeedXdd",
-  "XXXXXXXXXXXXXXXX",
-  "eeXYffXYffffXYff",
 ];
 
 export const MURO_2 = [
-  "YfffffYfffffYYff",
-  "deeedeeedeeeeeee",
+  "YYYfeYYfffffffff",
+  "YfYfefffffffffff",
+  "Yfffefffffffffff",
+  "efYfeffffffeffff",
+  "fYYfefffffffffff",
+  "eeeeeeeeeeeeeeee",
+  "YeeYfffeYffeYfef",
+  "ffeffffeYYfeffff",
+  "ffeffffeYffeffff",
+  "ffefffeefYfefffe",
+  "eeeeeeeeeeeeeeee",
+  "YfeYYffffffeYYff",
+  "ffeffffefffefeff",
+  "ffeffffffffeffff",
+  "ffeffffffffeffff",
+  "ffeffffffffefffe",
+  "eeeeXeeeeeeXeeee",
+  "edddXeeedddXdded",
   "XXXXXXXXXXXXXXXX",
-  "ffXYffffXYfXYfff",
-  "eeXeeeeeXeeXeeee",
-  "edXeeeedXedXeeed",
+  "eeXeeeeeXeeeXeee",
+  "ddXdddddXdddXddd",
   "XXXXXXXXXXXXXXXX",
-  "ffXYffXYfXYeeeeX",
-  "eeXeeeXeeXdddddX",
-  "edXeedXedXdddddX",
-  "XXXXXXXXXXXXXXXX",
-  "fffXYfXYfffXYffX",
-  "eeeXeeXeeeeXeeeX",
-  "eedXedXeeedXeedX",
-  "XXXXXXXXXXXXXXXX",
-  "YfXYeeeXYfffXYee",
-  "eeXddddXeeeeXddd",
-  "edXddddXeeedXddd",
-  "XXXXXXXXXXXXXXXX",
-  "YfffXYeeXYffffXY",
 ];
 
 export const MURO_3 = [
-  "fYYYffffffYYffff",
+  "YYffeYYfffeeYYff",
+  "ffffeffffffeffff",
+  "fffeeffffffeffff",
+  "ffffeefffffeffff",
   "eeeeeeeeeeeeeeee",
+  "YYfffffeYfeYfeYf",
+  "fffffffeffeffeff",
+  "fffffffeffeffeff",
+  "fffffffeffeffeff",
+  "ffffffeeffeefeff",
+  "eeeeeeeeeeeeeeee",
+  "YeefffffeYffeYYf",
+  "ffffffffefffefff",
+  "ffffffffefffefff",
+  "ffffffffefffefff",
+  "fffffffeeffeefff",
+  "eeXeeeeeeeeeeXee",
+  "edXdeeeeeeeedXee",
   "XXXXXXXXXXXXXXXX",
-  "eeeXYffffXYfXYff",
-  "dddXeeeeeXeeXeee",
-  "dddXeeeedXedXeee",
+  "eXeeeeeeXeeeeeee",
+  "dXddddddXddddddd",
   "XXXXXXXXXXXXXXXX",
-  "eeeeXYfXYfXYffff",
-  "ddddXeeXeeXeeeee",
-  "ddddXedXedXeeeed",
-  "XXXXXXXXXXXXXXXX",
-  "YffXYffffXYffXYf",
-  "eeeXeeeeeXeeeXee",
-  "eedXeeeedXeedXee",
-  "XXXXXXXXXXXXXXXX",
-  "ffXYfffXYeXYfffX",
-  "eeXeeeeXddXeeeeX",
-  "edXeeedXddXeeedX",
-  "XXXXXXXXXXXXXXXX",
-  "ffffXYffffXYeeXY",
 ];
 
 export const MURO_4 = [
-  "fkffYkkfffffYffY",
-  "eeeeeeeeeeeeedee",
+  "YYYYYYYfeYffffff",
+  "ffYYfYYfdfffffff",
+  "eYYYfYfdefffffff",
+  "kkYfYYdYefffkkkf",
+  "jjYYfeeYeffffjjf",
+  "eeeeeeeeeeeeeeee",
+  "YYffeYffffeYffff",
+  "ffffeffeffeYffYY",
+  "ffffefffffeYYfff",
+  "ffffefffffefYYfe",
+  "eeeeeeeeeeeeeeee",
+  "YfeYYYffYffYfeYf",
+  "ffeYYffffYYYYeff",
+  "ffeffYYffYYffeff",
+  "ffeYffYffYffYeff",
+  "ffeYYYfYYffYeeff",
+  "eXeeeekkeXeeeeee",
+  "dXdeeejjdXeeeeee",
   "XXXXXXXXXXXXXXXX",
-  "ffXYfXYffXYeXYff",
-  "eeXeeXeeeXddXeee",
-  "edXedXeedXddXeee",
+  "eeeeeeXeeeXeeeee",
+  "ddddddXdddXddddd",
   "XXXXXXXXXXXXXXXX",
-  "ffffXYeXYeXYeeXY",
-  "eeeeXddXddXXddXd",
-  "eeedXddXddXdXdXd",
-  "XXXkkkkXXXXXXXXX",
-  "fffjjYjfXYfXYXff",
-  "eeeeXeeeXeeXeeXe",
-  "eeedXeedXedXeeed",
-  "XXXXXXXXXXXXXXXX",
-  "fXYffXYffXYkkkYf",
-  "eXeeeXeeeXeejjee",
-  "dXeekkkkdXeedXee",
-  "XXXXjjjjXXXXXXXX",
-  "fXYffXYfXYfffXYf",
 ];
 
 export const MURO_5 = [
-  "YYYYfffkYYffffYY",
-  "eeeeeeeeeeeeeded",
+  "YYfeYfffffffffff",
+  "fffedfffffffffff",
+  "fffefdfffffffffe",
+  "fffeffdffffffffe",
+  "eeeeedeeeeeeeeee",
+  "YYfffffffeYfeYYf",
+  "fffffffffeffefff",
+  "fffffffffeffefff",
+  "feeffkkkfeffefff",
+  "ffffffjffeffefff",
+  "eeeeeeeeeeeeeeee",
+  "YYekkeYYffffffff",
+  "YYejjeffffffffff",
+  "YfefYeffffffffff",
+  "YYeYYeffffffffff",
+  "YYeYYefffffffeef",
+  "eeeeeXkkkeeeeeee",
+  "eeeedXjjjedeeeee",
   "XXXXXXXXXXXXXXXX",
-  "XYeeeeXYffffXYee",
-  "XdddddXeeeXeXddd",
-  "XdddddXeeXedXddd",
+  "eeeeeeXeeXeeeeee",
+  "ddddddXddXdddddd",
   "XXXXXXXXXXXXXXXX",
-  "YffXYfXYfXfXYeee",
-  "eeeXeeXeXeeXdddd",
-  "eedXedXeXedXdddd",
-  "XXXXXXXXXXXXXXXX",
-  "ffXkkfffXYfffXYf",
-  "eeXjjeeeXeeeeXee",
-  "edXeeeedXeeedXee",
-  "XXkkkXXXXXXXXXXX",
-  "YeejjYffffXYeeee",
-  "ddddXeeeeeXddddd",
-  "ddkkkeeeedXddddd",
-  "XXjjjXXXXXXXXXXX",
-  "YffXYfXYfXYfXYfX",
 ];
 
 export const MURI = [MURO_1, MURO_2, MURO_3, MURO_4, MURO_5];
