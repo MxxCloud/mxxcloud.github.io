@@ -12,6 +12,23 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.68 — il promemoria ha il fondo
+
+Le scritte accanto allo zaino («H COMANDI», «C COSTRUIRE», la durata
+dell'attrezzo, «E MANGIA...») stavano direttamente sopra il mondo, con la
+sola ombra: sopra l'orto o un prato fiorito si impastavano con quello che
+avevano sotto.
+- **Adesso hanno una targa scura**, la stessa dell'orologio: fondo
+  semitrasparente e bordo sottile.
+- **La targa segue le righe**: è larga quanto la più lunga e cresce verso
+  l'alto quando se ne aggiungono, per esempio con un attrezzo in mano o a
+  zaino pieno.
+- **I tasti stanno in colonna.** Le righe sono allineate a sinistra invece
+  che a destra: il tasto, che è quello che si cerca, sta sempre nello stesso
+  punto.
+- Sulla targa le scritte non hanno più l'ombra, che lì non serve.
+- Con una cassa aperta il promemoria non c'è, come prima.
+
 ## M7.18.67 — i muri hanno l'altezza
 
 Alberi, casse e superstite sono disegnati di tre quarti, i muri no: erano
