@@ -7050,3 +7050,30 @@ test('il font ha la percentuale: "+25% stamina" non esce più con il punto inter
   assert.match(gioco,/% stamina/);
   for(const c of "+25% STAMINA")assert.ok(c===' '||GLIFI_TESTO[c],c);
 });
+test('M7.18.65: la scala è intera in pixel veri dello schermo, non in pixel CSS',async()=>{
+  const {scalaPer,LARGHEZZA,ALTEZZA}=await import('../motore/schermo.js');
+  // A densità 1 il conto è quello di sempre.
+  assert.equal(scalaPer(1920,1080,1),5);
+  assert.equal(scalaPer(1440,900,1),3);
+  assert.equal(scalaPer(1366,768,1),3);
+  // A densità 2 la stessa finestra arriva a sette pixel veri, non a sei.
+  assert.equal(scalaPer(1440,900,2),7);
+  // Densità frazionaria: 1536 pixel CSS a 1,25 sono 1920 veri, cioè 5 pieni.
+  assert.equal(scalaPer(1536,864,1.25),5);
+  assert.equal(scalaPer(1280,720,1.5),5);
+  // Un telefono in orizzontale: 800x360 a densità 3 prima restava a 1.
+  assert.equal(scalaPer(800,360,3),5);
+  // Mai meno di uno, e una densità che non è un numero vale uno.
+  assert.equal(scalaPer(100,100,1),1);
+  assert.equal(scalaPer(1920,1080,NaN),5);
+  assert.equal(scalaPer(1920,1080,0),5);
+  // Il quadro sta sempre dentro la finestra, e non si poteva farlo più grande.
+  for(const [w,h,d] of [[1440,900,2],[1093,615,1.25],[2560,1440,1.5],[844,390,3],[1280,800,1.75]]){
+    const k=scalaPer(w,h,d);
+    assert.ok(LARGHEZZA*k<=w*d+0.5&&ALTEZZA*k<=h*d+0.5,`dentro ${w}x${h}@${d}`);
+    assert.ok(LARGHEZZA*(k+1)>w*d||ALTEZZA*(k+1)>h*d,`il più grande ${w}x${h}@${d}`);
+  }
+  // La carta non arrotonda la misura del quadro, che in pixel CSS può non essere intera.
+  const carta=readFileSync(new URL('../interfaccia/mappa.js',import.meta.url),'utf8');
+  assert.doesNotMatch(carta,/Math\.round\(riquadro\./);
+});

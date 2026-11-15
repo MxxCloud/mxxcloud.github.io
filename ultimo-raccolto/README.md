@@ -12,6 +12,24 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.65 — la scala sugli schermi densi
+
+Sugli schermi ad alta densità (i portatili «retina», molti schermi 4K, i
+telefoni) il gioco stava più piccolo del necessario, con bande nere larghe.
+- **La causa.** L'ingrandimento è sempre un numero intero, perché ogni pixel
+  del gioco resti un quadrato uguale agli altri. Ma l'intero si contava in
+  pixel CSS, e su quegli schermi un pixel CSS sono due o tre pixel veri.
+- **Adesso l'intero si conta in pixel veri dello schermo.** Una finestra di
+  1440×900 a densità 2 passava da 1152×648 a 1344×756: sette pixel veri per
+  pixel di gioco invece di sei, e il quadro riempie il 93% della larghezza
+  invece dell'80%. I pixel restano quadrati e tutti uguali.
+- **Sugli schermi normali non cambia niente**: a densità 1 il conto è quello
+  di prima.
+- Spostando la finestra da uno schermo all'altro la misura si rifà da sola.
+- La mappa (TAB) segue il quadro anche quando la sua misura in pixel CSS non
+  è intera. In diagnostica (F3) la riga della scala dice anche la densità.
+- È solo misura: regole, disegni e salvataggi non cambiano.
+
 ## M7.18.64.1 — il simbolo della percentuale
 
 Il carattere del gioco non aveva il «%»: «+25% stamina», dopo una dormita o
