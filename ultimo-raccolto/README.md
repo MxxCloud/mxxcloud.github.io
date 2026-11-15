@@ -12,6 +12,22 @@ L'indirizzo è `/ultimo-raccolto/` e non cambierà: rinominarlo romperebbe i
 collegamenti e le partite già salvate, che stanno nell'archivio del browser
 sotto quell'indirizzo.
 
+## M7.18.66 — il carattere si legge
+
+Il carattere del gioco è largo tre pixel, e in tre pixel alcune lettere non
+ci stavano: «CAMMINARE» si leggeva «CAHHINARE», «QUESTI» «4UESTI».
+- **La M e la W sono larghe cinque pixel**, con il vuoto in mezzo. Prima la
+  M differiva dalla H per una riga sola.
+- **La Q è larga quattro**, una O con la coda che esce in basso a destra.
+- **Le accentate hanno l'accento sopra la lettera**, in una riga in più: la
+  lettera sotto resta intera. Prima l'accento le rubava una riga, e la È era
+  una macchia. La È e la É, che erano lo stesso disegno, adesso hanno
+  l'accento ognuna dalla sua parte.
+- Le scritte con queste lettere sono più larghe di un pixel o due per
+  lettera. Nel pannello della partita la riga dei tasti usciva dal bordo, e
+  ha due spazi fra le voci invece di tre.
+- È solo disegno: nessun testo e nessuna regola cambia.
+
 ## M7.18.65 — la scala sugli schermi densi
 
 Sugli schermi ad alta densità (i portatili «retina», molti schermi 4K, i

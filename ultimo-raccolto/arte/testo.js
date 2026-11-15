@@ -29,7 +29,9 @@ export function disegna(pennello, testo, x, y, colore) {
     const glifo = glifoDi(carattere);
     // Lo spazio non ha pixel accesi: cuocerlo e disegnarlo sarebbe lavoro per
     // niente, e a ogni fotogramma per ogni spazio di ogni scritta.
-    if (carattere !== " ") pennello.drawImage(cuoci(glifo, tavolozza), penna, Math.round(y));
+    // Sulla base, non sulla cima: un'accentata è più alta delle altre, e
+    // quello che ha in più è l'accento, che sporge sopra (M7.18.66).
+    if (carattere !== " ") pennello.drawImage(cuoci(glifo, tavolozza), penna, Math.round(y) - (glifo.length - ALTEZZA));
     penna += glifo[0].length + SPAZIO;
   }
   return penna - SPAZIO;

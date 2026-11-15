@@ -7077,3 +7077,40 @@ test('M7.18.65: la scala è intera in pixel veri dello schermo, non in pixel CSS
   const carta=readFileSync(new URL('../interfaccia/mappa.js',import.meta.url),'utf8');
   assert.doesNotMatch(carta,/Math\.round\(riquadro\./);
 });
+test('M7.18.66: M, W, Q e le accentate si distinguono',async()=>{
+  const {GLIFI,ALTEZZA}=await import('../arte/sprite-testo.js');
+  const testo=await import('../arte/testo.js');
+  // Nessun glifo è il disegno di un altro: la È e la É lo erano.
+  const visti=new Map();
+  for(const [c,g] of Object.entries(GLIFI)){
+    // Fra le lettere: la O e lo zero, la S e il cinque sono lo stesso disegno
+    // da sempre, e lì è il contesto a distinguerli.
+    if(!/\p{L}/u.test(c))continue;
+    const chiave=g.join('/');
+    assert.ok(!visti.has(chiave),`«${c}» è uguale a «${visti.get(chiave)}»`);
+    visti.set(chiave,c);
+  }
+  // La M non è più una H con una riga diversa: ha la sua larghezza.
+  assert.equal(GLIFI.M[0].length,5);
+  assert.equal(GLIFI.W[0].length,5);
+  assert.equal(GLIFI.Q[0].length,4);
+  const diverse=(a,b)=>a.reduce((n,r,i)=>n+(r!==b[i]?1:0),0);
+  assert.ok(diverse(GLIFI.M,GLIFI.W)>=3);
+  // Ogni glifo è rettangolare; solo le accentate sono più alte, di una riga.
+  for(const [c,g] of Object.entries(GLIFI)){
+    assert.ok(g.every(r=>r.length===g[0].length),c);
+    assert.equal(g.length,'ÀÈÉÌÒÙ'.includes(c)?ALTEZZA+1:ALTEZZA,c);
+  }
+  // Sotto l'accento c'è la lettera intera.
+  for(const [acc,base] of [['À','A'],['È','E'],['É','E'],['Ì','I'],['Ò','O'],['Ù','U']])
+    assert.deepEqual(GLIFI[acc].slice(1),GLIFI[base],acc);
+  assert.equal(GLIFI['È'][0],'x..');assert.equal(GLIFI['É'][0],'..x');
+  // Le accentate si appoggiano sulla base delle altre: l'accento sporge sopra.
+  const sorgente=readFileSync(new URL('../arte/testo.js',import.meta.url),'utf8');
+  assert.match(sorgente,/Math\.round\(y\) - \(glifo\.length - ALTEZZA\)/);
+  // La larghezza si misura glifo per glifo.
+  assert.equal(testo.larghezza('MIO'),5+1+3+1+3);
+  // La riga dei tasti della partita sta nel suo pannello anche con CARICA.
+  const hud=readFileSync(new URL('../interfaccia/hud.js',import.meta.url),'utf8');
+  assert.match(hud,/`1-4 SCEGLI  A\/D MODO  SPAZIO \$\{verbo\}  P CHIUDI`/);
+});
