@@ -7125,3 +7125,32 @@ test('M7.18.66: M, W, Q e le accentate si distinguono',async()=>{
   const hud=readFileSync(new URL('../interfaccia/hud.js',import.meta.url),'utf8');
   assert.match(hud,/`1-4 SCEGLI  A\/D MODO  SPAZIO \$\{verbo\}  P CHIUDI`/);
 });
+test('M7.18.68: il promemoria accanto allo zaino sta su una targa che segue le righe',async()=>{
+  const hud=await import('../interfaccia/hud.js');
+  const testo=await import('../arte/testo.js');
+  const barra={x0:150,y:192};
+  const due=['H  COMANDI','C  COSTRUIRE'];
+  const t=hud.targaDelPromemoria(barra,due);
+  // Le scritte restano dov'erano: a destra a otto pixel dalla barra, l'ultima a barra.y+7.
+  assert.equal(t.destra,142);assert.equal(t.primaRiga,192+7-7);
+  // La targa contiene tutte le righe con quattro pixel attorno, e non tocca la barra.
+  const larga=Math.max(...due.map(r=>testo.larghezza(r)));
+  assert.equal(t.x,142-larga-4);assert.equal(t.larghezza,larga+8);
+  assert.equal(t.y,t.primaRiga-4);assert.equal(t.y+t.altezza,192+7+testo.ALTEZZA+4);
+  assert.ok(t.x+t.larghezza<barra.x0);
+  // Una riga in più: cresce verso l'alto di un passo, il fondo non si muove.
+  const tre=hud.targaDelPromemoria(barra,[...due,'DURATA 12/40']);
+  assert.equal(tre.y,t.y-7);assert.equal(tre.y+tre.altezza,t.y+t.altezza);
+  // Una riga più lunga la allarga a sinistra, mai oltre lo schermo.
+  const lunga=hud.targaDelPromemoria(barra,[...due,'ROTTO: VALE COME LE MANI NUDE']);
+  assert.ok(lunga.x<t.x);assert.equal(lunga.x+lunga.larghezza,t.x+t.larghezza);
+  const troppo=hud.targaDelPromemoria({x0:60,y:192},['E  MANGIA QUALCOSA DI MOLTO LUNGO']);
+  assert.equal(troppo.x,1);
+  // Si disegna il fondo, e sopra le scritte senza ombra.
+  const sorgente=readFileSync(new URL('../interfaccia/hud.js',import.meta.url),'utf8');
+  const corpo=sorgente.slice(sorgente.indexOf('export function disegnaPromemoria'),sorgente.indexOf('const PASSO_PROMEMORIA'));
+  assert.match(corpo,/riquadro\(p, targa\.x, targa\.y, targa\.larghezza, targa\.altezza, FONDO, BORDO\)/);
+  assert.doesNotMatch(corpo,/disegnaConOmbra/);
+  // I tasti in colonna: ogni riga parte dallo stesso punto, a sinistra.
+  assert.match(corpo,/testo\.disegna\(p, scritta, targa\.x \+ BORDO_PROMEMORIA, y, TENUE\)/);
+});

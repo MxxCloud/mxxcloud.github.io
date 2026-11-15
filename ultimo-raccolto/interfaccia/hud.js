@@ -645,11 +645,45 @@ export function disegnaPromemoria(p, barra, cosaInMano, indice, smontaggio = nul
   // un tasto deve essere uno solo, e non è il disegno.
   if (smontaggio) righe.push(`X  ${smontaggio.verbo.toUpperCase()}`);
 
-  let y = barra.y + 7 - (righe.length - 1) * 7;
+  const targa = targaDelPromemoria(barra, righe);
+  // Un fondo come quello dell'orologio (M7.18.68). Prima le righe stavano
+  // direttamente sopra il mondo, con la sola ombra: sopra l'orto o un prato
+  // fiorito si impastavano con quello che avevano sotto, ed erano le righe
+  // che dicono quali tasti premere.
+  riquadro(p, targa.x, targa.y, targa.larghezza, targa.altezza, FONDO, BORDO);
+  let y = targa.primaRiga;
   for (const scritta of righe) {
-    testo.disegnaConOmbra(p, scritta, barra.x0 - testo.larghezza(scritta) - 8, y, TENUE);
-    y += 7;
+    // Senza ombra: sul fondo scuro l'ombra non serve, e sporcava le lettere.
+    // Allineate a sinistra, non più a destra: sulla targa i tasti stanno in
+    // colonna, ed è il tasto la cosa che si cerca con l'occhio.
+    testo.disegna(p, scritta, targa.x + BORDO_PROMEMORIA, y, TENUE);
+    y += PASSO_PROMEMORIA;
   }
+}
+
+const PASSO_PROMEMORIA = 7;
+const BORDO_PROMEMORIA = 4;
+
+// Dove sta la targa: larga quanto la riga più lunga, alta quante sono le
+// righe, appoggiata in basso alla barra e cresciuta verso l'alto. Il bordo
+// destro delle scritte resta dov'era, a otto pixel dalla barra. Esportata
+// per i collaudi: è l'unica parte del promemoria che si può misurare senza
+// un canvas.
+export function targaDelPromemoria(barra, righe) {
+  const destra = barra.x0 - 8;
+  const larga = Math.max(...righe.map((r) => testo.larghezza(r)));
+  const primaRiga = barra.y + 7 - (righe.length - 1) * PASSO_PROMEMORIA;
+  // Mai fuori dallo schermo a sinistra: una riga lunghissima si accorcia la
+  // targa, non la fa uscire.
+  const x = Math.max(1, destra - larga - BORDO_PROMEMORIA);
+  return {
+    x,
+    y: primaRiga - BORDO_PROMEMORIA,
+    larghezza: destra + BORDO_PROMEMORIA - x,
+    altezza: (righe.length - 1) * PASSO_PROMEMORIA + testo.ALTEZZA + BORDO_PROMEMORIA * 2,
+    destra,
+    primaRiga,
+  };
 }
 
 // --- la schermata iniziale ------------------------------------------------
